@@ -19,6 +19,9 @@ class RAMLParserError(Exception):
     pass
 
 
+HTTP_METHODS = ["get", "post", "put", "delete", "patch", "options", "head"]
+
+
 class EndpointOrder(object):
     """Parses endpoint order to set order for RAML nodes"""
     def __init__(self, yaml_file):
@@ -52,7 +55,6 @@ class EndpointOrder(object):
 
 
 class APIRoot(object):
-    http_methods = ["get", "post", "put", "delete", "patch", "options", "head"]
 
     def __init__(self, raml_file):
         yaml.add_constructor("!include", self.__yaml_include)
@@ -112,8 +114,8 @@ class APIRoot(object):
         if resource_types:
             resources = []
             for resource in resource_types:
-                resources.append(ResourceType(resource.keys()[0],
-                                              resource.values()[0]))
+                resources.append(ResourceType(list(resource.keys())[0],
+                                              list(resource.values())[0]))
             return resources
         return None
 
@@ -148,8 +150,6 @@ class APIRoot(object):
 
 
 class ResourceType(object):
-    http_methods = ["get", "post", "put", "delete", "patch", "options", "head"]
-
     def __init__(self, name, data):
         self.name = name
         self.data = data
@@ -169,7 +169,7 @@ class ResourceType(object):
     @property
     def methods(self):
         methods = []
-        for m in self.http_methods:
+        for m in HTTP_METHODS:
             if self.data.get(m):
                 rec = ResourceTypeMethod(m, self.data.get(m))
                 methods.append(rec)
