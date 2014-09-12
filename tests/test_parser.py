@@ -63,13 +63,13 @@ class TestAPIMetadata(unittest.TestCase):
         media_type = "application/json"
         self.assertEqual(self.api.media_type, media_type)
 
-    # def test_resource_types(self):
-    #     resources = ['base', 'item', 'collection']
+    def test_resource_types(self):
+        resources = ['base', 'item', 'collection']
 
-    #     results = self.api.resource_types
+        results = self.api.resource_types
 
-    #     for i, resource in enumerate(results):
-    #         self.assertEqual(resource.name, resources[i])
+        for i, resource in enumerate(results):
+            self.assertEqual(resource.name, resources[i])
 
     def test_documentation(self):
         # TODO: add example that contains multiple examples
@@ -132,10 +132,10 @@ class TestAPIMetadata(unittest.TestCase):
         for scheme in self.api.security_schemes:
             assert isinstance(scheme, parser.SecurityScheme)
 
-    # def test_traits(self):
-    #     assert isinstance(self.api.traits, list)
-    #     for trait in self.api.traits:
-    #         assert isinstance(trait.values()[0], parser.QueryParameter)
+    def test_traits(self):
+        assert isinstance(self.api.traits, list)
+        for trait in self.api.traits:
+            assert isinstance(list(trait.values())[0], parser.QueryParameter)
 
 
 class TestDocumentation(unittest.TestCase):
