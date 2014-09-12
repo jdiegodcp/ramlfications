@@ -2,31 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
-import sys
-
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
-
-
-class NoseTest(TestCommand):
-    user_options = [('nosetest-args=', 'a', "Arguments to pass to nose")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.nosetest_args = None
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import nose
-        errno = nose.nosetests.main(self.nosetests_args or [] +
-                                    ["test_ramlfications.py"])
-        sys.exit(errno)
-
 
 setup(
     name="ramlfications",
@@ -55,13 +31,14 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    install_requires=[
-        "pyyaml"
-    ],
-    tests_require=[
+    setup_requires=[
         "nose"
     ],
-    cmdclass={
-        "test": NoseTest,
-    },
+    install_requires=[
+        "pyyaml", "ordereddict"
+    ],
+    tests_require=[
+        "nose",
+    ],
+    test_suite="nose.collector",
 )
