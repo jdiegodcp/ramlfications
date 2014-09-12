@@ -87,7 +87,7 @@ copyright = u'2014{0}, Lynn Root'.format(
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = find_version("../characteristic.py")
+release = "0.1.0"
 # The short X.Y version.
 version = release.rsplit(u".", 1)[0]
 
