@@ -11,7 +11,8 @@ import os
 
 import yaml
 
-from parameters import ContentType, FormParameter, URIParameter, QueryParameter
+from .parameters import (ContentType, FormParameter, URIParameter,
+                         QueryParameter)
 
 
 class RAMLParserError(Exception):
@@ -61,12 +62,12 @@ class APIRoot(object):
         # Get the path out of the yaml file
         file_name = os.path.join(os.path.dirname(loader.name), node.value)
 
-        with file(file_name) as inputfile:
+        with open(file_name) as inputfile:
             return yaml.load(inputfile)
 
     def __raml(self, raml_file):
         try:
-            return yaml.load(file(raml_file))
+            return yaml.load(open(raml_file))
         except IOError as e:
             raise RAMLParserError(e)
 
@@ -122,7 +123,8 @@ class APIRoot(object):
         if documentation:
             docs = []
             for doc in documentation:
-                docs.append(Documentation(doc.get('title'), doc.get('content')))
+                doc = Documentation(doc.get('title'), doc.get('content'))
+                docs.append(doc)
             return docs
         return None
 
@@ -138,9 +140,9 @@ class APIRoot(object):
         traits = self.raml.get('traits')
         trait_params = []
         for trait in traits:
-            for key, value in trait.iteritems():
+            for key, value in list(trait.items()):
                 items = value.get('queryParameters')
-                for k, v in items.iteritems():
+                for k, v in list(items.items()):
                     trait_params.append({key: QueryParameter(k, v)})
         return trait_params
 
@@ -167,11 +169,13 @@ class ResourceType(object):
     @property
     def methods(self):
         methods = []
-        for method in self.http_methods:
-            if self.data.get(method):
-                methods.append(ResourceTypeMethod(method, self.data.get(method)))
-            elif self.data.get(method + "?"):
-                methods.append(ResourceTypeMethod(method + "?", self.data.get(method + "?")))
+        for m in self.http_methods:
+            if self.data.get(m):
+                rec = ResourceTypeMethod(m, self.data.get(m))
+                methods.append(rec)
+            elif self.data.get(m + "?"):
+                rec = ResourceTypeMethod(m + "?", self.data.get(m + "?"))
+                methods.append(rec)
         return methods
 
 
@@ -201,7 +205,7 @@ class SecuritySchemes(object):
         if defined_schemes:
             schemes = []
             for scheme in defined_schemes:
-                for k, v in scheme.iteritems():
+                for k, v in list(scheme.items()):
                     schemes.append(SecurityScheme(k, v))
             return schemes
         else:
@@ -289,10 +293,11 @@ class NodeStack(object):
         self.raml = raml_file
 
     def yield_nodes(self):
-        available_methods = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options']
+        available_methods = ['get', 'post', 'put', 'delete',
+                             'patch', 'head', 'options']
         node_stack = []
 
-        for k, v in self.raml.iteritems():
+        for k, v in list(self.raml.items()):
             if k.startswith("/"):
                 for method in available_methods:
                     if method in self.raml[k].keys():
@@ -302,7 +307,7 @@ class NodeStack(object):
             current = node_stack.pop(0)
             yield current
             if current.data:
-                for child_k, child_v in current.data.iteritems():
+                for child_k, child_v in list(current.data.items()):
                     if child_k.startswith("/"):
                         for method in available_methods:
                             if method in current.data[child_k].keys():
@@ -385,7 +390,7 @@ class Node(object):
         if node.parent:
             uri_params = self._get_uri_params(node.parent)
         if 'uriParameters' in node.data:
-            for k, v in node.data['uriParameters'].iteritems():
+            for k, v in list(node.data['uriParameters'].items()):
                 uri_params.append((URIParameter(k, v)))
         return uri_params
 
@@ -397,10 +402,9 @@ class Node(object):
     def _get_query_params(self, node):
         """Returns a list of QueryParameter objects"""
         query_params = []
-        #if node.parent:
-        #    query_params = self._get_query_params(node.parent)
         if 'queryParameters' in node.data[self.method]:
-            for k, v in node.data[self.method]['queryParameters'].iteritems():
+            items = node.data[self.method]['queryParameters'].items()
+            for k, v in list(items):
                 query_params.append((QueryParameter(k, v)))
         return query_params
 
@@ -414,11 +418,13 @@ class Node(object):
         form_params = []
         if self.method in ['post', 'delete', 'put', 'patch']:
             if 'body' in node.data.get(self.method):
-                # TODO: check that this works with other HTTP verbs such as DELETE
-                if node.data.get(self.method).get('body').get('x-www-form-urlencoded'):
-                    if 'formParameters' in node.data[self.method]['body']['x-www-form-urlencoded']:
-                        for k, v in node.data[self.method]['body']['x-www-form-urlencoded']['formParameters'].iteritems():
-                            form_params.append((FormParameter(k, v)))
+                form_header = 'x-www-form-urlencoded'
+                # TODO: check that this works with other HTTP verbs
+                # such as DELETE, PATCH, etc
+                form = node.data.get(self.method).get('body').get(form_header)
+                if form and form.get('formParameters'):
+                    for k, v in list(form['formParameters'].items()):
+                        form_params.append((FormParameter(k, v)))
         return form_params
 
     @property
@@ -430,12 +436,13 @@ class Node(object):
     def req_content_types(self):
         content_type = []
         if self.method in ["post", "put", "delete", "patch"]:
-            if 'body' in self.data.get(self.method):
+            if self.data.get(self.method).get('body'):
                 # grabs all content types
+                content_types = self.data.get(self.method).get('body')
                 types = self.data.get(self.method).get('body').keys()
                 # TODO: skip www-form-encoded
                 for content in types:
-                    schema = self.data.get(self.method).get('body').get(content).get('schema')
-                    example = self.data.get(self.method).get('body').get(content).get('example')
+                    schema = content_types.get(content).get('schema')
+                    example = content_types.get(content).get('example')
                     content_type.append(ContentType(content, schema, example))
         return content_type

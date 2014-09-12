@@ -35,7 +35,7 @@ class JSONFormParameter(object):
     @property
     def items(self):
         if self.type == 'array':
-            return [item for item in self.data.get('items').get('properties').items()]
+            return self.data.get('items').get('properties').items()
         return None
 
     @property
