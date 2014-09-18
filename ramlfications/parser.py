@@ -3,75 +3,35 @@
 # Copyright (c) 2014 Spotify AB
 try:
     from collections import OrderedDict
-except ImportError:
+except ImportError:  # pragma: no cover
     # python 2.6
     from ordereddict import OrderedDict
 
-import os
 
-import yaml
-
+from .loader import RAMLLoader
 from .parameters import (ContentType, FormParameter, URIParameter,
-                         QueryParameter)
+                         QueryParameter, Header, Response, ResourceType,
+                         Documentation, SecuritySchemes)
 
 
 class RAMLParserError(Exception):
     pass
 
 
-HTTP_METHODS = ["get", "post", "put", "delete", "patch", "options", "head"]
-
-
-class EndpointOrder(object):
-    """Parses endpoint order to set order for RAML nodes"""
-    def __init__(self, yaml_file):
-        self.yaml = yaml_file
-
-    @property
-    def order(self):
-        """
-        Returns the desired visual order of endpoints defined in a
-        YAML file
-        """
-        class OrderedLoader(yaml.SafeLoader):
-            pass
-
-        def construct_mapping(loader, node):
-            loader.flatten_mapping(node)
-            return OrderedDict(loader.construct_pairs(node))
-        OrderedLoader.add_constructor(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-            construct_mapping)
-
-        try:
-            return yaml.load(file(self.yaml), OrderedLoader)
-        except IOError as e:
-            raise RAMLParserError(e)
-
-    @property
-    def groupings(self):
-        """Returns groupings of endpoints defined in endpoint-order.yaml"""
-        return self.order.keys()
+HTTP_RESP_CODES = [100, 101, 102,
+                   200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
+                   300, 301, 302, 303, 304, 305, 306, 307, 308,
+                   400, 401, 402, 403, 404, 405, 406, 407, 408, 409,
+                   410, 411, 412, 413, 414, 415, 416, 417, 418, 420,
+                   422, 423, 424, 425, 426, 428, 429, 431, 444, 449,
+                   450, 499,
+                   500, 501, 502, 503, 504, 505, 509, 510, 511, 598,
+                   599]
 
 
 class APIRoot(object):
-
     def __init__(self, raml_file):
-        yaml.add_constructor("!include", self.__yaml_include)
-        self.raml = self.__raml(raml_file)
-
-    def __yaml_include(self, loader, node):
-        # Get the path out of the yaml file
-        file_name = os.path.join(os.path.dirname(loader.name), node.value)
-
-        with open(file_name) as inputfile:
-            return yaml.load(inputfile)
-
-    def __raml(self, raml_file):
-        try:
-            return yaml.load(open(raml_file))
-        except IOError as e:
-            raise RAMLParserError(e)
+        self.raml = RAMLLoader(raml_file).raml
 
     @property
     def nodes(self):
@@ -105,6 +65,29 @@ class APIRoot(object):
         return None
 
     @property
+    def uri_parameters(self):
+        uri_params = self.raml.get('uriParameters')
+        if uri_params:
+            params = []
+            for k, v in list(uri_params.items()):
+                if k == 'version':
+                    raise RAMLParserError("'version' can only be defined "
+                                          "in baseUriParameters")
+                params.append((URIParameter(k, v)))
+            return params
+        return None
+
+    @property
+    def base_uri_parameters(self):
+        base_uri_params = self.raml.get('baseUriParameters')
+        if base_uri_params:
+            uri_params = []
+            for k, v in list(base_uri_params.items()):
+                uri_params.append((URIParameter(k, v)))
+            return uri_params
+        return None
+
+    @property
     def media_type(self):
         return self.raml.get('mediaType')
 
@@ -134,9 +117,6 @@ class APIRoot(object):
     def security_schemes(self):
         return SecuritySchemes(self.raml).security_schemes
 
-    def _parse_trait_query_params(self, trait):
-        pass
-
     @property
     def traits(self):
         traits = self.raml.get('traits')
@@ -147,145 +127,6 @@ class APIRoot(object):
                 for k, v in list(items.items()):
                     trait_params.append({key: QueryParameter(k, v)})
         return trait_params
-
-
-class ResourceType(object):
-    def __init__(self, name, data):
-        self.name = name
-        self.data = data
-
-    @property
-    def usage(self):
-        return self.data.get('usage')
-
-    @property
-    def description(self):
-        return self.data.get('description')
-
-    @property
-    def type(self):
-        return self.data.get('type')
-
-    @property
-    def methods(self):
-        methods = []
-        for m in HTTP_METHODS:
-            if self.data.get(m):
-                rec = ResourceTypeMethod(m, self.data.get(m))
-                methods.append(rec)
-            elif self.data.get(m + "?"):
-                rec = ResourceTypeMethod(m + "?", self.data.get(m + "?"))
-                methods.append(rec)
-        return methods
-
-
-class ResourceTypeMethod(object):
-    def __init__(self, name, data):
-        self.name = name
-        self.data = data
-
-    @property
-    def optional(self):
-        return "?" in self.name
-
-
-class Documentation(object):
-    # TODO: parse markdown content
-    def __init__(self, title, content):
-        self.title = title
-        self.content = content
-
-
-class SecuritySchemes(object):
-    def __init__(self, raml_file):
-        self.raml = raml_file
-
-    def _get_security_schemes(self):
-        defined_schemes = self.raml.get('securitySchemes')
-        if defined_schemes:
-            schemes = []
-            for scheme in defined_schemes:
-                for k, v in list(scheme.items()):
-                    schemes.append(SecurityScheme(k, v))
-            return schemes
-        else:
-            return None
-
-    @property
-    def security_schemes(self):
-        return self._get_security_schemes()
-
-
-class SecurityScheme(object):
-    def __init__(self, name, data):
-        self.name = name
-        self.data = data
-
-    @property
-    def type(self):
-        return self.data.get('type')
-
-    @property
-    def described_by(self):
-        # TODO: return a Headers, Response object
-        return self.data.get('describedBy')
-
-    @property
-    def description(self):
-        return self.data.get('description')
-
-    def _get_oauth_scheme(self, scheme):
-        return {'oauth_2_0': Oauth2Scheme,
-                'oauth_1_0': Oauth1Scheme}[scheme]
-
-    @property
-    def settings(self):
-        schemes = ['oauth_2_0', 'oauth_1_0']
-        if self.name in schemes:
-            return self._get_oauth_scheme(self.name)(self.data.get('settings'))
-
-
-class Oauth2Scheme(object):
-    def __init__(self, settings):
-        self.settings = settings
-
-    @property
-    def scopes(self):
-        return self.settings.get('scopes')  # list of strings
-
-    @property
-    def authorization_uri(self):
-        return self.settings.get('authorizationUri')  # string
-
-    @property
-    def access_token_uri(self):
-        return self.settings.get('accessTokenUri')  # string
-
-    @property
-    def authorization_grants(self):
-        return self.settings.get('authorizationGrants')  # list of strings
-
-
-class Oauth1Scheme(object):
-    def __init__(self, settings):
-        self.settings = settings
-
-    @property
-    def request_token_uri(self):
-        return self.settings.get('requestTokenUri')
-
-    @property
-    def authorization_uri(self):
-        return self.settings.get('authorizationUri')
-
-    @property
-    def token_credentials_uri(self):
-        return self.settings.get('tokenCredentialsUri')
-
-
-class Headers(object):
-    def __init__(self):
-        pass
 
 
 class NodeStack(object):
@@ -337,6 +178,15 @@ class Node(object):
         return self.data.get(self.method).get('description')
 
     @property
+    def headers(self):
+        _headers = self.data.get(self.method).get('headers')
+        headers = []
+        if _headers:
+            for k, v in list(_headers.items()):
+                headers.append(Header(k, v, self.method))
+        return headers
+
+    @property
     def path(self):
         """Returns string URI path of Node"""
         return self._get_path_to(self)
@@ -350,19 +200,22 @@ class Node(object):
             secured_by = self.data.get(self.method).get('securedBy')
         else:
             return None
-        if isinstance(secured_by, list):
-            _secured_by = []
-            for secured in secured_by:
-                if isinstance(secured, dict):
-                    _secured_by.append(secured.keys()[0])
-                else:
-                    _secured_by.append(secured)
-            return _secured_by
-        return secured_by
+
+        _secured_by = []
+        for secured in secured_by:
+            if isinstance(secured, dict):
+                _secured_by.append(list(secured.keys())[0])
+            else:
+                _secured_by.append(secured)
+        return _secured_by
 
     @property
     def secured_by(self):
         return self._get_secured_by()
+
+    @property
+    def resource_type(self):
+        return self.data.get('type', '')
 
     @property
     def traits(self):
@@ -377,12 +230,34 @@ class Node(object):
                 secured_by = self.data.get('securedBy')
             elif self.data.get(self.method).get('securedBy'):
                 secured_by = self.data.get(self.method).get('securedBy')
-            else:
-                return None
+
             for item in secured_by:
                 if isinstance(item, dict) and 'oauth_2_0' in item.keys():
                     return item.get('oauth_2_0').get('scopes')
         return None
+
+    @property
+    def protocols(self):
+        """Returns a list of supported protocols"""
+        return self.data.get(self.method).get('protocols', [])
+
+    def _get_responses(self, node):
+        resps = []
+        responses = self.data.get(self.method).get('responses')
+        if responses:
+            for k, v in list(responses.items()):
+                if k not in HTTP_RESP_CODES:
+                    msg = "{0} not a supported HTTP Response code".format(k)
+                    raise RAMLParserError(msg)
+                else:
+                    resps.append(Response(k, v, self.method))
+
+        return resps
+
+    @property
+    def responses(self):
+        """Returns responses of a given method"""
+        return self._get_responses(self)
 
     def _get_uri_params(self, node):
         """Returns a list of URIParameter Objects"""
@@ -398,6 +273,21 @@ class Node(object):
     def uri_params(self):
         """Returns URI parameters of Node"""
         return self._get_uri_params(self)
+
+    def _get_base_uri_params(self, node):
+        """Returns a list of (base) URIParameter objects"""
+        base_uri_params = []
+        if node.parent:
+            base_uri_params = self._get_base_uri_params(node.parent)
+        if 'baseUriParameters' in node.data:
+            for k, v in list(node.data['baseUriParameters'].items()):
+                base_uri_params.append((URIParameter(k, v)))
+        return base_uri_params
+
+    @property
+    def base_uri_params(self):
+        """Returns Base URI params of a Node"""
+        return self._get_base_uri_params(self)
 
     def _get_query_params(self, node):
         """Returns a list of QueryParameter objects"""
@@ -418,13 +308,13 @@ class Node(object):
         form_params = []
         if self.method in ['post', 'delete', 'put', 'patch']:
             if 'body' in node.data.get(self.method):
-                form_header = 'x-www-form-urlencoded'
-                # TODO: check that this works with other HTTP verbs
-                # such as DELETE, PATCH, etc
-                form = node.data.get(self.method).get('body').get(form_header)
-                if form and form.get('formParameters'):
-                    for k, v in list(form['formParameters'].items()):
-                        form_params.append((FormParameter(k, v)))
+                form_headers = ['application/x-www-form-urlencoded',
+                                'multipart/form-data']
+                for header in form_headers:
+                    form = node.data.get(self.method).get('body').get(header)
+                    if form and form.get('formParameters'):
+                        for k, v in list(form['formParameters'].items()):
+                            form_params.append((FormParameter(k, v)))
         return form_params
 
     @property

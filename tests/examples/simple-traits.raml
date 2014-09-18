@@ -1,0 +1,115 @@
+#%RAML 0.8
+title: Spotify Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.spotify.com/{version}
+resourceTypes:
+  - base:
+      get?: &common
+        headers:
+          Accept:
+            description: Is used to set specified media type.
+            type: string
+        responses:
+          403:
+            description: |
+              API rate limit exceeded. See http://developer.spotify.com/web-api/#rate-limiting for details.
+      post?: *common
+  - item:
+      type: base
+      get?:
+  - collection:
+      type: base
+      get?:
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Spotify supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.spotify.com/authorize
+        accessTokenUri: https://accounts.spotify.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "playlist-read-private"
+          - "playlist-modify-public"
+          - "playlist-modify-private"
+          - "user-library-read"
+          - "user-library-modify"
+          - "user-read-private"
+          - "user-read-email"
+traits:
+  - paged:
+      queryParameters:
+        limit:
+          displayName: Limit
+          description: The maximum number of track objects to return
+          type: integer
+          example: 10
+          minimum: 0
+          default: 20
+          maximum: 50
+          required: false
+        offset:
+          displayName: Offset
+          description: The index of the first track to return
+          type: integer
+          example: 5
+          default: 0
+          required: false
+/users/{user_id}/playlists:
+  type: collection
+  uriParameters:
+    user_id:
+      displayName: User ID
+      type: string
+      description: The user's Spotify user ID.
+      example: smedjan
+  displayName: playlists
+  get:
+    is: [ paged ]
+    description: |
+      [Get a List of a User's Playlists](https://developer.spotify.com/web-api/get-list-users-playlists/)
+    securedBy: [ oauth_2_0: {scopes: ['playlist-read-private']}]
+    responses:
+      200:
+        body:
+          application/json:
+            schema: |
+              {
+                "$schema": "http://json-schema.org/draft-03/schema",
+                "type": "array",
+                "items": {
+                  "$ref": "schemas/playlist.json"
+                }
+              }
+            #example: !include examples/playlists-get.json
+  post:
+    description: |
+      [Create a Playlist](https://developer.spotify.com/web-api/create-playlist/)
+    securedBy: [ oauth_2_0: {scopes: ['playlist-modify-public', 'playlist-modify-private']}]
+    body:
+      application/json:
+        schema: !include includes/post-playlist-schema.json
+        example: !include includes/post-playlist-example.json
+    responses:
+      201:
+        body:
+          application/json:
+            schema: Playlist
+            #example: !include examples/playlist-simple-get.json

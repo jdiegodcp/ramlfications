@@ -1,0 +1,33 @@
+# endpoints listed in order they should appear on sidebar navigation
+Albums:
+  - get-album
+  - get-several-albums
+  - get-album-tracks
+Artists:
+  - get-artist
+  - get-several-artists
+  - get-artist-albums
+  - get-artist-top-tracks
+  - get-artist-related-artists
+Tracks:
+  - get-track
+  - get-several-tracks
+Playlists:
+  - get-playlists
+  - get-playlist
+  - get-playlist-tracks
+  - post-playlists
+  - post-playlist-tracks
+  - delete-playlist-tracks
+  - put-playlist-tracks
+  - put-playlist
+User Profiles:
+  - get-users-profile
+  - get-current-user
+User Library:
+  - get-current-user-saved-tracks
+  - get-current-user-contains-saved-tracks
+  - put-current-user-saved-tracks
+  - delete-current-user-saved-tracks
+Search:
+  - get-search-item
