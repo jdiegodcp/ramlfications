@@ -188,6 +188,13 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(self.api.documentation[0].title, title)
         self.assertEqual(self.api.documentation[0].content, content)
 
+    def test_documentation_no_title(self):
+        raml = "examples/docs-no-title-parameter.raml"
+        raml_file = os.path.join(self.here, raml)
+        api = parser.APIRoot(raml_file)
+
+        self.assertRaises(parser.RAMLParserError, lambda: api.documentation)
+
     def test_security_schemes_oauth2(self):
         raml = "examples/security-scheme.raml"
         raml_file = os.path.join(self.here, raml)
