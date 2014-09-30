@@ -14,6 +14,11 @@ setup(
     author="Lynn Root",
     author_email="lynn@spotify.com",
     packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'ramlfications = ramlfications.__main__:main'
+        ]
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -35,7 +40,7 @@ setup(
         "nose"
     ],
     install_requires=[
-        "pyyaml", "ordereddict"
+        "pyyaml", "ordereddict", "click"
     ],
     tests_require=[
         "nose",

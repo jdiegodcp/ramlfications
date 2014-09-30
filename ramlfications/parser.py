@@ -37,7 +37,7 @@ class APIRoot(object):
 
     @property
     def nodes(self):
-        nodes_stack = NodeStack(self.raml).yield_nodes()
+        nodes_stack = NodeStack(self, self.raml).yield_nodes()
         nodes = OrderedDict()
         for node in nodes_stack:
             key_name = node.method + "-" + node.display_name
@@ -183,7 +183,8 @@ class APIRoot(object):
 
 
 class NodeStack(object):
-    def __init__(self, raml_file):
+    def __init__(self, api, raml_file):
+        self.api = api
         self.raml = raml_file
 
     def yield_nodes(self):
@@ -195,7 +196,8 @@ class NodeStack(object):
             if k.startswith("/"):
                 for method in available_methods:
                     if method in self.raml[k].keys():
-                        node = Node(name=k, data=v, method=method)
+                        node = Node(name=k, data=v, method=method,
+                                    api=self.api)
                         node_stack.append(node)
         while node_stack:
             current = node_stack.pop(0)
@@ -205,14 +207,17 @@ class NodeStack(object):
                     if child_k.startswith("/"):
                         for method in available_methods:
                             if method in current.data[child_k].keys():
-                                child = Node(child_k, child_v, method, current)
+                                child = Node(name=child_k, data=child_v,
+                                             method=method, parent=current,
+                                             api=self.api)
                                 node_stack.append(child)
 
 
 class Node(object):
-    def __init__(self, name, data, method, parent=None):
+    def __init__(self, name, data, method, api, parent=None):
         self.name = name
         self.data = data
+        self.api = api
         self.parent = parent
         self.method = method
 
