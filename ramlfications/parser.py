@@ -106,6 +106,9 @@ class APIRoot(object):
     def documentation(self):
         documentation = self.raml.get('documentation')
         if documentation:
+            if not isinstance(documentation, list):
+                msg = "Error parsing documentation"
+                raise RAMLParserError(msg)
             docs = []
             for doc in documentation:
                 doc = Documentation(doc.get('title'), doc.get('content'))
