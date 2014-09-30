@@ -259,9 +259,24 @@ class Node(object):
         _secured_by = []
         for secured in secured_by:
             if isinstance(secured, dict):
-                _secured_by.append(list(secured.keys())[0])
+                scheme = list(secured.keys())[0]
+                if 'scopes' in list(secured.values())[0]:
+                    scopes = list(secured.values())[0].get('scopes')
             else:
-                _secured_by.append(secured)
+                scheme = secured
+                scopes = None
+
+            _scheme = {}
+            for s in self.api.security_schemes:
+                if s.name == scheme:
+                    _scheme['name'] = s.name
+                    _scheme['type'] = s.type
+                    _scheme['scheme'] = s
+                if scopes:
+                    _scheme['scopes'] = scopes
+
+                if _scheme not in _secured_by:
+                    _secured_by.append(_scheme)
         return _secured_by
 
     @property

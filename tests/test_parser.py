@@ -791,7 +791,11 @@ class TestNode(BaseTestCase):
 
         for node in nodes.values():
             self.assertIsNotNone(node.secured_by)
-            self.assertEqual(node.secured_by, ['oauth_2_0'])
+            for s in node.secured_by:
+                self.assertEqual(s['name'], 'oauth_2_0')
+                self.assertIsInstance(s['scheme'], parameters.SecurityScheme)
+                self.assertEqual(s['type'], 'OAuth 2.0')
+                self.assertEqual(s['scopes'], ['playlist-read-private'])
 
     def test_scopes(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
@@ -803,10 +807,11 @@ class TestNode(BaseTestCase):
                   'playlist-read-private']
 
         for node in nodes.values():
-            self.assertIsNotNone(node.scopes)
+            for s in node.secured_by:
+                self.assertIsNotNone(s['scopes'])
 
-            for scope in node.scopes:
-                self.assertItemInList(scope, scopes)
+                for scope in s['scopes']:
+                    self.assertItemInList(scope, scopes)
 
     def test_base_uri_params(self):
         raml_file = os.path.join(self.here,
