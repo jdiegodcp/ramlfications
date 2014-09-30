@@ -507,6 +507,14 @@ class TestNode(BaseTestCase):
         for node in self.nodes.values():
             self.assertIsNotNone(node.display_name)
 
+    def test_display_name_not_defined(self):
+        raml_file = os.path.join(self.here, "examples/no-display-name.raml")
+        api = parser.APIRoot(raml_file)
+        node = list(api.nodes.values())[0]
+
+        self.assertEqual(node.display_name, '/tracks')
+        self.assertEqual(node.name, node.display_name)
+
     def test_has_description(self):
         for node in self.nodes.values():
             self.assertIsNotNone(node.description)

@@ -222,7 +222,10 @@ class Node(object):
 
     @property
     def display_name(self):
-        return self.data.get('displayName', '')
+        display_name = self.data.get('displayName')
+        if not display_name:
+            display_name = self.name
+        return display_name
 
     @property
     def description(self):
