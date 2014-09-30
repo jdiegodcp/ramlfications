@@ -16,45 +16,45 @@ class ContentType(object):
 class BaseParameter(object):
     """
     Base parameter with properties defined by the RAML spec's
-    'Named Paramters' section.
+    'Named Parameters' section.
     """
-    def __init__(self, item, data, param_type):
+    def __init__(self, item, data):
         self.item = item
         self.data = data
-        self.param_type = param_type
 
     @property
     def name(self):
-        """Name of the {0}""".format(self.param_type)
+        """Name of the Parameter"""
         return self.item
 
     @property
     def display_name(self):
-        """Display Name of the {0}""".format(self.param_type)
+        """Display Name of the Parameter"""
         return self.data.get('displayName')
 
     @property
     def type(self):
-        """Type of {0}""".format(self.param_type)
+        """Type of Parameter"""
         return self.data.get('type')
 
     @property
     def description(self):
-        """Description of {0}""".format(self.param_type)
+        """Description of Parameter"""
         return self.data.get('description')
 
     @property
     def example(self):
-        """Example of {0}""".format(self.param_type)
+        """Example of Parameter"""
         return self.data.get('example', '')
 
     @property
     def enum(self):
-        """Enum of {0}""".format(self.param_type)
+        """Enum of Parameter"""
         return self.data.get('enum')
 
     @property
     def default(self):
+        """Default value of parameter"""
         return self.data.get('default')
 
     @property
