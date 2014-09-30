@@ -89,10 +89,7 @@ class BaseParameter(object):
 
 class JSONFormParameter(object):   # pragma: no cover
     def __init__(self, param, data, example):
-        self.item = param
-        self.data = data
-        self.param_type = 'JSON Parameter'
-        super(BaseParameter, self).__init__()
+        BaseParameter.__init__(self, param, data)
         self.example = example
 
     @property
@@ -102,19 +99,13 @@ class JSONFormParameter(object):   # pragma: no cover
 
 class URIParameter(BaseParameter):
     def __init__(self, param, data, required=True):
-        self.item = param
-        self.data = data
-        self.param_type = 'URI Parameter'
-        super(BaseParameter, self).__init__()
+        BaseParameter.__init__(self, param, data)
         self.required = required
 
 
 class QueryParameter(BaseParameter):
     def __init__(self, param, data):
-        self.item = param
-        self.data = data
-        self.param_type = 'Query Parameter'
-        super(BaseParameter, self).__init__()
+        BaseParameter.__init__(self, param, data)
 
     @property
     def required(self):
@@ -123,10 +114,7 @@ class QueryParameter(BaseParameter):
 
 class FormParameter(BaseParameter):
     def __init__(self, param, data):
-        self.item = param
-        self.data = data
-        self.param_type = 'Form Parameter'
-        super(BaseParameter, self).__init__()
+        BaseParameter.__init__(self, param, data)
 
     @property
     def required(self):
@@ -135,10 +123,7 @@ class FormParameter(BaseParameter):
 
 class Header(BaseParameter):
     def __init__(self, name, data, method):
-        self.item = name
-        self.data = data
-        self.param_type = "Header"
-        super(BaseParameter, self).__init__()
+        BaseParameter.__init__(self, name, data)
         self.method = method
 
 

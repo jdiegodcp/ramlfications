@@ -627,7 +627,6 @@ class TestNode(BaseTestCase):
 
         self.assertIsInstance(results, list)
         for item in results:
-            self.assertEqual(item.param_type, "Header")
             self.assertItemInList(item.item, list(expected_data.keys()))
             self.assertIsInstance(item, parser.Header)
             self.assertDictEqual(item.data, expected_data[item.name])
@@ -832,7 +831,6 @@ class TestNode(BaseTestCase):
         }]
 
         for i, r in enumerate(foo_results):
-            self.assertEqual(r.param_type, "URI Parameter")
             self.assertItemInList(r.item, list(data[i].keys())[0])
             self.assertIsInstance(r, parser.URIParameter)
             self.assertEqual(r.name, list(data[i].keys())[0])
@@ -928,7 +926,6 @@ class TestNode(BaseTestCase):
         }
         for param in search_q_params:
             self.assertIsInstance(param, parser.QueryParameter)
-            self.assertEqual(param.param_type, "Query Parameter")
             self.assertItemInList(param.item, expected_search_q_params)
             self.assertItemInList(param.name, expected_search_q_params)
             self.assertDictEqual(param.data, expected_search_data[param.name])
@@ -1002,7 +999,6 @@ class TestNode(BaseTestCase):
 
         for param in track_u_params:
             self.assertIsInstance(param, parser.URIParameter)
-            self.assertEqual(param.param_type, "URI Parameter")
             self.assertEqual(param.item, expected_track_u_param)
             self.assertEqual(param.name, expected_track_u_param)
             # assuming all URI params are true
@@ -1047,7 +1043,6 @@ class TestNode(BaseTestCase):
         for param in form_params:
             self.assertIsInstance(param, parser.FormParameter)
             self.assertItemInList(param.item, expected_form_params)
-            self.assertEqual(param.param_type, "Form Parameter")
             self.assertItemInList(param.name, expected_form_params)
             self.assertEqual(param.display_name,
                              expected_form_data[param.name]['displayName'])
