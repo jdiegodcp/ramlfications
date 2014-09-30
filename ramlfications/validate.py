@@ -29,4 +29,3 @@ class ValidateRAML(object):
                 msg = "Not a valid version of RAML: {0}.".format(version)
                 raise RAMLValidationError(msg)
 
-            return raml_def, version
