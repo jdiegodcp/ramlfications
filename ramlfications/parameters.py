@@ -241,8 +241,7 @@ class SecurityScheme(object):
     def type(self):
         return self.data.get('type')
 
-    @property
-    def described_by(self):
+    def _get_described_by(self):
         _described_by = self.data.get('describedBy')
 
         if _described_by:
@@ -286,6 +285,10 @@ class SecurityScheme(object):
 
             return described_by
         return None
+
+    @property
+    def described_by(self):
+        return self._get_described_by()
 
     @property
     def description(self):
