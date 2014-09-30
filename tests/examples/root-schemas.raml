@@ -1,0 +1,22 @@
+#%RAML 0.8
+baseUri: https://api.example.com
+title: Filesystem API
+version: 0.1
+schemas:
+  - !include includes/simple.raml
+  - Playlist:       !include includes/playlist.json
+    CreatePlaylist: !include includes/post-playlist-schema.json
+
+/playlist:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            schema: Playlist
+  post:
+    responses:
+      204:
+        body:
+          application/json:
+            schema: CreatePlaylist

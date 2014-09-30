@@ -1,0 +1,119 @@
+#%RAML 0.8
+title: Spotify Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.spotify.com/{version}
+mediaType: application/json
+documentation:
+  - title: Spotify Web API Docs
+    content: |
+      Welcome to the _Spotify Web API_ specification. For more information about
+      how to use the API, check out [developer site](https://developer.spotify.com/web-api/).
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Spotify supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        queryParameters:
+          foo:
+            description: Foo Query Parameter
+            type: string
+            example: fooooo
+        uriParameters:
+          bar:
+            description: Bar URI Parameter
+            type: string
+            example: baaaar
+          baz:
+            description: Baz URI Parameter
+            type: string
+            example: baaaaaz
+        formParameters:
+          blarg:
+            description: Blarg Form Parameter
+            type: string
+            example: bllaaaarrgg
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.spotify.com/authorize
+        accessTokenUri: https://accounts.spotify.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "playlist-read-private"
+          - "playlist-modify-public"
+          - "playlist-modify-private"
+          - "user-library-read"
+          - "user-library-modify"
+          - "user-read-private"
+          - "user-read-email"
+  - oauth_1_0:
+      description: |
+          OAuth 1.0 continues to be supported for all API requests, but OAuth 2.0 is now preferred.
+      type: OAuth 1.0
+      settings:
+        requestTokenUri: https://api.spotify.com/1/oauth/request_token
+        authorizationUri: https://www.spotify.com/1/oauth/authorize
+        tokenCredentialsUri: https://api.spotify.com/1/oauth/access_token
+/me:
+  displayName: current-user
+  securedBy: [ oauth_2_0: {scopes: ['user-read-private']}, oauth_1_0 ]
+  get:
+    description: |
+      [Get Current User's Profile](https://developer.spotify.com/web-api/get-current-users-profile/)
+  /tracks:
+    displayName: current-user-saved-tracks
+    type: collection
+    get:
+      is: [ paged ]
+      description: |
+        [Get Current User's Saved Tracks](https://developer.spotify.com/web-api/get-users-saved-tracks/)
+      securedBy: [ oauth_2_0: {scopes: ['user-library-read']}]
+    put:
+      description: |
+        [Save Tracks for Current User](https://developer.spotify.com/web-api/save-tracks-user/)
+      securedBy: [ oauth_2_0: {scopes: ['user-library-modify']}]
+      queryParameters:
+        ids:
+          displayName: Spotify Track IDs
+          type: string
+          description: A comma-separated list of IDs
+          required: true
+          example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+    delete:
+      description: |
+        [Remove Tracks for Current User](https://developer.spotify.com/web-api/remove-tracks-user/)
+      securedBy: [ oauth_2_0: {scopes: ['user-library-modify']}]
+      queryParameters:
+        ids:
+          displayName: Spotify Track IDs
+          type: string
+          description: A comma-separated list of IDs
+          required: true
+          example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+    /contains:
+      displayName: current-user-contains-saved-tracks
+      get:
+        description: |
+          [Check Current User's Saved Tracks](https://developer.spotify.com/web-api/check-users-saved-tracks/)
+        securedBy: [ oauth_2_0: {scopes: ['user-library-read']}]
+        queryParameters:
+          ids:
+            displayName: Spotify Track IDs
+            type: string
+            description: A comma-separated list of IDs
+            required: true
+            example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'

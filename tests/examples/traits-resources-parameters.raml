@@ -1,0 +1,29 @@
+#%RAML 0.8
+title: Example API
+version: v1
+mediaType: application/json
+resourceTypes:
+  - collection:
+      get:
+        responses:
+          200:
+            body:
+              schema: <<resourcePathName>> # e.g. users
+      post:
+        responses:
+          200:
+            body:
+              schema: <<resourcePathName | !singularize>>  # e.g. user
+  - member:
+      get:
+        responses:
+          200:
+            body:
+              schema: <<resourcePathName>> # e.g. user
+traits:
+  - secured:
+      description: Some requests require authentication
+      queryParameters:
+        <<methodName>>: # e.g. get:
+          description: A <<methodName>> name-value pair must be provided for this request to succeed.  # e.g. A get name-value...
+          example: <<methodName>>=h8duh3uhhu38   # e.g. get=h8duh3uhhu38
