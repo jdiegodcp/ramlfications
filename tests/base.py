@@ -9,19 +9,19 @@ class BaseTestCase(unittest.TestCase):
     maxDiff = None
 
     def assertItemInList(self, item, items):
-        assert item in items
+        self.assertTrue(item in items)
 
     # Allow for py3.x compatability
     if not hasattr(unittest.TestCase, 'assertIsInstance'):
         def assertIsInstance(self, item, object):
-            assert isinstance(item, object)
+            self.assertTrue(isinstance(item, object))
 
     # Allow for py2.6 compatability
     if not hasattr(unittest.TestCase, 'assertDictEqual'):
         # assertEqual uses for dicts
         def assertDictEqual(self, d1, d2, msg=None):
             for k, v1 in d1.iteritems():
-                assert k in d2
+                self.assertTrue(k in d2)
                 v2 = d2[k]
                 self.assertEqual(v1, v2, msg)
             return True
