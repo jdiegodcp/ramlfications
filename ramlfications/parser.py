@@ -131,6 +131,50 @@ class APIRoot(object):
                     trait_params.append({key: QueryParameter(k, v)})
         return trait_params
 
+    def __find_params(self, string):
+        # TODO: ignoring humanizers for now
+        match = re.findall(r"(<<.*?>>)", string)
+        match = [m[2:-2] for m in match]  # clean <<>> first
+        ret = []
+        for m in match:
+            if "!singularlize" or "!pluralize" in m:  # clean out humanizers
+                param = m.split(" | ")[0]
+                param = "<<{0}>>".format(param)  # then put back <<>>
+                if param not in ret:
+                    ret.append(param)
+            else:
+                if m not in ret:
+                    param = "<<{0}>>".format(m)
+                    ret.append(param)
+
+        return ret
+
+    def __parse_parameters(self):
+        """If traits or resourceTypes contain <<parameter>> in definition"""
+        _resources_params = []
+        if self.resource_types:
+            for r in self.resource_types:
+                data = json.dumps(r.data)
+                match = self.__find_params(data)
+                _resources_params += match
+
+        _traits_params = []
+        if self.traits:
+            for t in self.traits:
+                data = json.dumps(t.keys())
+                match = self.__find_params(data)
+                _traits_params += match
+
+                data = json.dumps(t.values()[0].data)
+                match = self.__find_params(data)
+                _traits_params += match
+
+        return dict(resource_types=list(set(_resources_params)),
+                    traits=list(set(_traits_params)))
+
+    def get_parameters(self):
+        return self.__parse_parameters()
+
     @property
     def schemas(self):
         return self.raml.get('schemas')

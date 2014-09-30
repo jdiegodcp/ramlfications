@@ -352,6 +352,20 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(settings.token_credentials_uri,
                          data['settings']['tokenCredentialsUri'])
 
+    def test_get_parameters(self):
+        raml = "examples/traits-resources-parameters.raml"
+        raml_file = os.path.join(self.here, raml)
+        api = parser.APIRoot(raml_file)
+
+        params = api.get_parameters()
+
+        expected_data = {
+            'resource_types': ['<<resourcePathName>>'],
+            'traits': ['<<methodName>>']
+        }
+
+        self.assertDictEqual(params, expected_data)
+
     def test_schemas(self):
         raml_file = os.path.join(self.here, "examples/root-schemas.raml")
         api = parser.APIRoot(raml_file)
