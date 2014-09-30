@@ -7,6 +7,7 @@ except ImportError:  # pragma: no cover
     # python 2.6
     from ordereddict import OrderedDict
 
+import json
 import re
 
 from .loader import RAMLLoader
