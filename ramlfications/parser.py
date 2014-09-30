@@ -128,6 +128,10 @@ class APIRoot(object):
                     trait_params.append({key: QueryParameter(k, v)})
         return trait_params
 
+    @property
+    def schemas(self):
+        return self.raml.get('schemas')
+
 
 class NodeStack(object):
     def __init__(self, raml_file):

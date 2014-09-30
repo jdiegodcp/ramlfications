@@ -352,6 +352,92 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(settings.token_credentials_uri,
                          data['settings']['tokenCredentialsUri'])
 
+    def test_schemas(self):
+        raml_file = os.path.join(self.here, "examples/root-schemas.raml")
+        api = parser.APIRoot(raml_file)
+
+        result = api.schemas
+
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 2)
+
+        included_raml_file = os.path.join(self.here, "examples/includes/simple.raml")
+        api2 = parser.APIRoot(included_raml_file)
+
+        self.assertEqual(result[0], api2.raml)
+
+        expected_data = {
+            'CreatePlaylist': {
+                'name': 'New Playlist',
+                'public': False
+            },
+            'Playlist': {
+                '$schema': 'http://json-schema.org/draft-03/schema',
+                'properties': {
+                    'api_link': {
+                        'description': 'API resource address of the entity.',
+                        'type': 'string'
+                    },
+                    'collaborative': {
+                        'description': ("True if the owner allows other users "
+                                        "to modify the playlist."),
+                        'type': 'boolean'
+                    },
+                    'description': {
+                        'description': 'A description of the playlist.',
+                        'type': 'string'
+                    },
+                    'followers_count': {
+                        'description': ("The number of users following the "
+                                        "playlist."),
+                        'type': 'number'
+                    },
+                    'id': {
+                        'description': 'ID of the playlist.',
+                        'type': 'string'
+                    },
+                    'image': {
+                        'description': ("URL of a picture associated with the "
+                                        "playlist."),
+                        'type': 'string'
+                    },
+                    'items': {
+                        'description': ("Contents of the playlist (an array "
+                                        "of Track objects)."),
+                        'items': {
+                            '$ref': 'Track.json'
+                        },
+                        'type': 'array'
+                    },
+                    'link': {
+                        'description': 'HTTP link of the entity.',
+                        'type': 'string'
+                    },
+                    'name': {
+                        'description': 'Name of the playlist.',
+                        'type': 'string'
+                    },
+                    'owner': {
+                        '$ref': 'User.json',
+                        'description': 'User who owns the playlist.'
+                    },
+                    'published': {
+                        'description': ("Indicates whether the playlist is "
+                                        "publicly discoverable. This does not "
+                                        "restrict access for users who already"
+                                        " know the playlist's URI."),
+                        'type': 'boolean'
+                    },
+                    'uri': {
+                        'description': 'Spotify URI of the entity.',
+                        'type': 'string'
+                    }
+                },
+                'type': 'object'
+            }
+        }
+        self.assertDictEqual(result[1], expected_data)
+
 
 class TestDocumentation(BaseTestCase):
     # TODO: add test for markdown parsing
