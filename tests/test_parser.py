@@ -382,7 +382,8 @@ class TestAPIRoot(BaseTestCase):
         self.assertIsInstance(result, list)
         self.assertEqual(len(result), 2)
 
-        included_raml_file = os.path.join(self.here, "examples/includes/simple.raml")
+        included_raml_file = os.path.join(self.here,
+                                          "examples/includes/simple.raml")
         api2 = parser.APIRoot(included_raml_file)
 
         self.assertEqual(result[0], api2.raml)
