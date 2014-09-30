@@ -29,3 +29,44 @@ class ValidateRAML(object):
                 msg = "Not a valid version of RAML: {0}.".format(version)
                 raise RAMLValidationError(msg)
 
+    def api_title(self):
+        title = self.api.title
+        if not title:
+            msg = 'RAML File does not define an API title.'
+            raise RAMLValidationError(msg)
+
+    def base_uri(self):
+        base_uri = self.api.base_uri
+        if not base_uri:
+            msg = 'RAML File does not define the baseUri.'
+            raise RAMLValidationError(msg)
+
+    def base_uri_params(self):
+        base_uri_params = self.api.base_uri_parameters
+        if base_uri_params:
+            for param in base_uri_params:
+                if not param.default:
+                    msg = '{0} needs a default parameter.'.format(param.name)
+                    raise RAMLValidationError(msg)
+
+    def node_response(self):
+        nodes = self.api.nodes
+        valid_keys = ['body', 'headers', 'description']
+        for node in list(nodes.values()):
+            responses = node.responses
+            for resp in responses:
+                for key in list(resp.data.keys()):
+                    if key not in valid_keys:
+                        msg = "{0} not a valid Response parameter.".format(key)
+                        raise RAMLValidationError(msg)
+
+    def root_documentation(self):
+        docs = self.api.documentation
+        if docs:
+            for d in docs:
+                if not d.title:
+                    msg = "API Documentation requires a title."
+                    raise RAMLValidationError(msg)
+                if not d.content:
+                    msg = "API Documentation requires content defined."
+                    raise RAMLValidationError(msg)
