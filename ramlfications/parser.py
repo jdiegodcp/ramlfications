@@ -44,7 +44,7 @@ class APIRoot(object):
 
     @property
     def title(self):
-        return self.raml['title'] or None
+        return self.raml.get('title')
 
     @property
     def protocols(self):
