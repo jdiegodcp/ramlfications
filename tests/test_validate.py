@@ -58,3 +58,10 @@ class TestValidateRAML(BaseTestCase):
 
         self.assertRaises(RAMLValidationError,
                           lambda: raml.root_documentation())
+
+    def test_invalid_security_scheme(self):
+        raml_file = "examples/validate/invalid-security-scheme.raml"
+        raml = self.setup_raml(raml_file)
+
+        self.assertRaises(RAMLValidationError,
+                          lambda: raml.security_schemes())

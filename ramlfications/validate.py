@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
-
 from .parser import APIRoot
 
 
@@ -69,4 +68,19 @@ class ValidateRAML(object):
                     raise RAMLValidationError(msg)
                 if not d.content:
                     msg = "API Documentation requires content defined."
+                    raise RAMLValidationError(msg)
+
+    def security_schemes(self):
+        # QUESTION: Need to validate "other" schemas somehow? e.g. is
+        # 'describedBy' for x-foo-auth needed?
+        valid = ['OAuth 1.0',
+                 'OAuth 2.0',
+                 'Basic Authentication',
+                 'Digest Authentication']
+        schemes = self.api.security_schemes
+        if schemes:
+            for s in schemes:
+                if s.type not in valid or not s.type.startswith("x-"):
+                    msg = "'{0}' is not a valid Security Scheme.".format(
+                        s.type)
                     raise RAMLValidationError(msg)

@@ -359,6 +359,43 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(settings.token_credentials_uri,
                          data['settings']['tokenCredentialsUri'])
 
+    def test_security_schemes_other(self):
+        raml = "examples/security-schemes-http-other.raml"
+        raml_file = os.path.join(self.here, raml)
+        api = parser.APIRoot(raml_file)
+
+        schemes = api.security_schemes
+
+        expected_basic = {
+            'description': ("The Foo Web API supports HTTP Basic "
+                            "Authentication\n"),
+            'type': 'Basic Authentication'
+        }
+        expected_digest = {
+            'description': ("The Foo Web API supports HTTP Digest "
+                            "Authentication\n"),
+            'type': 'Digest Authentication'
+        }
+        expected_other = {
+            'describedBy': {
+                'headers': {
+                    'X-Foo-Auth': {
+                        'description': ("Foo's super awesome home-grown "
+                                        "authentication.  Complete with\nour "
+                                        "own home-grown cryptography! /s\n"),
+                        'displayName': 'Foo Auth'
+                    }
+                }
+            },
+            'description': ("The Foo Web API supports its home-grown "
+                            "authentication, Foo Auth\n"),
+            'type': 'x-foo-auth'
+        }
+
+        self.assertDictEqual(schemes[0].data, expected_basic)
+        self.assertDictEqual(schemes[1].data, expected_digest)
+        self.assertDictEqual(schemes[2].data, expected_other)
+
     def test_get_parameters(self):
         raml = "examples/traits-resources-parameters.raml"
         raml_file = os.path.join(self.here, raml)
