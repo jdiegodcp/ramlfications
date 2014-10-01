@@ -315,6 +315,18 @@ class TestAPIRoot(BaseTestCase):
 
         self.assertIsNone(api.security_schemes)
 
+    def test_security_schemes_markdown_desc(self):
+        raml = "examples/markdown-desc-docs.raml"
+        raml_file = os.path.join(self.here, raml)
+        api = parser.APIRoot(raml_file)
+
+        desc_results = api.security_schemes[0].description_html
+        expected_results = ("<p>Spotify supports <a href=\"https://developer."
+                            "spotify.com/web-api/authorization-guide/\">"
+                            "OAuth 2.0</a>\nfor authenticating all API "
+                            "requests.</p>")
+        self.assertEqual(desc_results, expected_results)
+
     def test_traits(self):
         self.assertIsInstance(self.api.traits, list)
         for trait in self.api.traits:
@@ -499,7 +511,6 @@ class TestAPIRoot(BaseTestCase):
 
 
 class TestDocumentation(BaseTestCase):
-    # TODO: add test for markdown parsing
     def setUp(self):
         here = os.path.abspath(os.path.dirname(__file__))
         raml_file = os.path.join(here, "examples/multiple_documentation.raml")
@@ -522,6 +533,23 @@ class TestDocumentation(BaseTestCase):
         for i, docs in enumerate(self.api.documentation):
             self.assertEqual(docs.title, titles[i])
             self.assertEqual(docs.content, contents[i])
+
+    def test_docs_markdown(self):
+        raml_file = os.path.join(self.here, "examples/markdown-desc-docs.raml")
+        api = parser.APIRoot(raml_file)
+        documentation = api.documentation[0]
+
+        expected_content = ("Welcome to the _Spotify Web API_ specification. "
+                            "For more information about\nhow to use the API, "
+                            "check out [developer site]"
+                            "(https://developer.spotify.com/web-api/).\n")
+        expected_html = ("<p>Welcome to the <em>Spotify Web API</em> "
+                         "specification. For more information about\nhow to "
+                         "use the API, check out <a href=\"https://developer."
+                         "spotify.com/web-api/\">developer site</a>.</p>")
+
+        self.assertEqual(documentation.content, expected_content)
+        self.assertEqual(documentation.content_html, expected_html)
 
 
 class TestNode(BaseTestCase):
@@ -563,6 +591,18 @@ class TestNode(BaseTestCase):
     def test_has_description(self):
         for node in self.nodes.values():
             self.assertIsNotNone(node.description)
+
+    def test_description_markdown(self):
+        raml = "examples/markdown-desc-docs.raml"
+        raml_file = os.path.join(self.here, raml)
+        api = parser.APIRoot(raml_file)
+        node = api.nodes.get('get-artist')
+
+        html_result = node.description_html
+        expected_result = ("<p><a href=\"https://developer.spotify.com/web-"
+                           "api/get-artist/\">Get an Artist</a></p>")
+
+        self.assertEqual(html_result, expected_result)
 
     def test_method(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
@@ -1108,6 +1148,20 @@ class TestNode(BaseTestCase):
             self.assertIsNone(param.minimum)
             self.assertIsNone(param.maximum)
             self.assertIsNone(param.repeat)
+
+    def test_param_markdown_desc(self):
+        raml = "examples/markdown-desc-docs.raml"
+        raml_file = os.path.join(self.here, raml)
+        api = parser.APIRoot(raml_file)
+
+        node = api.nodes.get('get-artist-top-tracks')
+        param = node.query_params[0]
+        html_result = param.description_html
+        expected_result = ("<p>The country (<a href=\"http://en.wikipedia.org"
+                           "/wiki/ISO_3166-1\">an ISO 3166-1 alpha-2 country "
+                           "code</a>)</p>")
+
+        self.assertEqual(html_result, expected_result)
 
     def test_req_content_types(self):
         raml_file = os.path.join(self.here, "examples/req-content-type.raml")

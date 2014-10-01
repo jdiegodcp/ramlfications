@@ -1,7 +1,8 @@
 ## TODOs before initial OSS release
 
 * Features:
-    * [ ] Parsing of Markdown in Documentation
+    * [x] Parsing of Markdown in Documentation
+    * [x] Tests for parsing of Markdown in Descriptions
     * [ ] Parse `mediaTypeExtension` as a reserved URI parameter
     * [ ] baseUriParameters may overwrite those in the Root
     * [ ] Parsing of non-JSON/RAML/YAML schemas in Body (e.g. xml)

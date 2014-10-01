@@ -10,6 +10,8 @@ except ImportError:  # pragma: no cover
 import json
 import re
 
+import markdown
+
 from .loader import RAMLLoader
 from .parameters import (ContentType, FormParameter, URIParameter,
                          QueryParameter, Header, Response, ResourceType,
@@ -237,6 +239,10 @@ class Node(object):
     @property
     def description(self):
         return self.data.get(self.method).get('description')
+
+    @property
+    def description_html(self):
+        return markdown.markdown(self.description)
 
     @property
     def headers(self):

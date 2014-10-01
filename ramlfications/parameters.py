@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
+import markdown
 
 HTTP_METHODS = ["get", "post", "put", "delete", "patch", "options", "head"]
 
@@ -41,6 +42,11 @@ class BaseParameter(object):
     def description(self):
         """Description of Parameter"""
         return self.data.get('description')
+
+    @property
+    def description_html(self):
+        """Description of Parameter in HTML"""
+        return markdown.markdown(self.data.get('description', ''))
 
     @property
     def example(self):
@@ -139,6 +145,10 @@ class Response(object):
         return self.data.get('description')
 
     @property
+    def description_html(self):
+        return markdown.markdown(self.data.get('description'))
+
+    @property
     def headers(self):
         _headers = self.data.get('headers')
         headers = []
@@ -179,6 +189,10 @@ class ResourceType(object):
         return self.data.get('description')
 
     @property
+    def description_html(self):
+        return markdown.markdown(self.data.get('description'))
+
+    @property
     def type(self):
         return self.data.get('type')
 
@@ -206,10 +220,17 @@ class ResourceTypeMethod(object):
 
 
 class Documentation(object):
-    # TODO: parse markdown content
+    """
+    Returns Documentation defined in API Root.
+
+    :param: title
+    :param: content - raw content (not parsed Markdown)
+    :param: content_html - returns parsed Markdown to HTML
+    """
     def __init__(self, title, content):
         self.title = title
-        self.content = content
+        self.content = content or ''
+        self.content_html = markdown.markdown(self.content)
 
 
 class SecuritySchemes(object):
@@ -293,6 +314,10 @@ class SecurityScheme(object):
     @property
     def description(self):
         return self.data.get('description')
+
+    @property
+    def description_html(self):
+        return markdown.markdown(self.data.get('description'))
 
     def _get_oauth_scheme(self, scheme):
         return {'oauth_2_0': Oauth2Scheme,
