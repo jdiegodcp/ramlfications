@@ -1,0 +1,30 @@
+#%RAML 0.8
+title: Foo Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.foo.com/{version}
+mediaType: application/json
+documentation:
+  - title: Foo Web API Docs
+    content: |
+      Welcome to the Foo Web API_ specification.
+securitySchemes:
+  - http_basic:
+      description: |
+        The Foo Web API supports HTTP Basic Authentication
+      type: Basic Authentication
+  - http_digest:
+      description: |
+        The Foo Web API supports HTTP Digest Authentication
+      type: Digest Authentication
+  - xFooAuth:
+      description: |
+        The Foo Web API supports its home-grown authentication, Foo Auth
+      type: x-foo-auth
+      describedBy:
+        headers:
+          X-Foo-Auth:
+            displayName: Foo Auth
+            description: |
+              Foo's super awesome home-grown authentication.  Complete with
+              our own home-grown cryptography! /s
