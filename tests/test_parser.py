@@ -865,7 +865,8 @@ class TestNode(BaseTestCase):
         nodes = api.nodes
 
         for node in nodes.values():
-            self.assertEqual(node.resource_type, 'collection')
+            expected_dict = {'usage': None, 'name': 'collection'}
+            self.assertDictEqual(node.resource_type, expected_dict)
             if node.method == 'get':
                 self.assertEqual(node.traits, ['paged'])
 
