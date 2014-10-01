@@ -289,9 +289,114 @@ class Node(object):
     def secured_by(self):
         return self._get_secured_by()
 
+    def __find_params(self, string):
+        # TODO: ignoring humanizers for now
+        match = re.findall(r"(<<.*?>>)", string)
+        match = [m[2:-2] for m in match]  # clean <<>> first
+        ret = []
+        for m in match:
+            if "!singularlize" or "!pluralize" in m:  # clean out humanizers
+                param = m.split(" | ")[0]
+                param = "<<{0}>>".format(param)  # then put back <<>>
+                if param not in ret:
+                    ret.append(param)
+            else:
+                if m not in ret:
+                    param = "<<{0}>>".format(m)
+                    ret.append(param)
+
+        return ret
+
+    def _fill_reserved_params(self, string):
+        if "<<resourcePathName>>" in string:
+            if self.name.startswith("/"):
+                name = self.name[1:]
+            else:
+                name = self.name
+            string = string.replace("<<resourcePathName>>", name)
+        if "<<resourcePath>>" in string:
+            string = string.replace("<<resourcePath>>", self.name)
+
+        return string
+
+    def _fill_params(self, string, key, value):
+        if key in string:
+            string = string.replace("<<" + key + ">>", value)
+        string = self._fill_reserved_params(string)
+        return string
+
+    def _map_resource_string(self, res_type):
+        results = []
+        api_resources = self.api.resource_types
+        for r in api_resources:
+            result = {}
+            if r.name == res_type:
+                result['name'] = r.name
+                result['usage'] = r.usage
+                methods = r.methods
+                for m in methods:
+                    if self.method == m.name:
+                        if m.data.get('description'):
+                            # If the method has a description attached,
+                            # then use it
+                            desc = m.data.get('description')
+                        else:
+                            # otherwise use the general description
+                            desc = r.description
+                    else:
+                        # otherwise use the general description
+                        desc = r.description
+                    result['description'] = self._fill_reserved_params(desc)
+                results.append(result)
+
+        # Would this ever get hit?
+        if len(results) > 1:
+            msg = "Too many resource types applied to one resource."
+            raise RAMLParserError(msg)
+        return results[0]
+
+    def _map_resource_dict(self, res_type):
+        api_resources = self.api.resource_types
+
+        _type = list(res_type.keys())[0]
+        api_resources_names = [a.name for a in api_resources]
+        if _type not in api_resources_names:
+            msg = "'{0}' is not defined in API Root's resourceTypes."
+            raise RAMLParserError(msg)
+
+        for r in api_resources:
+            if r.name == _type:
+                _values = list(res_type.values())[0]
+                data = json.dumps(r.data)
+                for k, v in list(_values.items()):
+                    data = self._fill_params(data, k, v)
+                data = json.loads(data)
+                result = dict(name=r.name, data=data)
+                return result
+
+    def _get_resource_type(self):
+        # NOTE: Extremely naive implementation, esp for dicts
+        res_type = self.data.get('type')
+        if res_type:
+            mapped_res_type = {}
+            if isinstance(res_type, str):
+                mapped_res_type = self._map_resource_string(res_type)
+
+            elif isinstance(res_type, dict):
+                if len(res_type.keys()) > 1:
+                    msg = "Too many resource types applied to one resource."
+                    raise RAMLParserError(msg)
+                mapped_res_type = self._map_resource_dict(res_type)
+
+            else:
+                msg = "Error applying resource type '{0}'' to '{1}'.".format(
+                    res_type, self.name)
+                raise RAMLParserError(msg)
+            return mapped_res_type
+
     @property
     def resource_type(self):
-        return self.data.get('type', '')
+        return self._get_resource_type()
 
     @property
     def traits(self):
