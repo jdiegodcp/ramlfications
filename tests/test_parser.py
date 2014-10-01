@@ -512,8 +512,9 @@ class TestAPIRoot(BaseTestCase):
 
 class TestDocumentation(BaseTestCase):
     def setUp(self):
-        here = os.path.abspath(os.path.dirname(__file__))
-        raml_file = os.path.join(here, "examples/multiple_documentation.raml")
+        self.here = os.path.abspath(os.path.dirname(__file__))
+        raml_file = os.path.join(self.here,
+                                 "examples/multiple_documentation.raml")
         self.api = parser.APIRoot(raml_file)
 
     def test_docs(self):
