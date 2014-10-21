@@ -1,0 +1,3 @@
+<api-request>
+    <input>s3://zencodertesting/test.mov</input>
+</api-request>
