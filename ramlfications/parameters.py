@@ -19,9 +19,10 @@ class BaseParameter(object):
     Base parameter with properties defined by the RAML spec's
     'Named Parameters' section.
     """
-    def __init__(self, item, data):
+    def __init__(self, item, data, param_type):
         self.item = item
         self.data = data
+        self.param_type = param_type
 
     @property
     def name(self):
@@ -92,10 +93,13 @@ class BaseParameter(object):
     def repeat(self):
         return self.data.get('repeat')
 
+    def __repr__(self):
+        return "< {0} Param: {1} >".format(self.param_type, self.name)
+
 
 class JSONFormParameter(object):   # pragma: no cover
     def __init__(self, param, data, example):
-        BaseParameter.__init__(self, param, data)
+        BaseParameter.__init__(self, param, data, "JSON")
         self.example = example
 
     @property
@@ -105,13 +109,13 @@ class JSONFormParameter(object):   # pragma: no cover
 
 class URIParameter(BaseParameter):
     def __init__(self, param, data, required=True):
-        BaseParameter.__init__(self, param, data)
+        BaseParameter.__init__(self, param, data, "URI")
         self.required = required
 
 
 class QueryParameter(BaseParameter):
     def __init__(self, param, data):
-        BaseParameter.__init__(self, param, data)
+        BaseParameter.__init__(self, param, data, "Query")
 
     @property
     def required(self):
@@ -120,7 +124,7 @@ class QueryParameter(BaseParameter):
 
 class FormParameter(BaseParameter):
     def __init__(self, param, data):
-        BaseParameter.__init__(self, param, data)
+        BaseParameter.__init__(self, param, data, "Form")
 
     @property
     def required(self):
@@ -129,7 +133,7 @@ class FormParameter(BaseParameter):
 
 class Header(BaseParameter):
     def __init__(self, name, data, method):
-        BaseParameter.__init__(self, name, data)
+        BaseParameter.__init__(self, name, data, "Header")
         self.method = method
 
 
@@ -138,7 +142,6 @@ class Response(object):
         self.code = code
         self.data = data
         self.method = method
-        self.param_type = "Response"
 
     @property
     def description(self):
@@ -174,6 +177,9 @@ class Response(object):
                 content_type.append(ContentType(content, schema, example))
         return content_type
 
+    def __repr__(self):
+        return "< Response: {0} >".format(self.code)
+
 
 class ResourceType(object):
     def __init__(self, name, data):
@@ -208,6 +214,9 @@ class ResourceType(object):
                 methods.append(rec)
         return methods
 
+    def __repr__(self):
+        return "< Resource Type: {0} >".format(self.name)
+
 
 class ResourceTypeMethod(object):
     def __init__(self, name, data):
@@ -217,6 +226,9 @@ class ResourceTypeMethod(object):
     @property
     def optional(self):
         return "?" in self.name
+
+    def __repr__(self):
+        return "< Resource Method: {0} >".format(self.name)
 
 
 class Documentation(object):
@@ -231,6 +243,9 @@ class Documentation(object):
         self.title = title
         self.content = content or ''
         self.content_html = markdown.markdown(self.content)
+
+    def __repr__(self):
+        return "< Documentation: {0} >".format(self.title)
 
 
 class SecuritySchemes(object):
@@ -328,6 +343,9 @@ class SecurityScheme(object):
         schemes = ['oauth_2_0', 'oauth_1_0']
         if self.name in schemes:
             return self._get_oauth_scheme(self.name)(self.data.get('settings'))
+
+    def __repr__(self):
+        return "< Security Scheme: {0} >".format(self.type)
 
 
 class Oauth2Scheme(object):

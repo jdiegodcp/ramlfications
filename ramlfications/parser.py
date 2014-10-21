@@ -523,3 +523,6 @@ class Node(object):
                     example = content_types.get(content).get('example')
                     content_type.append(ContentType(content, schema, example))
         return content_type
+
+    def __repr__(self):
+        return "< Resource: {0} {1} >".format(self.method.upper(), self.path)

@@ -577,6 +577,18 @@ class TestNode(BaseTestCase):
         for node in nodes.values():
             self.assertItemInList(node.path, expected_paths)
 
+    def test_repr(self):
+        raml_file = os.path.join(self.here, "examples/simple.raml")
+        api = parser.APIRoot(raml_file)
+        nodes = api.nodes
+
+        expected_nodes = {'get-several-tracks': '< Resource: GET /tracks >',
+                          'get-search-item': '< Resource: GET /search >',
+                          'get-track': '< Resource: GET /tracks/{id} >'}
+
+        for k, node in list(nodes.items()):
+            self.assertEqual(repr(node), expected_nodes[k])
+
     def test_has_display_name(self):
         for node in self.nodes.values():
             self.assertIsNotNone(node.display_name)
@@ -882,6 +894,8 @@ class TestNode(BaseTestCase):
                 self.assertIsInstance(s['scheme'], parameters.SecurityScheme)
                 self.assertEqual(s['type'], 'OAuth 2.0')
                 self.assertEqual(s['scopes'], ['playlist-read-private'])
+                self.assertEqual(repr(s['scheme']),
+                                 '< Security Scheme: OAuth 2.0 >')
 
     def test_scopes(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
