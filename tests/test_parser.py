@@ -577,6 +577,15 @@ class TestNode(BaseTestCase):
         for node in nodes.values():
             self.assertItemInList(node.path, expected_paths)
 
+    def test_absolute_path(self):
+        raml_file = os.path.join(self.here,
+                                 "examples/base-uri-parameters.raml")
+        api = parser.APIRoot(raml_file)
+        node = api.nodes['get-foo']
+
+        expected_path = 'https://{domainName}.github.com/{apiPath}/foo'
+        self.assertEqual(node.absolute_path, expected_path)
+
     def test_repr(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
         api = parser.APIRoot(raml_file)

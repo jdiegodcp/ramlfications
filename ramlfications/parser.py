@@ -258,6 +258,11 @@ class Node(object):
         """Returns string URI path of Node"""
         return self._get_path_to(self)
 
+    @property
+    def absolute_path(self):
+        """Return the full API URL for the Resource"""
+        return self.api.base_uri + self.path
+
     def _get_secured_by(self):
         # TODO: put a validator in to check if schemes here are not in
         # list of secured schemes
