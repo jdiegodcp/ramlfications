@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
-import markdown
+import markdown2 as markdown
 
 HTTP_METHODS = ["get", "post", "put", "delete", "patch", "options", "head"]
 

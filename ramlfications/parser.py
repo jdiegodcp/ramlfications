@@ -10,7 +10,7 @@ except ImportError:  # pragma: no cover
 import json
 import re
 
-import markdown
+import markdown2 as markdown
 
 from .loader import RAMLLoader
 from .parameters import (ContentType, FormParameter, URIParameter,

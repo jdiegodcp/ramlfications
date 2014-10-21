@@ -40,7 +40,7 @@ setup(
         "nose"
     ],
     install_requires=[
-        "pyyaml", "ordereddict", "click"
+        "pyyaml", "ordereddict", "click", "markdown2"
     ],
     tests_require=[
         "nose",

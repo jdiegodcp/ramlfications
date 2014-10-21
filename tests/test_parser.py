@@ -324,7 +324,7 @@ class TestAPIRoot(BaseTestCase):
         expected_results = ("<p>Spotify supports <a href=\"https://developer."
                             "spotify.com/web-api/authorization-guide/\">"
                             "OAuth 2.0</a>\nfor authenticating all API "
-                            "requests.</p>")
+                            "requests.</p>\n")
         self.assertEqual(desc_results, expected_results)
 
     def test_traits(self):
@@ -547,7 +547,7 @@ class TestDocumentation(BaseTestCase):
         expected_html = ("<p>Welcome to the <em>Spotify Web API</em> "
                          "specification. For more information about\nhow to "
                          "use the API, check out <a href=\"https://developer."
-                         "spotify.com/web-api/\">developer site</a>.</p>")
+                         "spotify.com/web-api/\">developer site</a>.</p>\n")
 
         self.assertEqual(documentation.content, expected_content)
         self.assertEqual(documentation.content_html, expected_html)
@@ -601,7 +601,7 @@ class TestNode(BaseTestCase):
 
         html_result = node.description_html
         expected_result = ("<p><a href=\"https://developer.spotify.com/web-"
-                           "api/get-artist/\">Get an Artist</a></p>")
+                           "api/get-artist/\">Get an Artist</a></p>\n")
 
         self.assertEqual(html_result, expected_result)
 
@@ -1161,7 +1161,7 @@ class TestNode(BaseTestCase):
         html_result = param.description_html
         expected_result = ("<p>The country (<a href=\"http://en.wikipedia.org"
                            "/wiki/ISO_3166-1\">an ISO 3166-1 alpha-2 country "
-                           "code</a>)</p>")
+                           "code</a>)</p>\n")
 
         self.assertEqual(html_result, expected_result)
 
