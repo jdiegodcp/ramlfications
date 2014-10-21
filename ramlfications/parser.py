@@ -15,7 +15,7 @@ import markdown2 as markdown
 from .loader import RAMLLoader
 from .parameters import (ContentType, FormParameter, URIParameter,
                          QueryParameter, Header, Response, ResourceType,
-                         Documentation, SecuritySchemes)
+                         Documentation, SecuritySchemes, Body)
 
 
 class RAMLParserError(Exception):
@@ -445,6 +445,19 @@ class Node(object):
     def responses(self):
         """Returns responses of a given method"""
         return self._get_responses(self)
+
+    def _get_body(self, node):
+        bodies = []
+        _bodies = self.data.get(self.method).get('body')
+        if _bodies:
+            for k, v in list(_bodies.items()):
+                bodies.append(Body(k, v))
+        return bodies
+
+    @property
+    def body(self):
+        """Returns body of a request"""
+        return self._get_body(self)
 
     def _get_uri_params(self, node):
         """Returns a list of URIParameter Objects"""

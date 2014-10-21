@@ -137,6 +137,27 @@ class Header(BaseParameter):
         self.method = method
 
 
+class Body(object):
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
+
+    @property
+    def mime_type(self):
+        return self.name
+
+    @property
+    def schema(self):
+        return self.data.get("schema")
+
+    @property
+    def example(self):
+        return self.data.get("example")
+
+    def __repr__(self):
+        return "< Request Body: {0} >".format(self.mime_type)
+
+
 class Response(object):
     def __init__(self, code, data, method):
         self.code = code

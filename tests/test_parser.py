@@ -635,6 +635,33 @@ class TestNode(BaseTestCase):
 
         self.assertListEqual(node.protocols, expected_protocols)
 
+    def test_body(self):
+        raml_file = os.path.join(self.here, "examples/simple-body.raml")
+        api = parser.APIRoot(raml_file)
+        node = api.nodes['post-playlists']
+
+        expected_data = {
+            'example': {
+                'name': 'foo',
+                'public': False
+            },
+            'schema': {
+                'name': 'New Playlist',
+                'public': False
+            }
+        }
+
+        expected_example = {'name': 'foo', 'public': False}
+
+        self.assertIsInstance(node.body, list)
+        self.assertEqual(len(node.body), 1)
+        self.assertEqual(repr(node.body[0]),
+                         '< Request Body: application/json >')
+        self.assertDictEqual(node.body[0].data, expected_data)
+        self.assertDictEqual(node.body[0].example, expected_example)
+        self.assertEqual(node.body[0].mime_type, "application/json")
+        self.assertEqual(node.body[0].name, "application/json")
+
     def test_responses(self):
         raml_file = os.path.join(self.here, "examples/responses.raml")
         node = parser.APIRoot(raml_file).nodes.get('get-popular-media')
@@ -653,7 +680,7 @@ class TestNode(BaseTestCase):
             503: {
                 'body': {
                     'application/json': {
-                        'schema': {'foo': 'bar'}
+                        'schema': {'name': 'foo', 'public': False}
                     }
                 },
                 'description': ("The service is currently unavailable or you "

@@ -348,8 +348,8 @@ traits:
       securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
       body:
         application/json:
-          #schema: !include schemas/put-playlist.json
-          #example: !include examples/put-playlist.json
+          schema: !include includes/post-playlist-schema.json
+          example: !include includes/post-playlist-example.json
         # NOTE: If we ever accept form encoded
         # application/x-www-form-urlencoded:
         #   formParameters:
