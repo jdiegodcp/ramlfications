@@ -165,11 +165,11 @@ class APIRoot(object):
         _traits_params = []
         if self.traits:
             for t in self.traits:
-                data = json.dumps(t.keys())
+                data = json.dumps(list(t.keys()))
                 match = self.__find_params(data)
                 _traits_params += match
 
-                data = json.dumps(t.values()[0].data)
+                data = json.dumps(list(t.values())[0].data)
                 match = self.__find_params(data)
                 _traits_params += match
 
