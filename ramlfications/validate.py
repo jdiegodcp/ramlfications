@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
-from .parser import APIRoot
+from parser import APIRoot
 
 
 VALID_RAML_VERSIONS = ["0.8"]
@@ -80,7 +80,16 @@ class ValidateRAML(object):
         schemes = self.api.security_schemes
         if schemes:
             for s in schemes:
-                if s.type not in valid or not s.type.startswith("x-"):
+                if s.type not in valid and not s.type.startswith("x-"):
                     msg = "'{0}' is not a valid Security Scheme.".format(
                         s.type)
                     raise RAMLValidationError(msg)
+
+    def validate(self):
+        self.raml_header()
+        self.api_title()
+        self.base_uri()
+        self.base_uri_params()
+        self.node_response()
+        self.root_documentation()
+        self.security_schemes()
