@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
+from collections import defaultdict, OrderedDict
 
-from loader import RAMLLoader
-from parser import Node, NodeStack
+from parser import APIRoot
 
 
 AVAIL_METHODS = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options']
@@ -35,128 +35,140 @@ class TreeNode(object):  # pragma: no cover
         return '%s' % self.name
 
 
-def root_nodes(raml):  # pragma: no cover
-    available_methods = ['get', 'post', 'put', 'delete',
-                         'patch', 'head', 'options']
-    node_stack = []
-    tree_nodes = []
-    for k, v in list(raml.items()):
-        if k.startswith("/"):
-            root = TreeNode(k)
-            _methods = []
-            for method in available_methods:
-                if method in raml[k].keys():
-                    _methods.append(method)
-                    node = Node(name=k, data=v, method=method)
-                    node_stack.append(node)
-            root.methods = set(_methods)
-            tree_nodes.append(root)
-
-    return node_stack, tree_nodes
+def _count_parents(node, count):
+    if node.parent:
+        count += 1
+        return _count_parents(node.parent, count)
+    else:
+        return count
 
 
-def get_children(root, node_stack):  # pragma: no cover
-    available_methods = ['get', 'post', 'put', 'delete',
-                         'patch', 'head', 'options']
+def get_tree(api):
+    _nodes = api.nodes
+    nodes = defaultdict(list)
+    for k, v in list(_nodes.items()):
+        nodes[v.path].append((v.method.upper(), v))
 
-    try:
-        print "Root: ", root.name
-        node_names = [n.name for n in node_stack]
-        node_index = node_names.index(root.name)
-        node_root = node_stack.pop(node_index)
-
-        children = []
-        methods = []
-        if node_root.data:
-            for child_k, child_v in list(node_root.data.items()):
-                if child_k.startswith("/"):
-                    child_node = TreeNode(name=child_k)
-                    print "Child: ", child_node.name
-                    for method in available_methods:
-                        if method in node_root.data[child_k].keys():
-                            methods.append(method)
-                        node = Node(child_k, child_v, method, node_root)
-                        node_stack.append(node)
-                    children.append(child_node)
-        print "Children: ", children
-        root.children = children
-        root.methods = methods
-
-        return root, node_stack
-    except ValueError:
-        return None, node_stack
-    except AttributeError:
-        return root, None
-    except TypeError:
-        return None, None
+    return nodes
 
 
-def child_nodes(node_stack):  # pragma: no cover
-    available_methods = ['get', 'post', 'put', 'delete',
-                         'patch', 'head', 'options']
-
-    while node_stack:
-        current = node_stack.pop(0)
-        _current = TreeNode(current.display_name, methods=list(current.method))
-        if current.data:
-            _children = []
-            _methods = [k for k, v in list(current.data.items()) if k in available_methods]
-            for child_k, child_v in list(current.data.items()):
-                if child_k.startswith("/"):
-                    _methods = []
-                    for method in available_methods:
-                        if method in current.data[child_k].keys():
-                            child = Node(child_k, child_v, method, current)
-                            node_stack.append(child)
-                            leaf = TreeNode(child.name, methods=method)
-                            if leaf not in _children:
-                                _children.append(leaf)
-            _current.children = _children
-            _current.methods = _methods
-        yield _current
+def order_nodes(nodes):
+    return OrderedDict(sorted(nodes.items(), key=lambda t: t[0]))
 
 
-# def get_children(raml):
-#     children = []
-#     remaining = {}
-
-#     for key, value in list(raml.items()):
-#         if key.startswith("/"):
-#             methods = []
-#             for method in AVAIL_METHODS:
-#                 if method in raml[key].keys():
-#                     methods.append(method)
-#             node = TreeNode(key, methods=methods)
-#             children.append(node)
-#             remaining[key] = value
-#     return children, remaining
+def count_parents(nodes):
+    for k, v in list(nodes.items()):
+        for node in v:
+            print _count_parents(node[1], count=0)
 
 
-def main():  # pragma: no cover
-    raml_file = "/Users/lynnroot/Dev/spotify/ramlfications/tests/examples/spotify-web-api.raml"
-    raml = RAMLLoader(raml_file).raml
+def print_1_verbose(api, ordered_nodes, color):
+    for k, v in list(ordered_nodes.items()):
+        for node in v:
+            space_count = _count_parents(node[1], count=0)
+            space = "  " * space_count
+        pipe = '\033[1;{0}m{1}\033[1;m'.format(color[0], "|")
+        endpoint = space + "– {0}".format(k)
+        print pipe + '\033[1;{0}m{1}\033[1;m'.format(color[2], endpoint)
+        for node in v:
+            method = space + "  ⌙ {0}".format(node[0])
+            print pipe + '\033[1;{0}m{1}\033[1;m'.format(color[3], method)
 
-    s_nodes, r_nodes = root_nodes(raml)
-    #c_nodes = list(child_nodes(r_nodes))
 
-    # children, remaining = get_children(raml)
-    root = TreeNode('Spotify API', methods=None, children=r_nodes)
+def print_2_verbose(api, ordered_nodes, color):
+    for k, v in list(ordered_nodes.items()):
+        for node in v:
+            space_count = _count_parents(node[1], count=0)
+            space = "  " * space_count
+        pipe = '\033[1;{0}m{1}\033[1;m'.format(color[0], "|")
+        endpoint = space + "– {0}".format(k)
+        print pipe + '\033[1;{0}m{1}\033[1;m'.format(color[2], endpoint)
+        for node in v:
+            method = space + "  ⌙ {0}".format(node[0])
+            print pipe + '\033[1;{0}m{1}\033[1;m'.format(color[3], method)
+            if node[1].query_params:
+                print pipe + space + '     \033[1;{0}m{1}\033[1;m'.format(
+                    color[4], "Query Params")
+                for q in node[1].query_params:
+                    print pipe + space + '      ⌙ \033[1;{0}m{1}\033[1;m'.format(
+                        color[4], q.name)
+            if node[1].uri_params:
+                print pipe + space + '     \033[1;{0}m{1}\033[1;m'.format(
+                    color[4], "URI Params")
+                for u in node[1].uri_params:
+                    print pipe + space + '      ⌙ \033[1;{0}m{1}\033[1;m'.format(
+                        color[4], u.name)
+            if node[1].form_params:
+                print pipe + space + '     \033[1;{0}m{1}\033[1;m'.format(
+                    color[4], "URI Params")
+                for f in node[1].form_params:
+                    print pipe + space + '      ⌙ \033[1;{0}m{1}\033[1;m'.format(
+                        color[4], f.name)
 
-    node_stack = list(NodeStack(raml).yield_nodes())
 
-    while node_stack:
-        for r in r_nodes:
-            node, node_stack = get_children(r, node_stack)
-            root.children.append(node)
-            if not node_stack:
-                break
+def print_3_verbose(api, ordered_nodes, color):
+    for k, v in list(ordered_nodes.items()):
+        for node in v:
+            space_count = _count_parents(node[1], count=0)
+            space = "  " * space_count
+        pipe = '\033[1;{0}m{1}\033[1;m'.format(color[0], "|")
+        endpoint = space + "– {0}".format(k)
+        print pipe + '\033[1;{0}m{1}\033[1;m'.format(color[2], endpoint)
+        for node in v:
+            method = space + "  ⌙ {0}".format(node[0])
+            print pipe + '\033[1;{0}m{1}\033[1;m'.format(color[3], method)
+            if node[1].query_params:
+                print pipe + space + '     \033[1;{0}m{1}\033[1;m'.format(
+                    color[4], "Query Params")
+                for q in node[1].query_params:
+                    print pipe + space + '      ⌙ \033[1;{0}m{1}\033[1;m'.format(
+                        color[4], q.name) + ": {0}".format(q.display_name)
+            if node[1].uri_params:
+                print pipe + space + '     \033[1;{0}m{1}\033[1;m'.format(
+                    color[4], "URI Params")
+                for u in node[1].uri_params:
+                    print pipe + space + '      ⌙ \033[1;{0}m{1}\033[1;m'.format(
+                        color[4], u.name) + ": {0}".format(u.display_name)
+            if node[1].form_params:
+                print pipe + space + '     \033[1;{0}m{1}\033[1;m'.format(
+                    color[4], "URI Params")
+                for f in node[1].form_params:
+                    print pipe + space + '      ⌙ \033[1;{0}m{1}\033[1;m'.format(
+                        color[4], f.name) + ': {0}'.format(f.display_name)
 
-    # for child in children:
-    #     _children, _remaining = get_children(remaining[child.name])
-    #     child_index = root.children.index(child)
-    #     root.children[child_index].children = _children
 
-    print root
+def pprint_tree(api, ordered_nodes, light, verbosity):
+    if light:
+        color = (39, 32, 33, 34, 31)
+    else:
+        color = (30, 35, 36, 30, 35)
+    print "\033[1;{0}m{1}\033[1;m".format(color[0], '=' * len(api.title))
+    print '\033[1;{0}m{1}\033[1;m'.format(color[1], api.title)
+    print "\033[1;{0}m{1}\033[1;m".format(color[0], '=' * len(api.title))
+    print '\033[1;{0}m{1}{2}\033[1;m'.format(color[1], "Base URI: ",
+                                             api.base_uri)
 
-if __name__ == '__main__':
-    main()
+    if verbosity == 3:
+        print_3_verbose(api, ordered_nodes, color)
+
+    elif verbosity == 2:
+        print_2_verbose(api, ordered_nodes, color)
+
+    elif verbosity == 1:
+        print_1_verbose(api, ordered_nodes, color)
+
+    else:
+        for k, v in list(ordered_nodes.items()):
+            for node in v:
+                space_count = _count_parents(node[1], count=0)
+                space = "  " * space_count
+            pipe = '\033[1;{0}m{1}\033[1;m'.format(color[0], "|")
+            endpoint = space + "– {0}".format(k)
+            print pipe + '\033[1;{0}m{1}\033[1;m'.format(color[2], endpoint)
+
+
+def tree(ramlfile, light, verbosity):  # pragma: no cover
+    api = APIRoot(ramlfile)
+    nodes = get_tree(api)
+    ordered_nodes = order_nodes(nodes)
+    pprint_tree(api, ordered_nodes, light, verbosity)
