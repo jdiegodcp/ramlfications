@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
+from __future__ import absolute_import, division, print_function
 
-from parser import APIRoot
+from .parser import APIRoot
 
 
 VALID_RAML_VERSIONS = ["0.8"]
