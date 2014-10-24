@@ -93,3 +93,7 @@ class ValidateRAML(object):
         self.node_response()
         self.root_documentation()
         self.security_schemes()
+
+
+def validate(ramlfile):
+    ValidateRAML(ramlfile).validate()
