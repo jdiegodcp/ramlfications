@@ -18,17 +18,22 @@ Ideally, this should mirror the `issues`_ listed on the ``ramlfications`` `githu
         - ``[ ]`` validate `media_type`
         - ``[ ]`` validate each Node's `secured_by`
 
-    - ``[-]`` Add repr/str overrides to all Classes
-    - ``[x]`` RAML Visualization/tree functionality
+    * ``[-]`` Add repr/str overrides to all Classes
+    * ``[x]`` RAML Visualization/tree functionality
+    * API Documentation/Resource description parsing:
+        - ``[ ]`` RTF output
+        - ``[ ]`` other output type?
 
 * Documentation (ramlfications.readthedocs.org):
     - ``[-]`` User docs
     - ``[-]`` docstrings with ``params``, ``returns``, and ``raises`` defined
     - ``[ ]`` perhaps doctests
+    - ``[ ]`` colorize the "tree" documentation within usage to show ``--light`` and ``--dark``
+    - ``[ ]`` colorize bash/terminal commands
 
 * Other:
-    * ``[ ]`` Travis Setup
-    * ``[ ]`` Coveralls Setup
+    * ``[ ]`` Travis Setup (depends on releasing to github)
+    * ``[ ]`` Coveralls Setup (depends on releasing to github)
 
 .. note::
     * ``[x]`` - completed recently (task item will be removed entirely at some point).
