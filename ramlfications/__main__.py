@@ -31,6 +31,7 @@ def validate(ramlfile):
 @main.command(help="Visualize the RAML with a tree.")
 @click.argument('ramlfile', type=click.Path(exists=True))
 @click.option("-c", "--color", type=click.Choice(['dark', 'light']),
+              default='light',
               help=("Color theme 'light' for dark-screened backgrounds"))
 @click.option("-v", "--verbose", default=0, count=True,
               help="Include methods for each endpoint")
