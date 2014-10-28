@@ -1,6 +1,9 @@
 Usage
 =====
 
+You can use ``ramlfications`` to parse and validate a RAML file with Python.
+With the command line, you can validate or visualize the RAML-defined API as a tree.
+
 Parse
 -----
 
@@ -48,15 +51,25 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> id_param.example
    '1zHlj4dQ8ZAtrayhuDDmkY'
 
+For more complete understanding of what's available when parsing a RAML file, check the :doc:`extendedusage`!
+
 
 Validate
 --------
+
+Validation is according to the `RAML Specification`_.
+
+.. comment:
+   TODO: add a note saying what is not yet supported when validating,
+   and add to the wishlist/todo list.
 
 To validate a RAML file via the command line::
 
    $ ramlfications validate /path/to/my-api.raml
 
-To validate a RAML file within your project::
+To validate a RAML file with Python:
+
+.. code-block:: python
 
    from ramlfications import validate
 
@@ -106,7 +119,7 @@ Options and Arguments
 
 The full usage is::
 
-   $ doc2dash [OPTIONS] COMMAND RAMLFILE
+   $ ramlfications [OPTIONS] COMMAND RAMLFILE
 
 The ``RAMLFILE`` is a file containing the RAML-defined API you’d like to work with.
 
