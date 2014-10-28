@@ -41,7 +41,7 @@ class BaseParameter(object):
         return self.data.get('type')
 
     @property
-    def description(self):
+    def description_raw(self):
         """Description of Parameter"""
         return self.data.get('description')
 
@@ -166,7 +166,7 @@ class Response(object):
         self.method = method
 
     @property
-    def description(self):
+    def description_raw(self):
         return self.data.get('description')
 
     @property
@@ -213,7 +213,7 @@ class ResourceType(object):
         return self.data.get('usage')
 
     @property
-    def description(self):
+    def description_raw(self):
         return self.data.get('description')
 
     @property
@@ -256,15 +256,11 @@ class ResourceTypeMethod(object):
 class Documentation(object):
     """
     Returns Documentation defined in API Root.
-
-    :param: title
-    :param: content - raw content (not parsed Markdown)
-    :param: content_html - returns parsed Markdown to HTML
     """
     def __init__(self, title, content):
         self.title = title
-        self.content = content or ''
-        self.content_html = markdown.markdown(self.content)
+        self.content_raw = content or ''
+        self.content_html = markdown.markdown(self.content_raw)
 
     def __repr__(self):
         return "< Documentation: {0} >".format(self.title)
@@ -349,7 +345,7 @@ class SecurityScheme(object):
         return self._get_described_by()
 
     @property
-    def description(self):
+    def description_raw(self):
         return self.data.get('description')
 
     @property

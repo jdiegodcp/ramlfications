@@ -9,7 +9,10 @@ except ImportError:  # pragma: no cover
     # python 2.6
     from ordereddict import OrderedDict
 
-import BaseHTTPServer
+try:
+    import BaseHTTPServer as httpserver
+except ImportError:
+    import http.server as httpserver
 import json
 import re
 
@@ -21,7 +24,7 @@ from .parameters import (ContentType, FormParameter, URIParameter,
                          Documentation, SecuritySchemes, Body)
 
 
-HTTP_RESP_CODES = BaseHTTPServer.BaseHTTPRequestHandler.responses.keys()
+HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
 
 
 class RAMLParserError(Exception):
@@ -33,24 +36,35 @@ class APIRoot(object):
         self.raml = RAMLLoader(raml_file).raml
 
     @property
-    def nodes(self):
-        nodes_stack = NodeStack(self, self.raml).yield_nodes()
-        nodes = OrderedDict()
-        for node in nodes_stack:
-            key_name = node.method + "-" + node.display_name
-            nodes[key_name] = node
-        return nodes
+    def resources(self):
+        """
+        Returns a dictionary of RAML resources/endpoints
+        """
+        resource_stack = ResourceStack(self, self.raml).yield_resources()
+        resource = OrderedDict()
+        for res in resource_stack:
+            key_name = res.method + "-" + res.display_name
+            resource[key_name] = res
+        return resource
 
     @property
     def title(self):
+        """Title of API"""
         return self.raml.get('title')
 
     @property
+    def version(self):
+        """API version"""
+        return self.raml.get('version')
+
+    @property
     def protocols(self):
+        """Supported protocols"""
         return self.raml.get('protocols')
 
     @property
     def base_uri(self):
+        """Base URI of API"""
         base_uri = self.raml.get('baseUri')
         if base_uri:
             if "{version}" in base_uri:
@@ -65,6 +79,7 @@ class APIRoot(object):
 
     @property
     def uri_parameters(self):
+        """URI Parameters"""
         uri_params = self.raml.get('uriParameters')
         if uri_params:
             params = []
@@ -78,6 +93,7 @@ class APIRoot(object):
 
     @property
     def base_uri_parameters(self):
+        """URI Parameters for base_uri"""
         base_uri_params = self.raml.get('baseUriParameters')
         if base_uri_params:
             uri_params = []
@@ -88,10 +104,12 @@ class APIRoot(object):
 
     @property
     def media_type(self):
+        """Supported Media Types"""
         return self.raml.get('mediaType')
 
     @property
     def resource_types(self):
+        """Defined Resource Types"""
         resource_types = self.raml.get('resourceTypes')
         if resource_types:
             resources = []
@@ -103,6 +121,7 @@ class APIRoot(object):
 
     @property
     def documentation(self):
+        """User Documentation"""
         documentation = self.raml.get('documentation')
         if documentation:
             if not isinstance(documentation, list):
@@ -117,10 +136,12 @@ class APIRoot(object):
 
     @property
     def security_schemes(self):
+        """Supported Security Schemes"""
         return SecuritySchemes(self.raml).security_schemes
 
     @property
     def traits(self):
+        """Defined traits"""
         traits = self.raml.get('traits')
         trait_params = []
         for trait in traits:

@@ -21,12 +21,12 @@ class TestAPIRoot(BaseTestCase):
         self.assertRaises(loader.RAMLLoaderError,
                           lambda: parser.APIRoot(raml_file))
 
-    def test_nodes(self):
-        nodes = self.api.nodes
-        self.assertIsInstance(nodes, dict)
+    def test_resources(self):
+        resources = self.api.resources
+        self.assertIsInstance(resources, dict)
 
-        for node in nodes.values():
-            self.assertIsInstance(node, parser.Node)
+        for resource in resources.values():
+            self.assertIsInstance(resource, parser.Resource)
 
     def test_title(self):
         title = "Spotify Web API"
@@ -63,7 +63,7 @@ class TestAPIRoot(BaseTestCase):
         for i, r in enumerate(results):
             self.assertIsInstance(r, parser.URIParameter)
             self.assertEqual(r.name, list(data[i].keys())[0])
-            self.assertEqual(r.description,
+            self.assertEqual(r.description_raw,
                              list(data[i].values())[0].get('description'))
             self.assertEqual(r.type,
                              list(data[i].values())[0].get('type'))
@@ -156,7 +156,7 @@ class TestAPIRoot(BaseTestCase):
             self.assertIsNone(r.usage)
             self.assertEqual(r.type, expected_data[r.name].get('type'))
             self.assertIsInstance(r.methods, list)
-            self.assertEqual(r.description,
+            self.assertEqual(r.description_raw,
                              expected_data[r.name].get('description'))
 
             methods = r.methods
@@ -179,15 +179,15 @@ class TestAPIRoot(BaseTestCase):
     def test_documentation(self):
         # TODO: add example that contains multiple examples
         title = "Spotify Web API Docs"
-        content = ("Welcome to the _Spotify Web API_ specification. "
-                   "For more information about\nhow to use the API, "
-                   "check out [developer site]"
-                   "(https://developer.spotify.com/web-api/).\n")
+        content_raw = ("Welcome to the _Spotify Web API_ specification. "
+                       "For more information about\nhow to use the API, "
+                       "check out [developer site]"
+                       "(https://developer.spotify.com/web-api/).\n")
 
         self.assertIsNotNone(self.api.documentation)
         self.assertIsInstance(self.api.documentation[0], parser.Documentation)
         self.assertEqual(self.api.documentation[0].title, title)
-        self.assertEqual(self.api.documentation[0].content, content)
+        self.assertEqual(self.api.documentation[0].content_raw, content_raw)
 
     def test_documentation_no_title(self):
         raml = "examples/docs-no-title-parameter.raml"
@@ -272,7 +272,7 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(api.security_schemes[0].name, scheme)
         self.assertDictEqual(api.security_schemes[0].data, data)
         self.assertEqual(api.security_schemes[0].type, 'OAuth 2.0')
-        self.assertEqual(api.security_schemes[0].description,
+        self.assertEqual(api.security_schemes[0].description_raw,
                          data.get('description'))
 
         settings = api.security_schemes[0].settings
@@ -359,7 +359,7 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(scheme.name, scheme_name)
         self.assertEqual(scheme.type, data['type'])
         self.assertIsNone(scheme.described_by)
-        self.assertEqual(scheme.description, data['description'])
+        self.assertEqual(scheme.description_raw, data['description'])
         self.assertEqual(scheme.data, data)
 
         settings = scheme.settings
@@ -534,7 +534,7 @@ class TestDocumentation(BaseTestCase):
 
         for i, docs in enumerate(self.api.documentation):
             self.assertEqual(docs.title, titles[i])
-            self.assertEqual(docs.content, contents[i])
+            self.assertEqual(docs.content_raw, contents[i])
 
     def test_docs_markdown(self):
         raml_file = os.path.join(self.here, "examples/markdown-desc-docs.raml")
@@ -550,78 +550,80 @@ class TestDocumentation(BaseTestCase):
                          "use the API, check out <a href=\"https://developer."
                          "spotify.com/web-api/\">developer site</a>.</p>\n")
 
-        self.assertEqual(documentation.content, expected_content)
+        self.assertEqual(documentation.content_raw, expected_content)
         self.assertEqual(documentation.content_html, expected_html)
 
 
-class TestNode(BaseTestCase):
+class TestResource(BaseTestCase):
 
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
         raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
         self.api = parser.APIRoot(raml_file)
-        self.nodes = self.api.nodes
+        self.resources = self.api.resources
 
     def test_has_path(self):
-        for node in self.nodes.values():
-            self.assertIsNotNone(node.path)
+        for resource in self.resources.values():
+            self.assertIsNotNone(resource.path)
 
     def test_paths(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
         expected_paths = ['/tracks', '/search', '/tracks/{id}']
 
-        self.assertEqual(len(nodes.values()), len(expected_paths))
+        self.assertEqual(len(resources.values()), len(expected_paths))
 
-        for node in nodes.values():
-            self.assertItemInList(node.path, expected_paths)
+        for resource in resources.values():
+            self.assertItemInList(resource.path, expected_paths)
 
     def test_absolute_path(self):
         raml_file = os.path.join(self.here,
                                  "examples/base-uri-parameters.raml")
         api = parser.APIRoot(raml_file)
-        node = api.nodes['get-foo']
+        resource = api.resources['get-foo']
 
         expected_path = 'https://{domainName}.github.com/{apiPath}/foo'
-        self.assertEqual(node.absolute_path, expected_path)
+        self.assertEqual(resource.absolute_path, expected_path)
 
     def test_repr(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
-        expected_nodes = {'get-several-tracks': '< Resource: GET /tracks >',
-                          'get-search-item': '< Resource: GET /search >',
-                          'get-track': '< Resource: GET /tracks/{id} >'}
+        expected_resources = {
+            'get-several-tracks': '< Resource: GET /tracks >',
+            'get-search-item': '< Resource: GET /search >',
+            'get-track': '< Resource: GET /tracks/{id} >'
+        }
 
-        for k, node in list(nodes.items()):
-            self.assertEqual(repr(node), expected_nodes[k])
+        for k, res in list(resources.items()):
+            self.assertEqual(repr(res), expected_resources[k])
 
     def test_has_display_name(self):
-        for node in self.nodes.values():
-            self.assertIsNotNone(node.display_name)
+        for resource in self.resources.values():
+            self.assertIsNotNone(resource.display_name)
 
     def test_display_name_not_defined(self):
         raml_file = os.path.join(self.here, "examples/no-display-name.raml")
         api = parser.APIRoot(raml_file)
-        node = list(api.nodes.values())[0]
+        resource = list(api.resources.values())[0]
 
-        self.assertEqual(node.display_name, '/tracks')
-        self.assertEqual(node.name, node.display_name)
+        self.assertEqual(resource.display_name, '/tracks')
+        self.assertEqual(resource.name, resource.display_name)
 
     def test_has_description(self):
-        for node in self.nodes.values():
-            self.assertIsNotNone(node.description)
+        for resource in self.resources.values():
+            self.assertIsNotNone(resource.description_raw)
 
     def test_description_markdown(self):
         raml = "examples/markdown-desc-docs.raml"
         raml_file = os.path.join(self.here, raml)
         api = parser.APIRoot(raml_file)
-        node = api.nodes.get('get-artist')
+        resource = api.resources.get('get-artist')
 
-        html_result = node.description_html
+        html_result = resource.description_html
         expected_result = ("<p><a href=\"https://developer.spotify.com/web-"
                            "api/get-artist/\">Get an Artist</a></p>\n")
 
@@ -630,25 +632,25 @@ class TestNode(BaseTestCase):
     def test_method(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
         methods = ['get', 'post']
 
-        for node in nodes.values():
-            self.assertItemInList(node.method, methods)
+        for resource in resources.values():
+            self.assertItemInList(resource.method, methods)
 
     def test_protocols(self):
         raml_file = os.path.join(self.here, "examples/protocols.raml")
-        node = parser.APIRoot(raml_file).nodes.get('get-tracks')
+        resource = parser.APIRoot(raml_file).resources.get('get-tracks')
 
         expected_protocols = ['HTTP', 'HTTPS']
 
-        self.assertListEqual(node.protocols, expected_protocols)
+        self.assertListEqual(resource.protocols, expected_protocols)
 
     def test_body(self):
         raml_file = os.path.join(self.here, "examples/simple-body.raml")
         api = parser.APIRoot(raml_file)
-        node = api.nodes['post-playlists']
+        resource = api.resources['post-playlists']
 
         expected_data = {
             'example': {
@@ -663,18 +665,18 @@ class TestNode(BaseTestCase):
 
         expected_example = {'name': 'foo', 'public': False}
 
-        self.assertIsInstance(node.body, list)
-        self.assertEqual(len(node.body), 1)
-        self.assertEqual(repr(node.body[0]),
+        self.assertIsInstance(resource.body, list)
+        self.assertEqual(len(resource.body), 1)
+        self.assertEqual(repr(resource.body[0]),
                          '< Request Body: application/json >')
-        self.assertDictEqual(node.body[0].data, expected_data)
-        self.assertDictEqual(node.body[0].example, expected_example)
-        self.assertEqual(node.body[0].mime_type, "application/json")
-        self.assertEqual(node.body[0].name, "application/json")
+        self.assertDictEqual(resource.body[0].data, expected_data)
+        self.assertDictEqual(resource.body[0].example, expected_example)
+        self.assertEqual(resource.body[0].mime_type, "application/json")
+        self.assertEqual(resource.body[0].name, "application/json")
 
     def test_responses(self):
         raml_file = os.path.join(self.here, "examples/responses.raml")
-        node = parser.APIRoot(raml_file).nodes.get('get-popular-media')
+        resource = parser.APIRoot(raml_file).resources.get('get-popular-media')
 
         expected_resp_data = {
             200: {
@@ -711,12 +713,12 @@ class TestNode(BaseTestCase):
             }
         }
 
-        responses = node.responses
+        responses = resource.responses
 
         for resp in responses:
             self.assertDictEqual(resp.data, expected_resp_data[resp.code])
             self.assertIsInstance(resp, parser.Response)
-            self.assertEqual(resp.description,
+            self.assertEqual(resp.description_raw,
                              expected_resp_data[resp.code].get('description'))
             self.assertIsInstance(resp.resp_content_types, list)
 
@@ -730,11 +732,11 @@ class TestNode(BaseTestCase):
 
     def test_headers(self):
         raml_file = os.path.join(self.here, "examples/headers.raml")
-        nodes = parser.APIRoot(raml_file).nodes
+        resources = parser.APIRoot(raml_file).resources
 
         # only one node
-        node = nodes['post-job']
-        results = node.headers
+        resource = resources['post-job']
+        results = resource.headers
 
         expected_data = {
             'x-Zencoder-job-metadata-{*}': {
@@ -769,7 +771,7 @@ class TestNode(BaseTestCase):
     def test_data(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
         expected_data = [
             {
@@ -892,41 +894,41 @@ class TestNode(BaseTestCase):
             },
         ]
 
-        for node in nodes.values():
-            self.assertItemInList(node.data, expected_data)
+        for resource in resources.values():
+            self.assertItemInList(resource.data, expected_data)
 
     def test_parent(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
         expected_parent = '/tracks'
 
-        for node in nodes.values():
-            if node.parent:
-                self.assertEqual(node.parent.name, expected_parent)
+        for resource in resources.values():
+            if resource.parent:
+                self.assertEqual(resource.parent.name, expected_parent)
             else:
-                self.assertEqual(node.parent, None)
+                self.assertEqual(resource.parent, None)
 
     def test_traits_resources(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
-        for node in nodes.values():
+        for resource in resources.values():
             expected_dict = {'usage': None, 'name': 'collection'}
-            self.assertDictEqual(node.resource_type, expected_dict)
-            if node.method == 'get':
-                self.assertEqual(node.traits, ['paged'])
+            self.assertDictEqual(resource.resource_type, expected_dict)
+            if resource.method == 'get':
+                self.assertEqual(resource.traits, ['paged'])
 
     def test_secured_by(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
-        for node in nodes.values():
-            self.assertIsNotNone(node.secured_by)
-            for s in node.secured_by:
+        for resource in resources.values():
+            self.assertIsNotNone(resource.secured_by)
+            for s in resource.secured_by:
                 self.assertEqual(s['name'], 'oauth_2_0')
                 self.assertIsInstance(s['scheme'], parameters.SecurityScheme)
                 self.assertEqual(s['type'], 'OAuth 2.0')
@@ -937,27 +939,36 @@ class TestNode(BaseTestCase):
     def test_scopes(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
         scopes = ['playlist-modify-public',
                   'playlist-modify-private',
                   'playlist-read-private']
 
-        for node in nodes.values():
-            for s in node.secured_by:
+        for resource in resources.values():
+            for s in resource.secured_by:
                 self.assertIsNotNone(s['scopes'])
 
                 for scope in s['scopes']:
                     self.assertItemInList(scope, scopes)
+
+    def test_scopes_2(self):
+        raml_file = os.path.join(self.here, "examples/multiple-security-schemes.raml")
+        api = parser.APIRoot(raml_file)
+        resource = api.resources['get-current-user']
+
+        scopes = ['user-read-private']
+
+        self.assertListEqual(resource.scopes, scopes)
 
     def test_base_uri_params(self):
         raml_file = os.path.join(self.here,
                                  'examples/base-uri-parameters.raml')
         api = parser.APIRoot(raml_file)
 
-        nodes = api.nodes
+        resources = api.resources
 
-        foo = nodes['get-foo']
+        foo = resources['get-foo']
         foo_results = foo.base_uri_params
 
         data = [{
@@ -972,7 +983,7 @@ class TestNode(BaseTestCase):
             self.assertItemInList(r.item, list(data[i].keys())[0])
             self.assertIsInstance(r, parser.URIParameter)
             self.assertEqual(r.name, list(data[i].keys())[0])
-            self.assertEqual(r.description,
+            self.assertEqual(r.description_raw,
                              list(data[i].values())[0].get('description'))
             self.assertEqual(r.type,
                              list(data[i].values())[0].get('type'))
@@ -981,13 +992,13 @@ class TestNode(BaseTestCase):
             self.assertEqual(r.display_name,
                              list(data[i].values())[0].get('displayName'))
 
-        bar = nodes['get-bar']
+        bar = resources['get-bar']
         bar_results = bar.base_uri_params
 
         for i, r in enumerate(bar_results):
             self.assertIsInstance(r, parser.URIParameter)
             self.assertEqual(r.name, list(data[i].keys())[0])
-            self.assertEqual(r.description,
+            self.assertEqual(r.description_raw,
                              list(data[i].values())[0].get('description'))
             self.assertEqual(r.type,
                              list(data[i].values())[0].get('type'))
@@ -999,11 +1010,11 @@ class TestNode(BaseTestCase):
     def test_query_params(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
-        search = nodes['get-search-item']
-        tracks = nodes['get-several-tracks']
-        track = nodes['get-track']
+        search = resources['get-search-item']
+        tracks = resources['get-several-tracks']
+        track = resources['get-track']
 
         search_q_params = search.query_params
         tracks_q_params = tracks.query_params
@@ -1071,7 +1082,7 @@ class TestNode(BaseTestCase):
                              expected_search_data[param.name]['required'])
             self.assertEqual(param.example,
                              expected_search_data[param.name]['example'])
-            self.assertEqual(param.description,
+            self.assertEqual(param.description_raw,
                              expected_search_data[param.name]['description'])
             self.assertEqual(param.type,
                              expected_search_data[param.name]['type'])
@@ -1097,7 +1108,7 @@ class TestNode(BaseTestCase):
             self.assertDictEqual(param.data, expected_tracks_data)
             self.assertEqual(param.required, expected_tracks_data['required'])
             self.assertEqual(param.example, expected_tracks_data['example'])
-            self.assertEqual(param.description,
+            self.assertEqual(param.description_raw,
                              expected_tracks_data['description'])
             self.assertEqual(param.type, expected_tracks_data['type'])
             self.assertEqual(param.display_name,
@@ -1115,11 +1126,11 @@ class TestNode(BaseTestCase):
     def test_uri_params(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
-        search = nodes['get-search-item']
-        tracks = nodes['get-several-tracks']
-        track = nodes['get-track']
+        search = resources['get-search-item']
+        tracks = resources['get-several-tracks']
+        track = resources['get-track']
 
         search_u_params = search.uri_params
         tracks_u_params = tracks.uri_params
@@ -1146,15 +1157,15 @@ class TestNode(BaseTestCase):
             self.assertEqual(param.display_name,
                              expected_track_data['displayName'])
             self.assertEqual(param.type, expected_track_data['type'])
-            self.assertIsNone(param.description)
+            self.assertIsNone(param.description_raw)
             self.assertIsNone(param.enum)
 
     def test_form_params(self):
         raml_file = os.path.join(self.here, "examples/form-parameters.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
-        tracks = nodes['post-several-tracks']
+        tracks = resources['post-several-tracks']
 
         form_params = tracks.form_params
 
@@ -1186,7 +1197,7 @@ class TestNode(BaseTestCase):
                              expected_form_data[param.name]['displayName'])
             self.assertEqual(param.type,
                              expected_form_data[param.name]['type'])
-            self.assertEqual(param.description,
+            self.assertEqual(param.description_raw,
                              expected_form_data[param.name]['description'])
             self.assertEqual(param.required,
                              expected_form_data[param.name]['required'])
@@ -1207,8 +1218,8 @@ class TestNode(BaseTestCase):
         raml_file = os.path.join(self.here, raml)
         api = parser.APIRoot(raml_file)
 
-        node = api.nodes.get('get-artist-top-tracks')
-        param = node.query_params[0]
+        resource = api.resources.get('get-artist-top-tracks')
+        param = resource.query_params[0]
         html_result = param.description_html
         expected_result = ("<p>The country (<a href=\"http://en.wikipedia.org"
                            "/wiki/ISO_3166-1\">an ISO 3166-1 alpha-2 country "
@@ -1219,9 +1230,9 @@ class TestNode(BaseTestCase):
     def test_req_content_types(self):
         raml_file = os.path.join(self.here, "examples/req-content-type.raml")
         api = parser.APIRoot(raml_file)
-        nodes = api.nodes
+        resources = api.resources
 
-        post_playlist = nodes['post-playlists']
+        post_playlist = resources['post-playlists']
 
         expected_post_playlist_schema = {
             "name": "New Playlist",
