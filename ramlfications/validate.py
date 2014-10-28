@@ -14,11 +14,15 @@ class RAMLValidationError(Exception):
 
 
 class ValidateRAML(object):
+    """
+    Validate a particular RAML file based off of http://raml.org/spec.html
+    """
     def __init__(self, raml_file):
         self.raml_file = raml_file
         self.api = APIRoot(raml_file)
 
     def raml_header(self):
+        """Validate Header of RAML File"""
         with open(self.raml_file, 'r') as r:
             raml_header = r.readline().split('\n')[0]
             raml_def, version = raml_header.split()
@@ -30,6 +34,7 @@ class ValidateRAML(object):
                 raise RAMLValidationError(msg)
 
     def api_title(self):
+        """Require an API Title."""
         title = self.api.title
         if not title:
             msg = 'RAML File does not define an API title.'
@@ -43,28 +48,33 @@ class ValidateRAML(object):
             raise RAMLValidationError(msg)
 
     def base_uri(self):
+        """Require a Base URI"""
         base_uri = self.api.base_uri
         if not base_uri:
             msg = 'RAML File does not define the baseUri.'
             raise RAMLValidationError(msg)
 
     def base_uri_params(self):
+        """
+        Require that Base URI Parameters have a `default` parameter set.
+        """
         base_uri_params = self.api.base_uri_parameters
         if base_uri_params:
             for param in base_uri_params:
                 if not param.default:
-                    msg = '{0} needs a default parameter.'.format(param.name)
+                    msg = "'{0}' needs a default parameter.".format(param.name)
                     raise RAMLValidationError(msg)
 
-    def node_response(self):
-        nodes = self.api.nodes
+    def resource_response(self):
+        resources = self.api.resources
         valid_keys = ['body', 'headers', 'description']
-        for node in list(nodes.values()):
-            responses = node.responses
+        for resource in list(resources.values()):
+            responses = resource.responses
             for resp in responses:
                 for key in list(resp.data.keys()):
                     if key not in valid_keys:
-                        msg = "{0} not a valid Response parameter.".format(key)
+                        msg = "'{0}' not a valid Response parameter.".format(
+                            key)
                         raise RAMLValidationError(msg)
 
     def root_documentation(self):
@@ -74,7 +84,7 @@ class ValidateRAML(object):
                 if not d.title:
                     msg = "API Documentation requires a title."
                     raise RAMLValidationError(msg)
-                if not d.content:
+                if not d.content_raw:
                     msg = "API Documentation requires content defined."
                     raise RAMLValidationError(msg)
 
@@ -94,11 +104,13 @@ class ValidateRAML(object):
                     raise RAMLValidationError(msg)
 
     def validate(self):
+        """Validates RAML elements according to RAML specification"""
         self.raml_header()
         self.api_title()
+        self.api_version()
         self.base_uri()
         self.base_uri_params()
-        self.node_response()
+        self.resource_response()
         self.root_documentation()
         self.security_schemes()
 

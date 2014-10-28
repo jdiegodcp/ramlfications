@@ -172,45 +172,48 @@ class APIRoot(object):
                     traits=list(set(_traits_params)))
 
     def get_parameters(self):
+        """Parameters for traits and/or resource_types"""
         return self.__parse_parameters()
 
     @property
     def schemas(self):
+        """User-defined schema with XML, JSON, YAML, etc"""
         return self.raml.get('schemas')
 
 
-class NodeStack(object):
+class ResourceStack(object):
     def __init__(self, api, raml_file):
         self.api = api
         self.raml = raml_file
 
-    def yield_nodes(self):
+    def yield_resources(self):
+        """Yields Resource objects for the API defined in the ramlfile"""
         available_methods = ['get', 'post', 'put', 'delete',
                              'patch', 'head', 'options']
-        node_stack = []
+        resource_stack = []
 
         for k, v in list(self.raml.items()):
             if k.startswith("/"):
                 for method in available_methods:
                     if method in self.raml[k].keys():
-                        node = Node(name=k, data=v, method=method,
-                                    api=self.api)
-                        node_stack.append(node)
-        while node_stack:
-            current = node_stack.pop(0)
+                        node = Resource(name=k, data=v, method=method,
+                                        api=self.api)
+                        resource_stack.append(node)
+        while resource_stack:
+            current = resource_stack.pop(0)
             yield current
             if current.data:
                 for child_k, child_v in list(current.data.items()):
                     if child_k.startswith("/"):
                         for method in available_methods:
                             if method in current.data[child_k].keys():
-                                child = Node(name=child_k, data=child_v,
-                                             method=method, parent=current,
-                                             api=self.api)
-                                node_stack.append(child)
+                                child = Resource(name=child_k, data=child_v,
+                                                 method=method, parent=current,
+                                                 api=self.api)
+                                resource_stack.append(child)
 
 
-class Node(object):
+class Resource(object):
     def __init__(self, name, data, method, api, parent=None):
         self.name = name
         self.data = data
@@ -226,18 +229,24 @@ class Node(object):
 
     @property
     def display_name(self):
+        """
+        Returns either the defined displayName for the Resource, or its
+        name if none is defined.
+        """
         display_name = self.data.get('displayName')
         if not display_name:
             display_name = self.name
         return display_name
 
     @property
-    def description(self):
+    def description_raw(self):
+        """Returns raw (Markdown) text of Resource description"""
         return self.data.get(self.method).get('description')
 
     @property
     def description_html(self):
-        return markdown.markdown(self.description)
+        """Returns HTML output of Resource description"""
+        return markdown.markdown(self.description_raw)
 
     @property
     def headers(self):
@@ -250,12 +259,12 @@ class Node(object):
 
     @property
     def path(self):
-        """Returns string URI path of Node"""
+        """Returns string URI path of Resource"""
         return self._get_path_to(self)
 
     @property
     def absolute_path(self):
-        """Return the full API URL for the Resource"""
+        """Return the full API URL for Resource"""
         return self.api.base_uri + self.path
 
     def _get_secured_by(self):
@@ -293,6 +302,9 @@ class Node(object):
 
     @property
     def secured_by(self):
+        """
+        Returns authentication protocol information if Resource is secured
+        """
         return self._get_secured_by()
 
     def __find_params(self, string):
@@ -348,10 +360,10 @@ class Node(object):
                             desc = m.data.get('description')
                         else:
                             # otherwise use the general description
-                            desc = r.description
+                            desc = r.description_raw
                     else:
                         # otherwise use the general description
-                        desc = r.description
+                        desc = r.description_raw
                     result['description'] = self._fill_reserved_params(desc)
                 results.append(result)
 
@@ -402,30 +414,36 @@ class Node(object):
 
     @property
     def resource_type(self):
+        """Returns a list of resource types assigned to the resource"""
         return self._get_resource_type()
 
     @property
     def traits(self):
+        """Returns a list of traits assigned to the resource"""
         endpoint_traits = self.data.get('is', [])
         method_traits = self.data.get(self.method).get('is', [])
         return endpoint_traits + method_traits
 
     @property
     def scopes(self):
-        if self.secured_by and 'oauth_2_0' in self.secured_by:
-            if self.data.get('securedBy'):
-                secured_by = self.data.get('securedBy')
-            elif self.data.get(self.method).get('securedBy'):
-                secured_by = self.data.get(self.method).get('securedBy')
-
-            for item in secured_by:
-                if isinstance(item, dict) and 'oauth_2_0' in item.keys():
-                    return item.get('oauth_2_0').get('scopes')
-        return None
+        """Returns a list of OAuth2 scopes assigned to the resource"""
+        if self.secured_by:
+            for item in self.secured_by:
+                if 'oauth_2_0' in item.values():
+                    if self.data.get('securedBy'):
+                        for i in self.data.get('securedBy'):
+                            if isinstance(i, dict) and 'oauth_2_0' in i.keys():
+                                return i.get('oauth_2_0').get('scopes')
+                    elif self.data.get(self.method).get('securedBy'):
+                        for i in self.data.get('securedBy'):
+                            if isinstance(i, dict) and 'oauth_2_0' in i.keys():
+                                return i.get('oauth_2_0').get('scopes')
+        else:
+            return None
 
     @property
     def protocols(self):
-        """Returns a list of supported protocols"""
+        """Returns a list of supported protocols for the particular resource"""
         return self.data.get(self.method).get('protocols', [])
 
     def _get_responses(self, node):
@@ -443,7 +461,7 @@ class Node(object):
 
     @property
     def responses(self):
-        """Returns responses of a given method"""
+        """Returns a list of Response objects of a resource"""
         return self._get_responses(self)
 
     def _get_body(self, node):
@@ -456,7 +474,7 @@ class Node(object):
 
     @property
     def body(self):
-        """Returns body of a request"""
+        """Returns a Body object of a request"""
         return self._get_body(self)
 
     def _get_uri_params(self, node):
@@ -471,11 +489,11 @@ class Node(object):
 
     @property
     def uri_params(self):
-        """Returns URI parameters of Node"""
+        """Returns a list of URIParameter objects of a resource"""
         return self._get_uri_params(self)
 
     def _get_base_uri_params(self, node):
-        """Returns a list of (base) URIParameter objects"""
+        """Returns a list of URIParameter objects for the base_uri"""
         base_uri_params = []
         if node.parent:
             base_uri_params = self._get_base_uri_params(node.parent)
@@ -486,7 +504,7 @@ class Node(object):
 
     @property
     def base_uri_params(self):
-        """Returns Base URI params of a Node"""
+        """Returns a list of Base URIParameter objects of a Resource"""
         return self._get_base_uri_params(self)
 
     def _get_query_params(self, node):
@@ -500,7 +518,7 @@ class Node(object):
 
     @property
     def query_params(self):
-        """Returns query parameters of Node"""
+        """Returns a list of QueryParameter objects"""
         return self._get_query_params(self)
 
     def _get_form_params(self, node):
@@ -524,6 +542,7 @@ class Node(object):
 
     @property
     def req_content_types(self):
+        """Returns a list of ContentType objects that the Resource supports"""
         content_type = []
         if self.method in ["post", "put", "delete", "patch"]:
             if self.data.get(self.method).get('body'):

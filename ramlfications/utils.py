@@ -17,7 +17,7 @@ class EndpointOrderError(Exception):
 
 
 class EndpointOrder(object):
-    """Parses endpoint order to set order for RAML nodes"""
+    """Parses a YAML file that defines order for RAML resources"""
     def __init__(self, yaml_file):
         self.yaml = yaml_file
 
