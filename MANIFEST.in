@@ -2,4 +2,7 @@ include *.md *.txt tox.ini docs/Makefile *.rst LICENSE .coveragerc
 recursive-include ramlfications *.py
 recursive-include docs *.py *.rst
 prune docs/_build
-recursive-include tests *.json *.md *.py *.raml *.yaml *.xsd
+recursive-include tests *py
+recursive-include tests/examples *.json *.md *.py *.raml *.yaml *.xsd
+recursive-include tests/examples/validate *.json *.md *.py *.raml *.yaml *.xsd
+recursive-include tests/examples/includes *.json *.md *.py *.raml *.yaml *.xsd
