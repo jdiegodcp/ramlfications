@@ -35,6 +35,13 @@ class ValidateRAML(object):
             msg = 'RAML File does not define an API title.'
             raise RAMLValidationError(msg)
 
+    def api_version(self):
+        # TODO: require version for production; optional for development
+        """Require an API Version."""
+        if not self.api.version:
+            msg = 'RAML File does not define an API version.'
+            raise RAMLValidationError(msg)
+
     def base_uri(self):
         base_uri = self.api.base_uri
         if not base_uri:
