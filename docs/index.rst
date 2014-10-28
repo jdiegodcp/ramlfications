@@ -13,10 +13,11 @@ User's Guide
 
 .. toctree::
    :maxdepth: 1
-   :titlesonly:
 
    installation
    usage
+   extendedusage
+   api
 
 
 Project Information
