@@ -16,6 +16,7 @@ import codecs
 import datetime
 import os
 import re
+import sys
 
 try:
     import sphinx_rtd_theme
@@ -48,7 +49,7 @@ def find_version(*file_paths):
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.append('/Users/lynnroot/Dev/spotify/ramlfications')
 
 # -- General configuration ------------------------------------------------
 
@@ -59,6 +60,8 @@ def find_version(*file_paths):
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
 ]
