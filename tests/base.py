@@ -3,6 +3,7 @@
 # Copyright (c) 2014 Spotify AB
 
 import unittest
+import sys
 
 
 class BaseTestCase(unittest.TestCase):
@@ -38,3 +39,19 @@ class BaseTestCase(unittest.TestCase):
     if not hasattr(unittest.TestCase, 'assertIsNone'):
         def assertIsNone(self, item):
             self.assertEqual(item, None)
+
+    # py2.6 assertRaises compatibility
+    def assert_raises(self, exception, function, **kw):
+        if sys.version_info[:2] == (2, 6):
+            try:
+                function(**kw)
+            except exception as e:
+                return e.message
+            except Exception as ee:
+                return ee.message
+            else:
+                self.fail("No exception thrown")
+        else:
+            with self.assertRaises(exception) as e:
+                function(**kw)
+            return e.exception
