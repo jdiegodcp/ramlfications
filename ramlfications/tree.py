@@ -2,13 +2,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
-from collections import defaultdict
-try:
-    from collections import OrderedDict
-except ImportError:  # pragma: no cover
-    # python 2.6
-    from ordereddict import OrderedDict
 
+from collections import defaultdict
+
+from ._compat import OrderedDict
 from .parser import APIRoot
 
 

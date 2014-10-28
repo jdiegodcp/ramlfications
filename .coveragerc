@@ -1,0 +1,3 @@
+[report]
+omit =
+    ramlfications/_compat.py

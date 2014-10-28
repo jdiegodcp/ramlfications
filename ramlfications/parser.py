@@ -3,25 +3,19 @@
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
 
-try:
-    from collections import OrderedDict
-except ImportError:  # pragma: no cover
-    # python 2.6
-    from ordereddict import OrderedDict
-
-try:
-    import BaseHTTPServer as httpserver
-except ImportError:
-    import http.server as httpserver
 import json
 import re
 
 import markdown2 as markdown
 
+from ._compat import OrderedDict, httpserver
+
 from .loader import RAMLLoader
-from .parameters import (ContentType, FormParameter, URIParameter,
-                         QueryParameter, Header, Response, ResourceType,
-                         Documentation, SecuritySchemes, Body)
+from .parameters import (
+    ContentType, FormParameter, URIParameter,
+    QueryParameter, Header, Response, ResourceType,
+    Documentation, SecuritySchemes, Body
+)
 
 
 HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()

@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
-from cStringIO import StringIO
 
 import os
 import sys
 
+from ramlfications._compat import StringIO
 from ramlfications import tree, parser
 
 from .base import BaseTestCase
