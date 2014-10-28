@@ -81,7 +81,7 @@ Tree
 
 To visualize a tree output of a RAML file::
 
-   $ ramlfications tree /path/to/my-api.raml [--dark] [-v|vv|vvv]
+   $ ramlfications tree /path/to/my-api.raml [-c|--color light/dark] [-v|vv|vvv]
 
 The least verbose option would show something like this::
 
@@ -141,6 +141,14 @@ Valid ``OPTIONS`` for all commands are the following:
    Show a brief usage summary and exit.
 
 Valid ``OPTIONS`` for the ``tree`` command are the following:
+
+.. option:: -c light|dark
+
+   Use a light color scheme for dark terminal backgrounds [DEFAULT], or dark color scheme for light backgrounds.
+
+.. option:: --color light|dark
+
+   Use a light color scheme for dark terminal backgrounds [DEFAULT], or dark color scheme for light backgrounds.
 
 .. option:: -v
 
