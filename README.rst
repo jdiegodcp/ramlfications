@@ -1,3 +1,5 @@
+NON PUBLIC DOCS: `https://ghe.spotify.net/pages/lynn/ramlfications <https://ghe.spotify.net/pages/ramlfications>`_
+
 ramlfications: RAML reference implementation in Python
 ======================================================
 
