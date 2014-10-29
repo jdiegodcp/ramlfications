@@ -1,0 +1,11 @@
+@import url("css/theme.css");
+@import url("css/badge_only.css");
+
+
+.wy-side-nav-search {
+    background-color: #81b900;
+}
+
+.rst-content a {
+    color: #81b900;
+}
