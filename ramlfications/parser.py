@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 
 import json
+import os
 import re
 
 import markdown2 as markdown
@@ -27,6 +28,7 @@ class RAMLParserError(Exception):
 
 class APIRoot(object):
     def __init__(self, raml_file):
+        self.raml_file = os.path.abspath(raml_file)
         self.raml = RAMLLoader(raml_file).raml
 
     @property
@@ -194,6 +196,9 @@ class APIRoot(object):
     def schemas(self):
         """User-defined schema with XML, JSON, YAML, etc"""
         return self.raml.get('schemas')
+
+    def __repr__(self):
+        return '<APIRoot(raml_file="{0}")>'.format(self.raml_file)
 
 
 class ResourceStack(object):
