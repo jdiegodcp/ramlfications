@@ -145,7 +145,7 @@ class APIRoot(object):
                     trait_params.append({key: QueryParameter(k, v)})
         return trait_params
 
-    def __find_params(self, string):
+    def _find_params(self, string):
         # TODO: ignoring humanizers for now
         match = re.findall(r"(<<.*?>>)", string)
         match = [m[2:-2] for m in match]  # clean <<>> first
@@ -163,24 +163,24 @@ class APIRoot(object):
 
         return ret
 
-    def __parse_parameters(self):
+    def _parse_parameters(self):
         """If traits or resourceTypes contain <<parameter>> in definition"""
         _resources_params = []
         if self.resource_types:
             for r in self.resource_types:
                 data = json.dumps(r.data)
-                match = self.__find_params(data)
+                match = self._find_params(data)
                 _resources_params += match
 
         _traits_params = []
         if self.traits:
             for t in self.traits:
                 data = json.dumps(list(t.keys()))
-                match = self.__find_params(data)
+                match = self._find_params(data)
                 _traits_params += match
 
                 data = json.dumps(list(t.values())[0].data)
-                match = self.__find_params(data)
+                match = self._find_params(data)
                 _traits_params += match
 
         return dict(resource_types=list(set(_resources_params)),
@@ -188,7 +188,7 @@ class APIRoot(object):
 
     def get_parameters(self):
         """Parameters for traits and/or resource_types"""
-        return self.__parse_parameters()
+        return self._parse_parameters()
 
     @property
     def schemas(self):
@@ -322,7 +322,7 @@ class Resource(object):
         """
         return self._get_secured_by()
 
-    def __find_params(self, string):
+    def _find_params(self, string):
         # TODO: ignoring humanizers for now
         match = re.findall(r"(<<.*?>>)", string)
         match = [m[2:-2] for m in match]  # clean <<>> first
