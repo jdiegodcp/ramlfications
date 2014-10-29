@@ -578,3 +578,7 @@ class Resource(object):
 
     def __repr__(self):
         return "< Resource: {0} {1} >".format(self.method.upper(), self.path)
+
+
+def parse(ramlfile):
+    return APIRoot(ramlfile)

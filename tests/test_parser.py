@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 import os
 
 from ramlfications import parser, loader, parameters
-
+from ramlfications.parser import parse
 from .base import BaseTestCase
 
 
@@ -15,6 +15,13 @@ class TestAPIRoot(BaseTestCase):
         self.here = os.path.abspath(os.path.dirname(__file__))
         raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
         self.api = parser.APIRoot(raml_file)
+
+    def test_parse_function(self):
+        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
+
+        result = parse(raml_file)
+
+        self.assertIsInstance(result, parser.APIRoot)
 
     def test_no_raml_file(self):
         raml_file = '/foo/bar.raml'
@@ -953,7 +960,8 @@ class TestResource(BaseTestCase):
                     self.assertItemInList(scope, scopes)
 
     def test_scopes_2(self):
-        raml_file = os.path.join(self.here, "examples/multiple-security-schemes.raml")
+        raml_file = os.path.join(self.here,
+                                 "examples/multiple-security-schemes.raml")
         api = parser.APIRoot(raml_file)
         resource = api.resources['get-current-user']
 
