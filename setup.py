@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ramlfications",
-    version="v0.1.0",
+    version="0.1.0",
     description="Python RAML parser",
     long_description=("TODO"),
     url="https://ramlfications.readthedocs.org/",
