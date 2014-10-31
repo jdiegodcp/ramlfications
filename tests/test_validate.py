@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
+from ramlfications.loader import load
 from ramlfications.validate import RAMLValidationError, validate
 
 from .base import BaseTestCase
@@ -15,8 +16,9 @@ class TestValidateRAML(BaseTestCase):
         self.here = os.path.abspath(os.path.dirname(__file__))
 
     def fail_validate(self, raml_file, expected_msg):
+        self.load_object = load(raml_file)
         e = self.assert_raises(RAMLValidationError, validate,
-                               ramlfile=raml_file)
+                               load_object=self.load_object)
 
         self.assertEqual(expected_msg, str(e))
 
