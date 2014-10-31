@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 import click
 
+from .loader import load
 from .tree import ttree
 from .validate import validate as vvalidate
 from .validate import RAMLValidationError
@@ -20,11 +21,13 @@ def main():
 def validate(ramlfile):
     """Validate a given RAML file."""
     try:
-        vvalidate(ramlfile)
-        click.secho("Success! Valid RAML file: {0}".format(ramlfile),
+        load_obj = load(ramlfile)
+        vvalidate(load_obj)
+        click.secho("Success! Valid RAML file: {0}".format(load_obj.raml_file),
                     fg="green")
     except RAMLValidationError as e:
-        click.secho("Error validating file {0}: {1}".format(ramlfile, e),
+        click.secho("Error validating file {0}: {1}".format(
+                    load_obj.raml_file, e),
                     fg="red", err=True)
 
 
@@ -38,12 +41,13 @@ def validate(ramlfile):
 def tree(ramlfile, color, verbose):
     """Pretty-print a tree of the RAML-defined API."""
     try:
-        vvalidate(ramlfile)
-        ttree(ramlfile, color, verbose)
+        load_obj = load(ramlfile)
+        vvalidate(load_obj)
+        ttree(load_obj, color, verbose)
     except RAMLValidationError as e:
         click.secho('"{0}" is not a valid RAML File: {1}'
-                    .format(click.format_filename(ramlfile), e), fg="red",
-                    err=True)
+                    .format(click.format_filename(load_obj.raml_file), e),
+                    fg="red", err=True)
         raise SystemExit(1)
 
 
