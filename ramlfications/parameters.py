@@ -14,6 +14,9 @@ class ContentType(object):
         self.schema = schema
         self.example = example
 
+    def __repr__(self):
+        return "<ContentType(name='{0}')>".format(self.name)
+
 
 class BaseParameter(object):
     """
@@ -156,7 +159,7 @@ class Body(object):
         return self.data.get("example")
 
     def __repr__(self):
-        return "< Request Body: {0} >".format(self.mime_type)
+        return "<Body(name='{0}')>".format(self.name)
 
 
 class Response(object):
@@ -200,7 +203,7 @@ class Response(object):
         return content_type
 
     def __repr__(self):
-        return "< Response: {0} >".format(self.code)
+        return "<Response(code='{0}')>".format(self.code)
 
 
 class ResourceType(object):
@@ -237,7 +240,7 @@ class ResourceType(object):
         return methods
 
     def __repr__(self):
-        return "< Resource Type: {0} >".format(self.name)
+        return "<ResourceType(name='{0}')>".format(self.name)
 
 
 class ResourceTypeMethod(object):
@@ -250,7 +253,7 @@ class ResourceTypeMethod(object):
         return "?" in self.name
 
     def __repr__(self):
-        return "< Resource Method: {0} >".format(self.name)
+        return "<ResourceTypeMethod(name='{0}')>".format(self.name)
 
 
 class Documentation(object):
@@ -263,7 +266,7 @@ class Documentation(object):
         self.content_html = markdown.markdown(self.content_raw)
 
     def __repr__(self):
-        return "< Documentation: {0} >".format(self.title)
+        return "<Documentation(title='{0}')>".format(self.title)
 
 
 class SecuritySchemes(object):
@@ -363,7 +366,7 @@ class SecurityScheme(object):
             return self._get_oauth_scheme(self.name)(self.data.get('settings'))
 
     def __repr__(self):
-        return "< Security Scheme: {0} >".format(self.type)
+        return "<Security Scheme(name='{0}')>".format(self.name)
 
 
 class Oauth2Scheme(object):

@@ -613,9 +613,9 @@ class TestResource(BaseTestCase):
         resources = api.resources
 
         expected_resources = {
-            'get-several-tracks': '< Resource: GET /tracks >',
-            'get-search-item': '< Resource: GET /search >',
-            'get-track': '< Resource: GET /tracks/{id} >'
+            'get-track': "<Resource(name='/{id}')>",
+            'get-several-tracks': "<Resource(name='/tracks')>",
+            'get-search-item': "<Resource(name='/search')>",
         }
 
         for k, res in list(resources.items()):
@@ -689,7 +689,7 @@ class TestResource(BaseTestCase):
         self.assertIsInstance(resource.body, list)
         self.assertEqual(len(resource.body), 1)
         self.assertEqual(repr(resource.body[0]),
-                         '< Request Body: application/json >')
+                         "<Body(name='application/json')>")
         self.assertDictEqual(resource.body[0].data, expected_data)
         self.assertDictEqual(resource.body[0].example, expected_example)
         self.assertEqual(resource.body[0].mime_type, "application/json")
@@ -956,7 +956,7 @@ class TestResource(BaseTestCase):
                 self.assertEqual(s['type'], 'OAuth 2.0')
                 self.assertEqual(s['scopes'], ['playlist-read-private'])
                 self.assertEqual(repr(s['scheme']),
-                                 '< Security Scheme: OAuth 2.0 >')
+                                 "<Security Scheme(name='oauth_2_0')>")
 
     def test_scopes(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
@@ -1013,7 +1013,8 @@ class TestResource(BaseTestCase):
             self.assertEqual(r.example,
                              list(data[i].values())[0].get('example'))
             self.assertEqual(r.display_name,
-                             list(data[i].values())[0].get('displayName'))
+                             list(data[i].values())[0].get('displayName',
+                                                           'domainName'))
 
         bar = resources['get-bar']
         bar_results = bar.base_uri_params
@@ -1028,7 +1029,8 @@ class TestResource(BaseTestCase):
             self.assertEqual(r.example,
                              list(data[i].values())[0].get('example'))
             self.assertEqual(r.display_name,
-                             list(data[i].values())[0].get('displayName'))
+                             list(data[i].values())[0].get('displayName',
+                                                           'domainName'))
 
     def test_query_params(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")

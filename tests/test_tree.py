@@ -35,12 +35,12 @@ class TestPrintTree(BaseTestCase):
         ordered_res = tree.order_resources(resources)
 
         expected_res = ("""OrderedDict([('/tracks', \
-[('GET', < Resource: GET /tracks >)]), ('/tracks/{id}', \
-[('GET', < Resource: GET /tracks/{id} >)]), \
+[('GET', <Resource(name='/tracks')>)]), ('/tracks/{id}', \
+[('GET', <Resource(name='/{id}')>)]), \
 ('/users/{user_id}/playlists', \
-[('GET', < Resource: GET /users/{user_id}/playlists >)]), \
+[('GET', <Resource(name='/users/{user_id}/playlists')>)]), \
 ('/users/{user_id}/playlists/{playlist_id}', \
-[('PUT', < Resource: PUT /users/{user_id}/playlists/{playlist_id} >)])])\
+[('PUT', <Resource(name='/{playlist_id}')>)])])\
 """)
         self.assertEqual(str(ordered_res), expected_res)
 

@@ -579,7 +579,7 @@ class Resource(object):
         return content_type
 
     def __repr__(self):
-        return "< Resource: {0} {1} >".format(self.method.upper(), self.path)
+        return "<Resource(name='{0}')>".format(self.name)
 
 
 def parse(loaded_raml):
