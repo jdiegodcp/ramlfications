@@ -7,7 +7,7 @@ import os
 import sys
 
 from ramlfications._compat import StringIO
-from ramlfications import tree, parser
+from ramlfications import tree, parser, loader
 
 from .base import BaseTestCase
 
@@ -17,7 +17,8 @@ class TestPrintTree(BaseTestCase):
         self.here = os.path.abspath(os.path.dirname(__file__))
         raml_file = "examples/simple-tree.raml"
         raml_file = os.path.join(self.here, raml_file)
-        self.api = parser.APIRoot(raml_file)
+        loaded_file = loader.load(raml_file)
+        self.api = parser.APIRoot(loaded_file)
         self.held, sys.stdout = sys.stdout, StringIO()
 
     def test_get_tree(self):

@@ -4,14 +4,12 @@
 from __future__ import absolute_import, division, print_function
 
 import json
-import os
 import re
 
 import markdown2 as markdown
 
 from ._compat import OrderedDict, httpserver
 
-from .loader import RAMLLoader
 from .parameters import (
     ContentType, FormParameter, URIParameter,
     QueryParameter, Header, Response, ResourceType,
@@ -27,9 +25,13 @@ class RAMLParserError(Exception):
 
 
 class APIRoot(object):
-    def __init__(self, raml_file):
-        self.raml_file = os.path.abspath(raml_file)
-        self.raml = RAMLLoader(raml_file).raml
+    """
+    The Root of the API object
+
+    :param obj load_object: Loaded RAML from ``ramlfications.load(ramlfile)``
+    """
+    def __init__(self, load_object):
+        self.raml = load_object.raml
 
     @property
     def resources(self):
@@ -580,5 +582,5 @@ class Resource(object):
         return "< Resource: {0} {1} >".format(self.method.upper(), self.path)
 
 
-def parse(ramlfile):
-    return APIRoot(ramlfile)
+def parse(loaded_raml):
+    return APIRoot(loaded_raml)

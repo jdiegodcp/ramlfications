@@ -17,9 +17,9 @@ class ValidateRAML(object):
     """
     Validate a particular RAML file based off of http://raml.org/spec.html
     """
-    def __init__(self, raml_file):
-        self.raml_file = raml_file
-        self.api = APIRoot(raml_file)
+    def __init__(self, load_object):
+        self.raml_file = load_object.raml_file
+        self.api = APIRoot(load_object)
 
     def raml_header(self):
         """Validate Header of RAML File"""
@@ -115,5 +115,5 @@ class ValidateRAML(object):
         self.security_schemes()
 
 
-def validate(ramlfile):
-    ValidateRAML(ramlfile).validate()
+def validate(load_object):
+    ValidateRAML(load_object).validate()

@@ -7,26 +7,30 @@ import os
 
 from ramlfications import parser, loader, parameters
 from ramlfications.parser import parse
+from ramlfications.loader import load
 from .base import BaseTestCase
 
 
 class TestAPIRoot(BaseTestCase):
+    def setup_parsed_raml(self, ramlfile):
+        self.loaded_file = load(ramlfile)
+        return parse(self.loaded_file)
+
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
         raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
-        self.api = parser.APIRoot(raml_file)
+        self.loader = load(raml_file)
+        self.api = parse(self.loader)
 
     def test_parse_function(self):
-        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
-
-        result = parse(raml_file)
+        result = parse(self.loader)
 
         self.assertIsInstance(result, parser.APIRoot)
 
     def test_no_raml_file(self):
         raml_file = '/foo/bar.raml'
         self.assertRaises(loader.RAMLLoaderError,
-                          lambda: parser.APIRoot(raml_file))
+                          lambda: self.setup_parsed_raml(raml_file))
 
     def test_resources(self):
         resources = self.api.resources
@@ -49,7 +53,7 @@ class TestAPIRoot(BaseTestCase):
 
     def test_base_uri_throws_exception(self):
         raml_file = os.path.join(self.here, "examples/no-version.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         self.assertRaises(parser.RAMLParserError, lambda: api.base_uri)
 
@@ -64,7 +68,7 @@ class TestAPIRoot(BaseTestCase):
 
         raml_file = os.path.join(self.here,
                                  'examples/base-uri-parameters.raml')
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         results = api.uri_parameters
 
         for i, r in enumerate(results):
@@ -82,7 +86,7 @@ class TestAPIRoot(BaseTestCase):
     def test_uri_parameters_throws_exception(self):
         raml_file = os.path.join(self.here,
                                  "examples/uri-parameters-error.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         self.assertRaises(parser.RAMLParserError, lambda: api.uri_parameters)
 
@@ -100,7 +104,7 @@ class TestAPIRoot(BaseTestCase):
 
     def test_resource_type(self):
         raml_file = os.path.join(self.here, "examples/resource-types.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         results = api.resource_types
 
         expected_data = {
@@ -199,14 +203,14 @@ class TestAPIRoot(BaseTestCase):
     def test_documentation_no_title(self):
         raml = "examples/docs-no-title-parameter.raml"
         raml_file = os.path.join(self.here, raml)
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         self.assertRaises(parser.RAMLParserError, lambda: api.documentation)
 
     def test_security_schemes_oauth2(self):
         raml = "examples/security-scheme.raml"
         raml_file = os.path.join(self.here, raml)
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         scheme = "oauth_2_0"
         data = {
@@ -319,14 +323,14 @@ class TestAPIRoot(BaseTestCase):
 
     def test_no_security_schemes(self):
         raml_file = os.path.join(self.here, "examples/no-security-scheme.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         self.assertIsNone(api.security_schemes)
 
     def test_security_schemes_markdown_desc(self):
         raml = "examples/markdown-desc-docs.raml"
         raml_file = os.path.join(self.here, raml)
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         desc_results = api.security_schemes[0].description_html
         expected_results = ("<p>Spotify supports <a href=\"https://developer."
@@ -359,7 +363,7 @@ class TestAPIRoot(BaseTestCase):
 
         r = 'examples/security-schemes-oauth-1.raml'
         raml_file = os.path.join(self.here, r)
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         scheme = api.security_schemes[0]
 
@@ -382,7 +386,7 @@ class TestAPIRoot(BaseTestCase):
     def test_security_schemes_other(self):
         raml = "examples/security-schemes-http-other.raml"
         raml_file = os.path.join(self.here, raml)
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         schemes = api.security_schemes
 
@@ -419,7 +423,7 @@ class TestAPIRoot(BaseTestCase):
     def test_get_parameters(self):
         raml = "examples/traits-resources-parameters.raml"
         raml_file = os.path.join(self.here, raml)
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         params = api.get_parameters()
 
@@ -432,7 +436,7 @@ class TestAPIRoot(BaseTestCase):
 
     def test_schemas(self):
         raml_file = os.path.join(self.here, "examples/root-schemas.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         result = api.schemas
 
@@ -441,7 +445,7 @@ class TestAPIRoot(BaseTestCase):
 
         included_raml_file = os.path.join(self.here,
                                           "examples/includes/simple.raml")
-        api2 = parser.APIRoot(included_raml_file)
+        api2 = self.setup_parsed_raml(included_raml_file)
 
         self.assertEqual(result[0], api2.raml)
 
@@ -519,11 +523,16 @@ class TestAPIRoot(BaseTestCase):
 
 
 class TestDocumentation(BaseTestCase):
+    def setup_parsed_raml(self, ramlfile):
+        self.loaded_file = load(ramlfile)
+        return parse(self.loaded_file)
+
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
         raml_file = os.path.join(self.here,
                                  "examples/multiple_documentation.raml")
-        self.api = parser.APIRoot(raml_file)
+        self.loader = load(raml_file)
+        self.api = parse(self.loader)
 
     def test_docs(self):
         titles = ["Getting Started",
@@ -545,7 +554,7 @@ class TestDocumentation(BaseTestCase):
 
     def test_docs_markdown(self):
         raml_file = os.path.join(self.here, "examples/markdown-desc-docs.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         documentation = api.documentation[0]
 
         expected_content = ("Welcome to the _Spotify Web API_ specification. "
@@ -562,11 +571,15 @@ class TestDocumentation(BaseTestCase):
 
 
 class TestResource(BaseTestCase):
+    def setup_parsed_raml(self, ramlfile):
+        self.loaded_file = load(ramlfile)
+        return parse(self.loaded_file)
 
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
         raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
-        self.api = parser.APIRoot(raml_file)
+        self.loader = load(raml_file)
+        self.api = parse(self.loader)
         self.resources = self.api.resources
 
     def test_has_path(self):
@@ -575,7 +588,7 @@ class TestResource(BaseTestCase):
 
     def test_paths(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         expected_paths = ['/tracks', '/search', '/tracks/{id}']
@@ -588,7 +601,7 @@ class TestResource(BaseTestCase):
     def test_absolute_path(self):
         raml_file = os.path.join(self.here,
                                  "examples/base-uri-parameters.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resource = api.resources['get-foo']
 
         expected_path = 'https://{domainName}.github.com/{apiPath}/foo'
@@ -596,7 +609,7 @@ class TestResource(BaseTestCase):
 
     def test_repr(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         expected_resources = {
@@ -614,7 +627,7 @@ class TestResource(BaseTestCase):
 
     def test_display_name_not_defined(self):
         raml_file = os.path.join(self.here, "examples/no-display-name.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resource = list(api.resources.values())[0]
 
         self.assertEqual(resource.display_name, '/tracks')
@@ -627,7 +640,7 @@ class TestResource(BaseTestCase):
     def test_description_markdown(self):
         raml = "examples/markdown-desc-docs.raml"
         raml_file = os.path.join(self.here, raml)
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resource = api.resources.get('get-artist')
 
         html_result = resource.description_html
@@ -638,7 +651,7 @@ class TestResource(BaseTestCase):
 
     def test_method(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         methods = ['get', 'post']
@@ -648,7 +661,8 @@ class TestResource(BaseTestCase):
 
     def test_protocols(self):
         raml_file = os.path.join(self.here, "examples/protocols.raml")
-        resource = parser.APIRoot(raml_file).resources.get('get-tracks')
+        resource = self.setup_parsed_raml(raml_file).resources.get(
+            'get-tracks')
 
         expected_protocols = ['HTTP', 'HTTPS']
 
@@ -656,7 +670,7 @@ class TestResource(BaseTestCase):
 
     def test_body(self):
         raml_file = os.path.join(self.here, "examples/simple-body.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resource = api.resources['post-playlists']
 
         expected_data = {
@@ -683,7 +697,8 @@ class TestResource(BaseTestCase):
 
     def test_responses(self):
         raml_file = os.path.join(self.here, "examples/responses.raml")
-        resource = parser.APIRoot(raml_file).resources.get('get-popular-media')
+        resource = self.setup_parsed_raml(raml_file).resources.get(
+            'get-popular-media')
 
         expected_resp_data = {
             200: {
@@ -739,7 +754,7 @@ class TestResource(BaseTestCase):
 
     def test_headers(self):
         raml_file = os.path.join(self.here, "examples/headers.raml")
-        resources = parser.APIRoot(raml_file).resources
+        resources = self.setup_parsed_raml(raml_file).resources
 
         # only one node
         resource = resources['post-job']
@@ -777,7 +792,7 @@ class TestResource(BaseTestCase):
 
     def test_data(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         expected_data = [
@@ -906,7 +921,7 @@ class TestResource(BaseTestCase):
 
     def test_parent(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         expected_parent = '/tracks'
@@ -919,7 +934,7 @@ class TestResource(BaseTestCase):
 
     def test_traits_resources(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         for resource in resources.values():
@@ -930,7 +945,7 @@ class TestResource(BaseTestCase):
 
     def test_secured_by(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         for resource in resources.values():
@@ -945,7 +960,7 @@ class TestResource(BaseTestCase):
 
     def test_scopes(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         scopes = ['playlist-modify-public',
@@ -962,7 +977,7 @@ class TestResource(BaseTestCase):
     def test_scopes_2(self):
         raml_file = os.path.join(self.here,
                                  "examples/multiple-security-schemes.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resource = api.resources['get-current-user']
 
         scopes = ['user-read-private']
@@ -972,7 +987,7 @@ class TestResource(BaseTestCase):
     def test_base_uri_params(self):
         raml_file = os.path.join(self.here,
                                  'examples/base-uri-parameters.raml')
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         resources = api.resources
 
@@ -1017,7 +1032,7 @@ class TestResource(BaseTestCase):
 
     def test_query_params(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         search = resources['get-search-item']
@@ -1133,7 +1148,7 @@ class TestResource(BaseTestCase):
 
     def test_uri_params(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         search = resources['get-search-item']
@@ -1170,7 +1185,7 @@ class TestResource(BaseTestCase):
 
     def test_form_params(self):
         raml_file = os.path.join(self.here, "examples/form-parameters.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         tracks = resources['post-several-tracks']
@@ -1224,7 +1239,7 @@ class TestResource(BaseTestCase):
     def test_param_markdown_desc(self):
         raml = "examples/markdown-desc-docs.raml"
         raml_file = os.path.join(self.here, raml)
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
 
         resource = api.resources.get('get-artist-top-tracks')
         param = resource.query_params[0]
@@ -1237,7 +1252,7 @@ class TestResource(BaseTestCase):
 
     def test_req_content_types(self):
         raml_file = os.path.join(self.here, "examples/req-content-type.raml")
-        api = parser.APIRoot(raml_file)
+        api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
         post_playlist = resources['post-playlists']
