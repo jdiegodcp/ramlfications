@@ -9,6 +9,13 @@ HTTP_METHODS = ["get", "post", "put", "delete", "patch", "options", "head"]
 
 
 class ContentType(object):
+    """
+    Supported Content Type of a resource (e.g. ``application/json``).
+
+    :param str name: The name of content type
+    :param dict schema: Schema definition of content type
+    :param str example: Example usage of content type
+    """
     def __init__(self, name, schema, example):
         self.name = name
         self.schema = schema
@@ -22,6 +29,10 @@ class BaseParameter(object):
     """
     Base parameter with properties defined by the RAML spec's
     'Named Parameters' section.
+
+    :param str item: The item name of parameter
+    :param dict data: All defined data of the item
+    :param str param_type: Type of parameter
     """
     def __init__(self, item, data, param_type):
         self.item = item
@@ -30,75 +41,130 @@ class BaseParameter(object):
 
     @property
     def name(self):
-        """Name of the Parameter"""
+        """
+        RAML key/name of the parameter.
+        """
         return self.item
 
     @property
     def display_name(self):
-        """Display Name of the Parameter"""
-        return self.data.get('displayName')
+        """
+        Returns the parameter's display name.
+
+        A friendly name used only for display or documentation purposes.
+
+        If ``displayName`` is not specified in RAML, it defaults to ``name``.
+        """
+        display_name = self.data.get('displayName')
+        if not display_name:
+            display_name = self.name
+        return display_name
 
     @property
     def type(self):
-        """Type of Parameter"""
+        """
+        Primative type of Parameter.  If ``type`` is not specified in the RAML
+        definition, it defaults to ``string``.
+
+        Valid types are:
+        * ``string``
+        * ``number`` - Floating point numbers allowed (as defined by YAML)
+        * ``integer`` - Floating point numbers **not** allowed.
+        * ``date`` - Acceptible date representations defined under Date/Time\
+        formats in [RFC2616](https://www.ietf.org/rfc/rfc2616.txt)
+        * ``boolean``
+        * ``file`` - only applicable in FormParameters
+        """
         return self.data.get('type')
 
     @property
     def description_raw(self):
-        """Description of Parameter"""
+        """
+        The description attribute describing the intended use or meaning
+        of the parameter.  May be written in Markdown.
+        """
         return self.data.get('description')
 
     @property
     def description_html(self):
-        """Description of Parameter in HTML"""
+        """
+        The ``description_raw`` attribute parsed into HTML.
+        """
         return markdown.markdown(self.data.get('description', ''))
 
     @property
     def example(self):
-        """Example of Parameter"""
+        """
+        Returns the example value for the property.
+        """
         return self.data.get('example', '')
 
     @property
     def enum(self):
-        """Enum of Parameter"""
+        """
+        Returns the ``enum`` attribute that provides an enumeration of the \
+        parameter's valid values. This MUST be an array.  Applicable only
+        for parameters of type ``string``.
+        """
         return self.data.get('enum')
 
     @property
     def default(self):
-        """Default value of parameter"""
+        """
+        Returns the default attribute for the property if the property \
+        is omitted or its value is not specified.
+        """
         return self.data.get('default')
 
     @property
     def pattern(self):
-        # TODO: what does pattern give me?
+        """
+        Returns the pattern attribute that is a regular expression \
+        that parameter of type ``string`` MUST match.
+        """
         return self.data.get('pattern')
 
     @property
     def min_length(self):
-        # TODO: set for only "string" types
+        """
+        Returns the parameter value's minimum number of characters.
+        Applicable only for parameters of type ``string``.
+        """
         return self.data.get('minLength')
 
     @property
     def max_length(self):
-        # TODO: set for only "string" types
+        """
+        Returns the parameter value's maximum number of characters.
+        Applicable only for parameters of type ``string``.
+        """
         return self.data.get('maxLength')
 
     @property
     def minimum(self):
-        # TODO: set for only integer/number types
+        """
+        Returns the parameter's minimum value.
+        Applicable only for parameters of type ``integer`` or ``number``.
+        """
         return self.data.get('minimum')
 
     @property
     def maximum(self):
-        # TODO: set for only integer/number types
+        """
+        Returns the parameter's minimum value.
+        Applicable only for parameters of type ``integer`` or ``number``.
+        """
         return self.data.get('maximum')
 
     @property
     def repeat(self):
+        """
+        Returns a boolean if the parameter can be repeated.
+        """
         return self.data.get('repeat')
 
     def __repr__(self):
-        return "< {0} Param: {1} >".format(self.param_type, self.name)
+        return "<{0}Parameter(name='{1}')>".format(self.param_type, self.name)
 
 
 class JSONFormParameter(object):   # pragma: no cover
@@ -112,30 +178,87 @@ class JSONFormParameter(object):   # pragma: no cover
 
 
 class URIParameter(BaseParameter):
+    """
+    URI parameter with properties defined by the RAML spec's
+    'Named Parameters' section, e.g. ``/foo/{id}`` where ``id``
+    is the name of URI parameter, and ``data`` are the
+    defined RAML attributes (e.g. ``required=True``, ``type=string``)
+
+    :param str param: The parameter name
+    :param dict data: All defined data of the parameter
+    :param bool required: Default is True
+    """
     def __init__(self, param, data, required=True):
         BaseParameter.__init__(self, param, data, "URI")
         self.required = required
 
 
 class QueryParameter(BaseParameter):
+    """
+    Query parameter with properties defined by the RAML spec's
+    'Named Parameters' section, e.g.:
+
+    ``/foo/bar?baz=123``
+
+    where ``baz`` is the Query Parameter name, and ``data`` are the
+    defined RAML attributes (e.g. ``required=True``, ``type=string``)
+
+    :param str param: The parameter name
+    :param dict data: All defined data of the parameter
+    :param bool required: Default is True
+    """
     def __init__(self, param, data):
         BaseParameter.__init__(self, param, data, "Query")
 
     @property
     def required(self):
+        """
+        Returns a boolean if the the parameter and its value MUST be present.
+        Defaults to ``False`` if not defined, except for ``URIParameter``,
+        where the default is ``True`` if omitted.
+        """
         return self.data.get('required')
 
 
 class FormParameter(BaseParameter):
+    """
+    Form parameter with properties defined by the RAML spec's
+    'Named Parameters' section, e.g.:
+
+    ``curl -X POST https://api.com/foo/bar -d baz=123``
+
+    where ``baz`` is the Form Parameter name, and ``data`` are the
+    defined RAML attributes (e.g. ``required=True``, ``type=string``).
+
+    :param str param: The parameter name
+    :param dict data: All defined data of the parameter
+    """
     def __init__(self, param, data):
         BaseParameter.__init__(self, param, data, "Form")
 
     @property
     def required(self):
+        """
+        Returns a boolean if the the parameter and its value MUST be present.
+        Defaults to ``False`` if not defined, except for ``URIParameter``,
+        where the default is ``True`` if omitted.
+        """
         return self.data.get('required')
 
 
 class Header(BaseParameter):
+    """
+    Header with properties defined by the RAML spec's
+    'Named Parameters' section, e.g.:
+
+    ``curl -H 'X-Some-Header: foobar' ...``
+
+    where ``X-Some-Header`` is the Header name, and ``data`` are the
+    defined RAML attributes (e.g. ``required=True``, ``type=string``).
+
+    :param str param: The parameter name
+    :param dict data: All defined data of the parameter
+    """
     def __init__(self, name, data, method):
         BaseParameter.__init__(self, name, data, "Header")
         self.method = method

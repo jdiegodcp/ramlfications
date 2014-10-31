@@ -36,7 +36,9 @@ class APIRoot(object):
     @property
     def resources(self):
         """
-        Returns a dictionary of RAML resources/endpoints
+        Returns a dict of RAML resources/endpoints, with keys set to the
+        method + resource display name (e.g. ``get-item``) and values set
+        to the ``Resource`` object.
         """
         resource_stack = ResourceStack(self, self.raml).yield_resources()
         resource = OrderedDict()
@@ -47,22 +49,35 @@ class APIRoot(object):
 
     @property
     def title(self):
-        """Title of API"""
+        """
+        Returns the title property defined in the root section of the API.
+        """
         return self.raml.get('title')
 
     @property
     def version(self):
-        """API version"""
+        """
+        Returns the API version.
+        """
         return self.raml.get('version')
 
     @property
     def protocols(self):
-        """Supported protocols"""
+        """
+        Returns the supported protocols of the API.
+        """
         return self.raml.get('protocols')
 
     @property
     def base_uri(self):
-        """Base URI of API"""
+        """
+        Returns the base URI of API.
+
+        **Note:** optional during development, required after implementation.
+
+        :raises RAMLParserError: if no ``version`` is defined but is
+        referenced in the ``baseUri`` parameter.
+        """
         base_uri = self.raml.get('baseUri')
         if base_uri:
             if "{version}" in base_uri:
@@ -77,7 +92,13 @@ class APIRoot(object):
 
     @property
     def uri_parameters(self):
-        """URI Parameters"""
+        """
+        Returns URI Parameters available for the baseUri and all \
+        resources/endpoints.
+
+        :raises RAMLParserError: if ``version`` is defined (``version``
+        can only be used in ``baseUriParameters``).
+        """
         uri_params = self.raml.get('uriParameters')
         if uri_params:
             params = []
@@ -91,7 +112,11 @@ class APIRoot(object):
 
     @property
     def base_uri_parameters(self):
-        """URI Parameters for base_uri"""
+        """
+        Returns URI Parameters for meant specifically for the ``base_uri``.
+
+        **Note:** optional during development, required after implementation.
+        """
         base_uri_params = self.raml.get('baseUriParameters')
         if base_uri_params:
             uri_params = []
@@ -102,7 +127,18 @@ class APIRoot(object):
 
     @property
     def media_type(self):
-        """Supported Media Types"""
+        """
+        Returns the supported Media Types of the API.
+
+        Valid media types:
+
+        * ``text/yaml``, ``text/x-yaml``, ``application/yaml``,\
+         ``application/x-yaml``
+        * Any defined in http://www.iana.org/assignments/media-types
+        * A custom type that follows the regex:\
+        ``application\/[A-Za-z.-0-1]*+?(json|xml)``
+
+        """
         return self.raml.get('mediaType')
 
     @property
@@ -119,7 +155,12 @@ class APIRoot(object):
 
     @property
     def documentation(self):
-        """User Documentation"""
+        """
+        Returns a list of Documentation objects meant for user documentation
+        of the for the API, or ``None`` if no documentation is defined.
+
+        :raises RAMLParserError: if can not parse documentation.
+        """
         documentation = self.raml.get('documentation')
         if documentation:
             if not isinstance(documentation, list):
@@ -134,7 +175,13 @@ class APIRoot(object):
 
     @property
     def security_schemes(self):
-        """Supported Security Schemes"""
+        """
+        Returns a list of SecurityScheme objects supported by the API,
+        or ``None`` if none are defined.
+
+        Valid security schemes are: OAuth 1.0, OAuth 2.0, Basic Authentication,
+         Digest Authentication, and API-defined auth with ``x-{other}``.
+        """
         return SecuritySchemes(self.raml).security_schemes
 
     @property
@@ -191,12 +238,20 @@ class APIRoot(object):
                     traits=list(set(_traits_params)))
 
     def get_parameters(self):
-        """Parameters for traits and/or resource_types"""
+        """
+        Returns <<parameters>> used in traits and/or resource_types.
+        """
         return self._parse_parameters()
 
     @property
     def schemas(self):
-        """User-defined schema with XML, JSON, YAML, etc"""
+        """
+        Returns a dict of user-defined schemas that may be applied anywhere
+        in the API definition.
+
+        Current explicit supported types are XML, JSON, YAML. Other schema
+        definitions may work at your own risk.
+        """
         return self.raml.get('schemas')
 
     def __repr__(self):
@@ -209,7 +264,9 @@ class ResourceStack(object):
         self.raml = raml_file
 
     def yield_resources(self):
-        """Yields Resource objects for the API defined in the ramlfile"""
+        """
+        Yields Resource objects for the API defined in the RAML File.
+        """
         available_methods = ['get', 'post', 'put', 'delete',
                              'patch', 'head', 'options']
         resource_stack = []
@@ -236,6 +293,10 @@ class ResourceStack(object):
 
 
 class Resource(object):
+    """
+    An API's endpoint (resource) defined in RAML, identified by a leading slash,
+    ``/``.
+    """
     def __init__(self, name, data, method, api, parent=None):
         self.name = name
         self.data = data
@@ -252,8 +313,11 @@ class Resource(object):
     @property
     def display_name(self):
         """
-        Returns either the defined displayName for the Resource, or its
-        name if none is defined.
+        Returns the Resource's display name.
+
+        A friendly name used only for display or documentation purposes.
+
+        If ``displayName`` is not specified in RAML, it defaults to ``name``.
         """
         display_name = self.data.get('displayName')
         if not display_name:
@@ -262,16 +326,24 @@ class Resource(object):
 
     @property
     def description_raw(self):
-        """Returns raw (Markdown) text of Resource description"""
+        """
+        The description attribute describing the intended use or meaning
+        of the Resource.  May be written in Markdown.
+        """
         return self.data.get(self.method).get('description')
 
     @property
     def description_html(self):
-        """Returns HTML output of Resource description"""
+        """
+        The ``description_raw`` attribute parsed into HTML.
+        """
         return markdown.markdown(self.description_raw)
 
     @property
     def headers(self):
+        """
+        Returns a list of Header objects that the endpoint accepts.
+        """
         _headers = self.data.get(self.method).get('headers')
         headers = []
         if _headers:
@@ -281,12 +353,22 @@ class Resource(object):
 
     @property
     def path(self):
-        """Returns string URI path of Resource"""
+        """
+        Returns string URI path of Resource.
+
+        Not explicitly defined in RAML but inferred based off of
+        the Resource ``name``.
+        """
         return self._get_path_to(self)
 
     @property
     def absolute_path(self):
-        """Return the full API URL for Resource"""
+        """
+        Return the full API URL for Resource.
+
+        Not explicitly defined in RAML but inferred based off of
+        ``path`` and the API root's ``base_uri``.
+        """
         return self.api.base_uri + self.path
 
     def _get_secured_by(self):
@@ -436,12 +518,22 @@ class Resource(object):
 
     @property
     def resource_type(self):
-        """Returns a list of resource types assigned to the resource"""
+        """
+        Returns a list of resource types assigned to the resource.
+
+        :raises RAMLParserError: Too many resource types applied to one \
+        resource.
+        :raises RAMLParserError: Resource not defined in the API Root.
+        :raises RAMLParserError: If resource type is something other \
+        than a ``str`` or ``dict``.
+        """
         return self._get_resource_type()
 
     @property
     def traits(self):
-        """Returns a list of traits assigned to the resource"""
+        """
+        Returns a list of traits assigned to the Resource.
+        """
         endpoint_traits = self.data.get('is', [])
         method_traits = self.data.get(self.method).get('is', [])
         return endpoint_traits + method_traits
@@ -465,7 +557,11 @@ class Resource(object):
 
     @property
     def protocols(self):
-        """Returns a list of supported protocols for the particular resource"""
+        """
+        Returns a list of supported protocols for the particular resource.
+
+        Overrides the root API's protocols.
+        """
         return self.data.get(self.method).get('protocols', [])
 
     def _get_responses(self, node):
@@ -483,7 +579,11 @@ class Resource(object):
 
     @property
     def responses(self):
-        """Returns a list of Response objects of a resource"""
+        """
+        Returns a list of Response objects of a resource
+
+        :raises RAMLParserError: Unsupported HTTP Response code
+        """
         return self._get_responses(self)
 
     def _get_body(self, node):
@@ -496,7 +596,9 @@ class Resource(object):
 
     @property
     def body(self):
-        """Returns a Body object of a request"""
+        """
+        Returns a Body object of a request, if defined in RAML.
+        """
         return self._get_body(self)
 
     def _get_uri_params(self, node):
@@ -511,11 +613,15 @@ class Resource(object):
 
     @property
     def uri_params(self):
-        """Returns a list of URIParameter objects of a resource"""
+        """
+        Returns a list of ``URIParameter`` objects of a ``Resource``.
+        """
         return self._get_uri_params(self)
 
     def _get_base_uri_params(self, node):
-        """Returns a list of URIParameter objects for the base_uri"""
+        """
+        Returns a list of ``URIParameter`` objects for the ``base_uri``
+        """
         base_uri_params = []
         if node.parent:
             base_uri_params = self._get_base_uri_params(node.parent)
@@ -526,11 +632,12 @@ class Resource(object):
 
     @property
     def base_uri_params(self):
-        """Returns a list of Base URIParameter objects of a Resource"""
+        """
+        Returns a list of Base ``URIParameter`` objects of a Resource.
+        """
         return self._get_base_uri_params(self)
 
     def _get_query_params(self, node):
-        """Returns a list of QueryParameter objects"""
         query_params = []
         if 'queryParameters' in node.data[self.method]:
             items = node.data[self.method]['queryParameters'].items()
@@ -540,7 +647,9 @@ class Resource(object):
 
     @property
     def query_params(self):
-        """Returns a list of QueryParameter objects"""
+        """
+        Returns a list of ``QueryParameter`` objects.
+        """
         return self._get_query_params(self)
 
     def _get_form_params(self, node):
@@ -559,12 +668,17 @@ class Resource(object):
 
     @property
     def form_params(self):
-        """Returns a list of FormParameter objects"""
+        """
+        Returns a list of FormParameter objects, or ``None`` if no form
+        parameters are defined.
+        """
         return self._get_form_params(self)
 
     @property
     def req_content_types(self):
-        """Returns a list of ContentType objects that the Resource supports"""
+        """
+        Returns a list of ``ContentType`` objects that the Resource supports.
+        """
         content_type = []
         if self.method in ["post", "put", "delete", "patch"]:
             if self.data.get(self.method).get('body'):
