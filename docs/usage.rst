@@ -11,9 +11,10 @@ To parse a RAML file, include ramlfications in your project and call the parse f
 
 .. code-block:: python
 
-   >>> from ramlfications import parser
+   >>> import ramlfications
    >>> RAML_FILE = "/path/to/my-api.raml"
-   >>> api = parser.APIRoot(RAML_FILE)
+   >>> loaded_raml = ramlfications.load(RAML_FILE)
+   >>> api = ramlfications.parse(loaded_raml)
    >>> api.title
    'Spotify Web API'
    >>>
@@ -71,10 +72,10 @@ To validate a RAML file with Python:
 
 .. code-block:: python
 
-   from ramlfications import validate
-
-   RAML_FILE = "/path/to/my-api.raml"
-   valid_client = validate.validate()
+   >>> import ramlfications
+   >>> RAML_FILE = "/path/to/my-api.raml"
+   >>> loaded_raml = ramlfications.load(RAML_FILE)
+   >>> ramlfications.validate(loaded_raml)
 
 Tree
 ----

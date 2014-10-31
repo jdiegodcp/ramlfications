@@ -5,9 +5,10 @@ To parse a RAML file, include ramlfications in your project and call the parse f
 
 .. code-block:: python
 
-   >>> from ramlfications import parser
+   >>> import ramlfications
    >>> RAML_FILE = "/path/to/my-api.raml"
-   >>> api = parser.APIRoot(RAML_FILE)
+   >>> loaded_raml = ramlfications.load(RAML_FILE)
+   >>> api = ramlfications.parse(loaded_raml)
 
 
 RAML Root Section
@@ -28,7 +29,7 @@ The Basics
    >>> api.base_uri
    'https://{domainName}.spotify.com/v1'
    >>> api.base_uri_parameters
-   [< URI Param: domainName >]
+   [<URIParameter(name='domainName')>]
    >>>
    >>> api.protocols
    ['HTTPS']
@@ -39,7 +40,7 @@ User Documentation
 .. code-block:: python
 
    >>> api.documentation
-   [< Documentation: Spotify Web API Docs >]
+   [<Documentation(title='Spotify Web API Docs')>]
    >>> doc = api.documentation[0]
    >>> doc.title
    'Spotify Web API Docs'
@@ -65,14 +66,14 @@ Check out :doc:`api` for full definition of ``APIRoot`` and its associated attri
 Security Schemes
 ^^^^^^^^^^^^^^^^
 
-`RAML supports`_ OAuth 1, OAuth 2, Basic & Digest, and any authentication scheme self-defined with an x-header.
+`RAML supports`_ OAuth 1, OAuth 2, Basic & Digest, and any authentication scheme self-defined with an ``x-{other}`` header.
 
 To parse auth schemes:
 
 .. code-block:: python
 
    >>> api.security_schemes
-   [< Security Scheme: OAuth 2.0 >]
+   [<SecurityScheme(name='oauth_2_0')>]
    >>> oauth2 = api.security_schemes[0]
    >>> oauth2.name
    'oauth_2_0'
@@ -88,10 +89,10 @@ And its related Headers and Responses:
 .. code-block:: python
 
    >>> oauth2.described_by
-   {'headers': [< Header Param: Authorization >], 'responses': [< Response: 401 >, < Response: 403 >]}
+   {'headers': [<HeaderParameter(name='Authorization')>], 'responses': [<Response(code='401')>, <Response(code='403')>]}
    >>> first_header = oauth2.described_by['headers'][0]
    >>> first_header
-   < Header Param: Authorization >
+   <HeaderParameter(name='Authorization')>
    >>> first_header.name
    'Authorization'
    >>> first_headers.description_raw
@@ -100,7 +101,7 @@ And its related Headers and Responses:
    u'<p>Used to send a valid OAuth 2 access token.</p>\n'
    >>> resps = oauth2.described_by['responses']
    >>> resps
-   [< Response: 401 >, < Response: 403 >]
+   [<Response(code='401')>, <Response(code='403')>]
    >>> resp[0].code
    401
    >>> resp[0].description_raw

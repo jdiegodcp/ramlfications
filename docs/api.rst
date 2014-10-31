@@ -50,6 +50,11 @@ API Definition
    :undoc-members:
    :inherited-members:
 
+.. autoclass:: ContentType
+   :members:
+   :undoc-members:
+   :inherited-members:
+
 .. autoclass:: Body
    :members:
    :undoc-members:
