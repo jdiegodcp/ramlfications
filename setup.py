@@ -1,14 +1,26 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
-
+import io
 from setuptools import setup, find_packages
+
+
+def read(*filenames, **kwargs):
+    encoding = kwargs.get('encoding', 'utf-8')
+    sep = kwargs.get('sep', '\n')
+    buf = []
+    for fl in filenames:
+        with io.open(fl, encoding=encoding) as f:
+            buf.append(f.read())
+    return sep.join(buf)
+
+long_description = read('README.md', 'CHANGES.md')
 
 setup(
     name="ramlfications",
     version="0.1.0",
     description="Python RAML parser",
-    long_description=("TODO"),
+    long_description=long_description,
     url="https://ramlfications.readthedocs.org/",
     license="Apache License 2.0",
     author="Lynn Root",
@@ -40,7 +52,7 @@ setup(
         "nose"
     ],
     install_requires=[
-        "pyyaml", "ordereddict", "click", "markdown2"
+        "pyyaml", "click", "markdown2"
     ],
     tests_require=[
         "nose",
