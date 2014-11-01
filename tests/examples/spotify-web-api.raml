@@ -1,5 +1,5 @@
 #%RAML 0.8
-title: Spotify Web API
+title: Spotify Web API Demo
 version: v1
 protocols: [ HTTPS ]
 baseUri: https://api.spotify.com/{version}
@@ -7,8 +7,10 @@ mediaType: application/json
 documentation:
   - title: Spotify Web API Docs
     content: |
-      Welcome to the _Spotify Web API_ specification. For more information about
-      how to use the API, check out [developer site](https://developer.spotify.com/web-api/).
+      Welcome to the _Spotify Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+      For more information about how to use the API, check out [developer
+       site](https://developer.spotify.com/web-api/).
 schemas:
   - Playlist: !include includes/post-playlist-schema.json
 resourceTypes:
@@ -202,7 +204,6 @@ traits:
 /search:
   displayName: search-item
   get:
-    # is: [ filterable ]
     is: [ paged ]
     description: |
       [Search for an Item](https://developer.spotify.com/web-api/search-item/)
@@ -320,7 +321,6 @@ traits:
         body:
           application/json:
             schema: Playlist
-            #example: !include examples/playlist-simple-get.json
   /{playlist_id}:
     type: item
     displayName: playlist
@@ -341,7 +341,6 @@ traits:
           body:
             application/json:
               schema: Playlist
-              #example: !include examples/playlist.json
     put:
       description: |
         [Change a Playlist's Details](https://developer.spotify.com/web-api/change-playlist-details/)
@@ -350,21 +349,6 @@ traits:
         application/json:
           schema: !include includes/post-playlist-schema.json
           example: !include includes/post-playlist-example.json
-        # NOTE: If we ever accept form encoded
-        # application/x-www-form-urlencoded:
-        #   formParameters:
-        #     name:
-        #       displayName: Playlist Name
-        #       description: Name of the new playlist
-        #       type: string
-        #       required: true
-        #       example: Awesomesauce
-        #     public:
-        #       displayName: Public
-        #       description: Make playlist publicly available
-        #       type: boolean
-        #       required: false
-        #       example: true
     /tracks:
       type: collection
       displayName: playlist-tracks
@@ -379,57 +363,15 @@ traits:
         securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
         body:
           application/json:
-            #schema: !include schemas/post-playlist-tracks.json
-            #example: !include examples/post-playlist-tracks.json
-        # NOTE: This is a valid option
-        # TODO: Have the user elect between POST'ing options
-        # queryParameters:
-        #   position:
-        #     displayName: Position
-        #     description: The position of where to insert/add tracks
-        #     example: 0
-        #     type: integer
-        #     required: false
-        #     default: 0
-        #   uris:
-        #     displayName: Spotify Track URIs
-        #     description: A comma-separated list of Spotify track URIs to add. A maximum of 100 tracks can be added in one request.
-        #     type: string
-        #     required: true
-        #     example: 'spotify:track:4iV5W9uYEdYUVa79Axb7Rh,spotify:track:1301WleyT98MSxVHPZCA6M'
       put:
         description: |
           [Replace a Playlist's tracks](https://developer.spotify.com/web-api/replace-playlists-tracks/)
         securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
         body:
           application/json:
-            #schema: !include schemas/put-playlist-tracks.json
-            #example: !include examples/put-playlist-tracks.json
-        # NOTE: This is a valid option
-        # TODO: Have the user elect between POST'ing options
-        # queryParameters:
-        #   uris:
-        #     displayName: Spotify Track URIs
-        #     description: A comma-separated list of Spotify track URIs to set. A maximum of 100 tracks can be set in one request.
-        #     type: string
-        #     required: true
-        #     example: 'spotify:track:4iV5W9uYEdYUVa79Axb7Rh,spotify:track:1301WleyT98MSxVHPZCA6M'
       delete:
         description: |
           [Remove Tracks from a Playlist](https://developer.spotify.com/web-api/remove-tracks-playlist/)
         securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
         body:
           application/json:
-            #schema: !include schemas/delete-playlist-tracks.json
-            #example: !include examples/delete-playlist-tracks.json
-        # NOTE: Currently, our Web API only accepts a json list of tracks, not an actual JSON dictionary
-        # like {'uri': ['foo', 'bar']}
-        # body:
-        #   application/x-www-form-urlencoded:
-        #     formParameters:
-        #       uris:
-        #         displayName: Spotify Track URIs
-        #         description: A comma-separated list of Spotify track URIs to add. A maximum of 100 tracks can be added in one request.
-        #         type: string
-        #         required: true
-        #         example: 'spotify:track:4iV5W9uYEdYUVa79Axb7Rh, spotify:track:1301WleyT98MSxVHPZCA6M'

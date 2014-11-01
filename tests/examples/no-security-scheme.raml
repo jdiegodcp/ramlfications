@@ -1,5 +1,5 @@
 #%RAML 0.8
-title: Spotify Web API
+title: Spotify Web API Demo - No Security Scheme
 version: v1
 protocols: [ HTTPS ]
 baseUri: https://api.spotify.com/{version}
@@ -7,8 +7,10 @@ mediaType: application/json
 documentation:
   - title: Spotify Web API Docs
     content: |
-      Welcome to the _Spotify Web API_ specification. For more information about
-      how to use the API, check out [developer site](https://developer.spotify.com/web-api/).
+      Welcome to the _Spotify Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+      For more information about how to use the API, check out [developer
+       site](https://developer.spotify.com/web-api/).
 /tracks:
   displayName: several-tracks
   get:

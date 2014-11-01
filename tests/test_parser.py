@@ -40,7 +40,7 @@ class TestAPIRoot(BaseTestCase):
             self.assertIsInstance(resource, parser.Resource)
 
     def test_title(self):
-        title = "Spotify Web API"
+        title = "Spotify Web API Demo"
         self.assertEqual(self.api.title, title)
 
     def test_protocols(self):
@@ -190,10 +190,12 @@ class TestAPIRoot(BaseTestCase):
     def test_documentation(self):
         # TODO: add example that contains multiple examples
         title = "Spotify Web API Docs"
-        content_raw = ("Welcome to the _Spotify Web API_ specification. "
-                       "For more information about\nhow to use the API, "
-                       "check out [developer site]"
-                       "(https://developer.spotify.com/web-api/).\n")
+        content_raw = ("""\
+Welcome to the _Spotify Web API_ demo specification. This is *not* \
+the complete API\nspecification, and is meant for testing purposes \
+within this RAML specification.\nFor more information about how to \
+use the API, check out [developer\n site](https://developer.spotify.\
+com/web-api/).\n""")
 
         self.assertIsNotNone(self.api.documentation)
         self.assertIsInstance(self.api.documentation[0], parser.Documentation)
@@ -557,14 +559,20 @@ class TestDocumentation(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         documentation = api.documentation[0]
 
-        expected_content = ("Welcome to the _Spotify Web API_ specification. "
-                            "For more information about\nhow to use the API, "
-                            "check out [developer site]"
-                            "(https://developer.spotify.com/web-api/).\n")
-        expected_html = ("<p>Welcome to the <em>Spotify Web API</em> "
-                         "specification. For more information about\nhow to "
-                         "use the API, check out <a href=\"https://developer."
-                         "spotify.com/web-api/\">developer site</a>.</p>\n")
+        expected_content = ("Welcome to the _Spotify Web API_ demo "
+                            "specification. This is *not* the complete API\n"
+                            "specification, and is meant for testing purposes "
+                            "within this RAML specification.\nFor more "
+                            "information about how to use the API, check out "
+                            "[developer\n site](https://developer.spotify."
+                            "com/web-api/).\n")
+        expected_html = ("<p>Welcome to the <em>Spotify Web API</em> demo "
+                         "specification. This is <em>not</em> the complete "
+                         "API\nspecification, and is meant for testing "
+                         "purposes within this RAML specification.\nFor more "
+                         "information about how to use the API, check out "
+                         "<a href=\"https://developer.spotify.com/web-api/\">"
+                         "developer\n site</a>.</p>\n")
 
         self.assertEqual(documentation.content_raw, expected_content)
         self.assertEqual(documentation.content_html, expected_html)

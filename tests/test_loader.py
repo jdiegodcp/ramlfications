@@ -37,7 +37,7 @@ class TestRAMLLoader(BaseTestCase):
                 'foo': 'FooBar',
                 'bar': 'BarBaz'
             },
-            'title': 'GitHub API',
+            'title': 'GitHub API Demo - Includes',
             'version': 'v3'
         }
 

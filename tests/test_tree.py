@@ -34,28 +34,26 @@ class TestPrintTree(BaseTestCase):
         resources = tree.get_tree(self.api)
         ordered_res = tree.order_resources(resources)
 
-        expected_res = ("""OrderedDict([('/tracks', \
-[('GET', <Resource(name='/tracks')>)]), ('/tracks/{id}', \
-[('GET', <Resource(name='/{id}')>)]), \
-('/users/{user_id}/playlists', \
-[('GET', <Resource(name='/users/{user_id}/playlists')>)]), \
-('/users/{user_id}/playlists/{playlist_id}', \
-[('PUT', <Resource(name='/{playlist_id}')>)])])\
-""")
+        expected_res = (
+            "OrderedDict([('/tracks', [('GET', <Resource(name='/tracks')"
+            ">)]), ('/tracks/{id}', [('GET', <Resource(name='/{id}')>)]), "
+            "('/users/{user_id}/playlists', [('GET', <Resource(name="
+            "'/users/{user_id}/playlists')>)]), ('/users/{user_id}/playlists/"
+            "{playlist_id}', [('PUT', <Resource(name='/{playlist_id}')>)])])")
         self.assertEqual(str(ordered_res), expected_res)
 
     def test_pprint_tree_light(self):
-        expected_result = ("""\
-\033[1;39m===============\033[1;m\n\
-\033[1;32mSpotify Web API\033[1;m\n\
-\033[1;39m===============\033[1;m\n\
-\033[1;32mBase URI: https://api.spotify.com/v1\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m– /tracks\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m  – /tracks/{id}\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m– /users/{user_id}/playlists\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m  – /users/{user_id}/playlists/{playlist_id}\033\
-[1;m\n\
-""")
+        expected_result = (
+            "\033[1;39m==================================\033[1;m\n"
+            "\033[1;32mSpotify Web API Demo - Simple Tree\033[1;m\n"
+            "\033[1;39m==================================\033[1;m\n"
+            "\033[1;32mBase URI: https://api.spotify.com/v1\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m– /tracks\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m  – /tracks/{id}\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m– /users/{user_id}/playlists"
+            "\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m  – /users/{user_id}/playlists/"
+            "{playlist_id}\033[1;m\n")
         resources = tree.get_tree(self.api)
         ordered_res = tree.order_resources(resources)
         tree.pprint_tree(self.api, ordered_res, 'light', 0)
@@ -63,17 +61,17 @@ class TestPrintTree(BaseTestCase):
         self.assertEqual(sys.stdout.getvalue(), expected_result)
 
     def test_pprint_tree_dark(self):
-        expected_result = ("""\
-\033[1;30m===============\033[1;m\n\
-\033[1;35mSpotify Web API\033[1;m\n\
-\033[1;30m===============\033[1;m\n\
-\033[1;35mBase URI: https://api.spotify.com/v1\033[1;m\n\
-\033[1;30m|\033[1;m\033[1;36m– /tracks\033[1;m\n\
-\033[1;30m|\033[1;m\033[1;36m  – /tracks/{id}\033[1;m\n\
-\033[1;30m|\033[1;m\033[1;36m– /users/{user_id}/playlists\033[1;m\n\
-\033[1;30m|\033[1;m\033[1;36m  – /users/{user_id}/playlists/{playlist_id}\
-\033[1;m\n\
-""")
+        expected_result = (
+            "\033[1;30m==================================\033[1;m\n"
+            "\033[1;35mSpotify Web API Demo - Simple Tree\033[1;m\n"
+            "\033[1;30m==================================\033[1;m\n"
+            "\033[1;35mBase URI: https://api.spotify.com/v1\033[1;m\n"
+            "\033[1;30m|\033[1;m\033[1;36m– /tracks\033[1;m\n"
+            "\033[1;30m|\033[1;m\033[1;36m  – /tracks/{id}\033[1;m\n"
+            "\033[1;30m|\033[1;m\033[1;36m– /users/{user_id}/playlists"
+            "\033[1;m\n"
+            "\033[1;30m|\033[1;m\033[1;36m  – /users/{user_id}/playlists/"
+            "{playlist_id}\033[1;m\n")
         resources = tree.get_tree(self.api)
         ordered_res = tree.order_resources(resources)
         tree.pprint_tree(self.api, ordered_res, 'dark', 0)
@@ -81,21 +79,21 @@ class TestPrintTree(BaseTestCase):
         self.assertEqual(sys.stdout.getvalue(), expected_result)
 
     def test_pprint_tree_light_v(self):
-        expected_result = ("""\
-\033[1;39m===============\033[1;m\n\
-\033[1;32mSpotify Web API\033[1;m\n\
-\033[1;39m===============\033[1;m\n\
-\033[1;32mBase URI: https://api.spotify.com/v1\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m– /tracks\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m  – /tracks/{id}\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m    ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m– /users/{user_id}/playlists\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m  – /users/{user_id}/playlists/{playlist_id}\
-\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m    ⌙ PUT\033[1;m\n\
-""")
+        expected_result = (
+            "\033[1;39m==================================\033[1;m\n"
+            "\033[1;32mSpotify Web API Demo - Simple Tree\033[1;m\n"
+            "\033[1;39m==================================\033[1;m\n"
+            "\033[1;32mBase URI: https://api.spotify.com/v1\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m– /tracks\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m  – /tracks/{id}\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m    ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m– /users/{user_id}/playlists"
+            "\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m  – /users/{user_id}/playlists/"
+            "{playlist_id}\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m    ⌙ PUT\033[1;m\n")
         resources = tree.get_tree(self.api)
         ordered_res = tree.order_resources(resources)
         tree.pprint_tree(self.api, ordered_res, 'light', 1)
@@ -103,32 +101,31 @@ class TestPrintTree(BaseTestCase):
         self.assertEqual(sys.stdout.getvalue(), expected_result)
 
     def test_pprint_tree_light_vv(self):
-        expected_result = ("""\
-\033[1;39m===============\033[1;m\n\
-\033[1;32mSpotify Web API\033[1;m\n\
-\033[1;39m===============\033[1;m\n\
-\033[1;32mBase URI: https://api.spotify.com/v1\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m– /tracks\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m     \033[1;31mQuery Params\033[1;m\n\
-\033[1;39m|\033[1;m      ⌙ \033[1;31mids\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m  – /tracks/{id}\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m    ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m       \033[1;31mURI Params\033[1;m\n\
-\033[1;39m|\033[1;m        ⌙ \033[1;31mid\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m– /users/{user_id}/playlists\
-\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m     \033[1;31mURI Params\033[1;m\n\
-\033[1;39m|\033[1;m      ⌙ \033[1;31muser_id\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m  – /users/{user_id}/playlists/\
-{playlist_id}\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m    ⌙ PUT\033[1;m\n\
-\033[1;39m|\033[1;m       \033[1;31mURI Params\033[1;m\n\
-\033[1;39m|\033[1;m        ⌙ \033[1;31muser_id\033[1;m\n\
-\033[1;39m|\033[1;m       \033[1;31mForm Params\033[1;m\n\
-\033[1;39m|\033[1;m        ⌙ \033[1;31mname\033[1;m\n\
-""")
+        expected_result = (
+            "\033[1;39m==================================\033[1;m\n"
+            "\033[1;32mSpotify Web API Demo - Simple Tree\033[1;m\n"
+            "\033[1;39m==================================\033[1;m\n"
+            "\033[1;32mBase URI: https://api.spotify.com/v1\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m– /tracks\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m     \033[1;31mQuery Params\033[1;m\n"
+            "\033[1;39m|\033[1;m      ⌙ \033[1;31mids\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m  – /tracks/{id}\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m    ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m       \033[1;31mURI Params\033[1;m\n"
+            "\033[1;39m|\033[1;m        ⌙ \033[1;31mid\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m– /users/{user_id}/playlists"
+            "\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m     \033[1;31mURI Params\033[1;m\n"
+            "\033[1;39m|\033[1;m      ⌙ \033[1;31muser_id\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m  – /users/{user_id}/playlists/"
+            "{playlist_id}\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m    ⌙ PUT\033[1;m\n"
+            "\033[1;39m|\033[1;m       \033[1;31mURI Params\033[1;m\n"
+            "\033[1;39m|\033[1;m        ⌙ \033[1;31muser_id\033[1;m\n"
+            "\033[1;39m|\033[1;m       \033[1;31mForm Params\033[1;m\n"
+            "\033[1;39m|\033[1;m        ⌙ \033[1;31mname\033[1;m\n")
         resources = tree.get_tree(self.api)
         ordered_res = tree.order_resources(resources)
         tree.pprint_tree(self.api, ordered_res, 'light', 2)
@@ -136,31 +133,34 @@ class TestPrintTree(BaseTestCase):
         self.assertEqual(sys.stdout.getvalue(), expected_result)
 
     def test_pprint_tree_light_vvv(self):
-        expected_result = ("""\
-\033[1;39m===============\033[1;m\n\
-\033[1;32mSpotify Web API\033[1;m\n\
-\033[1;39m===============\033[1;m\n\
-\033[1;32mBase URI: https://api.spotify.com/v1\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m– /tracks\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m     \033[1;31mQuery Params\033[1;m\n\
-\033[1;39m|\033[1;m      ⌙ \033[1;31mids: Spotify Track IDs\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m  – /tracks/{id}\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m    ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m       \033[1;31mURI Params\033[1;m\n\
-\033[1;39m|\033[1;m        ⌙ \033[1;31mid: Spotify Track ID\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m– /users/{user_id}/playlists\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n\
-\033[1;39m|\033[1;m     \033[1;31mURI Params\033[1;m\n\
-\033[1;39m|\033[1;m      ⌙ \033[1;31muser_id: User ID\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;33m  – /users/{user_id}/playlists/{playlist_id}\
-\033[1;m\n\
-\033[1;39m|\033[1;m\033[1;34m    ⌙ PUT\033[1;m\n\
-\033[1;39m|\033[1;m       \033[1;31mURI Params\033[1;m\n\
-\033[1;39m|\033[1;m        ⌙ \033[1;31muser_id: User ID\033[1;m\n\
-\033[1;39m|\033[1;m       \033[1;31mForm Params\033[1;m\n\
-\033[1;39m|\033[1;m        ⌙ \033[1;31mname: Playlist Name\033[1;m\n\
-""")
+        expected_result = (
+            "\033[1;39m==================================\033[1;m\n"
+            "\033[1;32mSpotify Web API Demo - Simple Tree\033[1;m\n"
+            "\033[1;39m==================================\033[1;m\n"
+            "\033[1;32mBase URI: https://api.spotify.com/v1\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m– /tracks\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m     \033[1;31mQuery Params\033[1;m\n"
+            "\033[1;39m|\033[1;m      ⌙ \033[1;31mids: Spotify Track IDs"
+            "\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m  – /tracks/{id}\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m    ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m       \033[1;31mURI Params\033[1;m\n"
+            "\033[1;39m|\033[1;m        ⌙ \033[1;31mid: Spotify Track ID"
+            "\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m– /users/{user_id}/playlists"
+            "\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m  ⌙ GET\033[1;m\n"
+            "\033[1;39m|\033[1;m     \033[1;31mURI Params\033[1;m\n"
+            "\033[1;39m|\033[1;m      ⌙ \033[1;31muser_id: User ID\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;33m  – /users/{user_id}/playlists/"
+            "{playlist_id}\033[1;m\n"
+            "\033[1;39m|\033[1;m\033[1;34m    ⌙ PUT\033[1;m\n"
+            "\033[1;39m|\033[1;m       \033[1;31mURI Params\033[1;m\n"
+            "\033[1;39m|\033[1;m        ⌙ \033[1;31muser_id: User ID\033[1;m\n"
+            "\033[1;39m|\033[1;m       \033[1;31mForm Params\033[1;m\n"
+            "\033[1;39m|\033[1;m        ⌙ \033[1;31mname: Playlist Name"
+            "\033[1;m\n")
         resources = tree.get_tree(self.api)
         ordered_res = tree.order_resources(resources)
         tree.pprint_tree(self.api, ordered_res, 'light', 3)
