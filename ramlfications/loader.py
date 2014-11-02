@@ -14,8 +14,6 @@ class RAMLLoaderError(Exception):
 class RAMLLoader(object):
     def __init__(self, raml_file):
         self.raml_file = os.path.abspath(raml_file)
-        yaml.add_constructor("!include", self._yaml_include)
-        self.raml = self._raml(raml_file)
 
     def _yaml_include(self, loader, node):
         # Get the path out of the yaml file
@@ -24,9 +22,11 @@ class RAMLLoader(object):
         with open(file_name) as inputfile:
             return yaml.load(inputfile)
 
-    def _raml(self, raml_file):
+    def load(self):
+        yaml.add_constructor("!include", self._yaml_include)
+
         try:
-            return yaml.load(open(raml_file))
+            return yaml.load(open(self.raml_file))
         except IOError as e:
             raise RAMLLoaderError(e)
 
@@ -35,4 +35,4 @@ class RAMLLoader(object):
 
 
 def load(raml_file):
-    return RAMLLoader(raml_file)
+    return RAMLLoader(raml_file).load()
