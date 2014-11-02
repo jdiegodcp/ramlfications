@@ -1,4 +1,3 @@
 PyYAML==3.11
-ordereddict==1.1
 markdown2==2.3.0
 click==3.3
