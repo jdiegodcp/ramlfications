@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
+
 from __future__ import absolute_import, division, print_function
 
 import json
@@ -31,7 +32,7 @@ class APIRoot(object):
     :param obj load_object: Loaded RAML from ``ramlfications.load(ramlfile)``
     """
     def __init__(self, load_object):
-        self.raml = load_object.raml
+        self.raml = load_object
 
     @property
     def resources(self):
