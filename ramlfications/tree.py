@@ -6,7 +6,11 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 
-from ._compat import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
+
 from .parser import APIRoot
 
 

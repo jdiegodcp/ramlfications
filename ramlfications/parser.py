@@ -9,7 +9,12 @@ import re
 
 import markdown2 as markdown
 
-from ._compat import OrderedDict, httpserver
+from six.moves import BaseHTTPServer as httpserver
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 from .parameters import (
     ContentType, FormParameter, URIParameter,

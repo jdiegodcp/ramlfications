@@ -2,7 +2,15 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 import io
+import sys
 from setuptools import setup, find_packages
+
+
+def install_requires():
+    install_requires = ["pyyaml", "click", "markdown2", "six"]
+    if sys.version_info[:2] == (2, 6):
+        install_requires.append("ordereddict")
+    return install_requires
 
 
 def read(*filenames, **kwargs):
@@ -14,7 +22,7 @@ def read(*filenames, **kwargs):
             buf.append(f.read())
     return sep.join(buf)
 
-long_description = read('README.md', 'CHANGES.md')
+long_description = read('README.rst', 'docs/changelog.rst')
 
 setup(
     name="ramlfications",
@@ -51,9 +59,7 @@ setup(
     setup_requires=[
         "nose"
     ],
-    install_requires=[
-        "pyyaml", "click", "markdown2"
-    ],
+    install_requires=install_requires(),
     tests_require=[
         "nose",
     ],

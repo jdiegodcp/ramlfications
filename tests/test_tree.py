@@ -6,7 +6,8 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 
-from ramlfications._compat import StringIO
+from six import StringIO
+
 from ramlfications import tree, parser, loader
 
 from .base import BaseTestCase
