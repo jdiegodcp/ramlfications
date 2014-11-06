@@ -81,7 +81,7 @@ class APIRoot(object):
 
         **Note:** optional during development, required after implementation.
 
-        :raises RAMLParserError: if no ``version`` is defined but is
+        :raises RAMLParserError: if no ``version`` is defined but is\
         referenced in the ``baseUri`` parameter.
         """
         base_uri = self.raml.get('baseUri')
@@ -102,7 +102,7 @@ class APIRoot(object):
         Returns URI Parameters available for the baseUri and all \
         resources/endpoints.
 
-        :raises RAMLParserError: if ``version`` is defined (``version``
+        :raises RAMLParserError: if ``version`` is defined (``version``\
         can only be used in ``baseUriParameters``).
         """
         uri_params = self.raml.get('uriParameters')
@@ -300,8 +300,8 @@ class ResourceStack(object):
 
 class Resource(object):
     """
-    An API's endpoint (resource) defined in RAML, identified by a leading slash,
-    ``/``.
+    An API's endpoint (resource) defined in RAML, identified by a leading
+    slash, ``/``.
     """
     def __init__(self, name, data, method, api, parent=None):
         self.name = name
