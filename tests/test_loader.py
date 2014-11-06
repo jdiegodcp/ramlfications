@@ -16,17 +16,17 @@ class TestRAMLLoader(BaseTestCase):
 
     def test_raml_file(self):
         raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
-        raml = loader.RAMLLoader(raml_file).raml
+        raml = loader.RAMLLoader(raml_file).load()
         self.assertIsNotNone(raml)
 
     def test_no_raml_file(self):
         raml_file = '/foo/bar.raml'
         self.assertRaises(loader.RAMLLoaderError,
-                          lambda: loader.RAMLLoader(raml_file).raml)
+                          lambda: loader.RAMLLoader(raml_file).load())
 
     def test_root_includes(self):
         raml_file = os.path.join(self.here, "examples/base-includes.raml")
-        raml = loader.RAMLLoader(raml_file).raml
+        raml = loader.RAMLLoader(raml_file).load()
 
         expected_data = {
             'external': {

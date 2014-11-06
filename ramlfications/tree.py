@@ -149,8 +149,9 @@ def pprint_tree(api, ordered_resources, print_color, verbosity):
     verbose_mapping(verbosity)(ordered_resources, color)
 
 
-def ttree(ramlfile, light, verbosity):  # pragma: no cover
-    api = APIRoot(ramlfile)
+def ttree(load_obj, light, verbosity):  # pragma: no cover
+    load_obj = load_obj.load()
+    api = APIRoot(load_obj)
     resources = get_tree(api)
     ordered_resources = order_resources(resources)
     pprint_tree(api, ordered_resources, light, verbosity)

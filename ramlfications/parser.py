@@ -261,7 +261,7 @@ class APIRoot(object):
         return self.raml.get('schemas')
 
     def __repr__(self):
-        return '<APIRoot(raml_file="{0}")>'.format(self.raml_file)
+        return '<APIRoot(raml_file="{0}")>'.format(self.load_object.raml_file)
 
 
 class ResourceStack(object):
