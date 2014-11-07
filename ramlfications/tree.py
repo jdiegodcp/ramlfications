@@ -8,8 +8,8 @@ from collections import defaultdict
 
 try:
     from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
+except ImportError:  # pragma: no cover
+    from ordereddict import OrderedDict  # pragma: no cover
 
 from .parser import APIRoot
 
@@ -150,7 +150,6 @@ def pprint_tree(api, ordered_resources, print_color, verbosity):
 
 
 def ttree(load_obj, light, verbosity):  # pragma: no cover
-    load_obj = load_obj.load()
     api = APIRoot(load_obj)
     resources = get_tree(api)
     ordered_resources = order_resources(resources)

@@ -14,6 +14,13 @@ class TestRAMLLoader(BaseTestCase):
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
 
+    def test_repr(self):
+        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
+        obj = loader.RAMLLoader(raml_file)
+
+        self.assertEqual(repr(obj), '<RAMLLoader(raml_file="{0}")>'.format(
+                         raml_file))
+
     def test_raml_file(self):
         raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
         raml = loader.RAMLLoader(raml_file).load()

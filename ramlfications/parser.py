@@ -13,7 +13,7 @@ from six.moves import BaseHTTPServer as httpserver
 
 try:
     from collections import OrderedDict
-except ImportError:
+except ImportError:  # pragma: no cover
     from ordereddict import OrderedDict
 
 from .parameters import (
@@ -37,7 +37,8 @@ class APIRoot(object):
     :param obj load_object: Loaded RAML from ``ramlfications.load(ramlfile)``
     """
     def __init__(self, load_object):
-        self.raml = load_object
+        self.raml_file = load_object.raml_file
+        self.raml = load_object.load()
 
     @property
     def resources(self):
@@ -261,7 +262,7 @@ class APIRoot(object):
         return self.raml.get('schemas')
 
     def __repr__(self):
-        return '<APIRoot(raml_file="{0}")>'.format(self.load_object.raml_file)
+        return '<APIRoot(raml_file="{0}")>'.format(self.raml_file)
 
 
 class ResourceStack(object):
@@ -615,6 +616,12 @@ class Resource(object):
         if 'uriParameters' in node.data:
             for k, v in list(node.data['uriParameters'].items()):
                 uri_params.append((URIParameter(k, v)))
+        if self.resource_type:
+            if 'uriParameters' in self.resource_type['data'][self.method]:
+                items = self.resource_type['data'][self.method][
+                    'uriParameters'].items()
+                for k, v in list(items):
+                    uri_params.append((URIParameter(k, v)))
         return uri_params
 
     @property
@@ -649,6 +656,12 @@ class Resource(object):
             items = node.data[self.method]['queryParameters'].items()
             for k, v in list(items):
                 query_params.append((QueryParameter(k, v)))
+        if self.resource_type:
+            if 'queryParameters' in self.resource_type['data'][self.method]:
+                items = self.resource_type['data'][self.method][
+                    'queryParameters'].items()
+                for k, v in list(items):
+                    query_params.append((QueryParameter(k, v)))
         return query_params
 
     @property
@@ -670,6 +683,12 @@ class Resource(object):
                     if form and form.get('formParameters'):
                         for k, v in list(form['formParameters'].items()):
                             form_params.append((FormParameter(k, v)))
+            if self.resource_type:
+                if 'formParameters' in self.resource_type['data'][self.method]:
+                    items = self.resource_type['data'][self.method][
+                        'formParameters'].items()
+                    for k, v in list(items):
+                        form_params.append((FormParameter(k, v)))
         return form_params
 
     @property

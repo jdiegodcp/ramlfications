@@ -298,7 +298,7 @@ class Response(object):
 
     @property
     def description_html(self):
-        return markdown.markdown(self.data.get('description'))
+        return markdown.markdown(self.data.get('description', ''))
 
     @property
     def headers(self):
@@ -345,7 +345,7 @@ class ResourceType(object):
 
     @property
     def description_html(self):
-        return markdown.markdown(self.data.get('description'))
+        return markdown.markdown(self.data.get('description', ''))
 
     @property
     def type(self):
@@ -477,7 +477,7 @@ class SecurityScheme(object):
 
     @property
     def description_html(self):
-        return markdown.markdown(self.data.get('description'))
+        return markdown.markdown(self.data.get('description', ''))
 
     def _get_oauth_scheme(self, scheme):
         return {'oauth_2_0': Oauth2Scheme,

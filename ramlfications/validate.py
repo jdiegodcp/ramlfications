@@ -20,7 +20,7 @@ class ValidateRAML(object):
     """
     def __init__(self, load_object):
         self.raml_file = load_object.raml_file
-        self.api = APIRoot(load_object.load())
+        self.api = APIRoot(load_object)
 
     def raml_header(self):
         """Validate Header of RAML File"""
