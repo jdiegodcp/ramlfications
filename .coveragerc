@@ -1,5 +1,4 @@
 [report]
-omit =
-    ramlfications/_compat.py
 exclude_lines =
     if __name__ == .__main__.:
+    pragma: no cover
