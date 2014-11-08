@@ -8,7 +8,6 @@ import markdown2 as markdown
 
 from ramlfications import parser, loader, parameters
 from ramlfications.parser import parse
-from ramlfications.loader import load
 from .base import BaseTestCase
 
 
@@ -108,6 +107,13 @@ class TestAPIRoot(BaseTestCase):
 
         for i, resource in enumerate(results):
             self.assertItemInList(resource.name, resources)
+            self.assertIsInstance(resource, parameters.ResourceType)
+            repr_str = "<ResourceType(name='{0}')>".format(resource.name)
+            self.assertEqual(repr(resource), repr_str)
+            for m in resource.methods:
+                self.assertIsInstance(m, parameters.ResourceTypeMethod)
+                repr_str = "<ResourceTypeMethod(name='{0}')>".format(m.name)
+                self.assertEqual(repr(m), repr_str)
 
     def test_resource_type(self):
         raml_file = os.path.join(self.here, "examples/resource-types.raml")
@@ -219,6 +225,8 @@ com/web-api/).\n""")
         self.assertIsInstance(self.api.documentation[0], parser.Documentation)
         self.assertEqual(self.api.documentation[0].title, title)
         self.assertEqual(self.api.documentation[0].content_raw, content_raw)
+        repr_str = "<Documentation(title='{0}')>".format(title)
+        self.assertEqual(repr(self.api.documentation[0]), repr_str)
 
     def test_documentation_no_title(self):
         raml = "examples/docs-no-title-parameter.raml"
@@ -324,10 +332,10 @@ com/web-api/).\n""")
 
         described_by = api.security_schemes[0].described_by
         expected_described_by_keys = sorted(['headers',
-                                            'responses',
-                                            'query_parameters',
-                                            'uri_parameters',
-                                            'form_parameters'])
+                                             'responses',
+                                             'query_parameters',
+                                             'uri_parameters',
+                                             'form_parameters'])
         self.assertListEqual(sorted(list(described_by.keys())),
                              expected_described_by_keys)
         self.assertIsInstance(described_by['headers'][0], parameters.Header)
@@ -546,6 +554,8 @@ com/web-api/).\n""")
             }
         }
         self.assertDictEqual(result[1], expected_data)
+        repr_str = '<APIRoot(raml_file="{0}")>'.format(raml_file)
+        self.assertEqual(repr(api), repr_str)
 
 
 class TestDocumentation(BaseTestCase):
@@ -765,6 +775,8 @@ class TestResource(BaseTestCase):
             self.assertDictEqual(resp.body, expected_resp_data[resp.code].get(
                                  'body'))
             self.assertIsInstance(resp, parser.Response)
+            self.assertEqual(repr(resp),
+                             "<Response(code='{0}')>".format(resp.code))
             self.assertEqual(resp.description_raw,
                              expected_resp_data[resp.code].get('description'))
             if resp.description_raw:
@@ -778,6 +790,13 @@ class TestResource(BaseTestCase):
             for h in headers:
                 self.assertIsInstance(h, parser.Header)
                 self.assertDictEqual(h.data, exp_headers)
+
+    def test_raises_incorrect_response_code(self):
+        raml_file = os.path.join(self.here, "examples/invalid-resp-code.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources['get-popular-media']
+
+        self.assertRaises(parser.RAMLParserError, lambda: resource.responses)
 
     def test_headers(self):
         raml_file = os.path.join(self.here, "examples/headers.raml")
@@ -970,6 +989,29 @@ class TestResource(BaseTestCase):
             if resource.method == 'get':
                 self.assertEqual(resource.traits, ['paged'])
 
+    def test_resource_types_too_many(self):
+        raml_file = os.path.join(self.here,
+                                 "examples/mapped-types-too-many.raml")
+        api = self.setup_parsed_raml(raml_file)
+        magazines = api.resources["get-/magazines"]
+
+        self.assertRaises(parser.RAMLParserError,
+                          lambda: magazines.resource_type)
+
+    def test_resource_types_invalid_mapped_type(self):
+        raml = "examples/mapped-types-incorrect-resource-type.raml"
+        raml_file = os.path.join(self.here, raml)
+        api = self.setup_parsed_raml(raml_file)
+
+        magazines = api.resources['get-/magazines']
+        books = api.resources['get-/books']
+
+        self.assertRaises(parser.RAMLParserError,
+                          lambda: magazines.resource_type)
+
+        self.assertRaises(parser.RAMLParserError,
+                          lambda: books.resource_type)
+
     def test_mapped_traits(self):
         raml_file = os.path.join(self.here,
                                  "examples/mapped-traits-types.raml")
@@ -981,8 +1023,40 @@ class TestResource(BaseTestCase):
         first_expected_name = 'searchableCollection'
         second_expected_name = 'collection'
 
+        first_res = api.resources['get-/books']
+        second_res = api.resources['get-/magazines']
+
+        first_expected_data = {
+            'data': {
+                u'get': {
+                    u'queryParameters': {
+                        u'digest_all_fields': {
+                            u'description': (u"If no values match the value "
+                                             "given for title, use "
+                                             "digest_all_fields instead")
+                        },
+                        u'title': {
+                            u'description': (u"Return books that have their "
+                                             "title matching the given value")
+                        }
+                    }
+                }
+            },
+            'name': 'searchableCollection'
+        }
+
+        second_expected_data = {
+            'description': 'The collection of magazines',
+            'name': 'collection',
+            'usage': ("This resourceType should be used for any collection"
+                      " of items")
+        }
+
         self.assertEqual(first.name, first_expected_name)
         self.assertEqual(second.name, second_expected_name)
+
+        self.assertDictEqual(first_res.resource_type, first_expected_data)
+        self.assertDictEqual(second_res.resource_type, second_expected_data)
 
     def test_secured_by(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")
@@ -1006,6 +1080,19 @@ class TestResource(BaseTestCase):
 
         for res in resources.values():
             self.assertIsNone(res.secured_by)
+
+    def test_method_scopes(self):
+        raml_file = os.path.join(self.here,
+                                 "examples/simple-secured-by-method.raml")
+        api = self.setup_parsed_raml(raml_file)
+        get_tracks = api.resources['get-several-tracks']
+        expected_scopes = ["user-read-email"]
+
+        for s in get_tracks.secured_by:
+            self.assertIsNotNone(s['scopes'])
+
+            for scope in s['scopes']:
+                self.assertItemInList(scope, expected_scopes)
 
     def test_scopes(self):
         raml_file = os.path.join(self.here, "examples/simple-traits.raml")

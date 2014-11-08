@@ -438,10 +438,7 @@ class Resource(object):
 
     def _fill_reserved_params(self, string):
         if "<<resourcePathName>>" in string:
-            if self.name.startswith("/"):
-                name = self.name[1:]
-            else:
-                name = self.name
+            name = self.name[1:]  # assumes all path names start with '/'
             string = string.replace("<<resourcePathName>>", name)
         if "<<resourcePath>>" in string:
             string = string.replace("<<resourcePath>>", self.name)
@@ -457,6 +454,12 @@ class Resource(object):
     def _map_resource_string(self, res_type):
         results = []
         api_resources = self.api.resource_types
+
+        api_resources_names = [a.name for a in api_resources]
+        if res_type not in api_resources_names:
+            msg = "'{0}' is not defined in API Root's resourceTypes."
+            raise RAMLParserError(msg)
+
         for r in api_resources:
             result = {}
             if r.name == res_type:
@@ -465,23 +468,13 @@ class Resource(object):
                 methods = r.methods
                 for m in methods:
                     if self.method == m.name:
-                        if m.data.get('description'):
-                            # If the method has a description attached,
-                            # then use it
-                            desc = m.data.get('description')
-                        else:
-                            # otherwise use the general description
-                            desc = r.description_raw
+                        desc = m.data.get('description', r.description_raw)
                     else:
                         # otherwise use the general description
                         desc = r.description_raw
                     result['description'] = self._fill_reserved_params(desc)
                 results.append(result)
 
-        # Would this ever get hit?
-        if len(results) > 1:
-            msg = "Too many resource types applied to one resource."
-            raise RAMLParserError(msg)
         return results[0]
 
     def _map_resource_dict(self, res_type):
@@ -516,6 +509,12 @@ class Resource(object):
                     msg = "Too many resource types applied to one resource."
                     raise RAMLParserError(msg)
                 mapped_res_type = self._map_resource_dict(res_type)
+
+            elif isinstance(res_type, list):
+                if len(res_type) > 1:
+                    msg = "Too many resource types applied to one resource."
+                    raise RAMLParserError(msg)
+                mapped_res_type = self._map_resource_string(res_type[0])
 
             else:
                 msg = "Error applying resource type '{0}'' to '{1}'.".format(
