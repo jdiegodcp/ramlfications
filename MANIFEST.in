@@ -1,4 +1,4 @@
-include *.md *.txt tox.ini docs/Makefile *.rst LICENSE .coveragerc
+include *.md *.txt tox.ini docs/Makefile *.rst LICENSE .coveragerc .travis.yml
 recursive-include ramlfications *.py
 recursive-include docs *.py *.rst
 recursive-include docs/_static *
