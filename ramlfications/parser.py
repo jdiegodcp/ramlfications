@@ -418,7 +418,7 @@ class Resource(object):
         """
         return self._get_secured_by()
 
-    def _find_params(self, string):
+    def _find_params(self, string):  # pragma: no cover
         # TODO: ignoring humanizers for now
         match = re.findall(r"(<<.*?>>)", string)
         match = [m[2:-2] for m in match]  # clean <<>> first
