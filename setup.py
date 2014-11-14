@@ -40,10 +40,10 @@ setup(
         ]
     },
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 4 – Beta",
         "Intended Audience :: Developers",
         "Natural Language :: English",
-        "License :: OSI Approved :: MIT License",
+        "License :: Apache License 2.0",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
