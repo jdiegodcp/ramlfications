@@ -10,50 +10,60 @@ from .parser import APIRoot
 VALID_RAML_VERSIONS = ["0.8"]
 
 
-class RAMLValidationError(Exception):
+class InvalidRamlFileError(Exception):
     pass
 
 
+# As valdiation does not require saved state, it's probably better
+# to get rid of the class and just have a validate function.
 class ValidateRAML(object):
     """
     Validate a particular RAML file based off of http://raml.org/spec.html
     """
     def __init__(self, load_object):
+        # Document exceptions or even better change the code to not throw
+        # Exceptions in the constructor.
         self.raml_file = load_object.raml_file
         self.api = APIRoot(load_object)
 
     def raml_header(self):
         """Validate Header of RAML File"""
+        # Line below throws IOException which is neither caught nor
+        # documented.
+        # LR: The load_object will raise an error if there is no RAML file
         with open(self.raml_file, 'r') as r:
+            # Line below might crash on empty files without any lines.
             raml_header = r.readline().split('\n')[0]
             raml_def, version = raml_header.split()
             if raml_def != "#%RAML":
                 msg = "Not a valid RAML header: {0}.".format(raml_def)
-                raise RAMLValidationError(msg)
+                raise InvalidRamlFileError(msg)
             if version not in VALID_RAML_VERSIONS:
                 msg = "Not a valid version of RAML: {0}.".format(version)
-                raise RAMLValidationError(msg)
+                raise InvalidRamlFileError(msg)
 
     def api_title(self):
         """Require an API Title."""
         title = self.api.title
         if not title:
             msg = 'RAML File does not define an API title.'
-            raise RAMLValidationError(msg)
+            raise InvalidRamlFileError(msg)
 
+    # Is this function useful or are missing versions
+    # already be caught in raml_header?
     def api_version(self):
         # TODO: require version for production; optional for development
         """Require an API Version."""
         if not self.api.version:
             msg = 'RAML File does not define an API version.'
-            raise RAMLValidationError(msg)
+            raise InvalidRamlFileError(msg)
 
     def base_uri(self):
         """Require a Base URI"""
         base_uri = self.api.base_uri
         if not base_uri:
             msg = 'RAML File does not define the baseUri.'
-            raise RAMLValidationError(msg)
+            raise InvalidRamlFileError(msg)
 
     def base_uri_params(self):
         """
@@ -64,7 +74,7 @@ class ValidateRAML(object):
             for param in base_uri_params:
                 if not param.default:
                     msg = "'{0}' needs a default parameter.".format(param.name)
-                    raise RAMLValidationError(msg)
+                    raise InvalidRamlFileError(msg)
 
     def resource_response(self):
         resources = self.api.resources
@@ -76,7 +86,7 @@ class ValidateRAML(object):
                     if key not in valid_keys:
                         msg = "'{0}' not a valid Response parameter.".format(
                             key)
-                        raise RAMLValidationError(msg)
+                        raise InvalidRamlFileError(msg)
 
     def root_documentation(self):
         docs = self.api.documentation
@@ -84,10 +94,10 @@ class ValidateRAML(object):
             for d in docs:
                 if not d.title:
                     msg = "API Documentation requires a title."
-                    raise RAMLValidationError(msg)
+                    raise InvalidRamlFileError(msg)
                 if not d.content_raw:
                     msg = "API Documentation requires content defined."
-                    raise RAMLValidationError(msg)
+                    raise InvalidRamlFileError(msg)
 
     def security_schemes(self):
         # QUESTION: Need to validate "other" schemas somehow? e.g. is
@@ -102,7 +112,7 @@ class ValidateRAML(object):
                 if s.type not in valid and not s.type.startswith("x-"):
                     msg = "'{0}' is not a valid Security Scheme.".format(
                         s.type)
-                    raise RAMLValidationError(msg)
+                    raise InvalidRamlFileError(msg)
 
     def validate(self):
         """Validates RAML elements according to RAML specification"""

@@ -9,9 +9,11 @@ import sys
 class BaseTestCase(unittest.TestCase):
     maxDiff = None
 
+    # This helper function might already exist in unnittest.
     def assertItemInList(self, item, items):
         self.assertTrue(item in items)
 
+    # Is this even properly aligned? Is this code ever executed?
     # Allow for py3.x compatability
     if not hasattr(unittest.TestCase, 'assertIsInstance'):
         def assertIsInstance(self, item, object):

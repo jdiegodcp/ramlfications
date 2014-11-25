@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 
 def install_requires():
-    install_requires = ["pyyaml", "click", "markdown2", "six"]
+    install_requires = ["pyyaml", "click", "markdown2", "six", "ansi"]
     if sys.version_info[:2] == (2, 6):
         install_requires.append("ordereddict")
     return install_requires

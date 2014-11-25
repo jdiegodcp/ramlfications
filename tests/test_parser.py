@@ -23,13 +23,14 @@ class TestAPIRoot(BaseTestCase):
         self.api = parse(self.loader)
 
     def test_parse_function(self):
+        # Move line below into assert.
         result = parse(self.loader)
 
         self.assertIsInstance(result, parser.APIRoot)
 
     def test_no_raml_file(self):
         raml_file = '/foo/bar.raml'
-        self.assertRaises(loader.RAMLLoaderError,
+        self.assertRaises(loader.LoadRamlFileError,
                           lambda: self.setup_parsed_raml(raml_file))
 
     def test_resources(self):
@@ -74,10 +75,9 @@ class TestAPIRoot(BaseTestCase):
         for i, r in enumerate(results):
             self.assertIsInstance(r, parser.URIParameter)
             self.assertEqual(r.name, list(data[i].keys())[0])
-            self.assertEqual(r.description_raw,
+            self.assertEqual(r.description.raw,
                              list(data[i].values())[0].get('description'))
-            self.assertEqual(r.type,
-                             list(data[i].values())[0].get('type'))
+            self.assertEqual(repr(r.type), "<String(name='apiPath')>")
             self.assertEqual(r.example,
                              list(data[i].values())[0].get('example'))
             self.assertEqual(r.display_name,
@@ -180,10 +180,10 @@ class TestAPIRoot(BaseTestCase):
             self.assertIsNone(r.usage)
             self.assertEqual(r.type, expected_data[r.name].get('type'))
             self.assertIsInstance(r.methods, list)
-            self.assertEqual(r.description_raw,
+            self.assertEqual(r.description.raw,
                              expected_data[r.name].get('description'))
-            if r.description_raw:
-                self.assertEqual(r.description_html,
+            if r.description.raw:
+                self.assertEqual(r.description.html,
                                  markdown.markdown(expected_data[r.name].get(
                                                    'description')))
 
@@ -247,6 +247,10 @@ com/web-api/).\n""")
         api = self.setup_parsed_raml(raml_file)
 
         scheme = "oauth_2_0"
+        # Can you move all these long data types/strings you use
+        # throughout this file into data files in the "examples"
+        # directory?
+        # This file is way too long.
         data = {
             "describedBy": {
                 'queryParameters': {
@@ -317,7 +321,7 @@ com/web-api/).\n""")
         self.assertEqual(api.security_schemes[0].name, scheme)
         self.assertDictEqual(api.security_schemes[0].data, data)
         self.assertEqual(api.security_schemes[0].type, 'OAuth 2.0')
-        self.assertEqual(api.security_schemes[0].description_raw,
+        self.assertEqual(api.security_schemes[0].description.raw,
                          data.get('description'))
 
         settings = api.security_schemes[0].settings
@@ -366,7 +370,7 @@ com/web-api/).\n""")
         raml_file = os.path.join(self.here, raml)
         api = self.setup_parsed_raml(raml_file)
 
-        desc_results = api.security_schemes[0].description_html
+        desc_results = api.security_schemes[0].description.html
         expected_results = ("<p>Spotify supports <a href=\"https://developer."
                             "spotify.com/web-api/authorization-guide/\">"
                             "OAuth 2.0</a>\nfor authenticating all API "
@@ -404,7 +408,7 @@ com/web-api/).\n""")
         self.assertEqual(scheme.name, scheme_name)
         self.assertEqual(scheme.type, data['type'])
         self.assertIsNone(scheme.described_by)
-        self.assertEqual(scheme.description_raw, data['description'])
+        self.assertEqual(scheme.description.raw, data['description'])
         self.assertEqual(scheme.data, data)
 
         settings = scheme.settings
@@ -663,7 +667,7 @@ class TestResource(BaseTestCase):
 
     def test_has_description(self):
         for resource in self.resources.values():
-            self.assertIsNotNone(resource.description_raw)
+            self.assertIsNotNone(resource.description.raw)
 
     def test_description_markdown(self):
         raml = "examples/markdown-desc-docs.raml"
@@ -671,7 +675,7 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources.get('get-artist')
 
-        html_result = resource.description_html
+        html_result = resource.description.html
         expected_result = ("<p><a href=\"https://developer.spotify.com/web-"
                            "api/get-artist/\">Get an Artist</a></p>\n")
 
@@ -777,10 +781,10 @@ class TestResource(BaseTestCase):
             self.assertIsInstance(resp, parser.Response)
             self.assertEqual(repr(resp),
                              "<Response(code='{0}')>".format(resp.code))
-            self.assertEqual(resp.description_raw,
+            self.assertEqual(resp.description.raw,
                              expected_resp_data[resp.code].get('description'))
-            if resp.description_raw:
-                self.assertEqual(resp.description_html, desc_html)
+            if resp.description.raw:
+                self.assertEqual(resp.description.html, desc_html)
             self.assertIsInstance(resp.resp_content_types, list)
 
         exp_headers = expected_resp_data[503]['headers']['X-waiting-period']
@@ -832,7 +836,7 @@ class TestResource(BaseTestCase):
 
         self.assertIsInstance(results, list)
         for item in results:
-            self.assertItemInList(item.item, list(expected_data.keys()))
+            self.assertItemInList(item.name, list(expected_data.keys()))
             self.assertIsInstance(item, parser.Header)
             self.assertDictEqual(item.data, expected_data[item.name])
 
@@ -1139,15 +1143,14 @@ class TestResource(BaseTestCase):
         }]
 
         for i, r in enumerate(foo_results):
-            self.assertItemInList(r.item, list(data[i].keys())[0])
+            self.assertItemInList(r.name, list(data[i].keys())[0])
             self.assertIsInstance(r, parser.URIParameter)
             self.assertEqual(repr(r),
                              "<URIParameter(name='{0}')>".format(r.name))
             self.assertEqual(r.name, list(data[i].keys())[0])
-            self.assertEqual(r.description_raw,
+            self.assertEqual(r.description.raw,
                              list(data[i].values())[0].get('description'))
-            self.assertEqual(r.type,
-                             list(data[i].values())[0].get('type'))
+            self.assertEqual(repr(r.type), "<String(name='domainName')>")
             self.assertEqual(r.example,
                              list(data[i].values())[0].get('example'))
             self.assertEqual(r.display_name,
@@ -1162,10 +1165,9 @@ class TestResource(BaseTestCase):
             self.assertEqual(repr(r),
                              "<URIParameter(name='{0}')>".format(r.name))
             self.assertEqual(r.name, list(data[i].keys())[0])
-            self.assertEqual(r.description_raw,
+            self.assertEqual(r.description.raw,
                              list(data[i].values())[0].get('description'))
-            self.assertEqual(r.type,
-                             list(data[i].values())[0].get('type'))
+            self.assertEqual(repr(r.type), "<String(name='domainName')>")
             self.assertEqual(r.example,
                              list(data[i].values())[0].get('example'))
             self.assertEqual(r.display_name,
@@ -1185,7 +1187,7 @@ class TestResource(BaseTestCase):
         tracks_q_params = tracks.query_params
         track_q_params = track.query_params
 
-        self.assertEqual(track_q_params, [])
+        self.assertEqual(track_q_params, None)
 
         expected_search_q_params = ['q', 'type']
         expected_search_data = {
@@ -1242,20 +1244,19 @@ class TestResource(BaseTestCase):
             self.assertIsInstance(param, parser.QueryParameter)
             self.assertEqual(repr(param),
                              "<QueryParameter(name='{0}')>".format(param.name))
-            self.assertItemInList(param.item, expected_search_q_params)
             self.assertItemInList(param.name, expected_search_q_params)
             self.assertDictEqual(param.data, expected_search_data[param.name])
             self.assertEqual(param.required,
                              expected_search_data[param.name]['required'])
             self.assertEqual(param.example,
                              expected_search_data[param.name]['example'])
-            self.assertEqual(param.description_raw,
+            self.assertEqual(param.description.raw,
                              expected_search_data[param.name]['description'])
-            self.assertEqual(param.type,
-                             expected_search_data[param.name]['type'])
+            self.assertEqual(repr(param.type), "<String(name='{0}')>".format(
+                             param.name))
             self.assertEqual(param.display_name,
                              expected_search_data[param.name]['displayName'])
-            self.assertEqual(param.enum,
+            self.assertEqual(param.type.enum,
                              expected_search_data[param.name].get('enum'))
 
         expected_tracks_q_param = 'ids'
@@ -1277,20 +1278,18 @@ class TestResource(BaseTestCase):
             self.assertDictEqual(param.data, expected_tracks_data)
             self.assertEqual(param.required, expected_tracks_data['required'])
             self.assertEqual(param.example, expected_tracks_data['example'])
-            self.assertEqual(param.description_raw,
+            self.assertEqual(param.description.raw,
                              expected_tracks_data['description'])
-            self.assertEqual(param.type, expected_tracks_data['type'])
+            self.assertEqual(repr(param.type), "<String(name='{0}')>".format(
+                             param.name))
             self.assertEqual(param.display_name,
                              expected_tracks_data['displayName'])
-            self.assertEqual(param.enum,
+            self.assertEqual(param.type.enum,
                              expected_tracks_data.get('enum'))
             self.assertIsNone(param.default)
-            self.assertIsNone(param.pattern)
-            self.assertIsNone(param.min_length)
-            self.assertIsNone(param.max_length)
-            self.assertIsNone(param.minimum)
-            self.assertIsNone(param.maximum)
-            self.assertIsNone(param.repeat)
+            self.assertIsNone(param.type.pattern)
+            self.assertIsNone(param.type.min_length)
+            self.assertIsNone(param.type.max_length)
 
     def test_uri_params(self):
         raml_file = os.path.join(self.here, "examples/simple.raml")
@@ -1305,8 +1304,8 @@ class TestResource(BaseTestCase):
         tracks_u_params = tracks.uri_params
         track_u_params = track.uri_params
 
-        self.assertEqual(tracks_u_params, [])
-        self.assertEqual(search_u_params, [])
+        self.assertIsNone(tracks_u_params)
+        self.assertIsNone(search_u_params)
 
         expected_track_u_param = 'id'
         expected_track_data = {
@@ -1319,7 +1318,6 @@ class TestResource(BaseTestCase):
             self.assertIsInstance(param, parser.URIParameter)
             self.assertEqual(repr(param), "<URIParameter(name='{0}')>".format(
                              param.name))
-            self.assertEqual(param.item, expected_track_u_param)
             self.assertEqual(param.name, expected_track_u_param)
             # assuming all URI params are true
             self.assertEqual(param.required, True)
@@ -1327,9 +1325,8 @@ class TestResource(BaseTestCase):
 
             self.assertEqual(param.display_name,
                              expected_track_data['displayName'])
-            self.assertEqual(param.type, expected_track_data['type'])
-            self.assertIsNone(param.description_raw)
-            self.assertIsNone(param.enum)
+            self.assertEqual(repr(param.type), "<String(name='id')>")
+            self.assertIsNone(param.description.raw)
 
     def test_form_params(self):
         raml_file = os.path.join(self.here, "examples/form-parameters.raml")
@@ -1364,27 +1361,19 @@ class TestResource(BaseTestCase):
             self.assertIsInstance(param, parser.FormParameter)
             self.assertEqual(repr(param), "<FormParameter(name='{0}')>".format(
                              param.name))
-            self.assertItemInList(param.item, expected_form_params)
             self.assertItemInList(param.name, expected_form_params)
             self.assertEqual(param.display_name,
                              expected_form_data[param.name]['displayName'])
-            self.assertEqual(param.type,
-                             expected_form_data[param.name]['type'])
-            self.assertEqual(param.description_raw,
+            self.assertEqual(repr(param.type), "<String(name='{0}')>".format(
+                             param.name))
+            self.assertEqual(param.description.raw,
                              expected_form_data[param.name]['description'])
             self.assertEqual(param.required,
                              expected_form_data[param.name]['required'])
             self.assertEqual(param.example,
                              expected_form_data[param.name]['example'])
-            # should all be none since it's not set in example RAML
+            # should be none since it's not set in example RAML
             self.assertIsNone(param.default)
-            self.assertIsNone(param.enum)
-            self.assertIsNone(param.pattern)
-            self.assertIsNone(param.min_length)
-            self.assertIsNone(param.max_length)
-            self.assertIsNone(param.minimum)
-            self.assertIsNone(param.maximum)
-            self.assertIsNone(param.repeat)
 
     def test_param_markdown_desc(self):
         raml = "examples/markdown-desc-docs.raml"
@@ -1393,7 +1382,7 @@ class TestResource(BaseTestCase):
 
         resource = api.resources.get('get-artist-top-tracks')
         param = resource.query_params[0]
-        html_result = param.description_html
+        html_result = param.description.html
         expected_result = ("<p>The country (<a href=\"http://en.wikipedia.org"
                            "/wiki/ISO_3166-1\">an ISO 3166-1 alpha-2 country "
                            "code</a>)</p>\n")

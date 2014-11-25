@@ -12,6 +12,7 @@ from .base import BaseTestCase
 
 class TestRAMLLoader(BaseTestCase):
     def setUp(self):
+        # Weird variable name. Please improve to something more meaningful.
         self.here = os.path.abspath(os.path.dirname(__file__))
 
     def test_repr(self):
@@ -22,13 +23,20 @@ class TestRAMLLoader(BaseTestCase):
                          raml_file))
 
     def test_raml_file(self):
+        # Everything this method does seems already be covered in test_repr
+        # Can this method be deleted?
         raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
         raml = loader.RAMLLoader(raml_file).load()
         self.assertIsNotNone(raml)
 
     def test_no_raml_file(self):
-        raml_file = '/foo/bar.raml'
-        self.assertRaises(loader.RAMLLoaderError,
+        raml_file = "examples/this-file-doesnt-exist.raml"
+        self.assertRaises(loader.LoadRamlFileError,
+                          lambda: loader.RAMLLoader(raml_file).load())
+
+    def test_none_raml_file(self):
+        raml_file = None
+        self.assertRaises(loader.LoadRamlFileError,
                           lambda: loader.RAMLLoader(raml_file).load())
 
     def test_root_includes(self):

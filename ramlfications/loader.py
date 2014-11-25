@@ -7,13 +7,19 @@ import os
 import yaml
 
 
-class RAMLLoaderError(Exception):
+class LoadRamlFileError(Exception):
     pass
 
 
 class RAMLLoader(object):
     def __init__(self, raml_file):
-        self.raml_file = os.path.abspath(raml_file)
+        self.raml_file = raml_file
+
+    def _get_abs_path(self):
+        if self.raml_file is None:
+            msg = "RAML file can not be 'None'."
+            raise LoadRamlFileError(msg)
+        return os.path.abspath(self.raml_file)
 
     def _yaml_include(self, loader, node):
         # Get the path out of the yaml file
@@ -22,13 +28,21 @@ class RAMLLoader(object):
         with open(file_name) as inputfile:
             return yaml.load(inputfile)
 
+    # Instead of having a load function it would probably be more
+    # Pythonic if you could implement the __ functions to make RAML
+    # files work with "with" like:
+    #
+    # with RAMLLoader(filename) as f:
+    #   print f
     def load(self):
         yaml.add_constructor("!include", self._yaml_include)
 
         try:
-            return yaml.load(open(self.raml_file))
+            raml = self._get_abs_path()
+            with open(raml) as r:
+                return yaml.load(r)
         except IOError as e:
-            raise RAMLLoaderError(e)
+            raise LoadRamlFileError(e)
 
     def __repr__(self):
         return '<RAMLLoader(raml_file="{0}")>'.format(self.raml_file)

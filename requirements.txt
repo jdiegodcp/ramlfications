@@ -1,3 +1,4 @@
 PyYAML==3.11
 markdown2==2.3.0
 click==3.3
+ansi==0.1.2

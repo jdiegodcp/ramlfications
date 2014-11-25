@@ -8,42 +8,58 @@ from click.testing import CliRunner
 
 from ramlfications import __main__ as main
 
-
-here = os.path.abspath(os.path.dirname(__file__))
-
-
-def test_validate():
-    raml_file = os.path.join(here, "examples/spotify-web-api.raml")
-    runner = CliRunner()
-    result = runner.invoke(main.validate, [raml_file])
-
-    assert result.exit_code == 0
-    assert result.output == "Success! Valid RAML file: {0}\n".format(raml_file)
+from .base import BaseTestCase
 
 
-def test_validate_fail():
-    raml_file = os.path.join(here, "examples/validate/no-title.raml")
-    runner = CliRunner()
-    result = runner.invoke(main.validate, [raml_file])
+class TestMain(BaseTestCase):
+    def setUp(self):
+        self.here = os.path.abspath(os.path.dirname(__file__))
+        self.runner = CliRunner()
 
-    assert result.exit_code == 0
-    assert result.output == "Error validating file {0}: {1}\n".format(
-        raml_file, 'RAML File does not define an API title.')
+    def _checkResult(self, exp_code, exp_msg, result):
+        self.assertEqual(result.exit_code, exp_code)
+        if exp_msg:
+            self.assertEqual(result.output, exp_msg)
 
+    def test_validate(self):
+        """
+        Successfully validate RAML file via CLI.
+        """
+        # For each test add a one-liner what you're testing.
+        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
+        exp_code = 0
+        exp_msg = "Success! Valid RAML file: {0}\n".format(raml_file)
+        result = self.runner.invoke(main.validate, [raml_file])
+        self._checkResult(exp_code, exp_msg, result)
 
-def test_tree():
-    raml_file = os.path.join(here, "examples/spotify-web-api.raml")
-    runner = CliRunner()
-    result = runner.invoke(main.tree, [raml_file, "--color=light"])
+    def test_validate_fail(self):
+        """
+        Raise error for invalid RAML file via CLI when validating.
+        """
+        raml_file = os.path.join(self.here, "examples/validate/no-title.raml")
+        exp_code = 1
+        exp_msg = "Error validating file {0}: {1}\n".format(
+            raml_file, 'RAML File does not define an API title.')
+        result = self.runner.invoke(main.validate, [raml_file])
+        self._checkResult(exp_code, exp_msg, result)
 
-    assert result.exit_code == 0
+    def test_tree(self):
+        """
+        Successfully print out tree of RAML file via CLI.
+        """
+        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
+        exp_code = 0
+        exp_msg = None
+        result = self.runner.invoke(main.tree, [raml_file, "--color=light"])
+        self._checkResult(exp_code, exp_msg, result)
 
-
-def test_tree_invalid():
-    raml_file = os.path.join(here, "examples/validate/no-title.raml")
-    runner = CliRunner()
-    result = runner.invoke(main.tree, [raml_file, "--color=light"])
-
-    assert result.exit_code == 1
-    assert result.output == '"{0}" is not a valid RAML File: {1}\n'.format(
-        raml_file, 'RAML File does not define an API title.')
+    def test_tree_invalid(self):
+        """
+        Raise error for invalid RAML file via CLI when printing the tree.
+        """
+        raml_file = os.path.join(self.here, "examples/validate/no-title.raml")
+        exp_code = 1
+        exp_msg = '"{0}" is not a valid RAML file: {1}\n'.format(
+            raml_file, 'RAML File does not define an API title.')
+        result = self.runner.invoke(main.tree, [raml_file, "--color=light"])
+        self._checkResult(exp_code, exp_msg, result)
