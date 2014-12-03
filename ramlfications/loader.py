@@ -14,16 +14,36 @@ class LoadRamlFileError(Exception):
 
 
 class RAMLLoader(object):
+    """
+    Loads the desired RAML file and returns a Python dictionary.
+
+    Accepts either:
+    - string of the file
+    - unicode string of the file
+    - Python file object with a ``read`` method returning either
+      ``str`` or ``unicode``
+    """
     def __init__(self, raml_file):
         self.raml_file = raml_file
+        self.name = None
 
-    def _get_abs_path(self):
+    def _get_raml_object(self):
         if self.raml_file is None:
             msg = "RAML file can not be 'None'."
             raise LoadRamlFileError(msg)
-        return os.path.abspath(self.raml_file)
+
+        if isinstance(self.raml_file, str):
+            return file(os.path.abspath(self.raml_file), 'r')
+        elif isinstance(self.raml_file, unicode):
+            return file(os.path.abspath(self.raml_file), 'r')
+        elif isinstance(self.raml_file, file):
+            return self.raml_file
 
     def _yaml_include(self, loader, node):
+        """
+        Adds the ability to follow ``!include`` directives within
+        RAML Files.
+        """
         # Get the path out of the yaml file
         file_name = os.path.join(os.path.dirname(loader.name), node.value)
 
@@ -36,19 +56,19 @@ class RAMLLoader(object):
     #
     # with RAMLLoader(filename) as f:
     #   print f
+    # LR: Nah. YAML & JSON loaders don't work like that. It's always called
+    # like yaml.load(fileobject) or json.dumps(filename).
     def load(self):
         yaml.add_constructor("!include", self._yaml_include)
 
         try:
-            raml = self._get_abs_path()
-            with open(raml) as r:
-                return yaml.load(r)
+            raml = self._get_raml_object()
+            self.name = raml.name
+            return yaml.load(raml)
         except IOError as e:
             raise LoadRamlFileError(e)
+        else:
+            raml.close()
 
     def __repr__(self):
         return '<RAMLLoader(raml_file="{0}")>'.format(self.raml_file)
-
-
-def load(raml_file):
-    return RAMLLoader(raml_file).load()
