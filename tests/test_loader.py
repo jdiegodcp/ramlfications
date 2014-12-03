@@ -7,16 +7,12 @@ import os
 
 from ramlfications import loader
 
-from .base import BaseTestCase
+from .base import BaseTestCase, EXAMPLES
 
 
 class TestRAMLLoader(BaseTestCase):
-    def setUp(self):
-        # Weird variable name. Please improve to something more meaningful.
-        self.here = os.path.abspath(os.path.dirname(__file__))
-
     def test_repr(self):
-        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
+        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
         obj = loader.RAMLLoader(raml_file)
 
         self.assertEqual(repr(obj), '<RAMLLoader(raml_file="{0}")>'.format(
@@ -25,12 +21,12 @@ class TestRAMLLoader(BaseTestCase):
     def test_raml_file(self):
         # Everything this method does seems already be covered in test_repr
         # Can this method be deleted?
-        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
+        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
         raml = loader.RAMLLoader(raml_file).load()
         self.assertIsNotNone(raml)
 
     def test_no_raml_file(self):
-        raml_file = "examples/this-file-doesnt-exist.raml"
+        raml_file = os.path.join(EXAMPLES + "this-file-doesnt-exist.raml")
         self.assertRaises(loader.LoadRamlFileError,
                           lambda: loader.RAMLLoader(raml_file).load())
 
@@ -40,7 +36,7 @@ class TestRAMLLoader(BaseTestCase):
                           lambda: loader.RAMLLoader(raml_file).load())
 
     def test_root_includes(self):
-        raml_file = os.path.join(self.here, "examples/base-includes.raml")
+        raml_file = os.path.join(EXAMPLES + "base-includes.raml")
         raml = loader.RAMLLoader(raml_file).load()
 
         expected_data = {

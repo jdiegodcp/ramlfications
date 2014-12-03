@@ -8,12 +8,11 @@ from click.testing import CliRunner
 
 from ramlfications import __main__ as main
 
-from .base import BaseTestCase
+from .base import BaseTestCase, EXAMPLES, VALIDATE
 
 
 class TestMain(BaseTestCase):
     def setUp(self):
-        self.here = os.path.abspath(os.path.dirname(__file__))
         self.runner = CliRunner()
 
     def _checkResult(self, exp_code, exp_msg, result):
@@ -26,7 +25,7 @@ class TestMain(BaseTestCase):
         Successfully validate RAML file via CLI.
         """
         # For each test add a one-liner what you're testing.
-        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
+        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
         exp_code = 0
         exp_msg = "Success! Valid RAML file: {0}\n".format(raml_file)
         result = self.runner.invoke(main.validate, [raml_file])
@@ -36,7 +35,7 @@ class TestMain(BaseTestCase):
         """
         Raise error for invalid RAML file via CLI when validating.
         """
-        raml_file = os.path.join(self.here, "examples/validate/no-title.raml")
+        raml_file = os.path.join(VALIDATE + "no-title.raml")
         exp_code = 1
         exp_msg = "Error validating file {0}: {1}\n".format(
             raml_file, 'RAML File does not define an API title.')
@@ -47,7 +46,7 @@ class TestMain(BaseTestCase):
         """
         Successfully print out tree of RAML file via CLI.
         """
-        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
+        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
         exp_code = 0
         exp_msg = None
         result = self.runner.invoke(main.tree, [raml_file, "--color=light"])
@@ -57,7 +56,7 @@ class TestMain(BaseTestCase):
         """
         Raise error for invalid RAML file via CLI when printing the tree.
         """
-        raml_file = os.path.join(self.here, "examples/validate/no-title.raml")
+        raml_file = os.path.join(VALIDATE + "no-title.raml")
         exp_code = 1
         exp_msg = '"{0}" is not a valid RAML file: {1}\n'.format(
             raml_file, 'RAML File does not define an API title.')

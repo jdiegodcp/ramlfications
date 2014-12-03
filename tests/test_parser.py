@@ -7,8 +7,8 @@ import os
 import markdown2 as markdown
 
 from ramlfications import parser, loader, parameters
-from ramlfications.parser import parse
-from .base import BaseTestCase
+from ramlfications import parse
+from .base import BaseTestCase, EXAMPLES
 
 
 class TestAPIRoot(BaseTestCase):
@@ -16,10 +16,8 @@ class TestAPIRoot(BaseTestCase):
         return parse(ramlfile)
 
     def setUp(self):
-        self.here = os.path.abspath(os.path.dirname(__file__))
-        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
-        self.loader = loader.RAMLLoader(raml_file)
-        self.api = parse(self.loader)
+        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
+        self.api = parse(raml_file)
 
     def test_parse_function(self):
         self.assertIsInstance(self.api, parser.APIRoot)
@@ -49,7 +47,7 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(self.api.base_uri, base_uri)
 
     def test_base_uri_throws_exception(self):
-        raml_file = os.path.join(self.here, "examples/no-version.raml")
+        raml_file = os.path.join(EXAMPLES + "no-version.raml")
         api = self.setup_parsed_raml(raml_file)
 
         self.assertRaises(parser.RAMLParserError, lambda: api.base_uri)
@@ -63,8 +61,7 @@ class TestAPIRoot(BaseTestCase):
                 "displayName": "API Path"}
         }]
 
-        raml_file = os.path.join(self.here,
-                                 'examples/base-uri-parameters.raml')
+        raml_file = os.path.join(EXAMPLES + 'base-uri-parameters.raml')
         api = self.setup_parsed_raml(raml_file)
         results = api.uri_parameters
 
@@ -80,14 +77,13 @@ class TestAPIRoot(BaseTestCase):
                              list(data[i].values())[0].get('displayName'))
 
     def test_uri_parameters_throws_exception(self):
-        raml_file = os.path.join(self.here,
-                                 "examples/uri-parameters-error.raml")
+        raml_file = os.path.join(EXAMPLES + "uri-parameters-error.raml")
         api = self.setup_parsed_raml(raml_file)
 
         self.assertRaises(parser.RAMLParserError, lambda: api.uri_parameters)
 
     def test_no_uri_parameters(self):
-        raml_file = os.path.join(self.here, "examples/simple.raml")
+        raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
 
         self.assertIsNone(api.uri_parameters)
@@ -112,7 +108,7 @@ class TestAPIRoot(BaseTestCase):
                 self.assertEqual(repr(m), repr_str)
 
     def test_resource_type(self):
-        raml_file = os.path.join(self.here, "examples/resource-types.raml")
+        raml_file = os.path.join(EXAMPLES + "resource-types.raml")
         api = self.setup_parsed_raml(raml_file)
         results = api.resource_types
 
@@ -201,8 +197,7 @@ class TestAPIRoot(BaseTestCase):
                     self.assertEqual(m.optional, optional)
 
     def test_no_resource_types(self):
-        raml_file = os.path.join(self.here,
-                                 "examples/simple-no-resource-types.raml")
+        raml_file = os.path.join(EXAMPLES + "simple-no-resource-types.raml")
         api = self.setup_parsed_raml(raml_file)
 
         self.assertIsNone(api.resource_types)
@@ -210,12 +205,12 @@ class TestAPIRoot(BaseTestCase):
     def test_documentation(self):
         # TODO: add example that contains multiple examples
         title = "Spotify Web API Docs"
-        content_raw = ("""\
-Welcome to the _Spotify Web API_ demo specification. This is *not* \
-the complete API\nspecification, and is meant for testing purposes \
-within this RAML specification.\nFor more information about how to \
-use the API, check out [developer\n site](https://developer.spotify.\
-com/web-api/).\n""")
+        content_raw = (
+            "Welcome to the _Spotify Web API_ demo specification. This is "
+            "*not* the complete API\nspecification, and is meant for testing "
+            "purposes within this RAML specification.\nFor more information "
+            "about how to use the API, check out [developer\n site]"
+            "(https://developer.spotify.com/web-api/).\n")
 
         self.assertIsNotNone(self.api.documentation)
         self.assertIsInstance(self.api.documentation[0], parser.Documentation)
@@ -225,21 +220,19 @@ com/web-api/).\n""")
         self.assertEqual(repr(self.api.documentation[0]), repr_str)
 
     def test_documentation_no_title(self):
-        raml = "examples/docs-no-title-parameter.raml"
-        raml_file = os.path.join(self.here, raml)
+        raml_file = os.path.join(EXAMPLES + "docs-no-title-parameter.raml")
         api = self.setup_parsed_raml(raml_file)
 
         self.assertRaises(parser.RAMLParserError, lambda: api.documentation)
 
     def test_no_docs(self):
-        raml_file = os.path.join(self.here, "examples/simple-no-docs.raml")
+        raml_file = os.path.join(EXAMPLES + "simple-no-docs.raml")
         api = self.setup_parsed_raml(raml_file)
 
         self.assertIsNone(api.documentation)
 
     def test_security_schemes_oauth2(self):
-        raml = "examples/security-scheme.raml"
-        raml_file = os.path.join(self.here, raml)
+        raml_file = os.path.join(EXAMPLES + "security-scheme.raml")
         api = self.setup_parsed_raml(raml_file)
 
         scheme = "oauth_2_0"
@@ -356,14 +349,13 @@ com/web-api/).\n""")
             self.assertIsInstance(scheme, parameters.SecurityScheme)
 
     def test_no_security_schemes(self):
-        raml_file = os.path.join(self.here, "examples/no-security-scheme.raml")
+        raml_file = os.path.join(EXAMPLES + "no-security-scheme.raml")
         api = self.setup_parsed_raml(raml_file)
 
         self.assertIsNone(api.security_schemes)
 
     def test_security_schemes_markdown_desc(self):
-        raml = "examples/markdown-desc-docs.raml"
-        raml_file = os.path.join(self.here, raml)
+        raml_file = os.path.join(EXAMPLES + "markdown-desc-docs.raml")
         api = self.setup_parsed_raml(raml_file)
 
         desc_results = api.security_schemes[0].description.html
@@ -395,8 +387,7 @@ com/web-api/).\n""")
             }
         }
 
-        r = 'examples/security-schemes-oauth-1.raml'
-        raml_file = os.path.join(self.here, r)
+        raml_file = os.path.join(EXAMPLES + 'security-schemes-oauth-1.raml')
         api = self.setup_parsed_raml(raml_file)
 
         scheme = api.security_schemes[0]
@@ -418,8 +409,7 @@ com/web-api/).\n""")
                          data['settings']['tokenCredentialsUri'])
 
     def test_security_schemes_other(self):
-        raml = "examples/security-schemes-http-other.raml"
-        raml_file = os.path.join(self.here, raml)
+        raml_file = os.path.join(EXAMPLES + "security-schemes-http-other.raml")
         api = self.setup_parsed_raml(raml_file)
 
         schemes = api.security_schemes
@@ -455,8 +445,8 @@ com/web-api/).\n""")
         self.assertDictEqual(schemes[2].data, expected_other)
 
     def test_get_parameters(self):
-        raml = "examples/traits-resources-parameters.raml"
-        raml_file = os.path.join(self.here, raml)
+        raml = "traits-resources-parameters.raml"
+        raml_file = os.path.join(EXAMPLES + raml)
         api = self.setup_parsed_raml(raml_file)
 
         params = api.get_parameters()
@@ -469,7 +459,7 @@ com/web-api/).\n""")
         self.assertDictEqual(params, expected_data)
 
     def test_schemas(self):
-        raml_file = os.path.join(self.here, "examples/root-schemas.raml")
+        raml_file = os.path.join(EXAMPLES + "root-schemas.raml")
         api = self.setup_parsed_raml(raml_file)
 
         result = api.schemas
@@ -477,8 +467,8 @@ com/web-api/).\n""")
         self.assertIsInstance(result, list)
         self.assertEqual(len(result), 2)
 
-        included_raml_file = os.path.join(self.here,
-                                          "examples/includes/simple.raml")
+        included_raml_file = os.path.join(EXAMPLES +
+                                          "includes/simple.raml")
         api2 = self.setup_parsed_raml(included_raml_file)
 
         self.assertEqual(result[0], api2.raml)
@@ -585,7 +575,7 @@ class TestDocumentation(BaseTestCase):
             self.assertEqual(docs.content.raw, contents[i])
 
     def test_docs_markdown(self):
-        raml_file = os.path.join(self.here, "examples/markdown-desc-docs.raml")
+        raml_file = os.path.join(EXAMPLES + "markdown-desc-docs.raml")
         api = self.setup_parsed_raml(raml_file)
         documentation = api.documentation[0]
 
@@ -613,10 +603,8 @@ class TestResource(BaseTestCase):
         return parse(ramlfile)
 
     def setUp(self):
-        self.here = os.path.abspath(os.path.dirname(__file__))
-        raml_file = os.path.join(self.here, "examples/spotify-web-api.raml")
-        self.loader = loader.RAMLLoader(raml_file)
-        self.api = parse(self.loader)
+        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
+        self.api = parse(raml_file)
         self.resources = self.api.resources
 
     def test_has_path(self):
@@ -624,7 +612,7 @@ class TestResource(BaseTestCase):
             self.assertIsNotNone(resource.path)
 
     def test_paths(self):
-        raml_file = os.path.join(self.here, "examples/simple.raml")
+        raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -636,8 +624,7 @@ class TestResource(BaseTestCase):
             self.assertItemInList(resource.path, expected_paths)
 
     def test_absolute_path(self):
-        raml_file = os.path.join(self.here,
-                                 "examples/base-uri-parameters.raml")
+        raml_file = os.path.join(EXAMPLES + "base-uri-parameters.raml")
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources['get-foo']
 
@@ -649,7 +636,7 @@ class TestResource(BaseTestCase):
             self.assertIsNotNone(resource.display_name)
 
     def test_display_name_not_defined(self):
-        raml_file = os.path.join(self.here, "examples/no-display-name.raml")
+        raml_file = os.path.join(EXAMPLES + "no-display-name.raml")
         api = self.setup_parsed_raml(raml_file)
         resource = list(api.resources.values())[0]
 
@@ -661,8 +648,7 @@ class TestResource(BaseTestCase):
             self.assertIsNotNone(resource.description.raw)
 
     def test_description_markdown(self):
-        raml = "examples/markdown-desc-docs.raml"
-        raml_file = os.path.join(self.here, raml)
+        raml_file = os.path.join(EXAMPLES + "markdown-desc-docs.raml")
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources.get('get-artist')
 
@@ -673,7 +659,7 @@ class TestResource(BaseTestCase):
         self.assertEqual(html_result, expected_result)
 
     def test_method(self):
-        raml_file = os.path.join(self.here, "examples/simple.raml")
+        raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -683,7 +669,7 @@ class TestResource(BaseTestCase):
             self.assertItemInList(resource.method, methods)
 
     def test_protocols(self):
-        raml_file = os.path.join(self.here, "examples/protocols.raml")
+        raml_file = os.path.join(EXAMPLES + "protocols.raml")
         resource = self.setup_parsed_raml(raml_file).resources.get(
             'get-tracks')
 
@@ -692,7 +678,7 @@ class TestResource(BaseTestCase):
         self.assertListEqual(resource.protocols, expected_protocols)
 
     def test_body(self):
-        raml_file = os.path.join(self.here, "examples/simple-body.raml")
+        raml_file = os.path.join(EXAMPLES + "simple-body.raml")
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources['post-playlists']
 
@@ -720,7 +706,7 @@ class TestResource(BaseTestCase):
         self.assertEqual(resource.body[0].name, "application/json")
 
     def test_responses(self):
-        raml_file = os.path.join(self.here, "examples/responses.raml")
+        raml_file = os.path.join(EXAMPLES + "responses.raml")
         resource = self.setup_parsed_raml(raml_file).resources.get(
             'get-popular-media')
 
@@ -787,14 +773,14 @@ class TestResource(BaseTestCase):
                 self.assertDictEqual(h.data, exp_headers)
 
     def test_raises_incorrect_response_code(self):
-        raml_file = os.path.join(self.here, "examples/invalid-resp-code.raml")
+        raml_file = os.path.join(EXAMPLES + "invalid-resp-code.raml")
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources['get-popular-media']
 
         self.assertRaises(parser.RAMLParserError, lambda: resource.responses)
 
     def test_headers(self):
-        raml_file = os.path.join(self.here, "examples/headers.raml")
+        raml_file = os.path.join(EXAMPLES + "headers.raml")
         resources = self.setup_parsed_raml(raml_file).resources
 
         # only one node
@@ -832,7 +818,7 @@ class TestResource(BaseTestCase):
             self.assertDictEqual(item.data, expected_data[item.name])
 
     def test_data(self):
-        raml_file = os.path.join(self.here, "examples/simple.raml")
+        raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -961,7 +947,7 @@ class TestResource(BaseTestCase):
             self.assertItemInList(resource.data, expected_data)
 
     def test_parent(self):
-        raml_file = os.path.join(self.here, "examples/simple.raml")
+        raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -974,7 +960,7 @@ class TestResource(BaseTestCase):
                 self.assertEqual(resource.parent, None)
 
     def test_traits_resources(self):
-        raml_file = os.path.join(self.here, "examples/simple-traits.raml")
+        raml_file = os.path.join(EXAMPLES + "simple-traits.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -985,8 +971,7 @@ class TestResource(BaseTestCase):
                 self.assertEqual(resource.traits, ['paged'])
 
     def test_resource_types_too_many(self):
-        raml_file = os.path.join(self.here,
-                                 "examples/mapped-types-too-many.raml")
+        raml_file = os.path.join(EXAMPLES + "mapped-types-too-many.raml")
         api = self.setup_parsed_raml(raml_file)
         magazines = api.resources["get-/magazines"]
 
@@ -994,8 +979,8 @@ class TestResource(BaseTestCase):
                           lambda: magazines.resource_type)
 
     def test_resource_types_invalid_mapped_type(self):
-        raml = "examples/mapped-types-incorrect-resource-type.raml"
-        raml_file = os.path.join(self.here, raml)
+        raml = "mapped-types-incorrect-resource-type.raml"
+        raml_file = os.path.join(EXAMPLES + raml)
         api = self.setup_parsed_raml(raml_file)
 
         magazines = api.resources['get-/magazines']
@@ -1008,8 +993,7 @@ class TestResource(BaseTestCase):
                           lambda: books.resource_type)
 
     def test_mapped_traits(self):
-        raml_file = os.path.join(self.here,
-                                 "examples/mapped-traits-types.raml")
+        raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
         api = self.setup_parsed_raml(raml_file)
 
         first = api.resource_types[0]
@@ -1054,7 +1038,7 @@ class TestResource(BaseTestCase):
         self.assertDictEqual(second_res.resource_type, second_expected_data)
 
     def test_secured_by(self):
-        raml_file = os.path.join(self.here, "examples/simple-traits.raml")
+        raml_file = os.path.join(EXAMPLES + "simple-traits.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -1069,16 +1053,15 @@ class TestResource(BaseTestCase):
                                  "<Security Scheme(name='oauth_2_0')>")
 
     def test_no_secured_by(self):
-        raml_file = os.path.join(self.here,
-                                 "examples/simple-no-secured-by.raml")
+        raml_file = os.path.join(EXAMPLES +
+                                 "simple-no-secured-by.raml")
         resources = self.setup_parsed_raml(raml_file).resources
 
         for res in resources.values():
             self.assertIsNone(res.secured_by)
 
     def test_method_scopes(self):
-        raml_file = os.path.join(self.here,
-                                 "examples/simple-secured-by-method.raml")
+        raml_file = os.path.join(EXAMPLES + "simple-secured-by-method.raml")
         api = self.setup_parsed_raml(raml_file)
         get_tracks = api.resources['get-several-tracks']
         expected_scopes = ["user-read-email"]
@@ -1090,7 +1073,7 @@ class TestResource(BaseTestCase):
                 self.assertItemInList(scope, expected_scopes)
 
     def test_scopes(self):
-        raml_file = os.path.join(self.here, "examples/simple-traits.raml")
+        raml_file = os.path.join(EXAMPLES + "simple-traits.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -1106,8 +1089,8 @@ class TestResource(BaseTestCase):
                     self.assertItemInList(scope, scopes)
 
     def test_scopes_2(self):
-        raml_file = os.path.join(self.here,
-                                 "examples/multiple-security-schemes.raml")
+        raml_file = os.path.join(EXAMPLES +
+                                 "multiple-security-schemes.raml")
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources['get-current-user']
 
@@ -1116,8 +1099,7 @@ class TestResource(BaseTestCase):
         self.assertListEqual(resource.scopes, scopes)
 
     def test_base_uri_params(self):
-        raml_file = os.path.join(self.here,
-                                 'examples/base-uri-parameters.raml')
+        raml_file = os.path.join(EXAMPLES + 'base-uri-parameters.raml')
         api = self.setup_parsed_raml(raml_file)
 
         resources = api.resources
@@ -1166,7 +1148,7 @@ class TestResource(BaseTestCase):
                                                            'domainName'))
 
     def test_query_params(self):
-        raml_file = os.path.join(self.here, "examples/simple.raml")
+        raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -1283,7 +1265,7 @@ class TestResource(BaseTestCase):
             self.assertIsNone(param.type.max_length)
 
     def test_uri_params(self):
-        raml_file = os.path.join(self.here, "examples/simple.raml")
+        raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -1320,7 +1302,7 @@ class TestResource(BaseTestCase):
             self.assertIsNone(param.description.raw)
 
     def test_form_params(self):
-        raml_file = os.path.join(self.here, "examples/form-parameters.raml")
+        raml_file = os.path.join(EXAMPLES + "form-parameters.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
@@ -1367,8 +1349,7 @@ class TestResource(BaseTestCase):
             self.assertIsNone(param.default)
 
     def test_param_markdown_desc(self):
-        raml = "examples/markdown-desc-docs.raml"
-        raml_file = os.path.join(self.here, raml)
+        raml_file = os.path.join(EXAMPLES + "markdown-desc-docs.raml")
         api = self.setup_parsed_raml(raml_file)
 
         resource = api.resources.get('get-artist-top-tracks')
@@ -1381,7 +1362,7 @@ class TestResource(BaseTestCase):
         self.assertEqual(html_result, expected_result)
 
     def test_req_content_types(self):
-        raml_file = os.path.join(self.here, "examples/req-content-type.raml")
+        raml_file = os.path.join(EXAMPLES + "req-content-type.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 

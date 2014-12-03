@@ -10,14 +10,12 @@ from six import StringIO
 
 from ramlfications import tree, parser, loader
 
-from .base import BaseTestCase
+from .base import BaseTestCase, EXAMPLES
 
 
 class TestPrintTree(BaseTestCase):
     def setUp(self):
-        self.here = os.path.abspath(os.path.dirname(__file__))
-        raml_file = "examples/simple-tree.raml"
-        raml_file = os.path.join(self.here, raml_file)
+        raml_file = os.path.join(EXAMPLES, "simple-tree.raml")
         loaded_file = loader.RAMLLoader(raml_file)
         self.api = parser.APIRoot(loaded_file)
         self.held, sys.stdout = sys.stdout, StringIO()
