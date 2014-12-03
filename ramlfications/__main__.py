@@ -8,7 +8,7 @@ import click
 
 from .loader import RAMLLoader
 from .tree import ttree
-from .validate import validate as vvalidate
+from .validate import validate_raml
 from .validate import InvalidRamlFileError
 
 
@@ -28,8 +28,7 @@ def validate(ramlfile):
         # except block?
 
         # LR: the @click.argument checks to see if the RAML file exists
-        load_obj = RAMLLoader(ramlfile)
-        vvalidate(load_obj)
+        validate_raml(ramlfile, prod=True)
         click.secho("Success! Valid RAML file: {0}".format(ramlfile),
                     fg="green")
 
@@ -52,7 +51,7 @@ def tree(ramlfile, color, output, verbose):
     """Pretty-print a tree of the RAML-defined API."""
     try:
         load_obj = RAMLLoader(ramlfile)
-        vvalidate(load_obj)
+        validate_raml(ramlfile, prod=True)
         ttree(load_obj, color, output, verbose)
     # Same exception conecrns as in the validate function.
     # LR: the @click.argument checks to see if the RAML file exists
