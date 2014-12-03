@@ -321,7 +321,6 @@ class Resource(object):
         self.method = method
 
     def _get_path_to(self, node):
-        # parent_path = self._get_path_to(node,parent, '')
         parent_path = ''
         if node.parent:
             parent_path = self._get_path_to(node.parent)

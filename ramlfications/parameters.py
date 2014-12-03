@@ -19,8 +19,11 @@ class ContentType(object):
     """
     def __init__(self, name, schema, example):
         # Input validation would be nice here.
+        # LR: Will do, but will add it to validate.py
+
         # Also: Hide private variables with an underscore like:
         # self._name = name
+        # LR: Not sure if want this private, though
         self.name = name
         self.schema = schema
         self.example = example
@@ -29,6 +32,7 @@ class ContentType(object):
         return "<ContentType(name='{0}')>".format(self.name)
 
 
+# NOTE: this is a class for extensibility, e.g. adding RTF support or whatevs
 class DescriptiveContent(object):
     """
     Returns documentable content from the RAML file (e.g. Documentation
@@ -166,6 +170,7 @@ class BaseParameter(object):
     """
     def __init__(self, name, data, param_type):
         # Input validation would be nice here.
+        # LR: Will do, but will add it to validate.py
         self.name = name
         self.data = data
         self.param_type = param_type
@@ -206,7 +211,7 @@ class BaseParameter(object):
         * ``boolean``
         * ``file`` - only applicable in FormParameters
         """
-        # TODO: Add test if 'type' isn't set
+        # TODO: Add test if 'type' isn't set in RAML
         item_type = self.data.get('type', 'string')
         return self._map_type(item_type)(self.name, self.data)
 
@@ -242,25 +247,6 @@ class BaseParameter(object):
         return "<{0}Parameter(name='{1}')>".format(self.param_type, self.name)
 
 
-class JSONFormParameter(object):   # pragma: no cover
-    def __init__(self, param, data, example):
-        # You call BaseParameter.__init__ but the class does not
-        # actually inherit from BaseParameter. This does not make sense
-        # to me.
-        # LR: because I don't use this but am "saving" it for future feature
-        # development
-        BaseParameter.__init__(self, param, data, "JSON")
-        self.example = example
-
-    @property
-    def required(self):
-        """
-        If JSON Form Parameter is required.  Defaults to ``True`` if not set.
-        (Optional)
-        """
-        return self.data.get('required', True)
-
-
 class URIParameter(BaseParameter):
     """
     URI parameter with properties defined by the RAML spec's
@@ -275,8 +261,8 @@ class URIParameter(BaseParameter):
     def __init__(self, param, data, required=True):
         # Same concerns as in the class above. Will not mention it again
         # below.
-        # LR: this does inherit BaseParameter, this is the python3 way to
-        # call super() on classes
+        # LR: this does inherit BaseParameter, this is the new preferred way to
+        # call super() on classes that is compatible with py2 and py3
         BaseParameter.__init__(self, param, data, "URI")
         self.required = required
 
@@ -307,6 +293,7 @@ class QueryParameter(BaseParameter):
         """
         # Exists in a whole lot of classes defined here. Maybe define a class
         # RequiredParameter and inherit from that.
+        # LR: No, because Header,  doesn't have 'required'
         return self.data.get('required', True)
 
 
@@ -357,7 +344,7 @@ class Header(BaseParameter):
 # From now on please consider:
 # - Use undersores for private variables
 # - Document if return types can be None, but even better return empty
-#   strings everywhere. I won't repeat that.
+#   strings everywhere. I won't repeat that. (LR: Will do)
 # LR: Not sure which should be private - I think it's useful to have all of
 # the below public
 class Body(object):
@@ -430,6 +417,8 @@ class Response(object):
         if self.data.get('body'):
             # grabs all content types
             # Can content_types be None?
+            # LR: not valid raml if body does not have keys that are
+            # content types
             content_types = self.data.get('body')
             # types = content_types.keys()
             # Can types be None?
@@ -522,9 +511,10 @@ class SecuritySchemes(object):
         defined_schemes = self.raml.get('securitySchemes')
         if defined_schemes:
             schemes = []
-            for scheme in defined_schemes:
-                for k, v in list(scheme.items()):
-                    schemes.append(SecurityScheme(k, v))
+            for s in defined_schemes:
+                schemes.extend(
+                    [SecurityScheme(k, v) for k, v in list(s.items())]
+                )
             return schemes
         else:
             return None
@@ -543,36 +533,31 @@ class SecurityScheme(object):
     def type(self):
         return self.data.get('type')
 
-    def _convert_items(self, items, object, **kw):
-        objs = []
-        for k, v in list(items.items()):
-            objs.append(object(k, v, **kw))
-        return objs
+    def _convert_items(self, items, obj, **kw):
+        return [obj(k, v, **kw) for k, v in list(items.items())]
 
     def _get_described_by(self):
-        _described_by = self.data.get('describedBy')
+        _d = self.data.get('describedBy')
 
-        if _described_by:
-            described_by = {}
+        if _d:
+            return {
+                'headers': self._convert_items(
+                    _d.get('headers', {}), Header, method=None
+                ),
+                'responses': self._convert_items(
+                    _d.get('responses', {}), Response, method=None
+                ),
+                'query_parameters': self._convert_items(
+                    _d.get('queryParameters', {}), QueryParameter
+                ),
+                'uri_parameters': self._convert_items(
+                    _d.get('uriParameters', {}), URIParameter
+                ),
+                'form_parameters': self._convert_items(
+                    _d.get('formParameters', {}), FormParameter
+                )
+            }
 
-            _headers = _described_by.get('headers', {})
-            _responses = _described_by.get('responses', {})
-            _q_params = _described_by.get('queryParameters', {})
-            _u_params = _described_by.get('uriParameters', {})
-            _f_params = _described_by.get('formParameters', {})
-
-            described_by['headers'] = self._convert_items(
-                _headers, Header, method=None)
-            described_by['responses'] = self._convert_items(
-                _responses, Response, method=None)
-            described_by['query_parameters'] = self._convert_items(
-                _q_params, QueryParameter)
-            described_by['uri_parameters'] = self._convert_items(
-                _u_params, URIParameter)
-            described_by['form_parameters'] = self._convert_items(
-                _f_params, FormParameter)
-
-            return described_by
         return None
 
     @property
