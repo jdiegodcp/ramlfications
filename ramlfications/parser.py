@@ -38,11 +38,11 @@ class APIRoot(object):
     :param obj load_object: Loaded RAML from ``ramlfications.load(ramlfile)``
     """
     def __init__(self, load_object):
-        self.raml_file = load_object.raml_file
         # The line below can throw an exception but that's not documented.
         # I find it awkward too as I don't like it when constructors
         # throw exceptions.
         self.raml = load_object.load()
+        self.raml_file = load_object.name
 
     @property
     def resources(self):
@@ -734,7 +734,3 @@ class Resource(object):
 
     def __repr__(self):
         return "<Resource(name='{0}')>".format(self.name)
-
-
-def parse(loaded_raml):
-    return APIRoot(loaded_raml)

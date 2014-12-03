@@ -19,6 +19,9 @@ class TestValidateRAML(BaseTestCase):
         self.load_object = RAMLLoader(raml_file)
         e = self.assert_raises(error_class, validate,
                                load_object=self.load_object)
+        self.raml_file = raml_file
+        e = self.assert_raises(error_class, validate_raml,
+                               raml_file=self.raml_file, prod=True)
 
         self.assertEqual(expected_msg, str(e))
 

@@ -13,8 +13,7 @@ from .base import BaseTestCase
 
 class TestAPIRoot(BaseTestCase):
     def setup_parsed_raml(self, ramlfile):
-        self.loaded_file = loader.RAMLLoader(ramlfile)
-        return parse(self.loaded_file)
+        return parse(ramlfile)
 
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
@@ -23,10 +22,7 @@ class TestAPIRoot(BaseTestCase):
         self.api = parse(self.loader)
 
     def test_parse_function(self):
-        # Move line below into assert.
-        result = parse(self.loader)
-
-        self.assertIsInstance(result, parser.APIRoot)
+        self.assertIsInstance(self.api, parser.APIRoot)
 
     def test_no_raml_file(self):
         raml_file = '/foo/bar.raml'
@@ -564,15 +560,11 @@ com/web-api/).\n""")
 
 class TestDocumentation(BaseTestCase):
     def setup_parsed_raml(self, ramlfile):
-        self.loaded_file = loader.RAMLLoader(ramlfile)
-        return parse(self.loaded_file)
+        return parse(ramlfile)
 
     def setUp(self):
-        self.here = os.path.abspath(os.path.dirname(__file__))
-        raml_file = os.path.join(self.here,
-                                 "examples/multiple_documentation.raml")
-        self.loader = loader.RAMLLoader(raml_file)
-        self.api = parse(self.loader)
+        raml_file = os.path.join(EXAMPLES + "multiple_documentation.raml")
+        self.api = parse(raml_file)
 
     def test_docs(self):
         titles = ["Getting Started",
@@ -618,8 +610,7 @@ class TestDocumentation(BaseTestCase):
 
 class TestResource(BaseTestCase):
     def setup_parsed_raml(self, ramlfile):
-        self.loaded_file = loader.RAMLLoader(ramlfile)
-        return parse(self.loaded_file)
+        return parse(ramlfile)
 
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
