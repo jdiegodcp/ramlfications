@@ -9,12 +9,20 @@ __version__ = '0.1.0'
 __license__ = 'Apache 2.0'
 
 
-from ramlfications.loader import load
-from ramlfications.parser import parse
-from ramlfications.validate import validate
+from ramlfications.loader import *  # NOQA
+from ramlfications.parser import *  # NOQA
+from ramlfications.validate import *  # NOQA
 
-__all__ = [
-    'load',
-    'parse',
-    'validate'
-]
+
+def parse(raml_file):
+    loader = RAMLLoader(raml_file)
+    return APIRoot(loader)
+
+
+def load(raml_file):
+    loader = RAMLLoader(raml_file)
+    return loader.load()
+
+
+def validate(raml_file, production=True):
+    return validate_raml(raml_file, production)

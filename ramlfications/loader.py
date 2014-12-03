@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
+__all__ = ["RAMLLoader", "LoadRamlFileError"]
+
 import os
 
 import yaml
