@@ -2,8 +2,13 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
+import os
 import unittest
 import sys
+
+PAR_DIR = os.path.abspath(os.path.dirname(__file__))
+EXAMPLES = os.path.join(PAR_DIR + '/data/examples/')
+VALIDATE = os.path.join(PAR_DIR + '/data/validate/')
 
 
 class BaseTestCase(unittest.TestCase):
