@@ -220,7 +220,7 @@ com/web-api/).\n""")
         self.assertIsNotNone(self.api.documentation)
         self.assertIsInstance(self.api.documentation[0], parser.Documentation)
         self.assertEqual(self.api.documentation[0].title, title)
-        self.assertEqual(self.api.documentation[0].content_raw, content_raw)
+        self.assertEqual(self.api.documentation[0].content.raw, content_raw)
         repr_str = "<Documentation(title='{0}')>".format(title)
         self.assertEqual(repr(self.api.documentation[0]), repr_str)
 
@@ -582,7 +582,7 @@ class TestDocumentation(BaseTestCase):
 
         for i, docs in enumerate(self.api.documentation):
             self.assertEqual(docs.title, titles[i])
-            self.assertEqual(docs.content_raw, contents[i])
+            self.assertEqual(docs.content.raw, contents[i])
 
     def test_docs_markdown(self):
         raml_file = os.path.join(self.here, "examples/markdown-desc-docs.raml")
@@ -604,8 +604,8 @@ class TestDocumentation(BaseTestCase):
                          "<a href=\"https://developer.spotify.com/web-api/\">"
                          "developer\n site</a>.</p>\n")
 
-        self.assertEqual(documentation.content_raw, expected_content)
-        self.assertEqual(documentation.content_html, expected_html)
+        self.assertEqual(documentation.content.raw, expected_content)
+        self.assertEqual(documentation.content.html, expected_html)
 
 
 class TestResource(BaseTestCase):

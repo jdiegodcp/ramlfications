@@ -347,7 +347,12 @@ class Resource(object):
         Assumes raw content is written in plain text or Markdown in RAML
         per specification. (Optional)
         """
-        return DescriptiveContent(self.data.get('description'))
+        desc = None
+        if self.data.get('description'):
+            desc = self.data.get('description')
+        elif self.data.get(self.method).get('description'):
+            desc = self.data.get(self.method).get('description')
+        return DescriptiveContent(desc)
 
     @property
     def headers(self):

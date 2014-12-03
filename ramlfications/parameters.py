@@ -508,8 +508,7 @@ class Documentation(object):
     """
     def __init__(self, title, content):
         self.title = title
-        self.content_raw = content or ''
-        self.content_html = markdown.markdown(self.content_raw)
+        self.content = DescriptiveContent(content)
 
     def __repr__(self):
         return "<Documentation(title='{0}')>".format(self.title)
