@@ -62,13 +62,12 @@ class RAMLLoader(object):
         yaml.add_constructor("!include", self._yaml_include)
 
         try:
-            raml = self._get_raml_object()
-            self.name = raml.name
-            return yaml.load(raml)
+            with self._get_raml_object() as raml:
+                loaded_raml = yaml.load(raml)
+                self.name = raml.name
+                return loaded_raml
         except IOError as e:
             raise LoadRamlFileError(e)
-        else:
-            raml.close()
 
     def __repr__(self):
         return '<RAMLLoader(raml_file="{0}")>'.format(self.raml_file)

@@ -25,6 +25,14 @@ class TestRAMLLoader(BaseTestCase):
         raml = loader.RAMLLoader(raml_file).load()
         self.assertIsNotNone(raml)
 
+    def test_raml_fileobj(self):
+        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
+        with open(raml_file) as f:
+            loader_obj = loader.RAMLLoader(f)
+            raml = loader_obj.load()
+            self.assertIsNotNone(raml)
+            self.assertEqual(loader_obj.raml_file.closed, True)
+
     def test_no_raml_file(self):
         raml_file = os.path.join(EXAMPLES + "this-file-doesnt-exist.raml")
         self.assertRaises(loader.LoadRamlFileError,
