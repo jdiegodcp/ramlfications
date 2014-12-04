@@ -553,18 +553,10 @@ class Resource(object):
     @property
     def scopes(self):
         """Returns a list of OAuth2 scopes assigned to the resource"""
-        # Code is awkward, can this be structured better?
         if self.secured_by:
             for item in self.secured_by:
-                if 'oauth_2_0' in item.values():
-                    if self.data.get('securedBy'):
-                        for i in self.data.get('securedBy'):
-                            if isinstance(i, dict) and 'oauth_2_0' in i.keys():
-                                return i.get('oauth_2_0').get('scopes')
-                    elif self.data.get(self.method).get('securedBy'):
-                        for i in self.data.get('securedBy'):
-                            if isinstance(i, dict) and 'oauth_2_0' in i.keys():
-                                return i.get('oauth_2_0').get('scopes')
+                if 'oauth_2_0' == item.get('name'):
+                    return item.get('scopes')
         else:
             return None
 

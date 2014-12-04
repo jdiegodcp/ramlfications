@@ -18,10 +18,15 @@ class TestRAMLLoader(BaseTestCase):
         self.assertEqual(repr(obj), '<RAMLLoader(raml_file="{0}")>'.format(
                          raml_file))
 
-    def test_raml_file(self):
+    def test_raml_string(self):
         # Everything this method does seems already be covered in test_repr
         # Can this method be deleted?
-        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
+        raml_file = os.path.join(str(EXAMPLES + "spotify-web-api.raml"))
+        raml = loader.RAMLLoader(raml_file).load()
+        self.assertIsNotNone(raml)
+
+    def test_raml_unicode(self):
+        raml_file = os.path.join(unicode(EXAMPLES + "spotify-web-api.raml"))
         raml = loader.RAMLLoader(raml_file).load()
         self.assertIsNotNone(raml)
 

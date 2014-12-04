@@ -12,10 +12,13 @@ from .base import BaseTestCase, EXAMPLES
 
 
 class TestAPIRoot(BaseTestCase):
+    fixture = 'test_api_root.json'
+
     def setup_parsed_raml(self, ramlfile):
         return parse(ramlfile)
 
     def setUp(self):
+        self.f = self.fixture_data.get(self.fixture).get  # fixtures setup
         raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
         self.api = parse(raml_file)
 
@@ -53,14 +56,7 @@ class TestAPIRoot(BaseTestCase):
         self.assertRaises(parser.RAMLParserError, lambda: api.base_uri)
 
     def test_uri_parameters(self):
-        data = [{
-            "apiPath": {
-                "description": "This is the additional path for some api",
-                "type": "string",
-                "example": "barbaz",
-                "displayName": "API Path"}
-        }]
-
+        data = self.f('test_uri_parameters')
         raml_file = os.path.join(EXAMPLES + 'base-uri-parameters.raml')
         api = self.setup_parsed_raml(raml_file)
         results = api.uri_parameters
@@ -111,6 +107,10 @@ class TestAPIRoot(BaseTestCase):
         raml_file = os.path.join(EXAMPLES + "resource-types.raml")
         api = self.setup_parsed_raml(raml_file)
         results = api.resource_types
+
+        # TODO: figure out how to setup fixtures where keys can be Ints
+        # expected_data = self.fixture_data.get(
+        #   self.fixtures[0]).get('test_resource_type')
 
         expected_data = {
             'foo': {
@@ -204,19 +204,16 @@ class TestAPIRoot(BaseTestCase):
 
     def test_documentation(self):
         # TODO: add example that contains multiple examples
-        title = "Spotify Web API Docs"
-        content_raw = (
-            "Welcome to the _Spotify Web API_ demo specification. This is "
-            "*not* the complete API\nspecification, and is meant for testing "
-            "purposes within this RAML specification.\nFor more information "
-            "about how to use the API, check out [developer\n site]"
-            "(https://developer.spotify.com/web-api/).\n")
+        expected_data = self.f('test_documentation')
 
         self.assertIsNotNone(self.api.documentation)
         self.assertIsInstance(self.api.documentation[0], parser.Documentation)
-        self.assertEqual(self.api.documentation[0].title, title)
-        self.assertEqual(self.api.documentation[0].content.raw, content_raw)
-        repr_str = "<Documentation(title='{0}')>".format(title)
+        self.assertEqual(self.api.documentation[0].title,
+                         expected_data.get('title'))
+        self.assertEqual(self.api.documentation[0].content.raw,
+                         expected_data.get('content'))
+        repr_str = "<Documentation(title='{0}')>".format(
+            expected_data.get('title'))
         self.assertEqual(repr(self.api.documentation[0]), repr_str)
 
     def test_documentation_no_title(self):
@@ -373,19 +370,7 @@ class TestAPIRoot(BaseTestCase):
 
     def test_security_schemes_oauth1(self):
         scheme_name = "oauth_1_0"
-        data = {
-            'description': ("OAuth 1.0 continues to be supported for all API "
-                            "requests, but OAuth 2.0 is now preferred.\n"),
-            'type': 'OAuth 1.0',
-            'settings': {
-                'requestTokenUri':
-                    "https://api.dropbox.com/1/oauth/request_token",
-                'authorizationUri':
-                    "https://www.dropbox.com/1/oauth/authorize",
-                'tokenCredentialsUri':
-                    'https://api.dropbox.com/1/oauth/access_token'
-            }
-        }
+        data = self.f('test_security_schemes_oauth1')
 
         raml_file = os.path.join(EXAMPLES + 'security-schemes-oauth-1.raml')
         api = self.setup_parsed_raml(raml_file)
@@ -414,31 +399,11 @@ class TestAPIRoot(BaseTestCase):
 
         schemes = api.security_schemes
 
-        expected_basic = {
-            'description': ("The Foo Web API supports HTTP Basic "
-                            "Authentication\n"),
-            'type': 'Basic Authentication'
-        }
-        expected_digest = {
-            'description': ("The Foo Web API supports HTTP Digest "
-                            "Authentication\n"),
-            'type': 'Digest Authentication'
-        }
-        expected_other = {
-            'describedBy': {
-                'headers': {
-                    'X-Foo-Auth': {
-                        'description': ("Foo's super awesome home-grown "
-                                        "authentication.  Complete with\nour "
-                                        "own home-grown cryptography! /s\n"),
-                        'displayName': 'Foo Auth'
-                    }
-                }
-            },
-            'description': ("The Foo Web API supports its home-grown "
-                            "authentication, Foo Auth\n"),
-            'type': 'x-foo-auth'
-        }
+        data = self.f('test_security_schemes_other')
+
+        expected_basic = data.get('basic')
+        expected_digest = data.get('digest')
+        expected_other = data.get('other')
 
         self.assertDictEqual(schemes[0].data, expected_basic)
         self.assertDictEqual(schemes[1].data, expected_digest)
@@ -473,99 +438,28 @@ class TestAPIRoot(BaseTestCase):
 
         self.assertEqual(result[0], api2.raml)
 
-        expected_data = {
-            'CreatePlaylist': {
-                'name': 'New Playlist',
-                'public': False
-            },
-            'Playlist': {
-                '$schema': 'http://json-schema.org/draft-03/schema',
-                'properties': {
-                    'api_link': {
-                        'description': 'API resource address of the entity.',
-                        'type': 'string'
-                    },
-                    'collaborative': {
-                        'description': ("True if the owner allows other users "
-                                        "to modify the playlist."),
-                        'type': 'boolean'
-                    },
-                    'description': {
-                        'description': 'A description of the playlist.',
-                        'type': 'string'
-                    },
-                    'followers_count': {
-                        'description': ("The number of users following the "
-                                        "playlist."),
-                        'type': 'number'
-                    },
-                    'id': {
-                        'description': 'ID of the playlist.',
-                        'type': 'string'
-                    },
-                    'image': {
-                        'description': ("URL of a picture associated with the "
-                                        "playlist."),
-                        'type': 'string'
-                    },
-                    'items': {
-                        'description': ("Contents of the playlist (an array "
-                                        "of Track objects)."),
-                        'items': {
-                            '$ref': 'Track.json'
-                        },
-                        'type': 'array'
-                    },
-                    'link': {
-                        'description': 'HTTP link of the entity.',
-                        'type': 'string'
-                    },
-                    'name': {
-                        'description': 'Name of the playlist.',
-                        'type': 'string'
-                    },
-                    'owner': {
-                        '$ref': 'User.json',
-                        'description': 'User who owns the playlist.'
-                    },
-                    'published': {
-                        'description': ("Indicates whether the playlist is "
-                                        "publicly discoverable. This does not "
-                                        "restrict access for users who already"
-                                        " know the playlist's URI."),
-                        'type': 'boolean'
-                    },
-                    'uri': {
-                        'description': 'Spotify URI of the entity.',
-                        'type': 'string'
-                    }
-                },
-                'type': 'object'
-            }
-        }
+        expected_data = self.f('test_schema')
+
         self.assertDictEqual(result[1], expected_data)
         repr_str = '<APIRoot(raml_file="{0}")>'.format(raml_file)
         self.assertEqual(repr(api), repr_str)
 
 
 class TestDocumentation(BaseTestCase):
+    fixture = 'test_documentation.json'
+
     def setup_parsed_raml(self, ramlfile):
         return parse(ramlfile)
 
     def setUp(self):
+        self.f = self.fixture_data.get(self.fixture).get  # fixtures setup
         raml_file = os.path.join(EXAMPLES + "multiple_documentation.raml")
         self.api = parse(raml_file)
 
     def test_docs(self):
-        titles = ["Getting Started",
-                  "Basics of Authentication",
-                  "Rendering Data as Graphs",
-                  "Overview"]
-        contents = ["Dummy content on getting started",
-                    "Dummy content on the basics of authentication",
-                    "Dummy content on rendering data as graphs",
-                    ("This is the [markdown](http://foo.com) file that gets "
-                     "included with tests.")]
+        data = self.f('test_docs')
+        titles = data.get('titles')
+        contents = data.get('contents')
 
         for doc in self.api.documentation:
             self.assertIsInstance(doc, parser.Documentation)
@@ -579,30 +473,23 @@ class TestDocumentation(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         documentation = api.documentation[0]
 
-        expected_content = ("Welcome to the _Spotify Web API_ demo "
-                            "specification. This is *not* the complete API\n"
-                            "specification, and is meant for testing purposes "
-                            "within this RAML specification.\nFor more "
-                            "information about how to use the API, check out "
-                            "[developer\n site](https://developer.spotify."
-                            "com/web-api/).\n")
-        expected_html = ("<p>Welcome to the <em>Spotify Web API</em> demo "
-                         "specification. This is <em>not</em> the complete "
-                         "API\nspecification, and is meant for testing "
-                         "purposes within this RAML specification.\nFor more "
-                         "information about how to use the API, check out "
-                         "<a href=\"https://developer.spotify.com/web-api/\">"
-                         "developer\n site</a>.</p>\n")
+        data = self.f('test_docs_markdown')
+
+        expected_content = data.get('content')
+        expected_html = data.get('html')
 
         self.assertEqual(documentation.content.raw, expected_content)
         self.assertEqual(documentation.content.html, expected_html)
 
 
 class TestResource(BaseTestCase):
+    fixture = 'test_resource.json'
+
     def setup_parsed_raml(self, ramlfile):
         return parse(ramlfile)
 
     def setUp(self):
+        self.f = self.fixture_data.get(self.fixture).get  # fixtures setup
         raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
         self.api = parse(raml_file)
         self.resources = self.api.resources
@@ -787,29 +674,7 @@ class TestResource(BaseTestCase):
         resource = resources['post-job']
         results = resource.headers
 
-        expected_data = {
-            'x-Zencoder-job-metadata-{*}': {
-                'description': ("Field names prefixed with x-Zencoder-job-"
-                                "metadata- contain user-specified metadata.\n"
-                                "The API does not validate or use this data. "
-                                "All metadata headers will be stored\nwith the"
-                                " job and returned to the client when this "
-                                "resource is queried.\n"),
-                'displayName': 'Job Metadata'
-            },
-            'Zencoder-Api-Key': {
-                'description': ("The API key for your Zencoder account. You "
-                                "can find your API key at\nhttps://app."
-                                "zencoder.com/api. You can also regenerate "
-                                "your API key on\nthat page.\n"),
-                'displayName': 'ZEncoder API Key',
-                'example': 'abcdefghijabcdefghijabcdefghij',
-                'maxLength': 30,
-                'minLength': 30,
-                'required': True,
-                'type': 'string'
-            }
-        }
+        expected_data = self.f('test_headers')
 
         self.assertIsInstance(results, list)
         for item in results:
@@ -822,126 +687,7 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
-        expected_data = [
-            {
-                '/{id}': {
-                    'displayName': 'track',
-                    'get': {
-                        'description': ("[Get a Track](https://developer."
-                                        "spotify.com/web-api/get-track/)\n")
-                    },
-                    'uriParameters': {
-                        'id': {
-                            'displayName': 'Spotify Track ID',
-                            'example': '1zHlj4dQ8ZAtrayhuDDmkY',
-                            'type': 'string'
-                        }
-                    }
-                },
-                'displayName': 'several-tracks',
-                'get': {
-                    'description': ("[Get Several Tracks]"
-                                    "(https://developer.spotify.com/web-api/"
-                                    "get-several-tracks/)\n"),
-                    'queryParameters': {
-                        'ids': {
-                            'description': 'A comma-separated list of IDs',
-                            'displayName': 'Spotify Track IDs',
-                            'example': ("7ouMYWpwJ422jRcDASZB7P,"
-                                        "4VqPOruhp5EdPBeR92t6lQ,"
-                                        "2takcwOaAZWiXQijPHIx7B"),
-                            'required': True,
-                            'type': 'string'
-                        }
-                    }
-                }
-            }, {
-                'displayName': 'search-item',
-                'get': {
-                    'description': ("[Search for an Item]"
-                                    "(https://developer.spotify.com/web-api/"
-                                    "search-item/)\n"),
-                    'is': ['paged'],
-                    'queryParameters': {
-                        'q': {
-                            'description': ("The search query's keywords (and "
-                                            "optional field filters). The "
-                                            "search is not case-sensitive: "
-                                            "'roadhouse' will match "
-                                            "'Roadhouse', 'roadHouse', etc. "
-                                            "Keywords will be matched in any "
-                                            "order unless surrounded by quotes"
-                                            ", thus q=roadhouse&20blues will "
-                                            "match both 'Blues Roadhouse' and "
-                                            "'Roadhouse of the Blues'. "
-                                            "Quotation marks can be used to "
-                                            "limit the match to a phrase: "
-                                            "q=roadhouse&20blues will match "
-                                            "'My Roadhouse Blues' but not "
-                                            "'Roadhouse of the Blues'. By "
-                                            "default, results are returned "
-                                            "when a match is found in any "
-                                            "field of the target object type. "
-                                            "Searches can be made more "
-                                            "specific by specifying an album, "
-                                            "artist or track field filter. For"
-                                            " example q=album:gold%20artist:"
-                                            "abba&type=album will search for "
-                                            "albums with the text 'gold' in "
-                                            "the album name and the text "
-                                            "'abba' in an artist name. Other "
-                                            "possible field filters, depending"
-                                            " on object types being searched, "
-                                            "include year, genre, upc, and "
-                                            "isrc. For example, q=damian%20"
-                                            "genre:reggae-pop&type=artist. The"
-                                            " asterisk (*) character can, with"
-                                            " some limitations, be used as a "
-                                            "wildcard (maximum: 2 per query). "
-                                            "It will match a variable number "
-                                            "of non-white-space characters. It"
-                                            " cannot be used in a quoted "
-                                            "phrase, in a field filter, or as "
-                                            "the first character of the "
-                                            "keyword string."),
-                            'displayName': 'Query',
-                            'example': 'Muse',
-                            'required': True,
-                            'type': 'string'
-                        },
-                        'type': {
-                            'description': ("A comma-separated list of item "
-                                            "types to search across. Search "
-                                            "results will include hits from "
-                                            "all the specified item types; for"
-                                            " example q=name:abacab&type="
-                                            "album,track will return both "
-                                            "albums and tracks with \"abacab\""
-                                            " in their name."),
-                            'displayName': 'Item Type',
-                            'enum': ['album', 'artist', 'track'],
-                            'example': 'artist',
-                            'required': True,
-                            'type': 'string'
-                        }
-                    }
-                }
-            }, {
-                'displayName': 'track',
-                'get': {
-                    'description': ("[Get a Track]"
-                                    "(https://developer.spotify.com/web-api/"
-                                    "get-track/)\n")
-                },
-                'uriParameters': {
-                    'id': {
-                        'displayName': 'Spotify Track ID',
-                        'example': '1zHlj4dQ8ZAtrayhuDDmkY',
-                        'type': 'string'
-                    }
-                }
-            },
-        ]
+        expected_data = self.f('test_data')
 
         for resource in resources.values():
             self.assertItemInList(resource.data, expected_data)
@@ -1005,31 +751,8 @@ class TestResource(BaseTestCase):
         first_res = api.resources['get-/books']
         second_res = api.resources['get-/magazines']
 
-        first_expected_data = {
-            'data': {
-                u'get': {
-                    u'queryParameters': {
-                        u'digest_all_fields': {
-                            u'description': (u"If no values match the value "
-                                             "given for title, use "
-                                             "digest_all_fields instead")
-                        },
-                        u'title': {
-                            u'description': (u"Return books that have their "
-                                             "title matching the given value")
-                        }
-                    }
-                }
-            },
-            'name': 'searchableCollection'
-        }
-
-        second_expected_data = {
-            'description': 'The collection of magazines',
-            'name': 'collection',
-            'usage': ("This resourceType should be used for any collection"
-                      " of items")
-        }
+        first_expected_data = self.f('test_mapped_traits').get('first')
+        second_expected_data = self.f('test_mapped_traits').get('second')
 
         self.assertEqual(first.name, first_expected_name)
         self.assertEqual(second.name, second_expected_name)
@@ -1163,56 +886,8 @@ class TestResource(BaseTestCase):
         self.assertEqual(track_q_params, None)
 
         expected_search_q_params = ['q', 'type']
-        expected_search_data = {
-            'q': {
-                'description': ("The search query's keywords (and optional "
-                                "field filters). The search is not "
-                                "case-sensitive: 'roadhouse' will match "
-                                "'Roadhouse', 'roadHouse', etc. Keywords will "
-                                "be matched in any order unless surrounded by "
-                                "quotes, thus q=roadhouse&20blues will match "
-                                "both 'Blues Roadhouse' and 'Roadhouse of the "
-                                "Blues'. Quotation marks can be used to limit "
-                                "the match to a phrase: q=roadhouse&20blues "
-                                "will match 'My Roadhouse Blues' but not "
-                                "'Roadhouse of the Blues'. By default, results"
-                                " are returned when a match is found in any "
-                                "field of the target object type. Searches can"
-                                " be made more specific by specifying an "
-                                "album, artist or track field filter. For "
-                                "example q=album:gold%20artist:abba&type=album"
-                                " will search for albums with the text 'gold' "
-                                "in the album name and the text 'abba' in an "
-                                "artist name. Other possible field filters, "
-                                "depending on object types being searched, "
-                                "include year, genre, upc, and isrc. For "
-                                "example, q=damian%20genre:reggae-pop&type="
-                                "artist. The asterisk (*) character can, with "
-                                "some limitations, be used as a wildcard "
-                                "(maximum: 2 per query). It will match a "
-                                "variable number of non-white-space characters"
-                                ". It cannot be used in a quoted phrase, in a "
-                                "field filter, or as the first character of "
-                                "the keyword string."),
-                'displayName': 'Query',
-                'example': 'Muse',
-                'required': True,
-                'type': 'string'
-            },
-            'type': {
-                'description': ("A comma-separated list of item types to "
-                                "search across. Search results will include "
-                                "hits from all the specified item types; for "
-                                "example q=name:abacab&type=album,track will "
-                                "return both albums and tracks with \"abacab\""
-                                " in their name."),
-                'displayName': 'Item Type',
-                'enum': ['album', 'artist', 'track'],
-                'example': 'artist',
-                'required': True,
-                'type': 'string'
-            }
-        }
+        expected_search_data = self.f('test_query_params')
+
         for param in search_q_params:
             self.assertIsInstance(param, parser.QueryParameter)
             self.assertEqual(repr(param),
