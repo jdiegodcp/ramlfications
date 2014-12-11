@@ -14,24 +14,22 @@ except ImportError:  # pragma: no cover
 
 import sys
 
-from ansi.colour import fg
+from termcolor import colored
 
 from .parser import APIRoot
 
 
-# "light" font for dark background screens
-# "dark" font for light background screens
 COLOR_MAP = {
-    "light": (fg.white,
-              fg.yellow,
-              fg.brightgreen,
-              fg.brightblue,
-              fg.brightcyan),
-    "dark": (fg.black,
-             fg.darkgrey,
-             fg.darkgrey,
-             fg.magenta,
-             fg.blue)
+    "light": (('white', None),
+              ('yellow', None),
+              ('green', 'bold'),
+              ('blue', 'bold'),
+              ('cyan', 'bold')),
+    "dark": (('grey', None),
+             ('grey', 'bold'),
+             ('grey', 'bold'),
+             ('magenta', None),
+             ('blue', None))
 }
 
 
@@ -69,13 +67,16 @@ def _create_space(v):
 
 def _set_ansi(string, screen_color, line_color):
     if screen_color:
-        return COLOR_MAP[screen_color][line_color](string)
+        color, attr = COLOR_MAP[screen_color][line_color]
+        if attr:
+            return colored(string, color, attrs=[attr])
+        return colored(string, color)
     return string
 
 
 def _print_line(sp, msg, color, line_color):
-    pipe = _set_ansi("|", color, 0)
-    output = pipe + sp + _set_ansi(msg, color, line_color) + "\n"
+    msg = "|" + sp + msg
+    output = _set_ansi(msg, color, line_color) + "\n"
     sys.stdout.write(output)
 
 
@@ -99,7 +100,7 @@ def _params(space, node, color, desc):
                 desc = ": " + p.display_name
             else:
                 desc = ''
-            _print_line(space + '      ⌙ ',  p.name + desc, color, 4)
+            _print_line(space + '      ⌙ ',  p.name + desc, color, 4)  # NOQA
 
 
 def _print_verbosity(ordered_resources, color, verbosity):
