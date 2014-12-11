@@ -131,7 +131,7 @@ class IntegerNumber(object):
         return self.data.get('maximum')
 
     def __repr__(self):
-        return "<IntegerType(name='{0}')>".format(self.name)
+        return "<IntegerNumber(name='{0}')>".format(self.name)
 
 
 class Boolean(object):

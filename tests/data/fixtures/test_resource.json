@@ -128,6 +128,24 @@
       "example": "artist",
       "required": true,
       "type": "string"
+    },
+    "limit": {
+      "displayName": "Limit",
+      "description": "The maximum number of track objects to return",
+      "type": "integer",
+      "example": 10,
+      "minimum": 0,
+      "default": 20,
+      "maximum": 50,
+      "required": false
+    },
+    "offset": {
+      "displayName": "Offset",
+      "description": "The index of the first track to return",
+      "type": "integer",
+      "example": 5,
+      "default": 0,
+      "required": false
     }
   }
 }

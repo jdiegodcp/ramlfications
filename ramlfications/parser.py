@@ -205,12 +205,32 @@ class APIRoot(object):
         Returns a list of traits, or ``None`` if non are defined.
         """
         traits = self.raml.get('traits', [])
-        trait_params = []
+        trait_params = {}
         for trait in traits:
             for key, value in list(trait.items()):
+                trait_params[key] = {}
                 items = value.get('queryParameters')
-                for k, v in list(items.items()):
-                    trait_params.append({key: QueryParameter(k, v)})
+                if items:
+                    q_params = []
+                    for k, v in list(items.items()):
+                        q_params.append(QueryParameter(k, v))
+                    trait_params[key]['query_parameters'] = q_params
+                # not sure if traits will ever have URI params, but CMA'ing
+                items = value.get('uriParameters')
+                if items:
+                    u_params = []
+                    for k, v in list(items.items()):
+                        u_params.append(URIParameter(k, v))
+                    trait_params[key]['uri_parameters'] = u_params
+                items = value.get('formParameters')
+                if items:
+                    f_params = []
+                    for k, v in list(items.items()):
+                        f_params.append(FormParameter(k, v))
+                    trait_params[key]['form_parameters'] = f_params
+                for k, v in list(value.items()):
+                    if k not in ['formParameters', 'queryParameters', 'uriParameters']:
+                        trait_params[key][k] = v
         return trait_params or None
 
     def _parse_parameters(self):
@@ -232,14 +252,15 @@ class APIRoot(object):
         # Same concern as above.
         # LR: returns None if none define, so will need the if-statement
         if self.traits:
-            for t in self.traits:
-                data = json.dumps(list(t.keys()))
+            for k, v in list(self.traits.items()):
+                data = json.dumps(k)
                 match = find_params(data)
                 _traits_params.extend(match)
 
                 # Is t.values() guaranteed to be non-empty? If not,
                 # the next line will crash.
-                data = json.dumps(list(t.values())[0].data)
+                print(self.traits)
+                data = json.dumps(str(v))
                 match = find_params(data)
                 _traits_params.extend(match)
 
@@ -548,7 +569,7 @@ class Resource(object):
         """
         endpoint_traits = self.data.get('is', [])
         method_traits = self.data.get(self.method).get('is', [])
-        return endpoint_traits + method_traits
+        return endpoint_traits + method_traits or None
 
     @property
     def scopes(self):
@@ -619,15 +640,12 @@ class Resource(object):
         if 'uriParameters' in node.data:
             for k, v in list(node.data['uriParameters'].items()):
                 uri_params.append((URIParameter(k, v)))
-        # LR: How can I better do this 'if-if-if statement'?
-        if self.resource_type:
-            if self.resource_type.get('data'):
-                if 'uriParameters' in self.resource_type['data'].get(
-                        self.method):
-                    items = self.resource_type['data'][self.method][
-                        'uriParameters'].items()
-                    for k, v in list(items):
-                        uri_params.append((URIParameter(k, v)))
+        if self.traits:
+            for trait in self.traits:
+                params = self.api.traits.get(trait)
+                uri_params.extend(
+                    [p for p in params if isinstance(p, URIParameter)])
+
         return uri_params
 
     @property
@@ -662,13 +680,11 @@ class Resource(object):
             items = node.data[self.method]['queryParameters'].items()
             for k, v in list(items):
                 query_params.append((QueryParameter(k, v)))
-        if self.resource_type:
-            if self.resource_type.get('data'):
-                if 'queryParameters' in self.resource_type['data'][self.method]:
-                    items = self.resource_type['data'][self.method][
-                        'queryParameters'].items()
-                    for k, v in list(items):
-                        query_params.append((QueryParameter(k, v)))
+        if self.traits:
+            for trait in self.traits:
+                params = self.api.traits.get(trait)
+                query_params.extend(
+                    [p for p in params if isinstance(p, QueryParameter)])
         return query_params
 
     @property
@@ -691,13 +707,11 @@ class Resource(object):
                     if form and form.get('formParameters'):
                         for k, v in list(form['formParameters'].items()):
                             form_params.append((FormParameter(k, v)))
-            if self.resource_type:
-                if self.resource_type.get('data'):
-                    if 'formParameters' in self.resource_type['data'][self.method]:
-                        items = self.resource_type['data'][self.method][
-                            'formParameters'].items()
-                        for k, v in list(items):
-                            form_params.append((FormParameter(k, v)))
+        if self.traits:
+            for trait in self.traits:
+                params = self.api.traits.get(trait)
+                form_params.extend(
+                    [p for p in params if isinstance(p, FormParameter)])
         return form_params
 
     @property

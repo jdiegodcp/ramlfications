@@ -363,10 +363,9 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(desc_results, expected_results)
 
     def test_traits(self):
-        self.assertIsInstance(self.api.traits, list)
-        for trait in self.api.traits:
-            self.assertIsInstance(list(trait.values())[0],
-                                  parser.QueryParameter)
+        self.assertIsInstance(self.api.traits, dict)
+        for k, v in list(self.api.traits.items()):
+            self.assertIsInstance(v, dict)
 
     def test_security_schemes_oauth1(self):
         scheme_name = "oauth_1_0"
@@ -885,7 +884,7 @@ class TestResource(BaseTestCase):
 
         self.assertEqual(track_q_params, None)
 
-        expected_search_q_params = ['q', 'type']
+        expected_search_q_params = ['q', 'type', 'limit', 'offset']
         expected_search_data = self.f('test_query_params')
 
         for param in search_q_params:
@@ -900,12 +899,8 @@ class TestResource(BaseTestCase):
                              expected_search_data[param.name]['example'])
             self.assertEqual(param.description.raw,
                              expected_search_data[param.name]['description'])
-            self.assertEqual(repr(param.type), "<String(name='{0}')>".format(
-                             param.name))
             self.assertEqual(param.display_name,
                              expected_search_data[param.name]['displayName'])
-            self.assertEqual(param.type.enum,
-                             expected_search_data[param.name].get('enum'))
 
         expected_tracks_q_param = 'ids'
         expected_tracks_data = {
