@@ -7,6 +7,7 @@ __all__ = ["RAMLLoader", "LoadRamlFileError"]
 import os
 
 import yaml
+import six
 
 
 class LoadRamlFileError(Exception):
@@ -32,12 +33,15 @@ class RAMLLoader(object):
             msg = "RAML file can not be 'None'."
             raise LoadRamlFileError(msg)
 
-        if isinstance(self.raml_file, str):
-            return file(os.path.abspath(self.raml_file), 'r')
-        elif isinstance(self.raml_file, unicode):
-            return file(os.path.abspath(self.raml_file), 'r')
-        elif isinstance(self.raml_file, file):
+        if isinstance(self.raml_file, six.text_type) or isinstance(
+                self.raml_file, str):
+            return open(os.path.abspath(self.raml_file), 'r')
+        elif hasattr(self.raml_file, 'read'):
             return self.raml_file
+        else:
+            msg = ("Can not load object '{0}': Not a basestring type or "
+                   "file object".format(self.raml_file))
+            raise LoadRamlFileError(msg)
 
     def _yaml_include(self, loader, node):
         """
