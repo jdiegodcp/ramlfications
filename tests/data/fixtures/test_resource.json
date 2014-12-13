@@ -147,5 +147,12 @@
       "default": 0,
       "required": false
     }
+  },
+  "test_primative_type_integer": {
+    "description": "A comma-separated list of IDs",
+    "displayName": "Spotify Track IDs",
+    "example": "7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B",
+    "required": true,
+    "type": "string"
   }
 }

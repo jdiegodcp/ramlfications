@@ -61,3 +61,8 @@ class TestRAMLLoader(BaseTestCase):
         }
 
         self.assertDictEqual(raml, expected_data)
+
+    def test_incorrect_raml_obj(self):
+        raml_file = dict(nota="raml_file")
+        self.assertRaises(loader.LoadRamlFileError,
+                          lambda: loader.RAMLLoader(raml_file).load())

@@ -370,8 +370,9 @@ class Resource(object):
         desc = None
         if self.data.get('description'):
             desc = self.data.get('description')
-        elif self.data.get(self.method).get('description'):
-            desc = self.data.get(self.method).get('description')
+        elif self.data.get(self.method):
+            if self.data.get(self.method).get('description'):
+                desc = self.data.get(self.method).get('description')
         return DescriptiveContent(desc)
 
     @property

@@ -1,0 +1,99 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Markdown Desc Docs
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.spotify.com/{version}
+mediaType: application/json
+documentation:
+  - title: Spotify Web API Docs
+    content: |
+      Welcome to the _Spotify Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+      For more information about how to use the API, check out [developer
+       site](https://developer.spotify.com/web-api/).
+schemas:
+  - Playlist: !include includes/post-playlist-schema.json
+resourceTypes:
+  - base:
+      get?: &common
+        headers:
+          Accept:
+            description: Is used to set specified media type.
+            type: string
+        responses:
+          403:
+            description: |
+              API rate limit exceeded. See http://developer.spotify.com/web-api/#rate-limiting for details.
+      post?: *common
+  - item:
+      type: base
+      get?:
+  - collection:
+      type: base
+      get?:
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Spotify supports [OAuth 2.0](https://developer.spotify.com/web-api/authorization-guide/)
+          for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.spotify.com/authorize
+        accessTokenUri: https://accounts.spotify.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "playlist-read-private"
+          - "playlist-modify-public"
+          - "playlist-modify-private"
+          - "user-library-read"
+          - "user-library-modify"
+          - "user-read-private"
+          - "user-read-email"
+
+/artists:
+  displayName: several-artists
+  get:
+    queryParameters:
+      ids:
+        displayName: Spotify Artist IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: '2CIMQHirSU0MQqyYHq0eOx,57dN52uHvrHOxijzpIgu3E,1vCWHaC5f2uS3yhpwWbIA6'
+  /{id}:
+    displayName: artist
+    uriParameters:
+      id:
+        displayName: Spotify Artist ID
+        type: string
+        description: The Spotify ID for the artist
+        example: 0TnOYISbd1XYRBk9myaseg
+        required: true
+    get:
+    /top-tracks:
+      displayName: artist-top-tracks
+      get:
+        description: |
+          [Get an Artist's Top Tracks](https://developer.spotify.com/web-api/get-artists-top-tracks/)
+        queryParameters:
+          country:
+            displayName: Country
+            description: The country ([an ISO 3166-1 alpha-2 country code](http://en.wikipedia.org/wiki/ISO_3166-1))
+            type: string
+            example: ES
+            required: true

@@ -544,6 +544,16 @@ class TestResource(BaseTestCase):
 
         self.assertEqual(html_result, expected_result)
 
+    def test_no_description(self):
+        raml_file = os.path.join(EXAMPLES + "resource-no-desc.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources.get('get-artist')
+
+        raw_desc = resource.description.raw
+        html_desc = resource.description.html
+        self.assertEqual(raw_desc, None)
+        self.assertEqual(html_desc, None)
+
     def test_method(self):
         raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
@@ -970,6 +980,17 @@ class TestResource(BaseTestCase):
                              expected_track_data['displayName'])
             self.assertEqual(repr(param.type), "<String(name='id')>")
             self.assertIsNone(param.description.raw)
+
+    def test_primative_type_integer(self):
+        raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources.get('get-bar')
+        param = resource.query_params.pop()
+
+        expected_data = self.f('test_primative_type_integer')
+
+        self.assertEqual(repr(param.type), "<IntegerNumber(name='limit')>")
+        self.assertDictEqual(param.data, expected_data)
 
     def test_form_params(self):
         raml_file = os.path.join(EXAMPLES + "form-parameters.raml")
