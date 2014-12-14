@@ -149,10 +149,32 @@
     }
   },
   "test_primative_type_integer": {
-    "description": "A comma-separated list of IDs",
-    "displayName": "Spotify Track IDs",
-    "example": "7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B",
-    "required": true,
-    "type": "string"
+    "description": "The maximum number of track objects to return",
+    "displayName": "Limit",
+    "example": 10,
+    "minimum": 0,
+    "default": 20,
+    "maximum": 50,
+    "required": false,
+    "type": "integer"
+  },
+  "test_primative_type_number": {
+    "description": "Some floating number parameter for the sake of testing.",
+    "displayName": "Some Number Parameter",
+    "example": 5.4,
+    "minimum": 4.3,
+    "default": 7.2,
+    "maximum": 8.5,
+    "required": false,
+    "type": "number",
+    "repeat": false
+  },
+  "test_primative_type_boolean": {
+    "description": "Some boolean parameter for the sake of testing. I'm not creative.",
+    "displayName": "Some Boolean Parameter",
+    "default": true,
+    "required": false,
+    "type": "boolean",
+    "repeat": false
   }
 }

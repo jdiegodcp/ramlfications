@@ -20,5 +20,15 @@ baseUri: https://api.spotify.com/{version}
       application/json:
         schema: !include includes/post-playlist-schema.json
         example: !include includes/post-playlist-example.json
+  put:
+    description: A PUT resource for testing body schemas.
+    body:
+      application/x-www-form-urlencoded:
+        schema: {"name": "foo"}
+  delete:
+    description: A DELETE resource for testing body schemas.
+    body:
+      multipart/form-data:
+        schema: {"name": "foo"}
 
 

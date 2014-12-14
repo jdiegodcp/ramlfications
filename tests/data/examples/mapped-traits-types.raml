@@ -25,6 +25,10 @@ traits:
       queryParameters:
         numPages:
           description: The number of pages to return, not to exceed <<maxPages>>
+    formTrait:
+      formParameters:
+        aFormTrait:
+          description: A form trait for testing purposes.
 /books:
   type: { searchableCollection: { queryParamName: title, fallbackParamName: digest_all_fields } }
   get:
@@ -33,3 +37,7 @@ traits:
   type: collection
   get:
     is: [ secured: { tokenName: access_token}, paged: { maxPages: 20} ]
+/foobar:
+  displayName: foobar
+  get:
+    is: [ formTrait ]

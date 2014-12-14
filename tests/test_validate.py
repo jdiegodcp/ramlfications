@@ -33,6 +33,19 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
+    def test_no_raml_header(self):
+        raml_file = os.path.join(EXAMPLES, "no-raml-header.raml")
+        expected_msg = ("RAML header empty. Please make sure the first line "
+                        "of the file contains a valid RAML file definition.")
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_invalid_raml_header(self):
+        raml_file = os.path.join(EXAMPLES, "invalid-raml-header.raml")
+        expected_msg = ("Not a valid RAML header: #%RAML.")
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
     def test_validate_raml_version(self):
         raml_file = os.path.join(EXAMPLES, "invalid-version-raml-header.raml")
         expected_msg = 'Not a valid version of RAML: 0.9.'

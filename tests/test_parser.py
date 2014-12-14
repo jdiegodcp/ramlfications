@@ -601,6 +601,17 @@ class TestResource(BaseTestCase):
         self.assertEqual(resource.body[0].mime_type, "application/json")
         self.assertEqual(resource.body[0].name, "application/json")
 
+    def test_body_form_mimetypes(self):
+        raml_file = os.path.join(EXAMPLES + "simple-body.raml")
+        api = self.setup_parsed_raml(raml_file)
+        form_encoded = api.resources['put-playlists'].body[0]
+        multipart = api.resources['delete-playlists'].body[0]
+
+        self.assertEqual(repr(form_encoded), "<Body(name='application/x-www-form-urlencoded')>")
+        self.assertEqual(repr(multipart), "<Body(name='multipart/form-data')>")
+        self.assertIsNone(form_encoded.schema)
+        self.assertIsNone(multipart.schema)
+
     def test_responses(self):
         raml_file = os.path.join(EXAMPLES + "responses.raml")
         resource = self.setup_parsed_raml(raml_file).resources.get(
@@ -769,6 +780,13 @@ class TestResource(BaseTestCase):
         self.assertDictEqual(first_res.resource_type, first_expected_data)
         self.assertDictEqual(second_res.resource_type, second_expected_data)
 
+    def test_mapped_form_traits(self):
+        raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources['get-foobar']
+        form_param = resource.form_params[0]
+        self.assertEqual(form_param.name, "aFormTrait")
+
     def test_secured_by(self):
         raml_file = os.path.join(EXAMPLES + "simple-traits.raml")
         api = self.setup_parsed_raml(raml_file)
@@ -829,6 +847,20 @@ class TestResource(BaseTestCase):
         scopes = ['user-read-private']
 
         self.assertListEqual(resource.scopes, scopes)
+
+    def test_is_secured_no_scopes(self):
+        raml_file = os.path.join(EXAMPLES +
+                                 "multiple-security-schemes.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources['post-current-user-contains-saved-tracks']
+        self.assertIsNone(resource.scopes)
+
+    def test_not_secured(self):
+        raml_file = os.path.join(EXAMPLES +
+                                 "multiple-security-schemes.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources['get-current-user-contains-saved-tracks']
+        self.assertIsNone(resource.scopes)
 
     def test_base_uri_params(self):
         raml_file = os.path.join(EXAMPLES + 'base-uri-parameters.raml')
@@ -991,6 +1023,36 @@ class TestResource(BaseTestCase):
 
         self.assertEqual(repr(param.type), "<IntegerNumber(name='limit')>")
         self.assertDictEqual(param.data, expected_data)
+        self.assertEqual(param.type.minimum, expected_data.get('minimum'))
+        self.assertEqual(param.type.maximum, expected_data.get('maximum'))
+        self.assertIsInstance(param.example, int)
+
+    def test_primative_type_number(self):
+        raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources.get('get-foobar')
+        param = resource.query_params.pop()
+
+        expected_data = self.f('test_primative_type_number')
+
+        self.assertEqual(repr(param.type), "<IntegerNumber(name='numberParam')>")
+        self.assertDictEqual(param.data, expected_data)
+        self.assertEqual(param.type.minimum, expected_data.get('minimum'))
+        self.assertEqual(param.type.maximum, expected_data.get('maximum'))
+        self.assertIsInstance(param.example, float)
+
+    def test_primative_type_boolean(self):
+        raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources.get('get-baz')
+        param = resource.query_params.pop()
+
+        expected_data = self.f('test_primative_type_boolean')
+
+        self.assertEqual(repr(param.type), "<Boolean(name='booleanParam')>")
+        self.assertDictEqual(param.data, expected_data)
+        self.assertEqual(param.type.repeat, expected_data.get('repeat'))
+        self.assertIsInstance(param.default, bool)
 
     def test_form_params(self):
         raml_file = os.path.join(EXAMPLES + "form-parameters.raml")

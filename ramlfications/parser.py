@@ -710,9 +710,7 @@ class Resource(object):
                             form_params.append((FormParameter(k, v)))
         if self.traits:
             for trait in self.traits:
-                params = self.api.traits.get(trait)
-                form_params.extend(
-                    [p for p in params if isinstance(p, FormParameter)])
+                form_params.extend(self.api.traits.get(trait).get('form_parameters'))
         return form_params
 
     @property

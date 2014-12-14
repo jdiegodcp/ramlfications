@@ -109,9 +109,7 @@ securitySchemes:
     /contains:
       displayName: current-user-contains-saved-tracks
       get:
-        description: |
-          [Check Current User's Saved Tracks](https://developer.spotify.com/web-api/check-users-saved-tracks/)
-        securedBy: [ oauth_2_0: {scopes: ['user-library-read']}]
+        description: A random GET method to test no secured_by and no scopes
         queryParameters:
           ids:
             displayName: Spotify Track IDs
@@ -119,3 +117,6 @@ securitySchemes:
             description: A comma-separated list of IDs
             required: true
             example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+      post:
+        description: A random POST method to test no oauth scopes
+        securedBy: [ oauth_2_0 ]

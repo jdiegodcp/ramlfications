@@ -8,6 +8,17 @@ from termcolor import colored
 # NOTE: I know that these should be caps being constants but I'm
 # not liking that for some reason for fixtures. Deal.
 
+tree_no_color = ("""\
+==================================
+Spotify Web API Demo - Simple Tree
+==================================
+Base URI: https://api.spotify.com/v1
+|- /tracks
+|  - /tracks/{id}
+|- /users/{user_id}/playlists
+|  - /users/{user_id}/playlists/{playlist_id}
+""")
+
 tree_light = (
     colored("==================================", "white") + "\n" +
     colored("Spotify Web API Demo - Simple Tree", "yellow") + "\n" +

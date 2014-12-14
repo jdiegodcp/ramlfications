@@ -42,6 +42,14 @@ class TestPrintTree(BaseTestCase):
             "{playlist_id}', [('PUT', <Resource(name='/{playlist_id}')>)])])")
         self.assertEqual(str(ordered_res), expected_res)
 
+    def test_pprint_tree_no_coder(self):
+        resources = tree._get_tree(self.api)
+        ordered_res = tree._order_resources(resources)
+        tree.pprint_tree(self.api, ordered_res, None, 0)
+
+        expected_result = tree_fixtures.tree_no_color
+        self.assertEqual(sys.stdout.getvalue(), expected_result)
+
     def test_pprint_tree_light(self):
         expected_result = tree_fixtures.tree_light
 
