@@ -660,8 +660,9 @@ class TestResource(BaseTestCase):
 
         for resp in responses:
             self.assertDictEqual(resp.data, expected_resp_data[resp.code])
-            self.assertDictEqual(resp.body, expected_resp_data[resp.code].get(
-                                 'body'))
+            self.assertIsInstance(resp.body, parameters.Body)
+            self.assertEqual(repr(resp.body),
+                             "<Body(name='application/json')>")
             self.assertIsInstance(resp, parser.Response)
             self.assertEqual(repr(resp),
                              "<Response(code='{0}')>".format(resp.code))
@@ -669,15 +670,14 @@ class TestResource(BaseTestCase):
                              expected_resp_data[resp.code].get('description'))
             if resp.description.raw:
                 self.assertEqual(resp.description.html, desc_html)
-            self.assertIsInstance(resp.resp_content_types, list)
 
         exp_headers = expected_resp_data[503]['headers']['X-waiting-period']
 
-        for resp in responses:
-            headers = resp.headers
-            for h in headers:
-                self.assertIsInstance(h, parser.Header)
-                self.assertDictEqual(h.data, exp_headers)
+        response_503 = responses[1]
+        headers = response_503.headers
+        for h in headers:
+            self.assertIsInstance(h, parser.Header)
+            self.assertDictEqual(h.data, exp_headers)
 
     def test_raises_incorrect_response_code(self):
         raml_file = os.path.join(EXAMPLES + "invalid-resp-code.raml")

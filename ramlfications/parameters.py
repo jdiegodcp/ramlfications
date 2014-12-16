@@ -409,25 +409,12 @@ class Response(object):
 
     @property
     def body(self):
-        return self.data.get('body', '')
-
-    @property
-    def resp_content_types(self):
-        content_type = []
-        if self.data.get('body'):
-            # grabs all content types
-            # Can content_types be None?
-            # LR: not valid raml if body does not have keys that are
-            # content types
-            content_types = self.data.get('body')
-            # types = content_types.keys()
-            # Can types be None?
-            types = self.data.get('body').keys()
-            for content in types:
-                schema = content_types.get(content).get('schema')
-                example = content_types.get(content).get('example')
-                content_type.append(ContentType(content, schema, example))
-        return content_type
+        """
+        Returns a ``Body`` object of a response if defined, or ``None``
+        """
+        name = self.data.get('body').keys()[0]
+        data = self.data.get('body').values()[0]
+        return Body(name, data) or None
 
     def __repr__(self):
         return "<Response(code='{0}')>".format(self.code)
