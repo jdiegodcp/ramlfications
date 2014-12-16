@@ -53,10 +53,6 @@ def validate_api_title(api):
         raise InvalidRamlFileError(msg)
 
 
-# Is this function useful or are missing versions
-# already be caught in raml_header?
-# LR - RAML version is different than API version
-# (e.g. RAML 0.8 version api.foo.com/v1/ where v1 = version)
 def validate_api_version(api, prod=True):
     """Require an API Version (e.g. api.foo.com/v1)."""
     if prod and not api.version:

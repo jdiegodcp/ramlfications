@@ -125,19 +125,11 @@ def _print_metadata(api, color):
 
 
 def pprint_tree(api, ordered_resources, print_color, verbosity):
-    # Verify layout of arguments. For example, print_color must be a list
-    # of exactly length three. Then verify that each list element is an
-    # integer(?) too.
-
-    # LR - print_color is verified in __main__.py with the use of ``click``
     _print_metadata(api, print_color)
     _print_verbosity(ordered_resources, print_color, verbosity)
 
 
 def ttree(load_obj, color, output, verbosity):  # pragma: no cover
-    # Function below can throw exceptions. Document these.
-    # LR: Any exceptions are caught in the __main__.py, which is
-    # the entry point for this module.
     api = APIRoot(load_obj)
     resources = _get_tree(api)
     ordered_resources = _order_resources(resources)

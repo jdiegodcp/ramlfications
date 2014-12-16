@@ -54,14 +54,6 @@ class RAMLLoader(object):
         with open(file_name) as inputfile:
             return yaml.load(inputfile)
 
-    # Instead of having a load function it would probably be more
-    # Pythonic if you could implement the __ functions to make RAML
-    # files work with "with" like:
-    #
-    # with RAMLLoader(filename) as f:
-    #   print f
-    # LR: Nah. YAML & JSON loaders don't work like that. It's always called
-    # like yaml.load(fileobject) or json.dumps(filename).
     def load(self):
         yaml.add_constructor("!include", self._yaml_include)
 

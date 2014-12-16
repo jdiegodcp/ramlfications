@@ -91,16 +91,12 @@ class APIRoot(object):
         :raises RAMLParserError: if no ``version`` is defined but is\
         referenced in the ``baseUri`` parameter.
         """
-        # Default base_uri to '' in the get method, then get rid of
-        # the if-statement one line below.
         base_uri = self.raml.get('baseUri')
         if base_uri:
             if "{version}" in base_uri:
                 try:
                     return base_uri.replace("{version}", self.raml['version'])
                 except KeyError:
-                    # Akward formatting. Break the line below after the
-                    # opening parens.
                     raise RAMLParserError("No API Version defined even though "
                                           "version is referred in the baseUri")
             else:
@@ -257,9 +253,6 @@ class APIRoot(object):
                 match = find_params(data)
                 _traits_params.extend(match)
 
-                # Is t.values() guaranteed to be non-empty? If not,
-                # the next line will crash.
-                print(self.traits)
                 data = json.dumps(str(v))
                 match = find_params(data)
                 _traits_params.extend(match)
@@ -414,7 +407,6 @@ class Resource(object):
         # I'd create a helper method for the if-statement below.
         if self.data.get('securedBy'):
             secured_by = self.data.get('securedBy')
-        # Can self.method be None? If yes, the next line crashes.
         elif self.data.get(self.method).get('securedBy'):
             secured_by = self.data.get(self.method).get('securedBy')
         else:
@@ -459,10 +451,6 @@ class Resource(object):
         if "<<resourcePath>>" in string:
             string = string.replace("<<resourcePath>>", self.name)
 
-        # Unclear to me if this is even a valid code path that makes
-        # sense.
-        # LR: will return string that was passed in if there are no
-        # reserved params used (resourcePathName, resourcePath)
         return string
 
     def _fill_params(self, string, key, value):
@@ -472,9 +460,6 @@ class Resource(object):
         return string
 
     def _map_resource_string(self, res_type):
-        # Can res_type be empty? If yes, next line crashes.
-        # LR: No - it's either None or a string, if None, then
-        # this function won't even be called
         api_resources = self.api.resource_types
 
         api_resources_names = [a.name for a in api_resources]
@@ -501,9 +486,6 @@ class Resource(object):
     def _map_resource_dict(self, res_type):
         api_resources = self.api.resource_types
 
-        # Can res_type be empty? If yes, next line crashes.
-        # LR: No - it's either None or a dict, if None, then
-        # this function won't even be called
         _type = list(res_type.keys())[0]
         # Can api_resources be None? If yes, next line crashes.
         api_resources_names = [a.name for a in api_resources]
@@ -594,10 +576,6 @@ class Resource(object):
     def _get_responses(self, node):
         resps = []
         responses = self.data.get(self.method).get('responses', {})
-        # Why are you turning responses.items() into a list? You
-        # do this all over the place but I don't know why.
-        # LR: this is for py3 compatibility.  py3 .items()s returns a
-        # generator but I want an interator.
         for k, v in list(responses.items()):
             if k in HTTP_RESP_CODES:
                 resps.append(Response(k, v, self.method))

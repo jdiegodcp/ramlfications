@@ -24,10 +24,6 @@ def main():
 def validate(ramlfile):
     """Validate a given RAML file."""
     try:
-        # Can the next line throw IOError that is not caught in the
-        # except block?
-
-        # LR: the @click.argument checks to see if the RAML file exists
         validate_raml(ramlfile, prod=True)
         click.secho("Success! Valid RAML file: {0}".format(ramlfile),
                     fg="green")
@@ -53,8 +49,6 @@ def tree(ramlfile, color, output, verbose):
         load_obj = RAMLLoader(ramlfile)
         validate_raml(ramlfile, prod=True)
         ttree(load_obj, color, output, verbose)
-    # Same exception conecrns as in the validate function.
-    # LR: the @click.argument checks to see if the RAML file exists
     except InvalidRamlFileError as e:
         msg = '"{0}" is not a valid RAML file: {1}'.format(
             click.format_filename(load_obj.raml_file), e)

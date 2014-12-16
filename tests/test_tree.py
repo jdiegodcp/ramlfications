@@ -87,9 +87,6 @@ class TestPrintTree(BaseTestCase):
         self.assertEqual(sys.stdout.getvalue(), expected_result)
 
     def test_pprint_tree_light_vvv(self):
-        # What does this test cover that the ones above do not?
-        # Can you combine all the tests into one that covers 100% of
-        # all tree code?
         expected_result = tree_fixtures.tree_light_vvv
 
         resources = tree._get_tree(self.api)

@@ -20,10 +20,6 @@ class ContentType(object):
     def __init__(self, name, schema, example):
         # Input validation would be nice here.
         # LR: Will do, but will add it to validate.py
-
-        # Also: Hide private variables with an underscore like:
-        # self._name = name
-        # LR: Not sure if want this private, though
         self.name = name
         self.schema = schema
         self.example = example
@@ -291,9 +287,6 @@ class QueryParameter(BaseParameter):
         Defaults to ``False`` if not defined, except for ``URIParameter``,
         where the default is ``True`` if omitted.
         """
-        # Exists in a whole lot of classes defined here. Maybe define a class
-        # RequiredParameter and inherit from that.
-        # LR: No, because Header,  doesn't have 'required'
         return self.data.get('required', True)
 
 
@@ -341,12 +334,8 @@ class Header(BaseParameter):
         self.method = method
 
 
-# From now on please consider:
-# - Use undersores for private variables
 # - Document if return types can be None, but even better return empty
 #   strings everywhere. I won't repeat that. (LR: Will do)
-# LR: Not sure which should be private - I think it's useful to have all of
-# the below public
 class Body(object):
     def __init__(self, name, data):
         self.name = name
@@ -467,11 +456,6 @@ class ResourceTypeMethod(object):
 
     @property
     def optional(self):
-        # Further up you always define methods "required", now we have
-        # one "optional". This seems weird unless there's a good reason.
-        # Would having a "required" method here be better than
-        # "optional".
-        # LR: this is according to the RAML spec where "?" denotes optional
         return "?" in self.name
 
     def __repr__(self):
