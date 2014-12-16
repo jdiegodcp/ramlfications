@@ -343,6 +343,10 @@ class Body(object):
 
     @property
     def mime_type(self):
+        """
+        Accepted MIME media types for the Body of the request/response.
+        (Required)
+        """
         return self.name
 
     @property
@@ -391,6 +395,9 @@ class Response(object):
 
     @property
     def headers(self):
+        """
+        Returns a list of ``Header`` objects if defined, or ``None``
+        """
         return [
             Header(k, v, self.method) for k, v in self.data.get(
                 'headers', {}).items()
@@ -410,12 +417,18 @@ class Response(object):
 
 
 class ResourceType(object):
+    """
+    Resource Type inheritable by resources.
+    """
     def __init__(self, name, data):
         self.name = name
         self.data = data
 
     @property
     def usage(self):
+        """
+        Returns a string detailing how to use this resource type.
+        """
         return self.data.get('usage')
 
     @property
@@ -431,10 +444,18 @@ class ResourceType(object):
 
     @property
     def type(self):
+        """
+        Returns a ``ResourceType`` name if inheriting properties from another
+        Resource Type, or ``None`` if not defined.
+        """
         return self.data.get('type')
 
     @property
     def methods(self):
+        """
+        Returns a list of ``ResourceTypeMethod` objects as  defined for the
+        Resource Type, or ``None`` if none are defined.
+        """
         methods = []
         for m in HTTP_METHODS:
             if self.data.get(m):
@@ -450,12 +471,20 @@ class ResourceType(object):
 
 
 class ResourceTypeMethod(object):
+    """
+    Object representing a method applied to a Resource Type.  Allows users
+    to see if the method is optional or not (denoted by ``?`` in the RAML
+    definition).
+    """
     def __init__(self, name, data):
         self.name = name
         self.data = data
 
     @property
     def optional(self):
+        """
+        Returns ``True`` if ``?`` in method, denoting that it is optional.
+        """
         return "?" in self.name
 
     def __repr__(self):
@@ -475,6 +504,9 @@ class Documentation(object):
 
 
 class SecuritySchemes(object):
+    """
+    Security schemes supported by the API.
+    """
     def __init__(self, raml_file):
         self.raml = raml_file
 
@@ -492,16 +524,23 @@ class SecuritySchemes(object):
 
     @property
     def security_schemes(self):
+        """Returns a list of API-supported ``SecurityScheme`` objects."""
         return self._get_security_schemes()
 
 
 class SecurityScheme(object):
+    """
+    Security scheme object defined by its type (OAuth 2.0, OAuth 1.0, etc).
+    """
     def __init__(self, name, data):
         self.name = name
         self.data = data
 
     @property
     def type(self):
+        """
+        Returns type of authentication.
+        """
         return self.data.get('type')
 
     def _convert_items(self, items, obj, **kw):
@@ -552,6 +591,10 @@ class SecurityScheme(object):
 
     @property
     def settings(self):
+        """
+        Returns the settings if defined for either OAuth 2.0, OAuth 1.0
+        or a API-defined authentication method denoted by ``x-{name}``.
+        """
         schemes = ['oauth_2_0', 'oauth_1_0']
         if self.name in schemes:
             return self._get_oauth_scheme(self.name)(self.data.get('settings'))
@@ -561,38 +604,65 @@ class SecurityScheme(object):
 
 
 class Oauth2Scheme(object):
+    """
+    OAuth 2 Authentication protocol scheme
+    """
     def __init__(self, settings):
         self.settings = settings
 
     @property
     def scopes(self):
+        """
+        Returns a list of strings of available scopes
+        """
         return self.settings.get('scopes')  # list of strings
 
     @property
     def authorization_uri(self):
+        """
+        Returns a string of the authorization URI
+        """
         return self.settings.get('authorizationUri')  # string
 
     @property
     def access_token_uri(self):
+        """
+        Returns a string of the access token URI
+        """
         return self.settings.get('accessTokenUri')  # string
 
     @property
     def authorization_grants(self):
+        """
+        Returns a list of strings of authorization grants
+        """
         return self.settings.get('authorizationGrants')  # list of strings
 
 
 class Oauth1Scheme(object):
+    """
+    OAuth 1 Authentication protocol scheme
+    """
     def __init__(self, settings):
         self.settings = settings
 
     @property
     def request_token_uri(self):
+        """
+        Returns a string of the Request Token URI
+        """
         return self.settings.get('requestTokenUri')
 
     @property
     def authorization_uri(self):
+        """
+        Returns a string of the Authorization URI
+        """
         return self.settings.get('authorizationUri')
 
     @property
     def token_credentials_uri(self):
+        """
+        Returns a string of the Token Credentials URI
+        """
         return self.settings.get('tokenCredentialsUri')
