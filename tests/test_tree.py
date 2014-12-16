@@ -42,55 +42,33 @@ class TestPrintTree(BaseTestCase):
             "{playlist_id}', [('PUT', <Resource(name='/{playlist_id}')>)])])")
         self.assertEqual(str(ordered_res), expected_res)
 
-    def test_pprint_tree_no_coder(self):
+    def pprint_tree(self, expected_result, color, verbosity):
         resources = tree._get_tree(self.api)
-        ordered_res = tree._order_resources(resources)
-        tree.pprint_tree(self.api, ordered_res, None, 0)
+        ordered_res = tree.ordered_resources(resources)
+        tree.pprint_tree(self.api, ordered_res, color, verbosity)
 
-        expected_result = tree_fixtures.tree_no_color
         self.assertEqual(sys.stdout.getvalue(), expected_result)
+
+    def test_pprint_tree_no_color(self):
+        expected_result = tree_fixtures.tree_no_color
+        self.pprint_tree(expected_result, None, 0)
 
     def test_pprint_tree_light(self):
         expected_result = tree_fixtures.tree_light
-
-        resources = tree._get_tree(self.api)
-        ordered_res = tree._order_resources(resources)
-        tree.pprint_tree(self.api, ordered_res, 'light', 0)
-
-        self.assertEqual(sys.stdout.getvalue(), expected_result)
+        self.pprint_tree(expected_result, 'light', 0)
 
     def test_pprint_tree_dark(self):
         expected_result = tree_fixtures.tree_dark
-
-        resources = tree._get_tree(self.api)
-        ordered_res = tree._order_resources(resources)
-        tree.pprint_tree(self.api, ordered_res, 'dark', 0)
-
-        self.assertEqual(sys.stdout.getvalue(), expected_result)
+        self.pprint_tree(expected_result, 'dark', 0)
 
     def test_pprint_tree_light_v(self):
         expected_result = tree_fixtures.tree_light_v
-
-        resources = tree._get_tree(self.api)
-        ordered_res = tree._order_resources(resources)
-        tree.pprint_tree(self.api, ordered_res, 'light', 1)
-
-        self.assertEqual(sys.stdout.getvalue(), expected_result)
+        self.pprint_tree(expected_result, 'light', 1)
 
     def test_pprint_tree_light_vv(self):
         expected_result = tree_fixtures.tree_light_vv
-
-        resources = tree._get_tree(self.api)
-        ordered_res = tree._order_resources(resources)
-        tree.pprint_tree(self.api, ordered_res, 'light', 2)
-
-        self.assertEqual(sys.stdout.getvalue(), expected_result)
+        self.pprint_tree(expected_result, 'light', 2)
 
     def test_pprint_tree_light_vvv(self):
         expected_result = tree_fixtures.tree_light_vvv
-
-        resources = tree._get_tree(self.api)
-        ordered_res = tree._order_resources(resources)
-        tree.pprint_tree(self.api, ordered_res, 'light', 3)
-
-        self.assertEqual(sys.stdout.getvalue(), expected_result)
+        self.pprint_tree(expected_result, 'light', 3)
