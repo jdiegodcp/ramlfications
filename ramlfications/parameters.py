@@ -141,7 +141,7 @@ class Boolean(object):
         """
         Returns a boolean if the parameter can be repeated.
         """
-        return self.data.get('repeat')
+        return self.data.get('repeat', False)
 
     def __repr__(self):
         return "<Boolean(name='{0}')>".format(self.name)
@@ -401,7 +401,7 @@ class Response(object):
         return [
             Header(k, v, self.method) for k, v in self.data.get(
                 'headers', {}).items()
-        ]
+        ] or None
 
     @property
     def body(self):
@@ -572,6 +572,9 @@ class SecurityScheme(object):
 
     @property
     def described_by(self):
+        """
+        Returns ``describedBy`` information of the authentication scheme.
+        """
         return self._get_described_by()
 
     @property
@@ -596,7 +599,7 @@ class SecurityScheme(object):
         or a API-defined authentication method denoted by ``x-{name}``.
         """
         schemes = ['oauth_2_0', 'oauth_1_0']
-        if self.name in schemes:
+        if self.name in schemes or self.name.startswith("x-"):
             return self._get_oauth_scheme(self.name)(self.data.get('settings'))
 
     def __repr__(self):
