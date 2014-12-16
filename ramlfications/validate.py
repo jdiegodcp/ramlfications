@@ -47,8 +47,7 @@ def validate_raml_header(raml_file):
 
 def validate_api_title(api):
     """Require an API Title."""
-    title = api.title
-    if not title:
+    if not api.title:
         msg = 'RAML File does not define an API title.'
         raise InvalidRamlFileError(msg)
 
@@ -62,8 +61,7 @@ def validate_api_version(api, prod=True):
 
 def validate_base_uri(api):
     """Require a Base URI."""
-    base_uri = api.base_uri
-    if not base_uri:
+    if not api.base_uri:
         msg = 'RAML File does not define the baseUri.'
         raise InvalidRamlFileError(msg)
 
@@ -85,11 +83,9 @@ def validate_resource_response(api):
     Assert only ``body``, ``headers``, and ``description`` are keys
     defined for a ``Response``.
     """
-    resources = api.resources
     valid_keys = ['body', 'headers', 'description']
-    for resource in list(resources.values()):
-        responses = resource.responses
-        for resp in responses:
+    for resource in list(api.resources.values()):
+        for resp in resource.responses:
             for key in list(resp.data.keys()):
                 if key not in valid_keys:
                     msg = "'{0}' not a valid Response parameter.".format(
