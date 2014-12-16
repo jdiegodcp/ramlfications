@@ -51,6 +51,7 @@ class APIRoot(object):
         method + resource display name (e.g. ``get-item``) and values set
         to the ``Resource`` object.
         """
+        # Agree with Matt! Return list.
         resource_stack = ResourceStack(self, self.raml).yield_resources()
         resource = OrderedDict()
         for res in resource_stack:
@@ -96,12 +97,15 @@ class APIRoot(object):
             if "{version}" in base_uri:
                 try:
                     return base_uri.replace("{version}", self.raml['version'])
+                # Double-check KeyError behavior
                 except KeyError:
-                    raise RAMLParserError("No API Version defined even though "
-                                          "version is referred in the baseUri")
-            else:
-                return base_uri
-        return None
+                    # Double-check all files for consistency of
+                    # double-ticks vs single-ticks for strings
+                    raise RAMLParserError(
+                        "No API Version defined even though version is "
+                        "referred in the baseUri")
+
+        return base_uri
 
     @property
     def uri_parameters(self):
@@ -200,6 +204,8 @@ class APIRoot(object):
         """
         Returns a list of traits, or ``None`` if non are defined.
         """
+        # Simplify this method by replacing duplicate code, think
+        # def _lookup_parameters
         traits = self.raml.get('traits', [])
         trait_params = {}
         for trait in traits:
@@ -470,6 +476,7 @@ class Resource(object):
         results = []
         for r in api_resources:
             if r.name == res_type:
+                # Weirdo!
                 result = dict(name=r.name, usage=r.usage)
                 methods = r.methods
                 for m in methods:
@@ -481,6 +488,8 @@ class Resource(object):
                     result['description'] = self._fill_reserved_params(desc)
                 results.append(result)
 
+        # If you always just return the first element, result why do you have
+        # a list in the first place?
         return results[0]
 
     def _map_resource_dict(self, res_type):
@@ -502,6 +511,7 @@ class Resource(object):
                 # Can next line throw exceptions that are not caught
                 # or documented?
                 # LR: How would I test to see this?
+                # Read docs for json.loads
                 data = json.loads(data)
                 result = dict(name=r.name, data=data)
                 return result

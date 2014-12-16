@@ -15,6 +15,7 @@ class LoadRamlFileError(Exception):
 
 
 class RAMLLoader(object):
+    # Fix documentation string format
     """
     Loads the desired RAML file and returns a Python dictionary.
 
@@ -54,6 +55,8 @@ class RAMLLoader(object):
         with open(file_name) as inputfile:
             return yaml.load(inputfile)
 
+    # Get rid of state in the Loader class and either return a tuple
+    # or define a new RamlFile class and return an instance here
     def load(self):
         yaml.add_constructor("!include", self._yaml_include)
 
@@ -65,5 +68,6 @@ class RAMLLoader(object):
         except IOError as e:
             raise LoadRamlFileError(e)
 
+    # Remove this function
     def __repr__(self):
         return '<RAMLLoader(raml_file="{0}")>'.format(self.raml_file)

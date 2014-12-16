@@ -17,6 +17,7 @@ class InvalidRamlFileError(Exception):
     pass
 
 
+# Make helper functions private
 def validate_raml_header(raml_file):
     """Validate Header of RAML File"""
     try:
@@ -145,3 +146,7 @@ def validate_raml(raml_file, prod):
 #  - At least one resource *is* defined
 #  - Body has valid Response Content Type keys
 #  - Body has valid Schema
+#  - Body has a valid MIME media key/type
+#  - Body does not have a schema defined if form
+#  - ResourceType: only "?" is allowed in non-scalar properties
+#    (e.g. usage & displayName)

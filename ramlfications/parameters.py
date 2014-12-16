@@ -511,6 +511,8 @@ class SecuritySchemes(object):
         self.raml = raml_file
 
     def _get_security_schemes(self):
+        # Use self.raml.get('securitySchemes', []), get rid of the
+        # if/else below, never return None but prefer []
         defined_schemes = self.raml.get('securitySchemes')
         if defined_schemes:
             schemes = []
