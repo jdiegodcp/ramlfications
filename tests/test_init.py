@@ -6,7 +6,7 @@ import os
 
 from ramlfications import parse, load, validate
 from ramlfications.parser import APIRoot
-from ramlfications.loader import LoadRamlFileError
+from ramlfications.loader import LoadRamlFileError, RAMLDict
 from ramlfications.validate import InvalidRamlFileError
 
 from .base import BaseTestCase, EXAMPLES
@@ -30,7 +30,7 @@ class TestParse(BaseTestCase):
     def test_load(self):
         result = load(self.raml_file)
         self.assertIsNotNone(result)
-        self.assertIsInstance(result, dict)
+        self.assertIsInstance(result, RAMLDict)
 
     def test_load_nonexistant_file(self):
         raml_file = "/tmp/non-existant-raml-file.raml"

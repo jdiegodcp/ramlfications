@@ -129,7 +129,7 @@ def validate_security_schemes(api):
 
 def validate_raml(raml_file, prod):
     validate_raml_header(raml_file)
-    loader = RAMLLoader(raml_file)
+    loader = RAMLLoader().load(raml_file)
     api = APIRoot(loader)
     validate_api_title(api)
     validate_api_version(api, prod)

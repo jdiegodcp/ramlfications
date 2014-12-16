@@ -17,8 +17,8 @@ from .data.fixtures import tree_fixtures
 class TestPrintTree(BaseTestCase):
     def setUp(self):
         raml_file = os.path.join(EXAMPLES, "simple-tree.raml")
-        loaded_file = loader.RAMLLoader(raml_file)
-        self.api = parser.APIRoot(loaded_file)
+        raml = loader.RAMLLoader().load(raml_file)
+        self.api = parser.APIRoot(raml)
         self.held, sys.stdout = sys.stdout, StringIO()
 
     def test_get_tree(self):
@@ -44,7 +44,7 @@ class TestPrintTree(BaseTestCase):
 
     def pprint_tree(self, expected_result, color, verbosity):
         resources = tree._get_tree(self.api)
-        ordered_res = tree.ordered_resources(resources)
+        ordered_res = tree._order_resources(resources)
         tree.pprint_tree(self.api, ordered_res, color, verbosity)
 
         self.assertEqual(sys.stdout.getvalue(), expected_result)
