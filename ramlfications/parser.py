@@ -741,4 +741,5 @@ class Resource(object):
         return content_type or None
 
     def __repr__(self):
-        return "<Resource(method='{0}', path='{1}')>".format(self.method, self.path)
+        return "<Resource(method='{0}', path='{1}')>".format(
+            self.method.upper(), self.path)

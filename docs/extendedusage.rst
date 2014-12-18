@@ -7,8 +7,7 @@ To parse a RAML file, include ramlfications in your project and call the parse f
 
    >>> import ramlfications
    >>> RAML_FILE = "/path/to/my-api.raml"
-   >>> loaded_raml = ramlfications.load(RAML_FILE)
-   >>> api = ramlfications.parse(loaded_raml)
+   >>> api = ramlfications.parse(RAML_FILE)
 
 
 RAML Root Section
@@ -135,7 +134,7 @@ Resource Types
 .. code-block:: python
 
     >>> api.resource_types
-    [< Resource Type: collection >, < Resource Type: member >]
+    [<ResourceType(name='collection')>, <ResourceType(name='member')>]
     >>> collection = api.resource_types[0]
     >>> collection.name
     'collection'
@@ -144,7 +143,7 @@ Resource Types
     >>> collection.usage
     'This resourceType should be used for any collection of items'
     >>> collection.methods
-    [< Resource Method: get >, < Resource Method: post >]
+    [<ResourceTypeMethod(name='get')>, <ResourceTypeMethod(name='post')>]
     >>> get = collection.methods[0]
     >>> get.name
     'get'
@@ -157,7 +156,7 @@ Traits
 .. code-block:: python
 
     >>> api.traits
-    [{'secured': < Query Param: <<tokenName>> >}, {'paged': < Query Param: numPages >}]
+    [{'secured': <QueryParameter(name='<<tokenName>>')>}, {'paged': <QueryParameter(name='numPages')>}]
     >>> secured = api.traits[0]
     >>> first_query_param = secured.values()[0]
     >>> first_query_param.name
@@ -181,19 +180,12 @@ making ``/{id}`` a nested resource, relative to ``/tracks``.  The relative path
 would be ``/tracks/{id}``, and the absolute path would be
 ``https://api.spotify.com/v1/tracks/{id}``.
 
-.. note::
-    The default setup for resources (when calling ``api.resources``) is an ``OrderedDict`` where the keys
-    are a string containing the resource's method + the resource's display name.  This may change since the
-    display name of a resource is not required, and may default to the resource's name (e.g. ``/{id}}``),
-    which isn't very friendly to work with.
-
 .. code-block:: python
 
-   >>> resources = api.resources
-   >>> resources.keys()
+   >>> api.resources
    ['get-several-tracks', 'get-current-user', 'get-users-profile',..., 'delete-playlist-tracks']
    >>>
-   >>> track = resources['get-track']
+   >>> track = resources[5]
    >>> track.name
    '/{id}'
    >>> track.description_raw
@@ -209,7 +201,7 @@ would be ``/tracks/{id}``, and the absolute path would be
    >>> track.absolute_path
    'https://api.spotify.com/v1/tracks/{id}'
    >>> track.uri_params
-   [< URI Param: id >]
+   [<URIParameter(name='id')>]
    >>>
    >>> id_param = track.uri_params[0]
    >>> id_param.required
@@ -220,7 +212,7 @@ would be ``/tracks/{id}``, and the absolute path would be
    '1zHlj4dQ8ZAtrayhuDDmkY'
    >>> tracks = track.parent
    >>> tracks
-   < Resource: GET /tracks >
+   <Resource(method='GET', path='/tracks/{id}')>
 
 Check out :doc:`api` for full definition of what is available for a ``resource`` object, and its associated attributes and objects.
 
