@@ -101,5 +101,4 @@ API Definition
 ----------------------
 
 .. automodule:: ramlfications.validate
-.. autoclass:: ValidateRAML
-   :members: validate
+   :members:

@@ -125,7 +125,8 @@ class APIRoot(object):
         are defined.
 
         :raises RAMLParserError: if ``version`` is defined (``version``
-        can only be used in ``baseUriParameters``).
+            can only be used in ``baseUriParameters``).
+
         """
         uri_params = self.raml.get('uriParameters', {})
         params = []
@@ -170,7 +171,7 @@ class APIRoot(object):
     @property
     def resource_types(self):
         """
-        Returns defined Resource Types.  Returns ``None if no resource
+        Returns defined Resource Types.  Returns ``None`` if no resource
         types are defined.
         """
         resource_types = self.raml.get('resourceTypes', {})
