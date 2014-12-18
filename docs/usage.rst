@@ -78,9 +78,11 @@ To validate a RAML file with Python:
 
 .. code-block:: python
 
-   >>> import ramlfications
+   >>> from ramlfications import validate
    >>> RAML_FILE = "/path/to/my-api.raml"
-   >>> ramlfications.validate(RAML_FILE)
+   >>> validate(RAML_FILE)
+   >>>
+
 
 Tree
 ----
