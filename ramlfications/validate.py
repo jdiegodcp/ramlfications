@@ -85,7 +85,7 @@ def validate_resource_response(api):
     defined for a ``Response``.
     """
     valid_keys = ['body', 'headers', 'description']
-    for resource in list(api.resources.values()):
+    for resource in api.resources:
         for resp in resource.responses:
             for key in list(resp.data.keys()):
                 if key not in valid_keys:

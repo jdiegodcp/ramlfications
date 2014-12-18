@@ -5,8 +5,6 @@
 from __future__ import absolute_import, division, print_function
 
 
-from collections import defaultdict
-
 try:
     from collections import OrderedDict
 except ImportError:  # pragma: no cover
@@ -42,26 +40,25 @@ def _get_node_level(node, count):
 
 
 def _get_tree(api):
-    _resources = api.resources
-    resources = defaultdict(list)
+    resources = OrderedDict()
     # Can _resources be None? If yes, the next line crashes.
     # LR: hmm if resources are none, then no endpoints are defined in RAML
     # pretty much required
     # TODO: add validation if no resources are defined
-    for k, v in list(_resources.items()):
-        resources[v.path].append((v.method.upper(), v))
+    for r in api.resources:
+        resources[r] = (r.method.upper(), r)
 
     return resources
 
 
 def _order_resources(resources):
-    return OrderedDict(sorted(resources.items(), key=lambda t: t[0]))
+    #return OrderedDict(sorted(resources.items(), key=lambda t: t[0]))
+    return resources
 
 
 def _create_space(v):
-    for node in v:
-        space_count = _get_node_level(node[1], count=0)
-        space = "  " * space_count
+    space_count = _get_node_level(v, count=0)
+    space = "  " * space_count
     return space
 
 
@@ -82,12 +79,12 @@ def _print_line(sp, msg, color, line_color):
 
 def _return_param_type(node):
     params = OrderedDict()
-    if node[1].query_params:
-        params["Query Params"] = node[1].query_params
-    if node[1].uri_params:
-        params["URI Params"] = node[1].uri_params
-    if node[1].form_params:
-        params["Form Params"] = node[1].form_params
+    if node.query_params:
+        params["Query Params"] = node.query_params
+    if node.uri_params:
+        params["URI Params"] = node.uri_params
+    if node.form_params:
+        params["Form Params"] = node.form_params
     return params
 
 
@@ -104,15 +101,14 @@ def _params(space, node, color, desc):
 
 
 def _print_verbosity(ordered_resources, color, verbosity):
-    for k, v in list(ordered_resources.items()):
-        space = _create_space(v)
-        _print_line(space, "- " + k, color, 2)
+    for r in ordered_resources:
+        space = _create_space(r)
+        _print_line(space, "- " + r.path, color, 2)
         if verbosity > 0:
-            for node in v:
-                _print_line(space, "  ⌙ " + node[0], color, 3)
-                if verbosity > 1:
-                    desc = verbosity == 3
-                    _params(space, node, color, desc)
+            _print_line(space, "  ⌙ " + r.method.upper(), color, 3)
+            if verbosity > 1:
+                desc = verbosity == 3
+                _params(space, r, color, desc)
 
 
 def _print_metadata(api, color):

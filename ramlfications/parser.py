@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = ["APIRoot", "Resource", "RAMLParserError"]
 
+from collections import defaultdict
 import json
 import re
 
@@ -51,13 +52,22 @@ class APIRoot(object):
         method + resource display name (e.g. ``get-item``) and values set
         to the ``Resource`` object.
         """
-        # Agree with Matt! Return list.
+        # TODO: Simplify this monstrosity
         resource_stack = ResourceStack(self, self.raml).yield_resources()
         resource = OrderedDict()
         for res in resource_stack:
             key_name = res.method + "-" + res.display_name
             resource[key_name] = res
-        return resource
+        resources = defaultdict(list)
+        for k, v in list(resource.items()):
+            resources[v.path].append((v.method.upper(), v))
+        sorted_dict = OrderedDict(sorted(resources.items(), key=lambda t: t[0]))
+        # sorted_list = sorted(resources.items(), key=lambda t: t[0])
+        sorted_list = []
+        for item in sorted_dict.values():
+            for i in item:
+                sorted_list.append(i[1])
+        return sorted_list
 
     @property
     def title(self):
@@ -730,4 +740,4 @@ class Resource(object):
         return content_type or None
 
     def __repr__(self):
-        return "<Resource(name='{0}')>".format(self.name)
+        return "<Resource(method='{0}', path='{1}')>".format(self.method, self.path)

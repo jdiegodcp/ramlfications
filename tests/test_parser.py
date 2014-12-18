@@ -32,9 +32,9 @@ class TestAPIRoot(BaseTestCase):
 
     def test_resources(self):
         resources = self.api.resources
-        self.assertIsInstance(resources, dict)
+        self.assertIsInstance(resources, list)
 
-        for resource in resources.values():
+        for resource in resources:
             self.assertIsInstance(resource, parser.Resource)
 
     def test_title(self):
@@ -494,7 +494,7 @@ class TestResource(BaseTestCase):
         self.resources = self.api.resources
 
     def test_has_path(self):
-        for resource in self.resources.values():
+        for resource in self.resources:
             self.assertIsNotNone(resource.path)
 
     def test_paths(self):
@@ -504,39 +504,39 @@ class TestResource(BaseTestCase):
 
         expected_paths = ['/tracks', '/search', '/tracks/{id}']
 
-        self.assertEqual(len(resources.values()), len(expected_paths))
+        self.assertEqual(len(resources), len(expected_paths))
 
-        for resource in resources.values():
+        for resource in resources:
             self.assertItemInList(resource.path, expected_paths)
 
     def test_absolute_path(self):
         raml_file = os.path.join(EXAMPLES + "base-uri-parameters.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources['get-foo']
+        resource = api.resources[0]
 
         expected_path = 'https://{domainName}.github.com/{apiPath}/foo'
         self.assertEqual(resource.absolute_path, expected_path)
 
     def test_has_display_name(self):
-        for resource in self.resources.values():
+        for resource in self.resources:
             self.assertIsNotNone(resource.display_name)
 
     def test_display_name_not_defined(self):
         raml_file = os.path.join(EXAMPLES + "no-display-name.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = list(api.resources.values())[0]
+        resource = api.resources[0]
 
         self.assertEqual(resource.display_name, '/tracks')
         self.assertEqual(resource.name, resource.display_name)
 
     def test_has_description(self):
-        for resource in self.resources.values():
+        for resource in self.resources:
             self.assertIsNotNone(resource.description.raw)
 
     def test_description_markdown(self):
         raml_file = os.path.join(EXAMPLES + "markdown-desc-docs.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources.get('get-artist')
+        resource = api.resources[1]
 
         html_result = resource.description.html
         expected_result = ("<p><a href=\"https://developer.spotify.com/web-"
@@ -547,7 +547,7 @@ class TestResource(BaseTestCase):
     def test_no_description(self):
         raml_file = os.path.join(EXAMPLES + "resource-no-desc.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources.get('get-artist')
+        resource = api.resources[0]
 
         raw_desc = resource.description.raw
         html_desc = resource.description.html
@@ -561,13 +561,12 @@ class TestResource(BaseTestCase):
 
         methods = ['get', 'post']
 
-        for resource in resources.values():
+        for resource in resources:
             self.assertItemInList(resource.method, methods)
 
     def test_protocols(self):
         raml_file = os.path.join(EXAMPLES + "protocols.raml")
-        resource = self.setup_parsed_raml(raml_file).resources.get(
-            'get-tracks')
+        resource = self.setup_parsed_raml(raml_file).resources[0]
 
         expected_protocols = ['HTTP', 'HTTPS']
 
@@ -576,7 +575,7 @@ class TestResource(BaseTestCase):
     def test_body(self):
         raml_file = os.path.join(EXAMPLES + "simple-body.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources['post-playlists']
+        resource = api.resources[0]
 
         expected_data = {
             'example': {
@@ -604,8 +603,8 @@ class TestResource(BaseTestCase):
     def test_body_form_mimetypes(self):
         raml_file = os.path.join(EXAMPLES + "simple-body.raml")
         api = self.setup_parsed_raml(raml_file)
-        form_encoded = api.resources['put-playlists'].body[0]
-        multipart = api.resources['delete-playlists'].body[0]
+        form_encoded = api.resources[1].body[0]
+        multipart = api.resources[2].body[0]
 
         self.assertEqual(repr(form_encoded), "<Body(name='application/x-www-form-urlencoded')>")
         self.assertEqual(repr(multipart), "<Body(name='multipart/form-data')>")
@@ -614,8 +613,7 @@ class TestResource(BaseTestCase):
 
     def test_responses(self):
         raml_file = os.path.join(EXAMPLES + "responses.raml")
-        resource = self.setup_parsed_raml(raml_file).resources.get(
-            'get-popular-media')
+        resource = self.setup_parsed_raml(raml_file).resources[0]
 
         expected_resp_data = {
             200: {
@@ -682,7 +680,7 @@ class TestResource(BaseTestCase):
     def test_raises_incorrect_response_code(self):
         raml_file = os.path.join(EXAMPLES + "invalid-resp-code.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources['get-popular-media']
+        resource = api.resources[0]
 
         self.assertRaises(parser.RAMLParserError, lambda: resource.responses)
 
@@ -690,8 +688,7 @@ class TestResource(BaseTestCase):
         raml_file = os.path.join(EXAMPLES + "headers.raml")
         resources = self.setup_parsed_raml(raml_file).resources
 
-        # only one node
-        resource = resources['post-job']
+        resource = resources[0]
         results = resource.headers
 
         expected_data = self.f('test_headers')
@@ -709,7 +706,7 @@ class TestResource(BaseTestCase):
 
         expected_data = self.f('test_data')
 
-        for resource in resources.values():
+        for resource in resources:
             self.assertItemInList(resource.data, expected_data)
 
     def test_parent(self):
@@ -719,7 +716,7 @@ class TestResource(BaseTestCase):
 
         expected_parent = '/tracks'
 
-        for resource in resources.values():
+        for resource in resources:
             if resource.parent:
                 self.assertEqual(resource.parent.name, expected_parent)
             else:
@@ -730,7 +727,7 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
-        for resource in resources.values():
+        for resource in resources:
             expected_dict = {'usage': None, 'name': 'collection'}
             self.assertDictEqual(resource.resource_type, expected_dict)
             if resource.method == 'get':
@@ -739,7 +736,7 @@ class TestResource(BaseTestCase):
     def test_resource_types_too_many(self):
         raml_file = os.path.join(EXAMPLES + "mapped-types-too-many.raml")
         api = self.setup_parsed_raml(raml_file)
-        magazines = api.resources["get-/magazines"]
+        magazines = api.resources[1]
 
         self.assertRaises(parser.RAMLParserError,
                           lambda: magazines.resource_type)
@@ -749,8 +746,8 @@ class TestResource(BaseTestCase):
         raml_file = os.path.join(EXAMPLES + raml)
         api = self.setup_parsed_raml(raml_file)
 
-        magazines = api.resources['get-/magazines']
-        books = api.resources['get-/books']
+        magazines = api.resources[1]
+        books = api.resources[0]
 
         self.assertRaises(parser.RAMLParserError,
                           lambda: magazines.resource_type)
@@ -768,8 +765,8 @@ class TestResource(BaseTestCase):
         first_expected_name = 'searchableCollection'
         second_expected_name = 'collection'
 
-        first_res = api.resources['get-/books']
-        second_res = api.resources['get-/magazines']
+        first_res = api.resources[0]
+        second_res = api.resources[2]
 
         first_expected_data = self.f('test_mapped_traits').get('first')
         second_expected_data = self.f('test_mapped_traits').get('second')
@@ -783,7 +780,7 @@ class TestResource(BaseTestCase):
     def test_mapped_form_traits(self):
         raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources['get-foobar']
+        resource = api.resources[1]
         form_param = resource.form_params[0]
         self.assertEqual(form_param.name, "aFormTrait")
 
@@ -792,7 +789,7 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
-        for resource in resources.values():
+        for resource in resources:
             self.assertIsNotNone(resource.secured_by)
             for s in resource.secured_by:
                 self.assertEqual(s['name'], 'oauth_2_0')
@@ -807,13 +804,13 @@ class TestResource(BaseTestCase):
                                  "simple-no-secured-by.raml")
         resources = self.setup_parsed_raml(raml_file).resources
 
-        for res in resources.values():
+        for res in resources:
             self.assertIsNone(res.secured_by)
 
     def test_method_scopes(self):
         raml_file = os.path.join(EXAMPLES + "simple-secured-by-method.raml")
         api = self.setup_parsed_raml(raml_file)
-        get_tracks = api.resources['get-several-tracks']
+        get_tracks = api.resources[0]
         expected_scopes = ["user-read-email"]
 
         for s in get_tracks.secured_by:
@@ -831,7 +828,7 @@ class TestResource(BaseTestCase):
                   'playlist-modify-private',
                   'playlist-read-private']
 
-        for resource in resources.values():
+        for resource in resources:
             for s in resource.secured_by:
                 self.assertIsNotNone(s['scopes'])
 
@@ -842,7 +839,7 @@ class TestResource(BaseTestCase):
         raml_file = os.path.join(EXAMPLES +
                                  "multiple-security-schemes.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources['get-current-user']
+        resource = api.resources[0]
 
         scopes = ['user-read-private']
 
@@ -852,14 +849,14 @@ class TestResource(BaseTestCase):
         raml_file = os.path.join(EXAMPLES +
                                  "multiple-security-schemes.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources['post-current-user-contains-saved-tracks']
+        resource = api.resources[5]
         self.assertIsNone(resource.scopes)
 
     def test_not_secured(self):
         raml_file = os.path.join(EXAMPLES +
                                  "multiple-security-schemes.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources['get-current-user-contains-saved-tracks']
+        resource = api.resources[4]
         self.assertIsNone(resource.scopes)
 
     def test_base_uri_params(self):
@@ -868,7 +865,7 @@ class TestResource(BaseTestCase):
 
         resources = api.resources
 
-        foo = resources['get-foo']
+        foo = resources[0]
         foo_results = foo.base_uri_params
 
         data = [{
@@ -894,7 +891,7 @@ class TestResource(BaseTestCase):
                              list(data[i].values())[0].get('displayName',
                                                            'domainName'))
 
-        bar = resources['get-bar']
+        bar = resources[1]
         bar_results = bar.base_uri_params
 
         for i, r in enumerate(bar_results):
@@ -916,9 +913,9 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
-        search = resources['get-search-item']
-        tracks = resources['get-several-tracks']
-        track = resources['get-track']
+        search = resources[0]
+        tracks = resources[1]
+        track = resources[2]
 
         search_q_params = search.query_params
         tracks_q_params = tracks.query_params
@@ -981,9 +978,9 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
-        search = resources['get-search-item']
-        tracks = resources['get-several-tracks']
-        track = resources['get-track']
+        search = resources[0]
+        tracks = resources[1]
+        track = resources[2]
 
         search_u_params = search.uri_params
         tracks_u_params = tracks.uri_params
@@ -1016,7 +1013,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_integer(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources.get('get-bar')
+        resource = api.resources[0]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_integer')
@@ -1030,7 +1027,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_number(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources.get('get-foobar')
+        resource = api.resources[5]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_number')
@@ -1044,7 +1041,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_boolean(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources.get('get-baz')
+        resource = api.resources[3]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_boolean')
@@ -1059,7 +1056,7 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
-        tracks = resources['post-several-tracks']
+        tracks = resources[0]
 
         form_params = tracks.form_params
 
@@ -1105,7 +1102,7 @@ class TestResource(BaseTestCase):
         raml_file = os.path.join(EXAMPLES + "markdown-desc-docs.raml")
         api = self.setup_parsed_raml(raml_file)
 
-        resource = api.resources.get('get-artist-top-tracks')
+        resource = api.resources[2]
         param = resource.query_params[0]
         html_result = param.description.html
         expected_result = ("<p>The country (<a href=\"http://en.wikipedia.org"
@@ -1119,7 +1116,7 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
 
-        post_playlist = resources['post-playlists']
+        post_playlist = resources[0]
 
         expected_post_playlist_schema = {
             "name": "New Playlist",
