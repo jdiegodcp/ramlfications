@@ -6,7 +6,10 @@ from __future__ import absolute_import, division, print_function
 
 import markdown2 as markdown
 
-HTTP_METHODS = ["get", "post", "put", "delete", "patch", "options", "head"]
+HTTP_METHODS = [
+    "get", "post", "put", "delete", "patch", "options",
+    "head", "trace", "connect"
+]
 
 
 class ContentType(object):
