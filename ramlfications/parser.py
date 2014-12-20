@@ -312,7 +312,8 @@ class ResourceStack(object):
         Yields Resource objects for the API defined in the RAML File.
         """
         available_methods = ['get', 'post', 'put', 'delete',
-                             'patch', 'head', 'options']
+                             'patch', 'head', 'options', 'trace',
+                             'connect']
         resource_stack = []
 
         # Akward code, create a helper method for it.

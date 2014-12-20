@@ -165,7 +165,10 @@ class TestAPIRoot(BaseTestCase):
             }
         }
 
-        http_methods = ['get', 'post', 'put', 'patch', 'delete']
+        http_methods = [
+            'get', 'post', 'put', 'patch', 'delete', 'options',
+            'trace', 'head', 'connect'
+        ]
 
         for r in results:
             self.assertDictEqual(r.data, expected_data[r.name])
