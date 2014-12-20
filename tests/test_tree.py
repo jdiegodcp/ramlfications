@@ -30,23 +30,6 @@ class TestPrintTree(BaseTestCase):
 
         self.assertEqual(len(ttree), 4)
 
-    # def test_order_resources(self):
-    #     resources = tree._get_tree(self.api)
-    #     ordered_res = tree._order_resources(resources)
-
-    #     expected_res = (
-    #         "OrderedDict([(<Resource(method='put', path='/users/{user_id}/"
-    #         "playlists/{playlist_id}')>, [('PUT', <Resource(method='put', "
-    #         "path='/users/{user_id}/playlists/{playlist_id}')>)]), "
-    #         "(<Resource(method='get', path='/tracks/{id}')>, [('GET', "
-    #         "<Resource(method='get', path='/tracks/{id}')>)]), "
-    #         "(<Resource(method='get', path='/users/{user_id}/playlists')>, "
-    #         "[('GET', <Resource(method='get', path='/users/{user_id}/playlists"
-    #         "')>)]), (<Resource(method='get', path='/tracks')>, [('GET', "
-    #         "<Resource(method='get', path='/tracks')>)])])"
-    #     )
-    #     self.assertEqual(str(ordered_res), expected_res)
-
     def pprint_tree(self, expected_result, color, verbosity):
         resources = tree._get_tree(self.api)
         ordered_res = tree._order_resources(resources)

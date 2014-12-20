@@ -72,8 +72,8 @@ def _set_ansi(string, screen_color, line_color):
 
 
 def _print_line(sp, msg, color, line_color):
-    msg = "|" + sp + msg
-    output = _set_ansi(msg, color, line_color) + "\n"
+    pipe = _set_ansi("|", color, 2)
+    output = pipe + _set_ansi(sp + msg, color, line_color) + "\n"
     sys.stdout.write(output)
 
 
