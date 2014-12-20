@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+# ! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
@@ -61,7 +61,8 @@ class APIRoot(object):
         resources = defaultdict(list)
         for k, v in list(resource.items()):
             resources[v.path].append((v.method.upper(), v))
-        sorted_dict = OrderedDict(sorted(resources.items(), key=lambda t: t[0]))
+        sorted_dict = OrderedDict(sorted(resources.items(),
+                                  key=lambda t: t[0]))
         # sorted_list = sorted(resources.items(), key=lambda t: t[0])
         sorted_list = []
         for item in sorted_dict.values():
@@ -242,7 +243,9 @@ class APIRoot(object):
                         f_params.append(FormParameter(k, v))
                     trait_params[key]['form_parameters'] = f_params
                 for k, v in list(value.items()):
-                    if k not in ['formParameters', 'queryParameters', 'uriParameters']:
+                    if k not in ['formParameters',
+                                 'queryParameters',
+                                 'uriParameters']:
                         trait_params[key][k] = v
         return trait_params or None
 
