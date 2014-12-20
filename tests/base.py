@@ -1,14 +1,41 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
+from __future__ import absolute_import, division, print_function
 
+import json
+import os
 import unittest
 import sys
+
+PAR_DIR = os.path.abspath(os.path.dirname(__file__))
+EXAMPLES = os.path.join(PAR_DIR + '/data/examples/')
+VALIDATE = os.path.join(PAR_DIR + '/data/validate/')
+FIXTURES = os.path.join(PAR_DIR + '/data/fixtures/')
 
 
 class BaseTestCase(unittest.TestCase):
     maxDiff = None
+    fixture = None
 
+    # Ensure load_fixtures() is called
+    def __call__(self, result):
+        try:
+            self.load_fixtures()
+        except IOError:
+            # registers an error in the test runner (nose)
+            result.addError(self, sys.exc_info())
+            return
+        super(BaseTestCase, self).__call__(result)
+
+    def load_fixtures(self):
+        if self.fixture:
+            self.fixture_data = {}
+            with open(FIXTURES + self.fixture) as f:
+                self.fixture_data[self.fixture] = json.load(f)
+            return self.fixture_data
+
+    # This helper function might already exist in unnittest.
     def assertItemInList(self, item, items):
         self.assertTrue(item in items)
 

@@ -1,0 +1,14 @@
+{
+    "test_docs": {
+        "titles": [
+            "Getting Started", "Basics of Authentication", "Rendering Data as Graphs", "Overview"
+        ],
+        "contents": [
+            "Dummy content on getting started", "Dummy content on the basics of authentication", "Dummy content on rendering data as graphs", "This is the [markdown](http://foo.com) file that gets included with tests."
+        ]
+    },
+    "test_docs_markdown": {
+        "content": "Welcome to the _Spotify Web API_ demo specification. This is *not* the complete API\nspecification, and is meant for testing purposes within this RAML specification.\nFor more information about how to use the API, check out [developer\n site](https://developer.spotify.com/web-api/).\n",
+        "html": "<p>Welcome to the <em>Spotify Web API</em> demo specification. This is <em>not</em> the complete API\nspecification, and is meant for testing purposes within this RAML specification.\nFor more information about how to use the API, check out <a href=\"https://developer.spotify.com/web-api/\">developer\n site</a>.</p>\n"
+    }
+}

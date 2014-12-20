@@ -17,7 +17,9 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> api = ramlfications.parse(loaded_raml)
    >>> api.title
    'Spotify Web API'
-   >>>
+
+.. code-block:: python
+
    >>> api.security_schemes
    [< Security Scheme: OAuth 2.0 >]
    >>> oauth2 = api.security_schemes[0]
@@ -29,12 +31,12 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    ['playlist-read-private', 'playlist-modify-public',..., 'user-read-email']
    >>> oauth2.settings.access_token_uri
    'https://accounts.spotify.com/api/token'
-   >>>
-   >>> nodes = api.nodes
-   >>> nodes.keys()
+
+.. code-block:: python
+
+   >>> api.resources
    ['get-several-tracks', 'get-current-user', 'get-users-profile',..., 'delete-playlist-tracks']
-   >>>
-   >>> track = nodes['get-track']
+   >>> track = api.resources[4]
    >>> track.name
    '/{id}'
    >>> track.display_name
@@ -42,8 +44,10 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> track.absolute_path
    'https://api.spotify.com/v1/tracks/{id}'
    >>> track.uri_params
-   [< URI Param: id >]
-   >>>
+   [<URIParameter(name='id')>]
+
+.. code-block:: python
+
    >>> id_param = track.uri_params[0]
    >>> id_param.required
    True
@@ -64,7 +68,9 @@ Validation is according to the `RAML Specification`_.
    TODO: add a note saying what is not yet supported when validating,
    and add to the wishlist/todo list.
 
-To validate a RAML file via the command line::
+To validate a RAML file via the command line:
+
+.. code-block:: bash
 
    $ ramlfications validate /path/to/my-api.raml
 
@@ -72,19 +78,24 @@ To validate a RAML file with Python:
 
 .. code-block:: python
 
-   >>> import ramlfications
+   >>> from ramlfications import validate
    >>> RAML_FILE = "/path/to/my-api.raml"
-   >>> loaded_raml = ramlfications.load(RAML_FILE)
-   >>> ramlfications.validate(loaded_raml)
+   >>> validate(RAML_FILE)
+   >>>
+
 
 Tree
 ----
 
-To visualize a tree output of a RAML file::
+To visualize a tree output of a RAML file:
 
-   $ ramlfications tree /path/to/my-api.raml [-c|--color light/dark] [-v|vv|vvv]
+.. code-block:: bash
 
-The least verbose option would show something like this::
+   $ ramlfications tree /path/to/my-api.raml [-c|--color light/dark] [-v|vv|vvv] [-o|--output]
+
+The least verbose option would show something like this:
+
+.. code-block:: bash
 
    ===============
    Spotify Web API
@@ -94,7 +105,9 @@ The least verbose option would show something like this::
    |– /tracks
    |  – /tracks/{id}
 
-And the most verbose::
+And the most verbose:
+
+.. code-block:: bash
 
    ===============
    Spotify Web API
@@ -118,7 +131,9 @@ And the most verbose::
 Options and Arguments
 ---------------------
 
-The full usage is::
+The full usage is:
+
+.. code-block:: bash
 
    $ ramlfications [OPTIONS] COMMAND RAMLFILE
 
@@ -150,6 +165,14 @@ Valid ``OPTIONS`` for the ``tree`` command are the following:
 .. option:: --color light|dark
 
    Use a light color scheme for dark terminal backgrounds [DEFAULT], or dark color scheme for light backgrounds.
+
+.. option:: -o
+
+   Save tree output desired file
+
+.. option:: --output
+
+   Save tree output desired file
 
 .. option:: -v
 

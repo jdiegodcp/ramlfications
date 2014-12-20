@@ -1,9 +1,7 @@
-include *.md *.txt tox.ini docs/Makefile *.rst LICENSE .coveragerc
+include *.md *.txt tox.ini docs/Makefile *.rst LICENSE .coveragerc .travis.yml
 recursive-include ramlfications *.py
 recursive-include docs *.py *.rst
 recursive-include docs/_static *
 prune docs/_build
 recursive-include tests *.py
-recursive-include tests/examples *.json *.md *.py *.raml *.yaml *.xsd
-recursive-include tests/examples/validate *.json *.md *.py *.raml *.yaml *.xsd
-recursive-include tests/examples/includes *.json *.md *.py *.raml *.yaml *.xsd
+recursive-include tests/data *.json *.md *.py *.raml *.yaml *.xsd

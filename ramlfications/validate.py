@@ -1,119 +1,152 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
+
 from __future__ import absolute_import, division, print_function
 
+__all__ = ["validate_raml", "InvalidRamlFileError"]
+
 from .parser import APIRoot
+from .loader import RAMLLoader
 
 
 VALID_RAML_VERSIONS = ["0.8"]
 
 
-class RAMLValidationError(Exception):
+class InvalidRamlFileError(Exception):
     pass
 
 
-class ValidateRAML(object):
-    """
-    Validate a particular RAML file based off of http://raml.org/spec.html
-    """
-    def __init__(self, load_object):
-        self.raml_file = load_object.raml_file
-        self.api = APIRoot(load_object)
-
-    def raml_header(self):
-        """Validate Header of RAML File"""
-        with open(self.raml_file, 'r') as r:
+# Make helper functions private
+def validate_raml_header(raml_file):
+    """Validate Header of RAML File"""
+    try:
+        with open(raml_file, 'r') as r:
+            # Returns None if empty file lines
             raml_header = r.readline().split('\n')[0]
-            raml_def, version = raml_header.split()
+            if not raml_header:
+                msg = ("RAML header empty. Please make sure the first line "
+                       "of the file contains a valid RAML file definition.")
+                raise InvalidRamlFileError(msg)
+
+            try:
+                raml_def, version = raml_header.split()
+            except ValueError:
+                msg = ("Not a valid RAML header: {0}.".format(raml_header))
+                raise InvalidRamlFileError(msg)
+
             if raml_def != "#%RAML":
                 msg = "Not a valid RAML header: {0}.".format(raml_def)
-                raise RAMLValidationError(msg)
+                raise InvalidRamlFileError(msg)
+
             if version not in VALID_RAML_VERSIONS:
                 msg = "Not a valid version of RAML: {0}.".format(version)
-                raise RAMLValidationError(msg)
-
-    def api_title(self):
-        """Require an API Title."""
-        title = self.api.title
-        if not title:
-            msg = 'RAML File does not define an API title.'
-            raise RAMLValidationError(msg)
-
-    def api_version(self):
-        # TODO: require version for production; optional for development
-        """Require an API Version."""
-        if not self.api.version:
-            msg = 'RAML File does not define an API version.'
-            raise RAMLValidationError(msg)
-
-    def base_uri(self):
-        """Require a Base URI"""
-        base_uri = self.api.base_uri
-        if not base_uri:
-            msg = 'RAML File does not define the baseUri.'
-            raise RAMLValidationError(msg)
-
-    def base_uri_params(self):
-        """
-        Require that Base URI Parameters have a `default` parameter set.
-        """
-        base_uri_params = self.api.base_uri_parameters
-        if base_uri_params:
-            for param in base_uri_params:
-                if not param.default:
-                    msg = "'{0}' needs a default parameter.".format(param.name)
-                    raise RAMLValidationError(msg)
-
-    def resource_response(self):
-        resources = self.api.resources
-        valid_keys = ['body', 'headers', 'description']
-        for resource in list(resources.values()):
-            responses = resource.responses
-            for resp in responses:
-                for key in list(resp.data.keys()):
-                    if key not in valid_keys:
-                        msg = "'{0}' not a valid Response parameter.".format(
-                            key)
-                        raise RAMLValidationError(msg)
-
-    def root_documentation(self):
-        docs = self.api.documentation
-        if docs:
-            for d in docs:
-                if not d.title:
-                    msg = "API Documentation requires a title."
-                    raise RAMLValidationError(msg)
-                if not d.content_raw:
-                    msg = "API Documentation requires content defined."
-                    raise RAMLValidationError(msg)
-
-    def security_schemes(self):
-        # QUESTION: Need to validate "other" schemas somehow? e.g. is
-        # 'describedBy' for x-foo-auth needed?
-        valid = ['OAuth 1.0',
-                 'OAuth 2.0',
-                 'Basic Authentication',
-                 'Digest Authentication']
-        schemes = self.api.security_schemes
-        if schemes:
-            for s in schemes:
-                if s.type not in valid and not s.type.startswith("x-"):
-                    msg = "'{0}' is not a valid Security Scheme.".format(
-                        s.type)
-                    raise RAMLValidationError(msg)
-
-    def validate(self):
-        """Validates RAML elements according to RAML specification"""
-        self.raml_header()
-        self.api_title()
-        self.api_version()
-        self.base_uri()
-        self.base_uri_params()
-        self.resource_response()
-        self.root_documentation()
-        self.security_schemes()
+                raise InvalidRamlFileError(msg)
+    except IOError as e:
+        raise InvalidRamlFileError(e)
 
 
-def validate(load_object):
-    ValidateRAML(load_object).validate()
+def validate_api_title(api):
+    """Require an API Title."""
+    if not api.title:
+        msg = 'RAML File does not define an API title.'
+        raise InvalidRamlFileError(msg)
+
+
+def validate_api_version(api, prod=True):
+    """Require an API Version (e.g. api.foo.com/v1)."""
+    if prod and not api.version:
+        msg = 'RAML File does not define an API version.'
+        raise InvalidRamlFileError(msg)
+
+
+def validate_base_uri(api):
+    """Require a Base URI."""
+    if not api.base_uri:
+        msg = 'RAML File does not define the baseUri.'
+        raise InvalidRamlFileError(msg)
+
+
+def validate_base_uri_params(api):
+    """
+    Require that Base URI Parameters have a ``default`` parameter set.
+    """
+    base_uri_params = api.base_uri_parameters
+    if base_uri_params:
+        for param in base_uri_params:
+            if not param.default:
+                msg = "'{0}' needs a default parameter.".format(param.name)
+                raise InvalidRamlFileError(msg)
+
+
+def validate_resource_response(api):
+    """
+    Assert only ``body``, ``headers``, and ``description`` are keys
+    defined for a ``Response``.
+    """
+    valid_keys = ['body', 'headers', 'description']
+    for resource in api.resources:
+        for resp in resource.responses:
+            for key in list(resp.data.keys()):
+                if key not in valid_keys:
+                    msg = "'{0}' not a valid Response parameter.".format(
+                        key)
+                    raise InvalidRamlFileError(msg)
+
+
+def validate_root_documentation(api):
+    """
+    Assert that if there is ``documentation`` defined in the root of the
+    RAML file, that it contains a ``title`` and ``content``.
+    """
+    docs = api.documentation
+    if docs:
+        for d in docs:
+            if not d.title:
+                msg = "API Documentation requires a title."
+                raise InvalidRamlFileError(msg)
+            if not d.content.raw:
+                msg = "API Documentation requires content defined."
+                raise InvalidRamlFileError(msg)
+
+
+def validate_security_schemes(api):
+    """
+    Assert only valid Security Schemes are used.
+    """
+    valid = ['OAuth 1.0',
+             'OAuth 2.0',
+             'Basic Authentication',
+             'Digest Authentication']
+    schemes = api.security_schemes
+    if schemes:
+        for s in schemes:
+            if s.type not in valid and not s.type.startswith("x-"):
+                msg = "'{0}' is not a valid Security Scheme.".format(
+                    s.type)
+                raise InvalidRamlFileError(msg)
+
+
+def validate_raml(raml_file, prod):
+    validate_raml_header(raml_file)
+    loader = RAMLLoader().load(raml_file)
+    api = APIRoot(loader)
+    validate_api_title(api)
+    validate_api_version(api, prod)
+    validate_base_uri(api)
+    validate_base_uri_params(api)
+    validate_resource_response(api)
+    validate_root_documentation(api)
+    validate_security_schemes(api)
+
+
+## TODO:
+#
+# Resource validation:
+#  - At least one resource *is* defined
+#  - Body has valid Response Content Type keys
+#  - Body has valid Schema
+#  - Body has a valid MIME media key/type
+#  - Body does not have a schema defined if form
+#  - ResourceType: only "?" is allowed in non-scalar properties
+#    (e.g. usage & displayName)

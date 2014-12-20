@@ -1,0 +1,95 @@
+#%RAML 0.8
+title: API Demo - Primative Param Types
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+
+/foo:
+  displayName: foo
+  get:
+    description: Totally uncreative get-foo description
+    queryParameters:
+      ids:
+        displayName: Spotify Track IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+/bar:
+  displayName: bar
+  get:
+    description: Totally uncreative get-bar description
+    queryParameters:
+      limit:
+        displayName: Limit
+        description: The maximum number of track objects to return
+        type: integer
+        example: 10
+        minimum: 0
+        default: 20
+        maximum: 50
+        required: false
+/baz:
+  displayName: baz
+  get:
+    description: Totally uncreative get-baz description
+    queryParameters:
+      booleanParam:
+        displayName: Some Boolean Parameter
+        description: Some boolean parameter for the sake of testing. I'm not creative.
+        type: boolean
+        repeat: false
+        required: false
+        default: true
+/foobar:
+  displayName: foobar
+  get:
+    description: Totally uncreative get-foobar description
+    queryParameters:
+      numberParam:
+        displayName: Some Number Parameter
+        description: Some floating number parameter for the sake of testing.
+        type: number
+        minimum: 4.3
+        maximum: 8.5
+        repeat: false
+        required: false
+        default: 7.2
+        example: 5.4
+/barbaz:
+  displayName: barbaz
+  get:
+    description: Totally uncreative get-barbaz description
+    queryParameters:
+      dateParam:
+        displayName: Some Date Parameter
+        description: Some date parameter for the sake of testing.
+        type: date
+        required: true
+        default: Sun, 06 Nov 1994 08:49:37 GMT
+/foobaz:
+  displayName: foobaz
+  get:
+    description: Totally uncreative get-foobaz description
+    queryParameters:
+      fileParam:
+        displayName: Some File Parameter
+        description: Some file parameter for the sake of testing.
+        type: file
+        required: false
+        repeat: false
+/barfoo:
+  displayName: barfoo
+  get:
+    description: Totally uncreative get-barfoo description
+    queryParameters:
+      fileParamAsString:
+        displayName: Some File Parameter As String
+        description: Some file parameter inputted as a string instead of a file object.
+        type: string
+        required: false
+        repeat: false
+
+
+

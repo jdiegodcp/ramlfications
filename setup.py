@@ -1,14 +1,34 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
-
+import io
+import sys
 from setuptools import setup, find_packages
+
+
+def install_requires():
+    install_requires = ["pyyaml", "click", "markdown2", "six", "termcolor"]
+    if sys.version_info[:2] == (2, 6):
+        install_requires.append("ordereddict")
+    return install_requires
+
+
+def read(*filenames, **kwargs):
+    encoding = kwargs.get('encoding', 'utf-8')
+    sep = kwargs.get('sep', '\n')
+    buf = []
+    for fl in filenames:
+        with io.open(fl, encoding=encoding) as f:
+            buf.append(f.read())
+    return sep.join(buf)
+
+long_description = read('README.rst', 'docs/changelog.rst')
 
 setup(
     name="ramlfications",
     version="0.1.0",
     description="Python RAML parser",
-    long_description=("TODO"),
+    long_description=long_description,
     url="https://ramlfications.readthedocs.org/",
     license="Apache License 2.0",
     author="Lynn Root",
@@ -20,10 +40,10 @@ setup(
         ]
     },
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 4 – Beta",
         "Intended Audience :: Developers",
         "Natural Language :: English",
-        "License :: OSI Approved :: MIT License",
+        "License :: Apache License 2.0",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
@@ -39,9 +59,7 @@ setup(
     setup_requires=[
         "nose"
     ],
-    install_requires=[
-        "pyyaml", "ordereddict", "click", "markdown2"
-    ],
+    install_requires=install_requires(),
     tests_require=[
         "nose",
     ],

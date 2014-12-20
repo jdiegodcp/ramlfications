@@ -96,16 +96,9 @@ API Definition
 
    Opens and loads a given RAML file.
 
-:mod:`utils` Module
--------------------
-
-.. automodule:: ramlfications.utils
-.. autoclass:: EndpointOrder
-   :members:
 
 :mod:`validate` Module
 ----------------------
 
 .. automodule:: ramlfications.validate
-.. autoclass:: ValidateRAML
-   :members: validate
+   :members:

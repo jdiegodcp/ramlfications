@@ -1,19 +1,22 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
+
 from __future__ import absolute_import, division, print_function
 
 import click
 
-from .loader import load
+from .loader import RAMLLoader
 from .tree import ttree
-from .validate import validate as vvalidate
-from .validate import RAMLValidationError
+from .validate import validate_raml
+from .validate import InvalidRamlFileError
 
 
 @click.group()
 def main():
     """The main routine."""
+    # Is this used for anything? Can it be removed and improved somehow?
+    # LR: @click.group() collects all below and attributes it to the main()
 
 
 @main.command(help="Validate a RAML file.")
@@ -21,33 +24,35 @@ def main():
 def validate(ramlfile):
     """Validate a given RAML file."""
     try:
-        load_obj = load(ramlfile)
-        vvalidate(load_obj)
-        click.secho("Success! Valid RAML file: {0}".format(load_obj.raml_file),
+        validate_raml(ramlfile, prod=True)
+        click.secho("Success! Valid RAML file: {0}".format(ramlfile),
                     fg="green")
-    except RAMLValidationError as e:
-        click.secho("Error validating file {0}: {1}".format(
-                    load_obj.raml_file, e),
-                    fg="red", err=True)
+
+    except InvalidRamlFileError as e:
+        msg = "Error validating file {0}: {1}".format(ramlfile, e)
+        click.secho(msg, fg="red", err=True)
+        raise SystemExit(1)
 
 
-@main.command(help="Visualize the RAML with a tree.")
+@main.command(help="Visualize the RAML file as a tree.")
 @click.argument('ramlfile', type=click.Path(exists=True))
 @click.option("-c", "--color", type=click.Choice(['dark', 'light']),
-              default='light',
+              default=None,
               help=("Color theme 'light' for dark-screened backgrounds"))
+@click.option("-o", "--output", type=click.File('w'),
+              help=("Save tree output to file"))
 @click.option("-v", "--verbose", default=0, count=True,
               help="Include methods for each endpoint")
-def tree(ramlfile, color, verbose):
+def tree(ramlfile, color, output, verbose):
     """Pretty-print a tree of the RAML-defined API."""
     try:
-        load_obj = load(ramlfile)
-        vvalidate(load_obj)
-        ttree(load_obj, color, verbose)
-    except RAMLValidationError as e:
-        click.secho('"{0}" is not a valid RAML File: {1}'
-                    .format(click.format_filename(load_obj.raml_file), e),
-                    fg="red", err=True)
+        load_obj = RAMLLoader().load(ramlfile)
+        validate_raml(ramlfile, prod=True)
+        ttree(load_obj, color, output, verbose)
+    except InvalidRamlFileError as e:
+        msg = '"{0}" is not a valid RAML file: {1}'.format(
+            click.format_filename(load_obj.raml_file), e)
+        click.secho(msg, fg="red", err=True)
         raise SystemExit(1)
 
 

@@ -7,12 +7,12 @@ ramlfications: RAML reference implementation in Python
    :target: https://pypi.python.org/pypi/ramlfications/
    :alt: Latest Version
 
-.. image:: https://travis-ci.org/econchick/ramlfications.png?branch=master
-   :target: https://travis-ci.org/econchick/ramlfications
+.. image:: https://travis-ci.org/spotify/ramlfications.png?branch=master
+   :target: https://travis-ci.org/spotify/ramlfications
    :alt: CI status
 
-.. image:: https://coveralls.io/repos/econchick/ramlfications/badge.png?branch=master
-   :target: https://coveralls.io/r/econchick/ramlfications?branch=master
+.. image:: https://coveralls.io/repos/spotify/ramlfications/badge.png?branch=master
+   :target: https://coveralls.io/r/spotify/ramlfications?branch=master
    :alt: Current coverage
 
 .. begin
@@ -47,6 +47,6 @@ It’s tested on Python 2.6, 2.7, 3.3+, and PyPy. Both Linux and OS X are suppor
 
 .. _`Documentation Set`: http://raml.org/
 .. _`Read the Docs`: https://ramlfications.readthedocs.org/
-.. _`GitHub`:  https://github.com/econchick/ramlfications/
+.. _`GitHub`:  https://github.com/spotify/ramlfications/
 .. _`pyraml-parser`: https://github.com/an2deg/pyraml-parser
 .. _`uriParameters`: https://github.com/an2deg/pyraml-parser/issues/6

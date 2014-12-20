@@ -3,52 +3,29 @@
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
 
-import os
 
-from ramlfications import utils
-
+from ramlfications.utils import find_params
 from .base import BaseTestCase
 
 
-class TestEndpointOrder(BaseTestCase):
-    def setUp(self):
-        self.here = os.path.abspath(os.path.dirname(__file__))
-        yaml_file = os.path.join(self.here, "examples/endpoint_order.yaml")
-        self.endpoint = utils.EndpointOrder(yaml_file)
+class TestUtils(BaseTestCase):
+    def test_find_params_non_humanized(self):
+        string = ("Return <<resourcePathName>> that have their "
+                  "<<queryParamName>> matching the given value")
 
-    def test_order(self):
-        result = self.endpoint.order
+        exp_params = ["<<resourcePathName>>", "<<queryParamName>>"]
 
-        self.assertIsInstance(result, dict)
+        params = find_params(string)
+        assert len(params) == len(exp_params)
+        assert sorted(params) == sorted(exp_params)
 
-        expected_results = {
-            'Albums': ['get-album', 'get-several-albums', 'get-album-tracks'],
-            'Artists': ['get-artist', 'get-several-artists',
-                        'get-artist-albums', 'get-artist-top-tracks',
-                        'get-artist-related-artists'],
-            'Tracks': ['get-track', 'get-several-tracks'],
-            'Playlists': ['get-playlists', 'get-playlist',
-                          'get-playlist-tracks', 'post-playlists',
-                          'post-playlist-tracks', 'delete-playlist-tracks',
-                          'put-playlist-tracks', 'put-playlist'],
-            'User Profiles': ['get-users-profile', 'get-current-user'],
-            'User Library': ['get-current-user-saved-tracks',
-                             'get-current-user-contains-saved-tracks',
-                             'put-current-user-saved-tracks',
-                             'delete-current-user-saved-tracks'],
-            'Search': ['get-search-item']
-        }
+    def test_find_params_humanized(self):
+        string = ("Return <<resourcePathName| !singularize>> that have "
+                  "their <<queryParamName |!pluralize>> matching the "
+                  "given value")
 
-        self.assertDictEqual(result, expected_results)
+        exp_params = ["<<resourcePathName>>", "<<queryParamName>>"]
 
-    def test_groupings(self):
-        result = self.endpoint.groupings
-        expected_results = ['Albums', 'Artists', 'Tracks', 'Playlists',
-                            'User Profiles', 'User Library', 'Search']
-        self.assertIsInstance(result, list)
-        self.assertListEqual(result, expected_results)
-
-    def test_no_yaml_file(self):
-        yaml_file = '/foo/bar.yaml'
-        self.assertRaises(utils.EndpointOrderError,
-                          lambda: utils.EndpointOrder(yaml_file).order)
+        params = find_params(string)
+        assert len(params) == len(exp_params)
+        assert sorted(params) == sorted(exp_params)

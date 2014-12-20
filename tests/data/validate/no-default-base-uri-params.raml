@@ -1,0 +1,33 @@
+#%RAML 0.8
+title: GitHub API Demo - No Default Base URI Params
+version: v3
+baseUri: https://{domainName}.github.com/{apiPath}
+baseUriParameters:
+  domainName:
+    description: "Domain Root Name"
+    type: string
+    example: blarg
+    displayName: Domain root name
+uriParameters:
+  apiPath:
+    description: "This is the additional path for some api"
+    type: string
+    example: barbaz
+    displayName: API Path
+/foo:
+  displayName: foo
+  baseUriParameters:
+    domainName:
+      description: "Foo API Subdomain"
+      type: string
+      example: "foo-api"
+  get:
+    description: "Get some foo"
+    type: "string"
+    example: "foobar"
+  /bar:
+    displayName: bar
+    get:
+      description: "Get some bar"
+      type: "string"
+      example: "barfoo"

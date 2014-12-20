@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
+
 from __future__ import absolute_import, division, print_function
 
 import markdown2 as markdown
@@ -17,6 +18,8 @@ class ContentType(object):
     :param str example: Example usage of content type
     """
     def __init__(self, name, schema, example):
+        # Input validation would be nice here.
+        # LR: Will do, but will add it to validate.py
         self.name = name
         self.schema = schema
         self.example = example
@@ -25,102 +28,57 @@ class ContentType(object):
         return "<ContentType(name='{0}')>".format(self.name)
 
 
-class BaseParameter(object):
+# NOTE: this is a class for extensibility, e.g. adding RTF support or whatevs
+class DescriptiveContent(object):
     """
-    Base parameter with properties defined by the RAML spec's
-    'Named Parameters' section.
+    Returns documentable content from the RAML file (e.g. Documentation
+    content, description) in either raw or parsed form.
 
-    :param str item: The item name of parameter
-    :param dict data: All defined data of the item
-    :param str param_type: Type of parameter
+    :param str data: The raw/marked up content.
     """
-    def __init__(self, item, data, param_type):
-        self.item = item
+    def __init__(self, data):
         self.data = data
-        self.param_type = param_type
 
     @property
-    def name(self):
+    def raw(self):
         """
-        RAML key/name of the parameter.
+        Helper method to return raw Markdown/plain text written in RAML file.
         """
-        return self.item
+        return self.data
 
     @property
-    def display_name(self):
+    def html(self):
         """
-        Returns the parameter's display name.
+        Returns parsed Markdown into HTML.
+        """
+        try:
+            return markdown.markdown(self.data)
+        except TypeError:
+            return None
 
-        A friendly name used only for display or documentation purposes.
 
-        If ``displayName`` is not specified in RAML, it defaults to ``name``.
-        """
-        display_name = self.data.get('displayName')
-        if not display_name:
-            display_name = self.name
-        return display_name
-
-    @property
-    def type(self):
-        """
-        Primative type of Parameter.  If ``type`` is not specified in the RAML
-        definition, it defaults to ``string``.
-
-        Valid types are:
-        * ``string``
-        * ``number`` - Floating point numbers allowed (as defined by YAML)
-        * ``integer`` - Floating point numbers **not** allowed.
-        * ``date`` - Acceptible date representations defined under Date/Time\
-        formats in [RFC2616](https://www.ietf.org/rfc/rfc2616.txt)
-        * ``boolean``
-        * ``file`` - only applicable in FormParameters
-        """
-        return self.data.get('type')
-
-    @property
-    def description_raw(self):
-        """
-        The description attribute describing the intended use or meaning
-        of the parameter.  May be written in Markdown.
-        """
-        return self.data.get('description')
-
-    @property
-    def description_html(self):
-        """
-        The ``description_raw`` attribute parsed into HTML.
-        """
-        return markdown.markdown(self.data.get('description', ''))
-
-    @property
-    def example(self):
-        """
-        Returns the example value for the property.
-        """
-        return self.data.get('example', '')
+class String(object):
+    """String parameter type"""
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
 
     @property
     def enum(self):
         """
-        Returns the ``enum`` attribute that provides an enumeration of the \
+        Returns the ``enum`` attribute that provides an enumeration of the
         parameter's valid values. This MUST be an array.  Applicable only
-        for parameters of type ``string``.
+        for parameters of type ``string``.  Returns ``None`` if not set.
+        (Optional)
         """
         return self.data.get('enum')
 
     @property
-    def default(self):
-        """
-        Returns the default attribute for the property if the property \
-        is omitted or its value is not specified.
-        """
-        return self.data.get('default')
-
-    @property
     def pattern(self):
         """
-        Returns the pattern attribute that is a regular expression \
+        Returns the pattern attribute that is a regular expression
         that parameter of type ``string`` MUST match.
+        Returns ``None`` if not set.
         """
         return self.data.get('pattern')
 
@@ -129,16 +87,28 @@ class BaseParameter(object):
         """
         Returns the parameter value's minimum number of characters.
         Applicable only for parameters of type ``string``.
+        Returns ``None`` if not set.
         """
-        return self.data.get('minLength')
+        return self.data.get('min_length')
 
     @property
     def max_length(self):
         """
         Returns the parameter value's maximum number of characters.
         Applicable only for parameters of type ``string``.
+        Returns ``None`` if not set.
         """
         return self.data.get('maxLength')
+
+    def __repr__(self):
+        return "<String(name='{0}')>".format(self.name)
+
+
+class IntegerNumber(object):
+    """Integer or Number Parameter Type"""
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
 
     @property
     def minimum(self):
@@ -156,25 +126,121 @@ class BaseParameter(object):
         """
         return self.data.get('maximum')
 
+    def __repr__(self):
+        return "<IntegerNumber(name='{0}')>".format(self.name)
+
+
+class Boolean(object):
+    """Boolean Parameter Type"""
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
+
     @property
     def repeat(self):
         """
         Returns a boolean if the parameter can be repeated.
         """
-        return self.data.get('repeat')
+        return self.data.get('repeat', False)
+
+    def __repr__(self):
+        return "<Boolean(name='{0}')>".format(self.name)
+
+
+class Date(object):
+    pass
+
+
+class File(object):
+    pass
+
+
+class BaseParameter(object):
+    """
+    Base parameter with properties defined by the RAML spec's
+    'Named Parameters' section.
+
+    :param str name: The item name of parameter
+    :param dict data: All defined data of the item
+    :param str param_type: Type of parameter
+    """
+    def __init__(self, name, data, param_type):
+        # Input validation would be nice here.
+        # LR: Will do, but will add it to validate.py
+        self.name = name
+        self.data = data
+        self.param_type = param_type
+
+    @property
+    def display_name(self):
+        """
+        Returns the parameter's display name.  (Optional)
+
+        A friendly name used only for display or documentation purposes.
+
+        If ``displayName`` is not specified in RAML, it defaults to ``name``.
+        """
+        return self.data.get('displayName', self.name)
+
+    def _map_type(self, item_type):
+        return {
+            'string': String,
+            'integer': IntegerNumber,
+            'number': IntegerNumber,
+            'boolean': Boolean,
+            'date': Date,
+            'file': File
+        }[item_type]
+
+    @property
+    def type(self):
+        """
+        Primative type of Parameter.  If ``type`` is not specified in the RAML
+        definition, it defaults to ``string``.  (Optional)
+
+        Valid types are:
+        * ``string``
+        * ``number`` - Floating point numbers allowed (as defined by YAML)
+        * ``integer`` - Floating point numbers **not** allowed.
+        * ``date`` - Acceptible date representations defined under Date/Time\
+        formats in [RFC2616](https://www.ietf.org/rfc/rfc2616.txt)
+        * ``boolean``
+        * ``file`` - only applicable in FormParameters
+        """
+        # TODO: Add test if 'type' isn't set in RAML
+        item_type = self.data.get('type', 'string')
+        return self._map_type(item_type)(self.name, self.data)
+
+    @property
+    def description(self):
+        """
+        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
+        attributes, or ``None`` if not defined.
+
+        Assumes raw content is written in plain text or Markdown in RAML
+        per specification. (Optional)
+        """
+        return DescriptiveContent(self.data.get('description'))
+
+    @property
+    def example(self):
+        """
+        Returns the example value for the property.  Returns ``None`` if
+        not set.  (Optional)
+        """
+        return self.data.get('example')
+
+    @property
+    def default(self):
+        """
+        Returns the default attribute for the property if the property
+        is omitted or its value is not specified.  Returns ``None`` if not
+        defined. (Optional)
+        """
+        return self.data.get('default')
 
     def __repr__(self):
         return "<{0}Parameter(name='{1}')>".format(self.param_type, self.name)
-
-
-class JSONFormParameter(object):   # pragma: no cover
-    def __init__(self, param, data, example):
-        BaseParameter.__init__(self, param, data, "JSON")
-        self.example = example
-
-    @property
-    def required(self):
-        return self.data.get('required')
 
 
 class URIParameter(BaseParameter):
@@ -189,6 +255,10 @@ class URIParameter(BaseParameter):
     :param bool required: Default is True
     """
     def __init__(self, param, data, required=True):
+        # Same concerns as in the class above. Will not mention it again
+        # below.
+        # LR: this does inherit BaseParameter, this is the new preferred way to
+        # call super() on classes that is compatible with py2 and py3
         BaseParameter.__init__(self, param, data, "URI")
         self.required = required
 
@@ -217,7 +287,7 @@ class QueryParameter(BaseParameter):
         Defaults to ``False`` if not defined, except for ``URIParameter``,
         where the default is ``True`` if omitted.
         """
-        return self.data.get('required')
+        return self.data.get('required', True)
 
 
 class FormParameter(BaseParameter):
@@ -243,7 +313,7 @@ class FormParameter(BaseParameter):
         Defaults to ``False`` if not defined, except for ``URIParameter``,
         where the default is ``True`` if omitted.
         """
-        return self.data.get('required')
+        return self.data.get('required', True)
 
 
 class Header(BaseParameter):
@@ -264,6 +334,8 @@ class Header(BaseParameter):
         self.method = method
 
 
+# - Document if return types can be None, but even better return empty
+#   strings everywhere. I won't repeat that. (LR: Will do)
 class Body(object):
     def __init__(self, name, data):
         self.name = name
@@ -271,14 +343,33 @@ class Body(object):
 
     @property
     def mime_type(self):
+        """
+        Accepted MIME media types for the Body of the request/response.
+        (Required)
+        """
         return self.name
 
     @property
     def schema(self):
-        return self.data.get("schema")
+        """
+        Body schema definition.  Returns ``None`` if not set.
+
+        Can **NOT** be set if ``mime_type`` is
+        ``application/x-www-form-urlencoded`` or ``multipart/form-data``.
+        (Optional)
+        """
+        schema = self.data.get("schema")
+        if self.mime_type in ["application/x-www-form-urlencoded",
+                              "multipart/form-data"]:
+            # TODO: this needs to raise a validation error
+            schema = None
+        return schema
 
     @property
     def example(self):
+        """
+        Example of Body.  Returns ``None`` if not set. (Optional)
+        """
         return self.data.get("example")
 
     def __repr__(self):
@@ -292,66 +383,79 @@ class Response(object):
         self.method = method
 
     @property
-    def description_raw(self):
-        return self.data.get('description')
+    def description(self):
+        """
+        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
+        attributes, or ``None`` if not defined.
 
-    @property
-    def description_html(self):
-        return markdown.markdown(self.data.get('description'))
+        Assumes raw content is written in plain text or Markdown in RAML
+        per specification. (Optional)
+        """
+        return DescriptiveContent(self.data.get('description'))
 
     @property
     def headers(self):
-        _headers = self.data.get('headers')
-        headers = []
-        if _headers:
-            for k, v in list(_headers.items()):
-                headers.append(Header(k, v, self.method))
-        return headers
+        """
+        Returns a list of ``Header`` objects if defined, or ``None``
+        """
+        return [
+            Header(k, v, self.method) for k, v in self.data.get(
+                'headers', {}).items()
+        ] or None
 
     @property
     def body(self):
-        return self.data.get('body')
-
-    @property
-    def resp_content_types(self):
-        content_type = []
-        if self.data.get('body'):
-            # grabs all content types
-            content_types = self.data.get('body')
-            types = self.data.get('body').keys()
-            for content in types:
-                schema = content_types.get(content).get('schema')
-                example = content_types.get(content).get('example')
-                content_type.append(ContentType(content, schema, example))
-        return content_type
+        """
+        Returns a ``Body`` object of a response if defined, or ``None``
+        """
+        name = self.data.get('body').keys()[0]
+        data = self.data.get('body').values()[0]
+        return Body(name, data) or None
 
     def __repr__(self):
         return "<Response(code='{0}')>".format(self.code)
 
 
 class ResourceType(object):
+    """
+    Resource Type inheritable by resources.
+    """
     def __init__(self, name, data):
         self.name = name
         self.data = data
 
     @property
     def usage(self):
+        """
+        Returns a string detailing how to use this resource type.
+        """
         return self.data.get('usage')
 
     @property
-    def description_raw(self):
-        return self.data.get('description')
+    def description(self):
+        """
+        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
+        attributes, or ``None`` if not defined.
 
-    @property
-    def description_html(self):
-        return markdown.markdown(self.data.get('description'))
+        Assumes raw content is written in plain text or Markdown in RAML
+        per specification. (Optional)
+        """
+        return DescriptiveContent(self.data.get('description'))
 
     @property
     def type(self):
+        """
+        Returns a ``ResourceType`` name if inheriting properties from another
+        Resource Type, or ``None`` if not defined.
+        """
         return self.data.get('type')
 
     @property
     def methods(self):
+        """
+        Returns a list of ``ResourceTypeMethod` objects as  defined for the
+        Resource Type, or ``None`` if none are defined.
+        """
         methods = []
         for m in HTTP_METHODS:
             if self.data.get(m):
@@ -367,12 +471,20 @@ class ResourceType(object):
 
 
 class ResourceTypeMethod(object):
+    """
+    Object representing a method applied to a Resource Type.  Allows users
+    to see if the method is optional or not (denoted by ``?`` in the RAML
+    definition).
+    """
     def __init__(self, name, data):
         self.name = name
         self.data = data
 
     @property
     def optional(self):
+        """
+        Returns ``True`` if ``?`` in method, denoting that it is optional.
+        """
         return "?" in self.name
 
     def __repr__(self):
@@ -385,98 +497,98 @@ class Documentation(object):
     """
     def __init__(self, title, content):
         self.title = title
-        self.content_raw = content or ''
-        self.content_html = markdown.markdown(self.content_raw)
+        self.content = DescriptiveContent(content)
 
     def __repr__(self):
         return "<Documentation(title='{0}')>".format(self.title)
 
 
 class SecuritySchemes(object):
+    """
+    Security schemes supported by the API.
+    """
     def __init__(self, raml_file):
         self.raml = raml_file
 
     def _get_security_schemes(self):
+        # Use self.raml.get('securitySchemes', []), get rid of the
+        # if/else below, never return None but prefer []
         defined_schemes = self.raml.get('securitySchemes')
         if defined_schemes:
             schemes = []
-            for scheme in defined_schemes:
-                for k, v in list(scheme.items()):
-                    schemes.append(SecurityScheme(k, v))
+            for s in defined_schemes:
+                schemes.extend(
+                    [SecurityScheme(k, v) for k, v in list(s.items())]
+                )
             return schemes
         else:
             return None
 
     @property
     def security_schemes(self):
+        """Returns a list of API-supported ``SecurityScheme`` objects."""
         return self._get_security_schemes()
 
 
 class SecurityScheme(object):
+    """
+    Security scheme object defined by its type (OAuth 2.0, OAuth 1.0, etc).
+    """
     def __init__(self, name, data):
         self.name = name
         self.data = data
 
     @property
     def type(self):
+        """
+        Returns type of authentication.
+        """
         return self.data.get('type')
 
+    def _convert_items(self, items, obj, **kw):
+        return [obj(k, v, **kw) for k, v in list(items.items())]
+
     def _get_described_by(self):
-        _described_by = self.data.get('describedBy')
+        _d = self.data.get('describedBy')
 
-        if _described_by:
-            described_by = {}
+        if _d:
+            return {
+                'headers': self._convert_items(
+                    _d.get('headers', {}), Header, method=None
+                ),
+                'responses': self._convert_items(
+                    _d.get('responses', {}), Response, method=None
+                ),
+                'query_parameters': self._convert_items(
+                    _d.get('queryParameters', {}), QueryParameter
+                ),
+                'uri_parameters': self._convert_items(
+                    _d.get('uriParameters', {}), URIParameter
+                ),
+                'form_parameters': self._convert_items(
+                    _d.get('formParameters', {}), FormParameter
+                )
+            }
 
-            _headers = _described_by.get('headers')
-            _responses = _described_by.get('responses')
-            _q_params = _described_by.get('queryParameters')
-            _u_params = _described_by.get('uriParameters')
-            _f_params = _described_by.get('formParameters')
-
-            if _headers:
-                head = []
-                for k, v in list(_headers.items()):
-                    head.append(Header(k, v, method=None))
-                described_by['headers'] = head
-
-            if _responses:
-                resp = []
-                for k, v in list(_responses.items()):
-                    resp.append(Response(k, v, method=None))
-                described_by['responses'] = resp
-
-            if _q_params:
-                q = []
-                for k, v in list(_q_params.items()):
-                    q.append(QueryParameter(k, v))
-                described_by['query_parameters'] = q
-
-            if _u_params:
-                u = []
-                for k, v in list(_u_params.items()):
-                    u.append(URIParameter(k, v))
-                described_by['uri_parameters'] = u
-
-            if _f_params:
-                f = []
-                for k, v in list(_f_params.items()):
-                    f.append(FormParameter(k, v))
-                described_by['form_parameters'] = f
-
-            return described_by
         return None
 
     @property
     def described_by(self):
+        """
+        Returns ``describedBy`` information of the authentication scheme.
+        """
         return self._get_described_by()
 
     @property
-    def description_raw(self):
-        return self.data.get('description')
+    def description(self):
+        """
+        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
+        attributes, or ``None`` if not defined.
 
-    @property
-    def description_html(self):
-        return markdown.markdown(self.data.get('description'))
+        Assumes raw content is written in plain text or Markdown in RAML
+        per specification. (Optional)
+        """
+        return DescriptiveContent(self.data.get('description'))
 
     def _get_oauth_scheme(self, scheme):
         return {'oauth_2_0': Oauth2Scheme,
@@ -484,8 +596,12 @@ class SecurityScheme(object):
 
     @property
     def settings(self):
+        """
+        Returns the settings if defined for either OAuth 2.0, OAuth 1.0
+        or a API-defined authentication method denoted by ``x-{name}``.
+        """
         schemes = ['oauth_2_0', 'oauth_1_0']
-        if self.name in schemes:
+        if self.name in schemes or self.name.startswith("x-"):
             return self._get_oauth_scheme(self.name)(self.data.get('settings'))
 
     def __repr__(self):
@@ -493,38 +609,65 @@ class SecurityScheme(object):
 
 
 class Oauth2Scheme(object):
+    """
+    OAuth 2 Authentication protocol scheme
+    """
     def __init__(self, settings):
         self.settings = settings
 
     @property
     def scopes(self):
+        """
+        Returns a list of strings of available scopes
+        """
         return self.settings.get('scopes')  # list of strings
 
     @property
     def authorization_uri(self):
+        """
+        Returns a string of the authorization URI
+        """
         return self.settings.get('authorizationUri')  # string
 
     @property
     def access_token_uri(self):
+        """
+        Returns a string of the access token URI
+        """
         return self.settings.get('accessTokenUri')  # string
 
     @property
     def authorization_grants(self):
+        """
+        Returns a list of strings of authorization grants
+        """
         return self.settings.get('authorizationGrants')  # list of strings
 
 
 class Oauth1Scheme(object):
+    """
+    OAuth 1 Authentication protocol scheme
+    """
     def __init__(self, settings):
         self.settings = settings
 
     @property
     def request_token_uri(self):
+        """
+        Returns a string of the Request Token URI
+        """
         return self.settings.get('requestTokenUri')
 
     @property
     def authorization_uri(self):
+        """
+        Returns a string of the Authorization URI
+        """
         return self.settings.get('authorizationUri')
 
     @property
     def token_credentials_uri(self):
+        """
+        Returns a string of the Token Credentials URI
+        """
         return self.settings.get('tokenCredentialsUri')

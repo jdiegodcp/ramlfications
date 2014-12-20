@@ -40,5 +40,5 @@ Ideally, this should mirror the `issues`_ listed on the ``ramlfications`` `githu
     * ``[-]`` - started task.
     * ``[ ]`` - the task is up for grabs.
 
-.. _`github`: https://github.com/econchick/ramlfications
-.. _`issues`: https://github.com/econchick/ramlfications/issues
+.. _`github`: https://github.com/spotify/ramlfications
+.. _`issues`: https://github.com/spotify/ramlfications/issues

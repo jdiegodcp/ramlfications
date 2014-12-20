@@ -1,0 +1,110 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Simple
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.spotify.com/{version}
+mediaType: application/json
+documentation:
+  - title: Spotify Web API Docs
+    content: |
+      Welcome to the _Spotify Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+      For more information about how to use the API, check out [developer
+       site](https://developer.spotify.com/web-api/).
+schemas:
+  - Playlist: !include includes/playlist.json
+resourceTypes:
+  - base:
+      get?: &common
+        headers:
+          Accept:
+            description: Is used to set specified media type.
+            type: string
+        responses:
+          403:
+            description: |
+              API rate limit exceeded. See http://developer.spotify.com/web-api/#rate-limiting for details.
+      post?: *common
+  - item:
+      type: base
+      get?:
+  - collection:
+      type: base
+      get?:
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Spotify supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.spotify.com/authorize
+        accessTokenUri: https://accounts.spotify.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "playlist-read-private"
+          - "playlist-modify-public"
+          - "playlist-modify-private"
+          - "user-library-read"
+          - "user-library-modify"
+          - "user-read-private"
+          - "user-read-email"
+
+/tracks:
+  displayName: several-tracks
+  get:
+    description: |
+      [Get Several Tracks](https://developer.spotify.com/web-api/get-several-tracks/)
+    queryParameters:
+      ids:
+        displayName: Spotify Track IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+  /{id}:
+    displayName: track
+    uriParameters:
+      id:
+        type: string
+        displayName: Spotify Track ID
+        example: 1zHlj4dQ8ZAtrayhuDDmkY
+    get:
+      description: |
+        [Get a Track](https://developer.spotify.com/web-api/get-track/)
+/search:
+  displayName: search-item
+  get:
+    description: |
+      [Search for an Item](https://developer.spotify.com/web-api/search-item/)
+    queryParameters:
+      q:
+        displayName: Query
+        type: string
+        description: "The search query's keywords (and optional field filters). The search is not case-sensitive: 'roadhouse' will match 'Roadhouse', 'roadHouse', etc. Keywords will be matched in any order unless surrounded by quotes, thus q=roadhouse&20blues will match both 'Blues Roadhouse' and 'Roadhouse of the Blues'. Quotation marks can be used to limit the match to a phrase: q=roadhouse&20blues will match 'My Roadhouse Blues' but not 'Roadhouse of the Blues'. By default, results are returned when a match is found in any field of the target object type. Searches can be made more specific by specifying an album, artist or track field filter. For example q=album:gold%20artist:abba&type=album will search for albums with the text 'gold' in the album name and the text 'abba' in an artist name. Other possible field filters, depending on object types being searched, include year, genre, upc, and isrc. For example, q=damian%20genre:reggae-pop&type=artist. The asterisk (*) character can, with some limitations, be used as a wildcard (maximum: 2 per query). It will match a variable number of non-white-space characters. It cannot be used in a quoted phrase, in a field filter, or as the first character of the keyword string."
+        example: Muse
+        required: true
+      type:
+        displayName: Item Type
+        description: A comma-separated list of item types to search across. Search results will include hits from all the specified item types; for example q=name:abacab&type=album,track will return both albums and tracks with "abacab" in their name.
+        type: string
+        example: artist
+        enum: ["album", "artist", "track"]
+        required: true
+
+
+
