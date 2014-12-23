@@ -18,9 +18,9 @@ except ImportError:  # pragma: no cover
     from ordereddict import OrderedDict
 
 from .parameters import (
-    ContentType, FormParameter, URIParameter,
-    QueryParameter, Header, Response, Documentation,
-    SecuritySchemes, Body, DescriptiveContent
+    FormParameter, URIParameter, QueryParameter,
+    Header, Response, Body, SecuritySchemes,
+    Documentation, DescriptiveContent
 )
 from .utils import find_params
 
@@ -207,8 +207,10 @@ class APIRoot(object):
         for k, v in list(resource.items()):
             for i in v.keys():
                 if i in HTTP_METHODS:
-                    data = self._get_union(v.get(i, {}), inherited_res.get(i, {}))
-                    resources.append(ResourceType(k, data, i, self))
+                    data = self._get_union(v.get(i, {}),
+                                           inherited_res.get(i, {}))
+                    resources.append(ResourceType(k, data, i, self,
+                                                  type=inherited))
         return resources
 
     @property
@@ -223,7 +225,9 @@ class APIRoot(object):
             for k, v in list(resource.items()):
                 # first parse out if it inherits another resourceType
                 if 'type' in v.keys():
-                    r = self._map_inherited_resource_types(resource, v.get('type'), resource_types)
+                    r = self._map_inherited_resource_types(resource,
+                                                           v.get('type'),
+                                                           resource_types)
                     resources.extend(r)
                 # else just create a ResourceType
                 else:
@@ -622,15 +626,21 @@ class _BaseResource(object):
         Assumes raw content is written in plain text or Markdown in RAML
         per specification. (Optional)
         """
-        desc = self.data.get('description', self.data.get(self.method, {}).get('description'))
-        return DescriptiveContent(desc)
+        method_desc = self.data.get(self.method, {}).get('description')
+        resource_desc = self.data.get('description')
+        if method_desc:
+            return DescriptiveContent(method_desc)
+        elif resource_desc:
+            return DescriptiveContent(resource_desc)
+        return None
 
 
 class ResourceType(_BaseResource):
-    def __init__(self, name, data, method, api, parent=None):
+    def __init__(self, name, data, method, api, type=None, parent=None):
         _BaseResource.__init__(self, name, data, method, api)
         self.orig_method = method
         self.method = self._clean_method(method)
+        self.type = type
 
     def _clean_method(self, method):
         if method.endswith("?"):
@@ -643,15 +653,6 @@ class ResourceType(_BaseResource):
         Returns a string detailing how to use this resource type.
         """
         return self.data.get('usage')
-
-    @property
-    def type(self):
-        """
-        Returns a ``ResourceType`` name if inheriting properties from another
-        Resource Type, or ``None`` if not defined.
-        """
-        # TODO: Probably should return an object rather than an name?
-        return self.data.get('type')
 
     @property
     def optional(self):
@@ -779,6 +780,10 @@ class Resource(_BaseResource):
         for r in api_resources:
             if r.name == res_type and r.method == self.method:
                 return r
+                # tmp = json.dumps(r.data)
+                # res_data = self._fill_reserved_params(tmp)
+                # data = json.loads(res_data)
+                # return ResourceType(r.name, data, self.method, self.api, self.type)
 
         return None
 
@@ -798,7 +803,7 @@ class Resource(_BaseResource):
                 for k, v in list(_values.items()):
                     data = self._fill_params(data, k, v)
                 data = json.loads(data)
-                return ResourceType(r.name, data, self.method, self.api)
+                return ResourceType(r.name, data, self.method, self.api, self.type)
         return None
 
     def _get_resource_type(self):
@@ -824,6 +829,8 @@ class Resource(_BaseResource):
                     res_type, self.name)
                 raise RAMLParserError(msg)
             return mapped_res_type
+
+        return None
 
     @property
     def resource_type(self):
@@ -924,6 +931,15 @@ class Resource(_BaseResource):
             traits.extend(self.resource_type.traits or [])
         _traits = super(Resource, self).traits or []
         return traits + _traits or None
+
+    @property
+    def description(self):
+        if super(Resource, self).description is not None:
+            return super(Resource, self).description
+        elif self.resource_type and self.resource_type.description:
+            desc = self._fill_reserved_params(self.resource_type.description.raw)
+            return DescriptiveContent(desc)
+        return None
 
     def __repr__(self):
         return "<Resource(method='{0}', path='{1}')>".format(
