@@ -22,8 +22,6 @@ from .parameters import (
     Header, Response, Body, SecuritySchemes,
     Documentation, DescriptiveContent
 )
-from .utils import find_params
-
 
 HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
 
@@ -189,7 +187,8 @@ class APIRoot(object):
             else:
                 resource_values = resource.get(k)
                 inherited_values = inherited_resource.get(k, {})
-                union[k] = dict(inherited_values.items() + resource_values.items())
+                union[k] = dict(inherited_values.items() +
+                                resource_values.items())
         for k, v in list(resource.items()):
             if k not in inherited_resource.keys():
                 union[k] = v
@@ -201,9 +200,9 @@ class APIRoot(object):
             if res_name == r.keys()[0]:
                 return dict(r.values()[0].items())
 
-    def _map_inherited_resource_types(self, resource, inherited, resource_types):
+    def _map_inherited_resource_types(self, resource, inherited, types):
         resources = []
-        inherited_res = self._get_inherited_resource(inherited, resource_types)
+        inherited_res = self._get_inherited_resource(inherited, types)
         for k, v in list(resource.items()):
             for i in v.keys():
                 if i in HTTP_METHODS:
@@ -236,46 +235,6 @@ class APIRoot(object):
                             resources.append(ResourceType(k, v, i, self))
 
         return resources or None
-
-    def _map_inherited(self, name, resources, inherited):
-        res = {}
-        for key, value in list(resources.items()):
-            if key in HTTP_METHODS:
-                if key in inherited.keys():
-                    if not value:
-                        res[key] = inherited.get(key)
-                    else:
-                        inherited_v = inherited.get(key)
-                        for k, v in list(value.items()):
-                            if k in inherited_v.keys():
-                                updated_v = v + inherited_v.get(k)
-                                res[key] = updated_v
-
-        ret = {name: res}
-        return ret
-
-    def _get_resource_types(self):
-        """
-        Returns a dictionary where keys are resourceType names, and values
-        are ``ResourceType`` objects.
-        """
-        resource_types = self.raml.get('resourceTypes', [])
-        resources = {}
-        for r in resource_types:
-            for key, value in list(r.items()):
-                if 'type' in value.keys():
-                    continue
-                else:
-                    resources[key] = {}
-                    for k, v in list(value.items()):
-                        if k in HTTP_METHODS:
-                            res = ResourceType(key, v, k, self)
-                            resources[key][k] = res
-        for r in resource_types:
-            for key, value in list(r.items()):
-                for k, v in list(value.items()):
-                    if k == 'type':
-                        res = resources.get[v]
 
     @property
     def documentation(self):
@@ -314,74 +273,12 @@ class APIRoot(object):
         # Simplify this method by replacing duplicate code, think
         # def _lookup_parameters
         traits = self.raml.get('traits', [])
-        trait_params = {}
+        trait_params = []
         for trait in traits:
-            for key, value in list(trait.items()):
-                trait_params[key] = {}
-                items = value.get('queryParameters')
-                if items:
-                    q_params = []
-                    for k, v in list(items.items()):
-                        q_params.append(QueryParameter(k, v))
-                    trait_params[key]['query_parameters'] = q_params
-                # not sure if traits will ever have URI params, but CMA'ing
-                items = value.get('uriParameters')
-                if items:
-                    u_params = []
-                    for k, v in list(items.items()):
-                        u_params.append(URIParameter(k, v))
-                    trait_params[key]['uri_parameters'] = u_params
-                items = value.get('formParameters')
-                if items:
-                    f_params = []
-                    for k, v in list(items.items()):
-                        f_params.append(FormParameter(k, v))
-                    trait_params[key]['form_parameters'] = f_params
-                for k, v in list(value.items()):
-                    if k not in ['formParameters',
-                                 'queryParameters',
-                                 'uriParameters']:
-                        trait_params[key][k] = v
+            trait_params.append(Trait(trait.keys()[0],
+                                trait.values()[0],
+                                api=self))
         return trait_params or None
-
-    def _parse_parameters(self):
-        """
-        If traits or resourceTypes contain <<parameter>> in definition
-        """
-        _resources_params = []
-        # Default self._resource_types to empty list to get rid of this
-        # if-statement.
-        # LR: returns None if none define, so will need the if-statement
-        if self.resource_types:
-            for r in self.resource_types:
-                data = json.dumps(r.data)
-                match = find_params(data)
-                # Not sure about the += here, I would prefer "append".
-                _resources_params.extend(match)
-
-        _traits_params = []
-        # Same concern as above.
-        # LR: returns None if none define, so will need the if-statement
-        if self.traits:
-            for k, v in list(self.traits.items()):
-                data = json.dumps(k)
-                match = find_params(data)
-                _traits_params.extend(match)
-
-                data = json.dumps(str(v))
-                match = find_params(data)
-                _traits_params.extend(match)
-
-        # Instead of the list(set) combo just make _traits_params and
-        # _resource_params a set initially.
-        return dict(resource_types=list(set(_resources_params)),
-                    traits=list(set(_traits_params)))
-
-    def get_parameters(self):
-        """
-        Returns <<parameters>> used in traits and/or resource_types.
-        """
-        return self._parse_parameters()
 
     @property
     def schemas(self):
@@ -438,24 +335,14 @@ class ResourceStack(object):
                                 resource_stack.append(child)
 
 
-class _BaseResource(object):
+class _BaseResourceProperties(object):
     """
     Base class from which Resource and ResourceType to inherit.
     """
-    def __init__(self, name, data, method, api, parent=None):
+    def __init__(self, name, data, api):
         self.name = name
         self.data = data
         self.api = api
-        self.method = method
-
-    @property
-    def traits(self):
-        """
-        Returns a list of traits assigned to the Resource.
-        """
-        endpoint_traits = self.data.get('is', [])
-        method_traits = self.data.get(self.method, {}).get('is', [])
-        return endpoint_traits + method_traits or None
 
     @property
     def headers(self):
@@ -522,12 +409,6 @@ class _BaseResource(object):
         for k, v in list(node.data.get('uriParameters', {}).items()):
             uri_params.append((URIParameter(k, v)))
 
-        if self.traits:
-            for trait in self.traits:
-                params = self.api.traits.get(trait)
-                uri_params.extend(
-                    [p for p in params if isinstance(p, URIParameter)])
-
         return uri_params
 
     @property
@@ -542,7 +423,7 @@ class _BaseResource(object):
         """
         Returns a list of ``URIParameter`` objects for the ``base_uri``
         """
-        if node.parent:
+        if hasattr(node, 'parent') and node.parent:
             base_uri_params = self._get_base_uri_params(node.parent, [])
         if 'baseUriParameters' in node.data:
             for k, v in list(node.data['baseUriParameters'].items()):
@@ -558,7 +439,10 @@ class _BaseResource(object):
 
     def _get_query_params(self, node):
         resource_params = self.data.get('queryParameters', {})
-        method_params = self.data.get(self.method, {}).get('queryParameters', {})
+        method_params = {}
+        if hasattr(self, 'method'):
+            method_params = self.data.get(self.method, {}).get(
+                'queryParameters', {})
         items = dict(resource_params.items() + method_params.items())
 
         query_params = []
@@ -582,21 +466,29 @@ class _BaseResource(object):
         return self._get_query_params(self) or None
 
     def _get_form_params(self, node):
-        # TODO: abstract away the body/app/json shiz
-        form_params = []
-        if self.method in ['post', 'delete', 'put', 'patch']:
-            form_headers = ['application/x-www-form-urlencoded',
-                            'multipart/form-data']
-            for header in form_headers:
-                form = node.data.get(self.method, {}).get('body', {}).get(header, {})
-                for k, v in list(form.get('formParameters', {}).items()):
-                    form_params.append((FormParameter(k, v)))
+        object_params = self.data.get('formParameters', {})
+        method_params = {}
+        body_params = {}
 
-        if self.traits:
-            for trait in self.traits:
-                form_params.extend(
-                    self.api.traits.get(trait, {}).get('form_parameters', [])
-                )
+        # TODO: This is ugly.
+        if hasattr(self, 'method'):
+            if self.method in ['post', 'delete', 'put', 'patch']:
+                method_params = self.data.get(self.method, {}).get(
+                    'formParameters', {})
+                url_form = self.data.get(self.method, {}).get('body').get(
+                    'application/x-www-form-urlencoded', {}).get(
+                    'formParameters', {})
+                multipart = self.data.get(self.method, {}).get('body').get(
+                    'multipart/form-data', {}).get('formParameters', {})
+                body_params = dict(url_form.items() + multipart.items())
+
+        items = dict(object_params.items() +
+                     method_params.items() +
+                     body_params.items())
+
+        form_params = []
+        for k, v in list(items.items()):
+            form_params.append((FormParameter(k, v)))
         return form_params or None
 
     @property
@@ -611,11 +503,16 @@ class _BaseResource(object):
     @property
     def req_mime_types(self):
         """
-        Returns a list of ``ContentType`` objects that the Resource supports.
+        Returns a list of MIME types that the Resource supports.
         """
-        if self.method in ["post", "put", "delete", "patch"]:
-            return self.data.get(self.method, {}).get('body', {}).keys() or None
-        return None
+        method_mime = []
+        if hasattr(self, 'method'):
+            if self.method in ["post", "put", "delete", "patch"]:
+                method_mime = self.data.get(self.method, {}).get(
+                    'body', {}).keys()
+        trait_mime = self.data.get('body', {}).keys()
+
+        return trait_mime + method_mime or None
 
     @property
     def description(self):
@@ -626,8 +523,10 @@ class _BaseResource(object):
         Assumes raw content is written in plain text or Markdown in RAML
         per specification. (Optional)
         """
-        method_desc = self.data.get(self.method, {}).get('description')
+        method_desc = None
         resource_desc = self.data.get('description')
+        if hasattr(self, 'method'):
+            method_desc = self.data.get(self.method, {}).get('description')
         if method_desc:
             return DescriptiveContent(method_desc)
         elif resource_desc:
@@ -635,8 +534,118 @@ class _BaseResource(object):
         return None
 
 
+class Trait(_BaseResourceProperties):
+    """
+    Method-level properties to apply to a resource.
+    """
+    @property
+    def usage(self):
+        """
+        Returns a string detailing how to use this resource type.
+        """
+        return self.data.get('usage')
+
+    def __repr__(self):
+        return "<Trait(name='{0}')>".format(self.name)
+
+
+class _BaseResource(_BaseResourceProperties):
+    def __init__(self, name, data, method, api):
+        _BaseResourceProperties.__init__(self, name, data, api)
+        self.method = method
+
+    @property
+    def is_(self):
+        """
+        Returns a list of strings denoting traits assign to Resource or
+        Resource Type, or ``None`` if not defined.
+
+        Use ``resource.traits`` to get the actual ``Trait`` object.
+        """
+        method_traits = self.data.get(self.method, {}).get('is', [])
+        resource_traits = self.data.get('is', [])
+        return method_traits + resource_traits or None
+
+    def _fill_params(self, string, key, value):
+        if key in string:
+            string = string.replace("<<" + key + ">>", str(value))
+        string = self._fill_reserved_params(string)
+        return string
+
+    def _get_traits_str(self, trait):
+        api_traits = self.api.traits
+
+        api_traits_names = [a.name for a in api_traits]
+        if trait not in api_traits_names:
+            msg = "'{0}' is not defined in API Root's resourceTypes."
+            raise RAMLParserError(msg)
+
+        for t in api_traits:
+            if t.name == trait:
+                return t
+        return None
+
+    def _get_traits_dict(self, trait):
+        api_traits = self.api.traits or []
+
+        _trait = list(trait.keys())[0]
+        api_trait_names = [a.name for a in api_traits]
+        if _trait not in api_trait_names:
+            msg = "'{0}' is not defined in API Root's traits."
+            raise RAMLParserError(msg)
+
+        for t in api_traits:
+            if t.name == _trait:
+                _values = list(trait.values())[0]
+                data = json.dumps(t.data)
+                for k, v in list(_values.items()):
+                    data = self._fill_params(data, k, v)
+                data = json.loads(data)
+                return Trait(t.name, data, self.api)
+        return None
+
+    def _get_traits(self):
+        if not self.is_:
+            return None
+
+        if not self.api.traits:
+            msg = "No traits are defined in RAML file."
+            raise RAMLParserError(msg)
+
+        trait_objects = []
+        for trait in self.is_:
+            trait_names = [t.name for t in self.api.traits]
+            if isinstance(trait, str):
+                if trait not in trait_names:
+                    msg = "'{0}' not defined under traits in RAML.".format(
+                        trait)
+                    raise RAMLParserError(msg)
+                str_trait = self._get_traits_str(trait)
+                trait_objects.append(str_trait)
+            elif isinstance(trait, dict):
+                if trait.keys()[0] not in trait_names:
+                    msg = "'{0}' not defined under traits in RAML.".format(
+                        trait)
+                    raise RAMLParserError(msg)
+                dict_trait = self._get_traits_dict(trait)
+                trait_objects.append(dict_trait)
+
+        return trait_objects or None
+
+    @property
+    def traits(self):
+        """
+        Returns a list of ``Trait`` objects assigned to the Resource or
+        ResourceType, if any.
+        """
+        return self._get_traits()
+
+
 class ResourceType(_BaseResource):
-    def __init__(self, name, data, method, api, type=None, parent=None):
+    """
+    Resource-level properties to apply to a resource.
+    """
+    def __init__(self, name, data, method, api, type=None):
         _BaseResource.__init__(self, name, data, method, api)
         self.orig_method = method
         self.method = self._clean_method(method)
@@ -662,7 +671,8 @@ class ResourceType(_BaseResource):
         return "?" in self.orig_method
 
     def __repr__(self):
-        return "<ResourceType(name='{0}')>".format(self.name)
+        return "<ResourceType(method='{0}', name='{1}')>".format(
+            self.method.upper(), self.name)
 
 
 class Resource(_BaseResource):
@@ -765,7 +775,7 @@ class Resource(_BaseResource):
 
     def _fill_params(self, string, key, value):
         if key in string:
-            string = string.replace("<<" + key + ">>", value)
+            string = string.replace("<<" + key + ">>", str(value))
         string = self._fill_reserved_params(string)
         return string
 
@@ -780,11 +790,6 @@ class Resource(_BaseResource):
         for r in api_resources:
             if r.name == res_type and r.method == self.method:
                 return r
-                # tmp = json.dumps(r.data)
-                # res_data = self._fill_reserved_params(tmp)
-                # data = json.loads(res_data)
-                # return ResourceType(r.name, data, self.method, self.api, self.type)
-
         return None
 
     def _map_resource_dict(self, res_type):
@@ -803,7 +808,8 @@ class Resource(_BaseResource):
                 for k, v in list(_values.items()):
                     data = self._fill_params(data, k, v)
                 data = json.loads(data)
-                return ResourceType(r.name, data, self.method, self.api, self.type)
+                return ResourceType(r.name, data, self.method,
+                                    self.api, self.type)
         return None
 
     def _get_resource_type(self):
@@ -864,8 +870,7 @@ class Resource(_BaseResource):
             for item in self.secured_by:
                 if 'oauth_2_0' == item.get('name'):
                     return item.get('scopes')
-        else:
-            return None
+        return None
 
     @property
     def protocols(self):
@@ -874,13 +879,18 @@ class Resource(_BaseResource):
 
         Overrides the root API's protocols.  Returns ``None`` if not defined.
         """
-        return self.data.get(self.method).get('protocols')
+        method_protocols = self.data.get(self.method).get('protocols', [])
+        resource_protocols = self.data.get('protocols', [])
+        return list(set(method_protocols + resource_protocols)) or None
 
     @property
     def headers(self):
         headers = []
         if self.resource_type:
             headers.extend(self.resource_type.headers or [])
+        if self.traits:
+            for t in self.traits:
+                headers.extend(t.headers or [])
         _headers = super(Resource, self).headers or []
         return headers + _headers or None
 
@@ -889,6 +899,9 @@ class Resource(_BaseResource):
         resp = []
         if self.resource_type:
             resp.extend(self.resource_type.responses or [])
+        if self.traits:
+            for t in self.traits:
+                resp.extend(t.responses or [])
         _resp = super(Resource, self).responses or []
         return resp + _resp or None
 
@@ -897,6 +910,9 @@ class Resource(_BaseResource):
         body = []
         if self.resource_type:
             body.extend(self.resource_type.body or [])
+        if self.traits:
+            for t in self.traits:
+                body.extend(t.body or [])
         _body = super(Resource, self).body or []
         return body + _body or None
 
@@ -905,6 +921,9 @@ class Resource(_BaseResource):
         params = []
         if self.resource_type:
             params.extend(self.resource_type.query_params or [])
+        if self.traits:
+            for t in self.traits:
+                params.extend(t.query_params or [])
         _params = super(Resource, self).query_params or []
         return params + _params or None
 
@@ -913,6 +932,9 @@ class Resource(_BaseResource):
         params = []
         if self.resource_type:
             params.extend(self.resource_type.uri_params or [])
+        if self.traits:
+            for t in self.traits:
+                params.extend(t.uri_params or [])
         _params = super(Resource, self).uri_params or []
         return params + _params or None
 
@@ -921,6 +943,9 @@ class Resource(_BaseResource):
         params = []
         if self.resource_type:
             params.extend(self.resource_type.form_params or [])
+        if self.traits:
+            for t in self.traits:
+                params.extend(t.form_params or [])
         _params = super(Resource, self).form_params or []
         return params + _params or None
 
@@ -937,7 +962,8 @@ class Resource(_BaseResource):
         if super(Resource, self).description is not None:
             return super(Resource, self).description
         elif self.resource_type and self.resource_type.description:
-            desc = self._fill_reserved_params(self.resource_type.description.raw)
+            desc = self._fill_reserved_params(
+                self.resource_type.description.raw)
             return DescriptiveContent(desc)
         return None
 
