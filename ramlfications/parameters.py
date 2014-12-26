@@ -59,6 +59,9 @@ class DescriptiveContent(object):
         except TypeError:
             return None
 
+    def __repr__(self):
+        return self.raw
+
 
 class String(object):
     """String parameter type"""
@@ -332,7 +335,7 @@ class Header(BaseParameter):
     :param str param: The parameter name
     :param dict data: All defined data of the parameter
     """
-    def __init__(self, name, data, method):
+    def __init__(self, name, data, method=None):
         BaseParameter.__init__(self, name, data, "Header")
         self.method = method
 
@@ -417,81 +420,6 @@ class Response(object):
 
     def __repr__(self):
         return "<Response(code='{0}')>".format(self.code)
-
-
-class ResourceType(object):
-    """
-    Resource Type inheritable by resources.
-    """
-    def __init__(self, name, data):
-        self.name = name
-        self.data = data
-
-    @property
-    def usage(self):
-        """
-        Returns a string detailing how to use this resource type.
-        """
-        return self.data.get('usage')
-
-    @property
-    def description(self):
-        """
-        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
-        attributes, or ``None`` if not defined.
-
-        Assumes raw content is written in plain text or Markdown in RAML
-        per specification. (Optional)
-        """
-        return DescriptiveContent(self.data.get('description'))
-
-    @property
-    def type(self):
-        """
-        Returns a ``ResourceType`` name if inheriting properties from another
-        Resource Type, or ``None`` if not defined.
-        """
-        return self.data.get('type')
-
-    @property
-    def methods(self):
-        """
-        Returns a list of ``ResourceTypeMethod` objects as  defined for the
-        Resource Type, or ``None`` if none are defined.
-        """
-        methods = []
-        for m in HTTP_METHODS:
-            if self.data.get(m):
-                rec = ResourceTypeMethod(m, self.data.get(m))
-                methods.append(rec)
-            elif self.data.get(m + "?"):
-                rec = ResourceTypeMethod(m + "?", self.data.get(m + "?"))
-                methods.append(rec)
-        return methods
-
-    def __repr__(self):
-        return "<ResourceType(name='{0}')>".format(self.name)
-
-
-class ResourceTypeMethod(object):
-    """
-    Object representing a method applied to a Resource Type.  Allows users
-    to see if the method is optional or not (denoted by ``?`` in the RAML
-    definition).
-    """
-    def __init__(self, name, data):
-        self.name = name
-        self.data = data
-
-    @property
-    def optional(self):
-        """
-        Returns ``True`` if ``?`` in method, denoting that it is optional.
-        """
-        return "?" in self.name
-
-    def __repr__(self):
-        return "<ResourceTypeMethod(name='{0}')>".format(self.name)
 
 
 class Documentation(object):

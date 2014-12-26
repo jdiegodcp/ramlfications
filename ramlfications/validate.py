@@ -86,12 +86,13 @@ def validate_resource_response(api):
     """
     valid_keys = ['body', 'headers', 'description']
     for resource in api.resources:
-        for resp in resource.responses:
-            for key in list(resp.data.keys()):
-                if key not in valid_keys:
-                    msg = "'{0}' not a valid Response parameter.".format(
-                        key)
-                    raise InvalidRamlFileError(msg)
+        if resource.responses:
+            for resp in resource.responses:
+                for key in list(resp.data.keys()):
+                    if key not in valid_keys:
+                        msg = "'{0}' not a valid Response parameter.".format(
+                            key)
+                        raise InvalidRamlFileError(msg)
 
 
 def validate_root_documentation(api):

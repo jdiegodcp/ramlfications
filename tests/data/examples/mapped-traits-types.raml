@@ -18,14 +18,15 @@ resourceTypes:
         description: Create a new <<resourcePathName | !singularize>>
 traits:
   - secured:
+      description: A secured method
       queryParameters:
         <<tokenName>>:
           description: A valid <<tokenName>> is required
-    paged:
+  - paged:
       queryParameters:
         numPages:
           description: The number of pages to return, not to exceed <<maxPages>>
-    formTrait:
+  - formTrait:
       formParameters:
         aFormTrait:
           description: A form trait for testing purposes.

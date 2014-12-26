@@ -104,7 +104,7 @@
       "name": "searchableCollection"
     },
     "second": {
-      "description": "The collection of magazines",
+      "description": "Get all magazines, optionally filtered",
       "name": "collection",
       "usage": "This resourceType should be used for any collection of items"
     }

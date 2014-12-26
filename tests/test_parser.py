@@ -95,13 +95,10 @@ class TestAPIRoot(BaseTestCase):
 
         for i, resource in enumerate(results):
             self.assertItemInList(resource.name, resources)
-            self.assertIsInstance(resource, parameters.ResourceType)
-            repr_str = "<ResourceType(name='{0}')>".format(resource.name)
+            self.assertIsInstance(resource, parser.ResourceType)
+            repr_str = "<ResourceType(method='{0}', name='{1}')>".format(
+                resource.method.upper(), resource.name)
             self.assertEqual(repr(resource), repr_str)
-            for m in resource.methods:
-                self.assertIsInstance(m, parameters.ResourceTypeMethod)
-                repr_str = "<ResourceTypeMethod(name='{0}')>".format(m.name)
-                self.assertEqual(repr(m), repr_str)
 
     def test_resource_type(self):
         raml_file = os.path.join(EXAMPLES + "resource-types.raml")
@@ -156,11 +153,41 @@ class TestAPIRoot(BaseTestCase):
                 }
             },
             'item': {
-                'get?': None,
+                'get?': {
+                    'headers': {
+                        'Accept': {
+                            'description': "Is used to set specified media "
+                                           "type.",
+                            'type': 'string'
+                        }
+                    },
+                    'responses': {
+                        403: {
+                            'description': "API rate limit exceeded. See "
+                                           "http://developer.spotify.com/web-"
+                                           "api/#rate-limiting for details.\n"
+                        }
+                    }
+                },
                 'type': 'base'
             },
             'collection': {
-                'get?': None,
+                'get?': {
+                    'headers': {
+                        'Accept': {
+                            'description': "Is used to set specified media "
+                                           "type.",
+                            'type': 'string'
+                        }
+                    },
+                    'responses': {
+                        403: {
+                            'description': "API rate limit exceeded. See "
+                                           "http://developer.spotify.com/web-"
+                                           "api/#rate-limiting for details.\n"
+                        }
+                    }
+                },
                 'type': 'base'
             }
         }
@@ -171,33 +198,22 @@ class TestAPIRoot(BaseTestCase):
         ]
 
         for r in results:
-            self.assertDictEqual(r.data, expected_data[r.name])
+            if r.optional:
+                method = r.method + "?"
+            else:
+                method = r.method
             self.assertIsNone(r.usage)
             self.assertEqual(r.type, expected_data[r.name].get('type'))
-            self.assertIsInstance(r.methods, list)
-            self.assertEqual(r.description.raw,
-                             expected_data[r.name].get('description'))
-            if r.description.raw:
+            self.assertIsInstance(r.method, str)
+            self.assertTrue(r.method in http_methods)
+            if r.description:
+                self.assertEqual(r.description.raw, expected_data.get(
+                    r.name).get(method).get('description'))
+            if r.description:
                 self.assertEqual(r.description.html,
-                                 markdown.markdown(expected_data[r.name].get(
-                                                   'description')))
-
-            methods = r.methods
-            exp_methods = {}
-
-            for m in http_methods:
-                if expected_data[r.name].get(m):
-                    exp_methods[m] = expected_data[r.name].get(m)
-                if expected_data[r.name].get(m + "?"):
-                    exp_methods[m + "?"] = expected_data[r.name].get(m + "?")
-
-            if exp_methods:
-                for m in methods:
-                    self.assertIsInstance(m, parameters.ResourceTypeMethod)
-                    assert m.name in exp_methods
-                    self.assertEqual(m.data, exp_methods[m.name])
-                    optional = "?" in list(exp_methods.keys())[0]
-                    self.assertEqual(m.optional, optional)
+                                 markdown.markdown(expected_data.get(r.name)
+                                                   .get(method)
+                                                   .get('description')))
 
     def test_no_resource_types(self):
         raml_file = os.path.join(EXAMPLES + "simple-no-resource-types.raml")
@@ -366,9 +382,9 @@ class TestAPIRoot(BaseTestCase):
         self.assertEqual(desc_results, expected_results)
 
     def test_traits(self):
-        self.assertIsInstance(self.api.traits, dict)
-        for k, v in list(self.api.traits.items()):
-            self.assertIsInstance(v, dict)
+        self.assertIsInstance(self.api.traits, list)
+        for t in self.api.traits:
+            self.assertIsInstance(t, parser.Trait)
 
     def test_security_schemes_oauth1(self):
         scheme_name = "oauth_1_0"
@@ -410,20 +426,6 @@ class TestAPIRoot(BaseTestCase):
         self.assertDictEqual(schemes[0].data, expected_basic)
         self.assertDictEqual(schemes[1].data, expected_digest)
         self.assertDictEqual(schemes[2].data, expected_other)
-
-    def test_get_parameters(self):
-        raml = "traits-resources-parameters.raml"
-        raml_file = os.path.join(EXAMPLES + raml)
-        api = self.setup_parsed_raml(raml_file)
-
-        params = api.get_parameters()
-
-        expected_data = {
-            'resource_types': ['<<resourcePathName>>'],
-            'traits': ['<<methodName>>']
-        }
-
-        self.assertDictEqual(params, expected_data)
 
     def test_schemas(self):
         raml_file = os.path.join(EXAMPLES + "root-schemas.raml")
@@ -552,10 +554,7 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources[0]
 
-        raw_desc = resource.description.raw
-        html_desc = resource.description.html
-        self.assertEqual(raw_desc, None)
-        self.assertEqual(html_desc, None)
+        self.assertIsNone(resource.description)
 
     def test_method(self):
         raml_file = os.path.join(EXAMPLES + "simple.raml")
@@ -609,7 +608,8 @@ class TestResource(BaseTestCase):
         form_encoded = api.resources[1].body[0]
         multipart = api.resources[2].body[0]
 
-        self.assertEqual(repr(form_encoded), "<Body(name='application/x-www-form-urlencoded')>")
+        self.assertEqual(repr(form_encoded),
+                         "<Body(name='application/x-www-form-urlencoded')>")
         self.assertEqual(repr(multipart), "<Body(name='multipart/form-data')>")
         self.assertIsNone(form_encoded.schema)
         self.assertIsNone(multipart.schema)
@@ -728,13 +728,11 @@ class TestResource(BaseTestCase):
     def test_traits_resources(self):
         raml_file = os.path.join(EXAMPLES + "simple-traits.raml")
         api = self.setup_parsed_raml(raml_file)
-        resources = api.resources
+        resource = api.resources[0]
 
-        for resource in resources:
-            expected_dict = {'usage': None, 'name': 'collection'}
-            self.assertDictEqual(resource.resource_type, expected_dict)
-            if resource.method == 'get':
-                self.assertEqual(resource.traits, ['paged'])
+        self.assertIsInstance(resource.resource_type, parser.ResourceType)
+        self.assertEqual(resource.resource_type.name, 'collection')
+        self.assertEqual([t.name for t in resource.traits], ['paged'])
 
     def test_resource_types_too_many(self):
         raml_file = os.path.join(EXAMPLES + "mapped-types-too-many.raml")
@@ -768,17 +766,15 @@ class TestResource(BaseTestCase):
         first_expected_name = 'searchableCollection'
         second_expected_name = 'collection'
 
-        first_res = api.resources[0]
         second_res = api.resources[2]
 
-        first_expected_data = self.f('test_mapped_traits').get('first')
         second_expected_data = self.f('test_mapped_traits').get('second')
 
         self.assertEqual(first.name, first_expected_name)
         self.assertEqual(second.name, second_expected_name)
 
-        self.assertDictEqual(first_res.resource_type, first_expected_data)
-        self.assertDictEqual(second_res.resource_type, second_expected_data)
+        self.assertEqual(second_res.description.raw,
+                         second_expected_data.get('description'))
 
     def test_mapped_form_traits(self):
         raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
@@ -1035,7 +1031,8 @@ class TestResource(BaseTestCase):
 
         expected_data = self.f('test_primative_type_number')
 
-        self.assertEqual(repr(param.type), "<IntegerNumber(name='numberParam')>")
+        self.assertEqual(repr(param.type),
+                         "<IntegerNumber(name='numberParam')>")
         self.assertDictEqual(param.data, expected_data)
         self.assertEqual(param.type.minimum, expected_data.get('minimum'))
         self.assertEqual(param.type.maximum, expected_data.get('maximum'))
@@ -1131,12 +1128,9 @@ class TestResource(BaseTestCase):
                                   'application/x-www-form-urlencoded',
                                   'multipart/form-data']
 
-        for c_type in post_playlist.req_content_types:
-            self.assertIsInstance(c_type, parser.ContentType)
-            self.assertEqual(repr(c_type), "<ContentType(name='{0}')>".format(
-                             c_type.name))
-            self.assertItemInList(c_type.name, expected_content_types)
-            if c_type.name is 'application/json':
+        for c_type in post_playlist.req_mime_types:
+            self.assertItemInList(c_type, expected_content_types)
+            if c_type is 'application/json':
                 self.assertDictEqual(c_type.schema,
                                      expected_post_playlist_schema)
                 self.assertDictEqual(c_type.example,
