@@ -158,6 +158,7 @@ class APIRoot(object):
 
     @property
     def media_type(self):
+        # TODO: raise an error if not acceptable media type given
         """
         Returns the supported Media Types of the API.  Returns ``None``
         if no media types are defined.
@@ -337,7 +338,7 @@ class ResourceStack(object):
 
 class _BaseResourceProperties(object):
     """
-    Base class from which Resource and ResourceType to inherit.
+    Base class from which Trait, Resource, and ResourceType to inherit.
     """
     def __init__(self, name, data, api):
         self.name = name
@@ -347,149 +348,82 @@ class _BaseResourceProperties(object):
     @property
     def headers(self):
         """
-        Returns a list of Header objects that the endpoint accepts.
+        Returns a list of accepted Header objects.
 
         Returns ``None`` if no headers defined.
         """
-
         resource_headers = self.data.get('headers', {})
-        method_headers = self.data.get(self.method, {}).get('headers', {})
-        _headers = dict(resource_headers.items() + method_headers.items())
         headers = []
-        for k, v in list(_headers.items()):
-            headers.append(Header(k, v, self.method))
+        for k, v in list(resource_headers.items()):
+            headers.append(Header(k, v))
         return headers or None
-
-    def _get_body(self):
-        bodies = []
-        method_body = self.data.get(self.method, {}).get('body', {})
-        resource_body = self.data.get('body', {})
-        body = dict(resource_body.items() + method_body.items())
-        for k, v in list(body.items()):
-            bodies.append(Body(k, v))
-        return bodies or None
 
     @property
     def body(self):
         """
-        Returns a Body object of a request if defined in RAML, or ``None``
-        if not.
+        Returns a list of Body objects of a request or
+        ``None`` if none defined.
         """
-        return self._get_body()
+        bodies = []
+        resource_body = self.data.get('body', {})
+        for k, v in list(resource_body.items()):
+            bodies.append(Body(k, v))
+        return bodies or None
 
-    def _get_responses(self):
+    @property
+    def responses(self):
+        """
+        Returns a list of ``Response`` objects of a Trait, or ``None``
+        if none are defined.
+
+        :raises RAMLParserError: Unsupported HTTP Response code
+        """
         resps = []
-        resource_headers = self.data.get('responses', {})
-        method_responses = self.data.get(self.method, {}).get('responses', {})
-        responses = dict(resource_headers.items() + method_responses.items())
-        for k, v in list(responses.items()):
+        resource_responses = self.data.get('responses', {})
+        for k, v in list(resource_responses.items()):
             if int(k) in HTTP_RESP_CODES:
                 resps.append(Response(k, v, self.method))
             else:
                 msg = "{0} not a supported HTTP Response code".format(k)
                 raise RAMLParserError(msg)
 
-        return resps
-
-    @property
-    def responses(self):
-        """
-        Returns a list of Response objects of a resource.
-
-        :raises RAMLParserError: Unsupported HTTP Response code
-        """
-        return self._get_responses()
-
-    def _get_uri_params(self, node, uri_params):
-        """Returns a list of URIParameter Objects"""
-        # ResourceType does not have `parent` attr so need to check this
-        if hasattr(node, 'parent') and node.parent:
-            uri_params = self._get_uri_params(node.parent, [])
-
-        for k, v in list(node.data.get('uriParameters', {}).items()):
-            uri_params.append((URIParameter(k, v)))
-
-        return uri_params
+        return resps or None
 
     @property
     def uri_params(self):
         """
-        Returns a list of ``URIParameter`` objects of a ``Resource``, or
+        Returns a list of ``URIParameter`` objects of a Trait, or
         ``None`` if none are defined.
         """
-        return self._get_uri_params(self, []) or None
+        uri_params = []
+        for k, v in list(self.data.get('uriParameters', {}).items()):
+            uri_params.append((URIParameter(k, v)))
 
-    def _get_base_uri_params(self, node, base_uri_params):
-        """
-        Returns a list of ``URIParameter`` objects for the ``base_uri``
-        """
-        if hasattr(node, 'parent') and node.parent:
-            base_uri_params = self._get_base_uri_params(node.parent, [])
-        if 'baseUriParameters' in node.data:
-            for k, v in list(node.data['baseUriParameters'].items()):
-                base_uri_params.append((URIParameter(k, v)))
-        return base_uri_params
+        return uri_params or None
 
     @property
     def base_uri_params(self):
         """
-        Returns a list of Base ``URIParameter`` objects of a Resource.
+        Returns a list of ``URIParameter`` objects of a Trait for
+        ``base_uri``, or ``None`` if none are defined.
         """
-        return self._get_base_uri_params(self, []) or None
-
-    def _get_query_params(self, node):
-        resource_params = self.data.get('queryParameters', {})
-        method_params = {}
-        if hasattr(self, 'method'):
-            method_params = self.data.get(self.method, {}).get(
-                'queryParameters', {})
-        items = dict(resource_params.items() + method_params.items())
-
-        query_params = []
-        for k, v in list(items.items()):
-            query_params.append((QueryParameter(k, v)))
-
-        # TODO: Fix/update traits
-        # if self.traits:
-        #     for trait in self.traits:
-        #         params = self.api.traits.get(trait)
-        #         query_params.extend(
-        #             [p for p in params if isinstance(p, QueryParameter)])
-        return query_params
+        base_uri_params = []
+        for k, v in list(self.data.get('baseUriParameters', {}).items()):
+            base_uri_params.append((URIParameter(k, v)))
+        return base_uri_params or None
 
     @property
     def query_params(self):
         """
-        Returns a list of ``QueryParameter`` objects, or ``None`` if no
-        query parameters are defined.
+        Returns a list of ``QueryParameter`` objects of a Trait,
+        or ``None`` if no query parameters are defined.
         """
-        return self._get_query_params(self) or None
+        resource_params = self.data.get('queryParameters', {})
 
-    def _get_form_params(self, node):
-        object_params = self.data.get('formParameters', {})
-        method_params = {}
-        body_params = {}
-
-        # TODO: This is ugly.
-        if hasattr(self, 'method'):
-            if self.method in ['post', 'delete', 'put', 'patch']:
-                method_params = self.data.get(self.method, {}).get(
-                    'formParameters', {})
-                url_form = self.data.get(self.method, {}).get('body').get(
-                    'application/x-www-form-urlencoded', {}).get(
-                    'formParameters', {})
-                multipart = self.data.get(self.method, {}).get('body').get(
-                    'multipart/form-data', {}).get('formParameters', {})
-                body_params = dict(url_form.items() + multipart.items())
-
-        items = dict(object_params.items() +
-                     method_params.items() +
-                     body_params.items())
-
-        form_params = []
-        for k, v in list(items.items()):
-            form_params.append((FormParameter(k, v)))
-        return form_params or None
+        query_params = []
+        for k, v in list(resource_params.items()):
+            query_params.append((QueryParameter(k, v)))
+        return query_params or None
 
     @property
     def form_params(self):
@@ -497,22 +431,20 @@ class _BaseResourceProperties(object):
         Returns a list of FormParameter objects, or ``None`` if no form
         parameters are defined.
         """
-        # TODO: seems like there isn't a test for this if None?
-        return self._get_form_params(self)
+        form_params = []
+        for k, v in list(self.data.get('formParameters', {}).items()):
+            form_params.append((FormParameter(k, v)))
+        return form_params or None
 
     @property
     def req_mime_types(self):
         """
-        Returns a list of MIME types that the Resource supports.
+        Returns a list of strings referring to MIME types that the
+        Trait supports, or ``None`` if none defined.
         """
-        method_mime = []
-        if hasattr(self, 'method'):
-            if self.method in ["post", "put", "delete", "patch"]:
-                method_mime = self.data.get(self.method, {}).get(
-                    'body', {}).keys()
-        trait_mime = self.data.get('body', {}).keys()
+        mime_types = self.data.get('body', {}).keys()
 
-        return trait_mime + method_mime or None
+        return mime_types or None
 
     @property
     def description(self):
@@ -523,25 +455,20 @@ class _BaseResourceProperties(object):
         Assumes raw content is written in plain text or Markdown in RAML
         per specification. (Optional)
         """
-        method_desc = None
         resource_desc = self.data.get('description')
-        if hasattr(self, 'method'):
-            method_desc = self.data.get(self.method, {}).get('description')
-        if method_desc:
-            return DescriptiveContent(method_desc)
-        elif resource_desc:
+        if resource_desc:
             return DescriptiveContent(resource_desc)
         return None
 
 
 class Trait(_BaseResourceProperties):
     """
-    Method-level properties to apply to a resource.
+    Method-level properties to apply to a Resource or ResourceType.
     """
     @property
     def usage(self):
         """
-        Returns a string detailing how to use this resource type.
+        Returns a string detailing how to use this trait.
         """
         return self.data.get('usage')
 
@@ -637,13 +564,176 @@ class _BaseResource(_BaseResourceProperties):
         """
         Returns a list of ``Trait`` objects assigned to the Resource or
         ResourceType, if any.
+
+        Use ``resource.is_`` to get a simple list of strings denoting the
+        names of applicable traits.
         """
         return self._get_traits()
+
+    @property
+    def protocols(self):
+        """
+        Returns a list of supported protocols for the particular Resource or
+        ResourceType.
+
+        Overrides the root API's protocols.  Returns ``None`` if not defined.
+        """
+        method_protocols = self.data.get(self.method).get('protocols', [])
+        resource_protocols = self.data.get('protocols', [])
+        return list(set(method_protocols + resource_protocols)) or None
+
+    #####
+    # Following properties extend those from _BaseResourceProperies
+    #####
+
+    @property
+    def headers(self):
+        """
+        Returns a list of accepted Header objects for Resource or
+        ResourceTypes, or  ``None`` if no headers defined.
+        """
+        method_headers = self.data.get(self.method, {}).get('headers', {})
+
+        headers = super(_BaseResource, self).headers or []
+
+        for k, v in list(method_headers.items()):
+            headers.append(Header(k, v, self.method))
+        return headers or None
+
+    @property
+    def body(self):
+        """
+        Returns a list of Body objects of a request for Resource or
+        ResourceTypes, or ``None`` if none defined.
+        """
+        bodies = super(_BaseResource, self).body or []
+        method_body = self.data.get(self.method, {}).get('body', {})
+        for k, v in list(method_body.items()):
+            bodies.append(Body(k, v))
+        return bodies or None
+
+    @property
+    def responses(self):
+        """
+        Returns a list of Response objects of a Resource or ResourceType,
+        or ``None`` if none defined.
+
+        :raises RAMLParserError: Unsupported HTTP Response code
+        """
+        resps = super(_BaseResource, self).responses or []
+        method_responses = self.data.get(self.method, {}).get('responses', {})
+        for k, v in list(method_responses.items()):
+            if int(k) in HTTP_RESP_CODES:
+                resps.append(Response(k, v, self.method))
+            else:
+                msg = "{0} not a supported HTTP Response code".format(k)
+                raise RAMLParserError(msg)
+
+        return resps
+
+    @property
+    def uri_params(self):
+        """
+        Returns a list of ``URIParameter`` objects of a Resource or
+        ResourceType, or ``None`` if none are defined.
+        """
+        uri_params = super(_BaseResource, self).uri_params or []
+        method_params = self.data.get(self.method, {}).get('uriParameters', {})
+        for k, v in list(method_params.items()):
+            uri_params.append((URIParameter(k, v)))
+
+        return uri_params or None
+
+    @property
+    def base_uri_params(self):
+        """
+        Returns a list of base ``URIParameter`` objects of a Resource or
+        ResourceType, or ``None`` if none are defined.
+        """
+        base_params = super(_BaseResource, self).base_uri_params or []
+        method_params = self.data.get(self.method, {}).get(
+            'baseUriParameters', {})
+        for k, v in list(method_params.items()):
+            base_params.append((URIParameter(k, v)))
+
+        return base_params or None
+
+    @property
+    def query_params(self):
+        """
+        Returns a list of ``QueryParameter`` objects of a Resource or
+        ResourceType, or ``None`` if no query parameters are defined.
+        """
+        query_params = super(_BaseResource, self).query_params or []
+        method_params = self.data.get(self.method, {}).get(
+            'queryParameters', {})
+        for k, v in list(method_params.items()):
+            query_params.append(QueryParameter(k, v))
+
+        return query_params or None
+
+    @property
+    def form_params(self):
+        """
+        Returns a list of FormParameter objects of a Resource or
+        ResourceType, or ``None`` if no form parameters are defined.
+        """
+
+        form_params = super(_BaseResource, self).form_params or []
+
+        method_params = {}
+        url_form = {}
+        multipart = {}
+
+        if self.method in ['post', 'delete', 'put', 'patch']:
+            method_params = self.data.get(self.method, {}).get(
+                'formParameters', {})
+            # TODO: will these show up outside of a method?
+            url_form = self.data.get(self.method, {}).get('body').get(
+                'application/x-www-form-urlencoded', {}).get(
+                'formParameters', {})
+            multipart = self.data.get(self.method, {}).get('body').get(
+                'multipart/form-data', {}).get('formParameters', {})
+
+        items = dict(method_params.items() +
+                     url_form.items() +
+                     multipart.items())
+
+        for k, v in list(items.items()):
+            form_params.append((FormParameter(k, v)))
+        return form_params or None
+
+    @property
+    def req_mime_types(self):
+        """
+        Returns a list of strings referring to MIME types that the
+        Resource or ResourceType supports, or ``None`` if none defined.
+        """
+        method_mime = []
+        if self.method in ["post", "put", "delete", "patch"]:
+            method_mime = self.data.get(self.method, {}).get('body', {}).keys()
+        mime_types = self.data.get('body', {}).keys() + method_mime
+
+        return mime_types or None
+
+    @property
+    def description(self):
+        """
+        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
+        attributes, or ``None`` if not defined.
+
+        Assumes raw content is written in plain text or Markdown in RAML
+        per specification.
+        """
+        method_desc = self.data.get(self.method, {}).get('description')
+        if method_desc:
+            return DescriptiveContent(method_desc)
+        return super(_BaseResource, self).description
 
 
 class ResourceType(_BaseResource):
     """
-    Resource-level properties to apply to a resource.
+    Resource-level properties to apply to a Resource.
     """
     def __init__(self, name, data, method, api, type=None):
         _BaseResource.__init__(self, name, data, method, api)
@@ -659,7 +749,7 @@ class ResourceType(_BaseResource):
     @property
     def usage(self):
         """
-        Returns a string detailing how to use this resource type.
+        Returns a string detailing how to use this ResourceType.
         """
         return self.data.get('usage')
 
@@ -674,21 +764,174 @@ class ResourceType(_BaseResource):
         return "<ResourceType(method='{0}', name='{1}')>".format(
             self.method.upper(), self.name)
 
+    #####
+    # Following properties extend those from _BaseResourceProperies
+    #####
+    @property
+    def protocols(self):
+        """
+        Returns a list of supported protocols for the particular ResourceType.
+
+        Overrides the root API's protocols.  Returns ``None`` if not defined.
+        """
+        protocols = super(ResourceType, self).protocols or []
+        opt_method_protocols = self.data.get(self.orig_method).get(
+            'protocols', [])
+        return list(set(opt_method_protocols + protocols)) or None
+
+    @property
+    def headers(self):
+        """
+        Returns a list of accepted Header objects for ResourceType,
+        or  ``None`` if no headers defined.
+        """
+        opt_method_headers = self.data.get(self.orig_method, {}).get(
+            'headers', {})
+
+        headers = super(ResourceType, self).headers or []
+        for k, v in list(opt_method_headers.items()):
+            headers.append(Header(k, v, self.method))
+        return headers or None
+
+    @property
+    def body(self):
+        """
+        Returns a list of Body objects of a request for ResourceType,
+        or ``None`` if none defined.
+        """
+        bodies = super(ResourceType, self).body or []
+        opt_method_body = self.data.get(self.orig_method, {}).get('body', {})
+        for k, v in list(opt_method_body.items()):
+            bodies.append(Body(k, v))
+        return bodies or None
+
+    @property
+    def responses(self):
+        """
+        Returns a list of Response objects of a ResourceType, or ``None``
+        if none are defined.
+
+        :raises RAMLParserError: Unsupported HTTP Response code
+        """
+        resps = super(ResourceType, self).responses or []
+        opt_method_resps = self.data.get(self.orig_method, {}).get(
+            'responses', {})
+
+        for k, v in list(opt_method_resps.items()):
+            if int(k) in HTTP_RESP_CODES:
+                resps.append(Response(k, v, self.method))
+            else:
+                msg = "{0} not a supported HTTP Response code".format(k)
+                raise RAMLParserError(msg)
+
+        return resps
+
+    @property
+    def uri_params(self):
+        """
+        Returns a list of ``URIParameter`` objects of a ResourceType, or
+        ``None`` if none are defined.
+        """
+        uri_params = super(ResourceType, self).uri_params or []
+        orig_method_params = self.data.get(self.orig_method, {}).get(
+            'uriParameters', {})
+        for k, v in list(orig_method_params.items()):
+            uri_params.append((URIParameter(k, v)))
+
+        return uri_params or None
+
+    @property
+    def base_uri_params(self):
+        """
+        Returns a list of base ``URIParameter`` objects of a ResourceType,
+        or ``None`` if none are defined.
+        """
+        base_params = super(ResourceType, self).base_uri_params or []
+        opt_method_params = self.data.get(self.orig_method, {}).get(
+            'baseUriParameters', {})
+        for k, v in list(opt_method_params.items()):
+            base_params.append((URIParameter(k, v)))
+
+        return base_params or None
+
+    @property
+    def query_params(self):
+        """
+        Returns a list of ``QueryParameter`` objects of a ResourceType,
+        or ``None`` if no query parameters are defined.
+        """
+        query_params = super(ResourceType, self).query_params or []
+        opt_method_params = self.data.get(self.orig_method, {}).get(
+            'queryParameters', {})
+        for k, v in list(opt_method_params.items()):
+            query_params.append(QueryParameter(k, v))
+
+        return query_params or None
+
+    @property
+    def form_params(self):
+        """
+        Returns a list of FormParameter objects of a ResourceType,
+        or ``None`` if no form parameters are defined.
+        """
+        form_params = super(ResourceType, self).form_params or []
+
+        if self.orig_method in ['post?', 'delete?', 'put?', 'patch?']:
+            method_params = self.data.get(self.orig_method, {}).get(
+                'formParameters', {})
+            # TODO: will these show up outside of a method?
+            url_form = self.data.get(self.orig_method, {}).get('body').get(
+                'application/x-www-form-urlencoded', {}).get(
+                'formParameters', {})
+            multipart = self.data.get(self.orig_method, {}).get('body').get(
+                'multipart/form-data', {}).get('formParameters', {})
+
+        items = dict(method_params.items() +
+                     url_form.items() +
+                     multipart.items())
+
+        for k, v in list(items.items()):
+            form_params.append((FormParameter(k, v)))
+        return form_params or None
+
+    @property
+    def req_mime_types(self):
+        """
+        Returns a list of strings referring to MIME types that the
+        ResourceType supports, or ``None`` if none defined.
+        """
+        mime_types = super(ResourceType, self).req_mime_types or []
+        opt_method_mime = []
+        if self.orig_method in ["post?", "put?", "delete?", "patch?"]:
+            opt_method_mime = self.data.get(self.orig_method, {}).get(
+                'body', {}).keys()
+
+        return mime_types + opt_method_mime or None
+
+    @property
+    def description(self):
+        """
+        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
+        attributes, or ``None`` if not defined.
+
+        Assumes raw content is written in plain text or Markdown in RAML
+        per specification.
+        """
+        opt_method_desc = self.data.get(self.orig_method, {}).get(
+            'description')
+        if opt_method_desc:
+            return DescriptiveContent(opt_method_desc)
+        return super(ResourceType, self).description
+
 
 class Resource(_BaseResource):
     """
-    An API's endpoint (resource) defined in RAML, identified by a leading
+    An object representing an endpoint defined in RAML, identified by a leading
     slash, ``/``.
     """
     def __init__(self, name, data, method, api, parent=None):
         _BaseResource.__init__(self, name, data, method, api)
         self.parent = parent
-
-    def _get_path_to(self, node):
-        parent_path = ''
-        if node.parent:
-            parent_path = self._get_path_to(node.parent)
-        return parent_path + node.name
 
     @property
     def display_name(self):
@@ -701,10 +944,17 @@ class Resource(_BaseResource):
         """
         return self.data.get('displayName', self.name)
 
+    def _get_path_to(self, node):
+        parent_path = ''
+        if node.parent:
+            parent_path = self._get_path_to(node.parent)
+        return parent_path + node.name
+
     @property
     def path(self):
         """
-        Returns string URI path of Resource.
+        Returns a string of the URI path of Resource relative to
+        ``api.base_uri``.
 
         Not explicitly defined in RAML but inferred based off of
         the Resource ``name``.
@@ -714,7 +964,7 @@ class Resource(_BaseResource):
     @property
     def absolute_path(self):
         """
-        Return the full API URL for Resource.
+        Returns a string of the absolute URI path of Resource.
 
         Not explicitly defined in RAML but inferred based off of
         ``path`` and the API root's ``base_uri``.
@@ -762,6 +1012,7 @@ class Resource(_BaseResource):
         """
         Returns authentication protocol information if Resource is secured
         """
+        # TODO: can ResourceTypes be secured?
         return self._get_secured_by()
 
     def _fill_reserved_params(self, string):
@@ -841,13 +1092,16 @@ class Resource(_BaseResource):
     @property
     def resource_type(self):
         """
-        Returns a list of resource types assigned to the resource.
+        Returns a list of ResourceType objects assigned to the Resource.
 
-        :raises RAMLParserError: Too many resource types applied to one \
-        resource.
+        Use ``resource.type`` to get the string name representation of the
+        ResourceType applied.
+
+        :raises RAMLParserError: Too many resource types applied to one
+            resource.
         :raises RAMLParserError: Resource not defined in the API Root.
-        :raises RAMLParserError: If resource type is something other \
-        than a ``str`` or ``dict``.
+        :raises RAMLParserError: If resource type is something other
+            than a ``str`` or ``dict``.
         """
         return self._get_resource_type()
 
@@ -861,11 +1115,17 @@ class Resource(_BaseResource):
 
         Use ``resource.resource_type`` to get the actual ResourceType object.
         """
-        return self.data.get('type')
+        resource_type = self.data.get('type')
+        if not resource_type and self.parent:
+            return self.parent.type
+        return resource_type
 
     @property
     def scopes(self):
-        """Returns a list of OAuth2 scopes assigned to the resource"""
+        """
+        Returns a list of OAuth2 scopes assigned to the Resource, or
+        ``None`` if none are defined, or is not secured by OAuth 2.
+        """
         if self.secured_by:
             for item in self.secured_by:
                 if 'oauth_2_0' == item.get('name'):
@@ -873,18 +1133,12 @@ class Resource(_BaseResource):
         return None
 
     @property
-    def protocols(self):
-        """
-        Returns a list of supported protocols for the particular resource.
-
-        Overrides the root API's protocols.  Returns ``None`` if not defined.
-        """
-        method_protocols = self.data.get(self.method).get('protocols', [])
-        resource_protocols = self.data.get('protocols', [])
-        return list(set(method_protocols + resource_protocols)) or None
-
-    @property
     def headers(self):
+        """
+        Returns a list of accepted Header objects for Resource,
+        or  ``None`` if no headers defined.
+        """
+        # TODO: does resource inherit headers from its parent?
         headers = []
         if self.resource_type:
             headers.extend(self.resource_type.headers or [])
@@ -896,6 +1150,13 @@ class Resource(_BaseResource):
 
     @property
     def responses(self):
+        """
+        Returns a list of Response objects of a Resource, or ``None``
+        if none are defined.
+
+        :raises RAMLParserError: Unsupported HTTP Response code
+        """
+        # TODO: does resource inherit responses from its parent?
         resp = []
         if self.resource_type:
             resp.extend(self.resource_type.responses or [])
@@ -907,6 +1168,11 @@ class Resource(_BaseResource):
 
     @property
     def body(self):
+        """
+        Returns a list of Body objects of a request for Resource,
+        or ``None`` if none defined.
+        """
+        # TODO: does resource inherit body from its parent?
         body = []
         if self.resource_type:
             body.extend(self.resource_type.body or [])
@@ -918,6 +1184,10 @@ class Resource(_BaseResource):
 
     @property
     def query_params(self):
+        """
+        Returns a list of ``QueryParameter`` objects of a Resource,
+        or ``None`` if no query parameters are defined.
+        """
         params = []
         if self.resource_type:
             params.extend(self.resource_type.query_params or [])
@@ -929,17 +1199,44 @@ class Resource(_BaseResource):
 
     @property
     def uri_params(self):
+        """
+        Returns a list of ``URIParameter`` objects of a Resource, or
+        ``None`` if none are defined.
+        """
         params = []
         if self.resource_type:
             params.extend(self.resource_type.uri_params or [])
         if self.traits:
             for t in self.traits:
                 params.extend(t.uri_params or [])
+        if self.parent:
+            params.extend(self.parent.uri_params or [])
         _params = super(Resource, self).uri_params or []
         return params + _params or None
 
     @property
+    def base_uri_params(self):
+        """
+        Returns a list of base ``URIParameter`` objects of a Resource,
+        or ``None`` if none are defined.
+        """
+        params = []
+        if self.resource_type:
+            params.extend(self.resource_type.base_uri_params or [])
+        if self.traits:
+            for t in self.traits:
+                params.extend(t.base_uri_params or [])
+        if self.parent:
+            params.extend(self.parent.base_uri_params or [])
+        _params = super(Resource, self).base_uri_params or []
+        return params + _params or None
+
+    @property
     def form_params(self):
+        """
+        Returns a list of FormParameter objects of a Resource,
+        or ``None`` if no form parameters are defined.
+        """
         params = []
         if self.resource_type:
             params.extend(self.resource_type.form_params or [])
@@ -954,17 +1251,28 @@ class Resource(_BaseResource):
         traits = []
         if self.resource_type:
             traits.extend(self.resource_type.traits or [])
+        if self.parent:
+            traits.extend(self.parent.traits or [])
         _traits = super(Resource, self).traits or []
         return traits + _traits or None
 
     @property
     def description(self):
+        """
+        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
+        attributes, or ``None`` if not defined.
+
+        Assumes raw content is written in plain text or Markdown in RAML
+        per specification.
+        """
         if super(Resource, self).description is not None:
             return super(Resource, self).description
         elif self.resource_type and self.resource_type.description:
             desc = self._fill_reserved_params(
                 self.resource_type.description.raw)
             return DescriptiveContent(desc)
+        elif self.parent:
+            return self.parent.description
         return None
 
     def __repr__(self):

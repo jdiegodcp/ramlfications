@@ -59,6 +59,9 @@ class DescriptiveContent(object):
         except TypeError:
             return None
 
+    def __repr__(self):
+        return self.raw
+
 
 class String(object):
     """String parameter type"""
@@ -332,7 +335,7 @@ class Header(BaseParameter):
     :param str param: The parameter name
     :param dict data: All defined data of the parameter
     """
-    def __init__(self, name, data, method):
+    def __init__(self, name, data, method=None):
         BaseParameter.__init__(self, name, data, "Header")
         self.method = method
 
