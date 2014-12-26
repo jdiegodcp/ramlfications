@@ -60,7 +60,7 @@ class APIRoot(object):
         resource_stack = ResourceStack(self, self.raml).yield_resources()
         resource = OrderedDict()
         for res in resource_stack:
-            key_name = res.method + "-" + res.display_name
+            key_name = res.method + "-" + res.path
             resource[key_name] = res
         resources = defaultdict(list)
         for k, v in list(resource.items()):
@@ -299,27 +299,42 @@ class APIRoot(object):
 
 
 class ResourceStack(object):
+    available_methods = ['get', 'post', 'put', 'delete', 'patch', 'head',
+                         'options', 'trace', 'connect']
+
     def __init__(self, api, raml_file):
         self.api = api
         self.raml = raml_file
+
+    def _create_resource_stack(self, items, resource_stack):
+        for k, v in list(items.items()):
+            if k.startswith("/"):
+                keys = items[k].keys()
+                methods = [m for m in self.available_methods if m in keys]
+                if methods:
+                    for m in self.available_methods:
+                        if m in items[k].keys():
+                            node = Resource(name=k, data=v,
+                                            method=m, api=self.api)
+                            resource_stack.append(node)
+                else:
+                    for item in keys:
+                        if item.startswith("/"):
+                            _item = {}
+                            _item[k + item] = items.get(k).get(item)
+                            resource_stack.extend(
+                                self._create_resource_stack(_item,
+                                                            resource_stack)
+                            )
+
+        return resource_stack
 
     def yield_resources(self):
         """
         Yields Resource objects for the API defined in the RAML File.
         """
-        available_methods = ['get', 'post', 'put', 'delete',
-                             'patch', 'head', 'options', 'trace',
-                             'connect']
-        resource_stack = []
 
-        # Akward code, create a helper method for it.
-        for k, v in list(self.raml.items()):
-            if k.startswith("/"):
-                for method in available_methods:
-                    if method in self.raml[k].keys():
-                        node = Resource(name=k, data=v, method=method,
-                                        api=self.api)
-                        resource_stack.append(node)
+        resource_stack = self._create_resource_stack(self.raml, [])
 
         # Akward code, create a helper method for it.
         while resource_stack:
@@ -328,7 +343,7 @@ class ResourceStack(object):
             if current.data:
                 for child_k, child_v in list(current.data.items()):
                     if child_k.startswith("/"):
-                        for method in available_methods:
+                        for method in self.available_methods:
                             if method in current.data[child_k].keys():
                                 child = Resource(name=child_k, data=child_v,
                                                  method=method, parent=current,
