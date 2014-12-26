@@ -22,6 +22,7 @@ from .parameters import (
     Header, Response, Body, SecuritySchemes,
     Documentation, DescriptiveContent
 )
+from .utils import memoized
 
 HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
 
@@ -50,6 +51,7 @@ class APIRoot(object):
         self.raml_file = raml_obj.raml_file
 
     @property
+    @memoized
     def resources(self):
         """
         Returns a dict of RAML resources/endpoints, with keys set to the
@@ -75,6 +77,7 @@ class APIRoot(object):
         return sorted_list
 
     @property
+    @memoized
     def title(self):
         """
         Returns the title property defined in the root section of the API.
@@ -82,6 +85,7 @@ class APIRoot(object):
         return self.raml.get('title')
 
     @property
+    @memoized
     def version(self):
         """
         Returns the API version.
@@ -89,6 +93,7 @@ class APIRoot(object):
         return self.raml.get('version')
 
     @property
+    @memoized
     def protocols(self):
         """
         Returns the supported protocols of the API.  If not set, then
@@ -98,6 +103,7 @@ class APIRoot(object):
         return self.raml.get('protocols', protocol)
 
     @property
+    @memoized
     def base_uri(self):
         """
         Returns the base URI of API.
@@ -123,6 +129,7 @@ class APIRoot(object):
         return base_uri
 
     @property
+    @memoized
     def uri_parameters(self):
         """
         Returns URI Parameters available for the baseUri and all
@@ -143,6 +150,7 @@ class APIRoot(object):
         return params or None
 
     @property
+    @memoized
     def base_uri_parameters(self):
         """
         Returns URI Parameters for meant specifically for the ``base_uri``.
@@ -157,6 +165,7 @@ class APIRoot(object):
         return uri_params or None
 
     @property
+    @memoized
     def media_type(self):
         # TODO: raise an error if not acceptable media type given
         """
@@ -214,6 +223,7 @@ class APIRoot(object):
         return resources
 
     @property
+    @memoized
     def resource_types(self):
         """
         Returns defined Resource Types.  Returns ``None`` if no resource
@@ -238,6 +248,7 @@ class APIRoot(object):
         return resources or None
 
     @property
+    @memoized
     def documentation(self):
         """
         Returns a list of Documentation objects meant for user documentation
@@ -256,6 +267,7 @@ class APIRoot(object):
         return docs or None
 
     @property
+    @memoized
     def security_schemes(self):
         """
         Returns a list of SecurityScheme objects supported by the API,
@@ -267,6 +279,7 @@ class APIRoot(object):
         return SecuritySchemes(self.raml).security_schemes
 
     @property
+    @memoized
     def traits(self):
         """
         Returns a list of traits, or ``None`` if non are defined.
@@ -282,6 +295,7 @@ class APIRoot(object):
         return trait_params or None
 
     @property
+    @memoized
     def schemas(self):
         """
         Returns a dict of user-defined schemas that may be applied anywhere
@@ -361,6 +375,7 @@ class _BaseResourceProperties(object):
         self.api = api
 
     @property
+    @memoized
     def headers(self):
         """
         Returns a list of accepted Header objects.
@@ -374,6 +389,7 @@ class _BaseResourceProperties(object):
         return headers or None
 
     @property
+    @memoized
     def body(self):
         """
         Returns a list of Body objects of a request or
@@ -386,6 +402,7 @@ class _BaseResourceProperties(object):
         return bodies or None
 
     @property
+    @memoized
     def responses(self):
         """
         Returns a list of ``Response`` objects of a Trait, or ``None``
@@ -405,6 +422,7 @@ class _BaseResourceProperties(object):
         return resps or None
 
     @property
+    @memoized
     def uri_params(self):
         """
         Returns a list of ``URIParameter`` objects of a Trait, or
@@ -417,6 +435,7 @@ class _BaseResourceProperties(object):
         return uri_params or None
 
     @property
+    @memoized
     def base_uri_params(self):
         """
         Returns a list of ``URIParameter`` objects of a Trait for
@@ -428,6 +447,7 @@ class _BaseResourceProperties(object):
         return base_uri_params or None
 
     @property
+    @memoized
     def query_params(self):
         """
         Returns a list of ``QueryParameter`` objects of a Trait,
@@ -441,6 +461,7 @@ class _BaseResourceProperties(object):
         return query_params or None
 
     @property
+    @memoized
     def form_params(self):
         """
         Returns a list of FormParameter objects, or ``None`` if no form
@@ -452,6 +473,7 @@ class _BaseResourceProperties(object):
         return form_params or None
 
     @property
+    @memoized
     def req_mime_types(self):
         """
         Returns a list of strings referring to MIME types that the
@@ -462,6 +484,7 @@ class _BaseResourceProperties(object):
         return mime_types or None
 
     @property
+    @memoized
     def description(self):
         """
         Returns ``DescriptiveContent`` object with ``raw`` and ``html``
@@ -481,6 +504,7 @@ class Trait(_BaseResourceProperties):
     Method-level properties to apply to a Resource or ResourceType.
     """
     @property
+    @memoized
     def usage(self):
         """
         Returns a string detailing how to use this trait.
@@ -497,6 +521,7 @@ class _BaseResource(_BaseResourceProperties):
         self.method = method
 
     @property
+    @memoized
     def is_(self):
         """
         Returns a list of strings denoting traits assign to Resource or
@@ -575,6 +600,7 @@ class _BaseResource(_BaseResourceProperties):
         return trait_objects or None
 
     @property
+    @memoized
     def traits(self):
         """
         Returns a list of ``Trait`` objects assigned to the Resource or
@@ -586,6 +612,7 @@ class _BaseResource(_BaseResourceProperties):
         return self._get_traits()
 
     @property
+    @memoized
     def protocols(self):
         """
         Returns a list of supported protocols for the particular Resource or
@@ -602,6 +629,7 @@ class _BaseResource(_BaseResourceProperties):
     #####
 
     @property
+    @memoized
     def headers(self):
         """
         Returns a list of accepted Header objects for Resource or
@@ -616,6 +644,7 @@ class _BaseResource(_BaseResourceProperties):
         return headers or None
 
     @property
+    @memoized
     def body(self):
         """
         Returns a list of Body objects of a request for Resource or
@@ -628,6 +657,7 @@ class _BaseResource(_BaseResourceProperties):
         return bodies or None
 
     @property
+    @memoized
     def responses(self):
         """
         Returns a list of Response objects of a Resource or ResourceType,
@@ -647,6 +677,7 @@ class _BaseResource(_BaseResourceProperties):
         return resps
 
     @property
+    @memoized
     def uri_params(self):
         """
         Returns a list of ``URIParameter`` objects of a Resource or
@@ -660,6 +691,7 @@ class _BaseResource(_BaseResourceProperties):
         return uri_params or None
 
     @property
+    @memoized
     def base_uri_params(self):
         """
         Returns a list of base ``URIParameter`` objects of a Resource or
@@ -674,6 +706,7 @@ class _BaseResource(_BaseResourceProperties):
         return base_params or None
 
     @property
+    @memoized
     def query_params(self):
         """
         Returns a list of ``QueryParameter`` objects of a Resource or
@@ -688,6 +721,7 @@ class _BaseResource(_BaseResourceProperties):
         return query_params or None
 
     @property
+    @memoized
     def form_params(self):
         """
         Returns a list of FormParameter objects of a Resource or
@@ -719,6 +753,7 @@ class _BaseResource(_BaseResourceProperties):
         return form_params or None
 
     @property
+    @memoized
     def req_mime_types(self):
         """
         Returns a list of strings referring to MIME types that the
@@ -732,6 +767,7 @@ class _BaseResource(_BaseResourceProperties):
         return mime_types or None
 
     @property
+    @memoized
     def description(self):
         """
         Returns ``DescriptiveContent`` object with ``raw`` and ``html``
@@ -762,6 +798,7 @@ class ResourceType(_BaseResource):
         return method
 
     @property
+    @memoized
     def usage(self):
         """
         Returns a string detailing how to use this ResourceType.
@@ -783,6 +820,7 @@ class ResourceType(_BaseResource):
     # Following properties extend those from _BaseResourceProperies
     #####
     @property
+    @memoized
     def protocols(self):
         """
         Returns a list of supported protocols for the particular ResourceType.
@@ -795,6 +833,7 @@ class ResourceType(_BaseResource):
         return list(set(opt_method_protocols + protocols)) or None
 
     @property
+    @memoized
     def headers(self):
         """
         Returns a list of accepted Header objects for ResourceType,
@@ -809,6 +848,7 @@ class ResourceType(_BaseResource):
         return headers or None
 
     @property
+    @memoized
     def body(self):
         """
         Returns a list of Body objects of a request for ResourceType,
@@ -821,6 +861,7 @@ class ResourceType(_BaseResource):
         return bodies or None
 
     @property
+    @memoized
     def responses(self):
         """
         Returns a list of Response objects of a ResourceType, or ``None``
@@ -842,6 +883,7 @@ class ResourceType(_BaseResource):
         return resps
 
     @property
+    @memoized
     def uri_params(self):
         """
         Returns a list of ``URIParameter`` objects of a ResourceType, or
@@ -856,6 +898,7 @@ class ResourceType(_BaseResource):
         return uri_params or None
 
     @property
+    @memoized
     def base_uri_params(self):
         """
         Returns a list of base ``URIParameter`` objects of a ResourceType,
@@ -870,6 +913,7 @@ class ResourceType(_BaseResource):
         return base_params or None
 
     @property
+    @memoized
     def query_params(self):
         """
         Returns a list of ``QueryParameter`` objects of a ResourceType,
@@ -884,12 +928,17 @@ class ResourceType(_BaseResource):
         return query_params or None
 
     @property
+    @memoized
     def form_params(self):
         """
         Returns a list of FormParameter objects of a ResourceType,
         or ``None`` if no form parameters are defined.
         """
         form_params = super(ResourceType, self).form_params or []
+
+        method_params = {}
+        url_form = {}
+        multipart = {}
 
         if self.orig_method in ['post?', 'delete?', 'put?', 'patch?']:
             method_params = self.data.get(self.orig_method, {}).get(
@@ -910,6 +959,7 @@ class ResourceType(_BaseResource):
         return form_params or None
 
     @property
+    @memoized
     def req_mime_types(self):
         """
         Returns a list of strings referring to MIME types that the
@@ -924,6 +974,7 @@ class ResourceType(_BaseResource):
         return mime_types + opt_method_mime or None
 
     @property
+    @memoized
     def description(self):
         """
         Returns ``DescriptiveContent`` object with ``raw`` and ``html``
@@ -949,6 +1000,7 @@ class Resource(_BaseResource):
         self.parent = parent
 
     @property
+    @memoized
     def display_name(self):
         """
         Returns the Resource's display name.
@@ -966,6 +1018,7 @@ class Resource(_BaseResource):
         return parent_path + node.name
 
     @property
+    @memoized
     def path(self):
         """
         Returns a string of the URI path of Resource relative to
@@ -977,6 +1030,7 @@ class Resource(_BaseResource):
         return self._get_path_to(self)
 
     @property
+    @memoized
     def absolute_path(self):
         """
         Returns a string of the absolute URI path of Resource.
@@ -1023,6 +1077,7 @@ class Resource(_BaseResource):
         return _secured_by
 
     @property
+    @memoized
     def secured_by(self):
         """
         Returns authentication protocol information if Resource is secured
@@ -1105,6 +1160,7 @@ class Resource(_BaseResource):
         return None
 
     @property
+    @memoized
     def resource_type(self):
         """
         Returns a list of ResourceType objects assigned to the Resource.
@@ -1121,6 +1177,7 @@ class Resource(_BaseResource):
         return self._get_resource_type()
 
     @property
+    @memoized
     def type(self):
         """
         Returns a string of the ``type`` associated with the corresponding
@@ -1136,6 +1193,7 @@ class Resource(_BaseResource):
         return resource_type
 
     @property
+    @memoized
     def scopes(self):
         """
         Returns a list of OAuth2 scopes assigned to the Resource, or
@@ -1148,6 +1206,7 @@ class Resource(_BaseResource):
         return None
 
     @property
+    @memoized
     def headers(self):
         """
         Returns a list of accepted Header objects for Resource,
@@ -1164,6 +1223,7 @@ class Resource(_BaseResource):
         return headers + _headers or None
 
     @property
+    @memoized
     def responses(self):
         """
         Returns a list of Response objects of a Resource, or ``None``
@@ -1182,6 +1242,7 @@ class Resource(_BaseResource):
         return resp + _resp or None
 
     @property
+    @memoized
     def body(self):
         """
         Returns a list of Body objects of a request for Resource,
@@ -1198,6 +1259,7 @@ class Resource(_BaseResource):
         return body + _body or None
 
     @property
+    @memoized
     def query_params(self):
         """
         Returns a list of ``QueryParameter`` objects of a Resource,
@@ -1213,6 +1275,7 @@ class Resource(_BaseResource):
         return params + _params or None
 
     @property
+    @memoized
     def uri_params(self):
         """
         Returns a list of ``URIParameter`` objects of a Resource, or
@@ -1230,6 +1293,7 @@ class Resource(_BaseResource):
         return params + _params or None
 
     @property
+    @memoized
     def base_uri_params(self):
         """
         Returns a list of base ``URIParameter`` objects of a Resource,
@@ -1247,6 +1311,7 @@ class Resource(_BaseResource):
         return params + _params or None
 
     @property
+    @memoized
     def form_params(self):
         """
         Returns a list of FormParameter objects of a Resource,
@@ -1262,6 +1327,7 @@ class Resource(_BaseResource):
         return params + _params or None
 
     @property
+    @memoized
     def traits(self):
         traits = []
         if self.resource_type:
@@ -1272,6 +1338,7 @@ class Resource(_BaseResource):
         return traits + _traits or None
 
     @property
+    @memoized
     def description(self):
         """
         Returns ``DescriptiveContent`` object with ``raw`` and ``html``
