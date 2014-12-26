@@ -1,0 +1,382 @@
+#%RAML 0.8
+---
+title: GitHub API
+version: v3
+baseUri: https://api.github.com/
+securitySchemes:
+  - oauth_2_0:
+      description: |
+        OAuth2 is a protocol that lets external apps request authorization to private
+        details in a user's GitHub account without getting their password. This is
+        preferred over Basic Authentication because tokens can be limited to specific
+        types of data, and can be revoked by users at any time.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token. Do not use together with
+              the "access_token" query string parameter.
+            type: string
+        queryParameters:
+          access_token:
+            description: |
+              Used to send a valid OAuth 2 access token. Do not use together with
+              the "Authorization" header
+            type: string
+        responses:
+          404:
+            description: Unauthorized
+      settings:
+        authorizationUri: https://github.com/login/oauth/authorize
+        accessTokenUri: https://github.com/login/oauth/access_token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "user"
+          - "user:email"
+          - "user:follow"
+          - "public_repo"
+          - "repo"
+          - "repo:status"
+          - "delete_repo"
+          - "notifications"
+          - "gist"
+securedBy: [ oauth_2_0 ]
+mediaType: application/json
+resourceTypes:
+  - base:
+      get?: &common
+        headers:
+          X-GitHub-Media-Type:
+            description: |
+              You can check the current version of media type in responses.
+            type: string
+          Accept:
+            description: Is used to set specified media type.
+            type: string
+          X-RateLimit-Limit:
+            type: integer
+          X-RateLimit-Remaining:
+            type: integer
+          X-RateLimit-Reset:
+            type: integer
+          X-GitHub-Request-Id:
+            type: integer
+        responses:
+          403:
+            description: |
+              API rate limit exceeded. See http://developer.github.com/v3/#rate-limiting
+              for details.
+      post?: *common
+      patch?: *common
+      put?: *common
+      delete?: *common
+  - item:
+      type: base
+      get?:
+      post?:
+      patch?:
+      put?:
+      delete?:
+        responses:
+          204:
+            description: Item removed.
+  - collection:
+      type: base
+      get?:
+      post?:
+traits:
+  - historical:
+      queryParameters:
+        since:
+          description: |
+            Timestamp in ISO 8601 format YYYY-MM-DDTHH:MM:SSZ.
+            Only gists updated at or after this time are returned.
+          type: string
+  - filterable:
+      queryParameters:
+        filter:
+          description: |
+             Issues assigned to you / created by you / mentioning you / you're
+             subscribed to updates for / All issues the authenticated user can see
+          enum:
+            - assigned
+            - created
+            - mentioned
+            - subscribed
+            - all
+          default: all
+          required: true
+        state:
+          enum:
+            - open
+            - closed
+          default: open
+          required: true
+        labels:
+          description: String list of comma separated Label names. Example - bug,ui,@high.
+          type: string
+          required: true
+        sort:
+          enum:
+            - created
+            - updated
+            - comments
+          default: created
+          required: true
+        direction:
+          enum:
+            - asc
+            - desc
+          default: desc
+          required: true
+        since:
+          description: |
+            Optional string of a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+            Only issues updated at or after this time are returned.
+          type: string
+/issues:
+  type: item
+  get:
+    is: [ filterable ]
+    description: |
+      List issues.
+      List all issues across all the authenticated user's visible repositories.
+    responses:
+      200:
+        body:
+          schema: |
+            {
+                "$schema": "http://json-schema.org/draft-03/schema",
+                "type": "array",
+                "issues": [
+                    {
+                        "properties": {
+                            "url": {
+                                "type": "string"
+                            },
+                            "html_url": {
+                                "type": "string"
+                            },
+                            "number": {
+                                "type": "integer"
+                            },
+                            "state": {
+                                "enum": [
+                                    "open",
+                                    "closed"
+                                ]
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "body": {
+                                "type": "string"
+                            },
+                            "user": {
+                                "properties": {
+                                    "login": {
+                                        "type": "string"
+                                    },
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "avatar_url": {
+                                        "type": "string"
+                                    },
+                                    "gravatar_id": {
+                                        "type": "string"
+                                    },
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "labels": [
+                                {
+                                    "properties": {
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "color": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            ],
+                            "type": "array",
+                            "assignee": {
+                                "properties": {
+                                    "login": {
+                                        "type": "string"
+                                    },
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "avatar_url": {
+                                        "type": "string"
+                                    },
+                                    "gravatar_id": {
+                                        "type": "string"
+                                    },
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "milestone": {
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    },
+                                    "number": {
+                                        "type": "integer"
+                                    },
+                                    "state": {
+                                        "enum": [
+                                            "open",
+                                            "closed"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "creator": {
+                                        "properties": {
+                                            "login": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "avatar_url": {
+                                                "type": "string"
+                                            },
+                                            "gravatar_id": {
+                                                "type": "string"
+                                            },
+                                            "url": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "open_issues": {
+                                        "type": "integer"
+                                    },
+                                    "closed_issues": {
+                                        "type": "integer"
+                                    },
+                                    "created_at": {
+                                        "description": "ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ",
+                                        "type": "string"
+                                    },
+                                    "due_on": {
+                                        "description": "ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "comments": {
+                                "type": "integer"
+                            },
+                            "pull_request": {
+                                "properties": {
+                                    "html_url": {
+                                        "type": "string"
+                                    },
+                                    "diff_url": {
+                                        "type": "string"
+                                    },
+                                    "patch_url": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "closed_at": {
+                                "description": "ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ",
+                                "type": "string"
+                            },
+                            "created_at": {
+                                "description": "ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ",
+                                "type": "string"
+                            },
+                            "updated_at": {
+                                "description": "ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ",
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            }
+          example: |
+            [
+              {
+                "url": "https://api.github.com/repos/octocat/Hello-World/issues/1347",
+                "html_url": "https://github.com/octocat/Hello-World/issues/1347",
+                "number": 1347,
+                "state": "open",
+                "title": "Found a bug",
+                "body": "I'm having a problem with this.",
+                "user": {
+                  "login": "octocat",
+                  "id": 1,
+                  "avatar_url": "https://github.com/images/error/octocat_happy.gif",
+                  "gravatar_id": "somehexcode",
+                  "url": "https://api.github.com/users/octocat"
+                },
+                "labels": [
+                  {
+                    "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
+                    "name": "bug",
+                    "color": "f29513"
+                  }
+                ],
+                "assignee": {
+                  "login": "octocat",
+                  "id": 1,
+                  "avatar_url": "https://github.com/images/error/octocat_happy.gif",
+                  "gravatar_id": "somehexcode",
+                  "url": "https://api.github.com/users/octocat"
+                },
+                "milestone": {
+                  "url": "https://api.github.com/repos/octocat/Hello-World/milestones/1",
+                  "number": 1,
+                  "state": "open",
+                  "title": "v1.0",
+                  "description": "",
+                  "creator": {
+                    "login": "octocat",
+                    "id": 1,
+                    "avatar_url": "https://github.com/images/error/octocat_happy.gif",
+                    "gravatar_id": "somehexcode",
+                    "url": "https://api.github.com/users/octocat"
+                  },
+                  "open_issues": 4,
+                  "closed_issues": 8,
+                  "created_at": "2011-04-10T20:09:31Z",
+                  "due_on": null
+                },
+                "comments": 0,
+                "pull_request": {
+                  "html_url": "https://github.com/octocat/Hello-World/issues/1347",
+                  "diff_url": "https://github.com/octocat/Hello-World/issues/1347.diff",
+                  "patch_url": "https://github.com/octocat/Hello-World/issues/1347.patch"
+                },
+                "closed_at": null,
+                "created_at": "2011-04-22T13:33:48Z",
+                "updated_at": "2011-04-22T13:33:48Z"
+              }
+            ]
