@@ -154,11 +154,37 @@ class Boolean(object):
 
 
 class Date(object):
-    pass
+    """Date Parameter Type"""
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
+
+    @property
+    def repeat(self):
+        """
+        Returns a boolean if the parameter can be repeated.
+        """
+        return self.data.get('repeat', False)
+
+    def __repr__(self):
+        return "<Date(name='{0}')>".format(self.name)
 
 
 class File(object):
-    pass
+    """File Parameter Type"""
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
+
+    @property
+    def repeat(self):
+        """
+        Returns a boolean if the parameter can be repeated.
+        """
+        return self.data.get('repeat', False)
+
+    def __repr__(self):
+        return "<File(name='{0}')>".format(self.name)
 
 
 class BaseParameter(object):

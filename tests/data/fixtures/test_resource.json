@@ -176,5 +176,26 @@
     "required": false,
     "type": "boolean",
     "repeat": false
+  },
+  "test_primative_type_date": {
+    "description": "Some date parameter for the sake of testing.",
+    "displayName": "Some Date Parameter",
+    "default": "Sun, 06 Nov 1994 08:49:37 GMT",
+    "required": true,
+    "type": "date"
+  },
+  "test_primative_type_file": {
+    "description": "Some file parameter for the sake of testing.",
+    "displayName": "Some File Parameter",
+    "required": false,
+    "type": "file",
+    "repeat": false
+  },
+  "test_primative_type_string":{
+    "description": "A comma-separated list of IDs",
+    "displayName": "Spotify Track IDs",
+    "required": true,
+    "type": "string",
+    "example": "7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B"
   }
 }
