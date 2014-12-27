@@ -1051,6 +1051,40 @@ class TestResource(BaseTestCase):
         self.assertEqual(param.type.repeat, expected_data.get('repeat'))
         self.assertIsInstance(param.default, bool)
 
+    def test_primative_type_date(self):
+        raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources[1]
+        param = resource.query_params.pop()
+
+        expected_data = self.f('test_primative_type_date')
+
+        self.assertEqual(repr(param.type), "<Date(name='dateParam')>")
+        self.assertDictEqual(param.data, expected_data)
+
+    def test_primative_type_file(self):
+        raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources[6]
+        param = resource.query_params.pop()
+
+        expected_data = self.f('test_primative_type_file')
+
+        self.assertEqual(repr(param.type), "<File(name='fileParam')>")
+        self.assertDictEqual(param.data, expected_data)
+        self.assertEqual(param.type.repeat, expected_data.get('repeat'))
+
+    def test_primative_type_string(self):
+        raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
+        api = self.setup_parsed_raml(raml_file)
+        resource = api.resources[4]
+        param = resource.query_params.pop()
+
+        expected_data = self.f('test_primative_type_string')
+
+        self.assertEqual(repr(param.type), "<String(name='ids')>")
+        self.assertDictEqual(param.data, expected_data)
+
     def test_form_params(self):
         raml_file = os.path.join(EXAMPLES + "form-parameters.raml")
         api = self.setup_parsed_raml(raml_file)
