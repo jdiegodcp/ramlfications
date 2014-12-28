@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import markdown2 as markdown
 
-from ramlfications import parser, loader, parameters
+from ramlfications import raml, loader, parameters
 from ramlfications import parse
 from .base import BaseTestCase, EXAMPLES
 
@@ -23,7 +23,7 @@ class TestAPIRoot(BaseTestCase):
         self.api = parse(raml_file)
 
     def test_parse_function(self):
-        self.assertIsInstance(self.api, parser.APIRoot)
+        self.assertIsInstance(self.api, raml.RAMLRoot)
 
     def test_no_raml_file(self):
         raml_file = '/foo/bar.raml'
@@ -35,7 +35,7 @@ class TestAPIRoot(BaseTestCase):
         self.assertIsInstance(resources, list)
 
         for resource in resources:
-            self.assertIsInstance(resource, parser.Resource)
+            self.assertIsInstance(resource, raml.Resource)
 
     def test_title(self):
         title = "Spotify Web API Demo"
@@ -53,7 +53,7 @@ class TestAPIRoot(BaseTestCase):
         raml_file = os.path.join(EXAMPLES + "no-version.raml")
         api = self.setup_parsed_raml(raml_file)
 
-        self.assertRaises(parser.RAMLParserError, lambda: api.base_uri)
+        self.assertRaises(raml.RAMLParserError, lambda: api.base_uri)
 
     def test_uri_parameters(self):
         data = self.f('test_uri_parameters')
@@ -62,7 +62,7 @@ class TestAPIRoot(BaseTestCase):
         results = api.uri_parameters
 
         for i, r in enumerate(results):
-            self.assertIsInstance(r, parser.URIParameter)
+            self.assertIsInstance(r, raml.URIParameter)
             self.assertEqual(r.name, list(data[i].keys())[0])
             self.assertEqual(r.description.raw,
                              list(data[i].values())[0].get('description'))
@@ -76,7 +76,7 @@ class TestAPIRoot(BaseTestCase):
         raml_file = os.path.join(EXAMPLES + "uri-parameters-error.raml")
         api = self.setup_parsed_raml(raml_file)
 
-        self.assertRaises(parser.RAMLParserError, lambda: api.uri_parameters)
+        self.assertRaises(raml.RAMLParserError, lambda: api.uri_parameters)
 
     def test_no_uri_parameters(self):
         raml_file = os.path.join(EXAMPLES + "simple.raml")
@@ -95,7 +95,7 @@ class TestAPIRoot(BaseTestCase):
 
         for i, resource in enumerate(results):
             self.assertItemInList(resource.name, resources)
-            self.assertIsInstance(resource, parser.ResourceType)
+            self.assertIsInstance(resource, raml.ResourceType)
             repr_str = "<ResourceType(method='{0}', name='{1}')>".format(
                 resource.method.upper(), resource.name)
             self.assertEqual(repr(resource), repr_str)
@@ -226,7 +226,7 @@ class TestAPIRoot(BaseTestCase):
         expected_data = self.f('test_documentation')
 
         self.assertIsNotNone(self.api.documentation)
-        self.assertIsInstance(self.api.documentation[0], parser.Documentation)
+        self.assertIsInstance(self.api.documentation[0], raml.Documentation)
         self.assertEqual(self.api.documentation[0].title,
                          expected_data.get('title'))
         self.assertEqual(self.api.documentation[0].content.raw,
@@ -239,7 +239,7 @@ class TestAPIRoot(BaseTestCase):
         raml_file = os.path.join(EXAMPLES + "docs-no-title-parameter.raml")
         api = self.setup_parsed_raml(raml_file)
 
-        self.assertRaises(parser.RAMLParserError, lambda: api.documentation)
+        self.assertRaises(raml.RAMLParserError, lambda: api.documentation)
 
     def test_no_docs(self):
         raml_file = os.path.join(EXAMPLES + "simple-no-docs.raml")
@@ -384,7 +384,7 @@ class TestAPIRoot(BaseTestCase):
     def test_traits(self):
         self.assertIsInstance(self.api.traits, list)
         for t in self.api.traits:
-            self.assertIsInstance(t, parser.Trait)
+            self.assertIsInstance(t, raml.Trait)
 
     def test_security_schemes_oauth1(self):
         scheme_name = "oauth_1_0"
@@ -445,7 +445,7 @@ class TestAPIRoot(BaseTestCase):
         expected_data = self.f('test_schema')
 
         self.assertDictEqual(result[1], expected_data)
-        repr_str = '<APIRoot(raml_file="{0}")>'.format(raml_file)
+        repr_str = '<RAMLRoot(raml_file="{0}")>'.format(raml_file)
         self.assertEqual(repr(api), repr_str)
 
 
@@ -466,7 +466,7 @@ class TestDocumentation(BaseTestCase):
         contents = data.get('contents')
 
         for doc in self.api.documentation:
-            self.assertIsInstance(doc, parser.Documentation)
+            self.assertIsInstance(doc, raml.Documentation)
 
         for i, docs in enumerate(self.api.documentation):
             self.assertEqual(docs.title, titles[i])
@@ -514,13 +514,13 @@ class TestResource(BaseTestCase):
         for resource in resources:
             self.assertItemInList(resource.path, expected_paths)
 
-    def test_absolute_path(self):
+    def test_absolute_uri(self):
         raml_file = os.path.join(EXAMPLES + "base-uri-parameters.raml")
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources[0]
 
         expected_path = 'https://{domainName}.github.com/{apiPath}/foo'
-        self.assertEqual(resource.absolute_path, expected_path)
+        self.assertEqual(resource.absolute_uri, expected_path)
 
     def test_has_display_name(self):
         for resource in self.resources:
@@ -664,7 +664,7 @@ class TestResource(BaseTestCase):
             self.assertIsInstance(resp.body, parameters.Body)
             self.assertEqual(repr(resp.body),
                              "<Body(name='application/json')>")
-            self.assertIsInstance(resp, parser.Response)
+            self.assertIsInstance(resp, raml.Response)
             self.assertEqual(repr(resp),
                              "<Response(code='{0}')>".format(resp.code))
             self.assertEqual(resp.description.raw,
@@ -677,7 +677,7 @@ class TestResource(BaseTestCase):
         response_503 = responses[1]
         headers = response_503.headers
         for h in headers:
-            self.assertIsInstance(h, parser.Header)
+            self.assertIsInstance(h, raml.Header)
             self.assertDictEqual(h.data, exp_headers)
 
     def test_raises_incorrect_response_code(self):
@@ -685,7 +685,7 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources[0]
 
-        self.assertRaises(parser.RAMLParserError, lambda: resource.responses)
+        self.assertRaises(raml.RAMLParserError, lambda: resource.responses)
 
     def test_headers(self):
         raml_file = os.path.join(EXAMPLES + "headers.raml")
@@ -699,7 +699,7 @@ class TestResource(BaseTestCase):
         self.assertIsInstance(results, list)
         for item in results:
             self.assertItemInList(item.name, list(expected_data.keys()))
-            self.assertIsInstance(item, parser.Header)
+            self.assertIsInstance(item, raml.Header)
             self.assertDictEqual(item.data, expected_data[item.name])
 
     def test_data(self):
@@ -730,31 +730,22 @@ class TestResource(BaseTestCase):
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources[0]
 
-        self.assertIsInstance(resource.resource_type, parser.ResourceType)
+        self.assertIsInstance(resource.resource_type, raml.ResourceType)
         self.assertEqual(resource.resource_type.name, 'collection')
         self.assertEqual([t.name for t in resource.traits], ['paged'])
 
     def test_resource_types_too_many(self):
         raml_file = os.path.join(EXAMPLES + "mapped-types-too-many.raml")
-        api = self.setup_parsed_raml(raml_file)
-        magazines = api.resources[1]
+        api = self.setup_parsed_raml
 
-        self.assertRaises(parser.RAMLParserError,
-                          lambda: magazines.resource_type)
+        self.assertRaises(raml.RAMLParserError, lambda: api(raml_file))
 
     def test_resource_types_invalid_mapped_type(self):
-        raml = "mapped-types-incorrect-resource-type.raml"
-        raml_file = os.path.join(EXAMPLES + raml)
-        api = self.setup_parsed_raml(raml_file)
+        raml_path = "mapped-types-incorrect-resource-type.raml"
+        raml_file = os.path.join(EXAMPLES + raml_path)
+        api = self.setup_parsed_raml
 
-        magazines = api.resources[1]
-        books = api.resources[0]
-
-        self.assertRaises(parser.RAMLParserError,
-                          lambda: magazines.resource_type)
-
-        self.assertRaises(parser.RAMLParserError,
-                          lambda: books.resource_type)
+        self.assertRaises(raml.RAMLParserError, lambda: api(raml_file))
 
     def test_mapped_traits(self):
         raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
@@ -790,12 +781,11 @@ class TestResource(BaseTestCase):
 
         for resource in resources:
             self.assertIsNotNone(resource.secured_by)
-            for s in resource.secured_by:
-                self.assertEqual(s['name'], 'oauth_2_0')
-                self.assertIsInstance(s['scheme'], parameters.SecurityScheme)
-                self.assertEqual(s['type'], 'OAuth 2.0')
-                self.assertEqual(s['scopes'], ['playlist-read-private'])
-                self.assertEqual(repr(s['scheme']),
+            for s in resource.security_schemes:
+                self.assertEqual(s.name, 'oauth_2_0')
+                self.assertIsInstance(s, parameters.SecurityScheme)
+                self.assertEqual(s.type, 'OAuth 2.0')
+                self.assertEqual(repr(s),
                                  "<Security Scheme(name='oauth_2_0')>")
 
     def test_no_secured_by(self):
@@ -806,57 +796,12 @@ class TestResource(BaseTestCase):
         for res in resources:
             self.assertIsNone(res.secured_by)
 
-    def test_method_scopes(self):
-        raml_file = os.path.join(EXAMPLES + "simple-secured-by-method.raml")
-        api = self.setup_parsed_raml(raml_file)
-        get_tracks = api.resources[0]
-        expected_scopes = ["user-read-email"]
-
-        for s in get_tracks.secured_by:
-            self.assertIsNotNone(s['scopes'])
-
-            for scope in s['scopes']:
-                self.assertItemInList(scope, expected_scopes)
-
-    def test_scopes(self):
-        raml_file = os.path.join(EXAMPLES + "simple-traits.raml")
-        api = self.setup_parsed_raml(raml_file)
-        resources = api.resources
-
-        scopes = ['playlist-modify-public',
-                  'playlist-modify-private',
-                  'playlist-read-private']
-
-        for resource in resources:
-            for s in resource.secured_by:
-                self.assertIsNotNone(s['scopes'])
-
-                for scope in s['scopes']:
-                    self.assertItemInList(scope, scopes)
-
-    def test_scopes_2(self):
-        raml_file = os.path.join(EXAMPLES +
-                                 "multiple-security-schemes.raml")
-        api = self.setup_parsed_raml(raml_file)
-        resource = api.resources[0]
-
-        scopes = ['user-read-private']
-
-        self.assertListEqual(resource.scopes, scopes)
-
-    def test_is_secured_no_scopes(self):
-        raml_file = os.path.join(EXAMPLES +
-                                 "multiple-security-schemes.raml")
-        api = self.setup_parsed_raml(raml_file)
-        resource = api.resources[5]
-        self.assertIsNone(resource.scopes)
-
     def test_not_secured(self):
         raml_file = os.path.join(EXAMPLES +
                                  "multiple-security-schemes.raml")
         api = self.setup_parsed_raml(raml_file)
         resource = api.resources[4]
-        self.assertIsNone(resource.scopes)
+        self.assertIsNone(resource.secured_by)
 
     def test_base_uri_params(self):
         raml_file = os.path.join(EXAMPLES + 'base-uri-parameters.raml')
@@ -877,7 +822,7 @@ class TestResource(BaseTestCase):
 
         for i, r in enumerate(foo_results):
             self.assertItemInList(r.name, list(data[i].keys())[0])
-            self.assertIsInstance(r, parser.URIParameter)
+            self.assertIsInstance(r, raml.URIParameter)
             self.assertEqual(repr(r),
                              "<URIParameter(name='{0}')>".format(r.name))
             self.assertEqual(r.name, list(data[i].keys())[0])
@@ -894,7 +839,7 @@ class TestResource(BaseTestCase):
         bar_results = bar.base_uri_params
 
         for i, r in enumerate(bar_results):
-            self.assertIsInstance(r, parser.URIParameter)
+            self.assertIsInstance(r, raml.URIParameter)
             self.assertEqual(repr(r),
                              "<URIParameter(name='{0}')>".format(r.name))
             self.assertEqual(r.name, list(data[i].keys())[0])
@@ -926,7 +871,7 @@ class TestResource(BaseTestCase):
         expected_search_data = self.f('test_query_params')
 
         for param in search_q_params:
-            self.assertIsInstance(param, parser.QueryParameter)
+            self.assertIsInstance(param, raml.QueryParameter)
             self.assertEqual(repr(param),
                              "<QueryParameter(name='{0}')>".format(param.name))
             self.assertItemInList(param.name, expected_search_q_params)
@@ -952,7 +897,7 @@ class TestResource(BaseTestCase):
         }
 
         for param in tracks_q_params:
-            self.assertIsInstance(param, parser.QueryParameter)
+            self.assertIsInstance(param, raml.QueryParameter)
             self.assertEqual(repr(param),
                              "<QueryParameter(name='{0}')>".format(param.name))
             self.assertEqual(param.name, expected_tracks_q_param)
@@ -996,7 +941,7 @@ class TestResource(BaseTestCase):
         }
 
         for param in track_u_params:
-            self.assertIsInstance(param, parser.URIParameter)
+            self.assertIsInstance(param, raml.URIParameter)
             self.assertEqual(repr(param), "<URIParameter(name='{0}')>".format(
                              param.name))
             self.assertEqual(param.name, expected_track_u_param)
@@ -1115,7 +1060,7 @@ class TestResource(BaseTestCase):
         expected_form_params = ['ids', 'fooname']
 
         for param in form_params:
-            self.assertIsInstance(param, parser.FormParameter)
+            self.assertIsInstance(param, raml.FormParameter)
             self.assertEqual(repr(param), "<FormParameter(name='{0}')>".format(
                              param.name))
             self.assertItemInList(param.name, expected_form_params)

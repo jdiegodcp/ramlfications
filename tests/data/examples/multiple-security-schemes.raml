@@ -78,9 +78,7 @@ securitySchemes:
       [Get Current User's Profile](https://developer.spotify.com/web-api/get-current-users-profile/)
   /tracks:
     displayName: current-user-saved-tracks
-    type: collection
     get:
-      is: [ paged ]
       description: |
         [Get Current User's Saved Tracks](https://developer.spotify.com/web-api/get-users-saved-tracks/)
       securedBy: [ oauth_2_0: {scopes: ['user-library-read']}]

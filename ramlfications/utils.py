@@ -22,6 +22,15 @@ def find_params(string):
     return list(ret)
 
 
+def fill_reserved_params(resource, string):
+    if "<<resourcePathName>>" in string:
+        string = string.replace("<<resourcePathName>>", resource.name[1:])
+    if "<<resourcePath>>" in string:
+        string = string.replace("<<resourcePath>>", resource.path)
+
+    return string
+
+
 class memoized(object):
     """
     Decorator. Caches a function's return value each time it is called.

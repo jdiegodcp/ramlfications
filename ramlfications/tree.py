@@ -14,8 +14,7 @@ import sys
 
 from termcolor import colored
 
-from .parser import APIRoot
-
+from .parser import parse_raml
 
 COLOR_MAP = {
     "light": (('white', None),
@@ -126,7 +125,7 @@ def pprint_tree(api, ordered_resources, print_color, verbosity):
 
 
 def ttree(load_obj, color, output, verbosity):  # pragma: no cover
-    api = APIRoot(load_obj)
+    api = parse_raml(load_obj)
     resources = _get_tree(api)
     ordered_resources = _order_resources(resources)
 
