@@ -19,6 +19,12 @@ API Definition
 .. autoclass:: ResourceStack
    :members:
 
+.. autoclass:: ResourceType
+   :members:
+
+.. autoclass:: Trait
+   :members:
+
 .. autoclass:: Resource
    :members:
 
@@ -63,13 +69,12 @@ API Definition
    :members:
    :undoc-members:
 
-.. autoclass:: ResourceType
-   :members:
-   :undoc-members:
-
 .. autoclass:: Documentation
    :members:
    :undoc-members:
+
+.. autoclass:: DescriptiveContent
+   :members:
 
 .. autoclass:: SecuritySchemes
    :members:
@@ -86,6 +91,24 @@ API Definition
 .. autoclass:: Oauth1Scheme
    :members:
    :undoc-members:
+
+Primative Types
+^^^^^^^^^^^^^^^
+
+.. autoclass:: String
+   :members:
+
+.. autoclass:: IntegerNumber
+   :members:
+
+.. autoclass:: Boolean
+   :members:
+
+.. autoclass:: Date
+   :members:
+
+.. autoclass:: File
+   :members:
 
 
 :mod:`loader` Module
