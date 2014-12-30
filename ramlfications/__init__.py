@@ -28,7 +28,7 @@ def parse(raml_file):
         (see ``parser.APIRoot``)
     """
     loader = RAMLLoader().load(raml_file)
-    return APIRoot(loader)
+    return parse_raml(loader)
 
 
 def load(raml_file):

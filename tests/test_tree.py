@@ -8,7 +8,7 @@ import sys
 
 from six import StringIO
 
-from ramlfications import tree, parser, loader
+from ramlfications import tree, loader, parser
 
 from .base import BaseTestCase, EXAMPLES
 from .data.fixtures import tree_fixtures
@@ -16,9 +16,9 @@ from .data.fixtures import tree_fixtures
 
 class TestPrintTree(BaseTestCase):
     def setUp(self):
-        raml_file = os.path.join(EXAMPLES, "simple-tree.raml")
-        raml = loader.RAMLLoader().load(raml_file)
-        self.api = parser.APIRoot(raml)
+        raml_str = os.path.join(EXAMPLES, "simple-tree.raml")
+        loaded_raml = loader.RAMLLoader().load(raml_str)
+        self.api = parser.parse_raml(loaded_raml)
         self.held, sys.stdout = sys.stdout, StringIO()
 
     def test_get_tree(self):

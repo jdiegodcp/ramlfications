@@ -6,8 +6,8 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = ["validate_raml", "InvalidRamlFileError"]
 
-from .parser import APIRoot
 from .loader import RAMLLoader
+from .parser import parse_raml
 
 
 VALID_RAML_VERSIONS = ["0.8"]
@@ -18,7 +18,7 @@ class InvalidRamlFileError(Exception):
 
 
 # Make helper functions private
-def validate_raml_header(raml_file):
+def __validate_raml_header(raml_file):
     """Validate Header of RAML File"""
     try:
         with open(raml_file, 'r') as r:
@@ -46,28 +46,28 @@ def validate_raml_header(raml_file):
         raise InvalidRamlFileError(e)
 
 
-def validate_api_title(api):
+def __validate_api_title(api):
     """Require an API Title."""
     if not api.title:
         msg = 'RAML File does not define an API title.'
         raise InvalidRamlFileError(msg)
 
 
-def validate_api_version(api, prod=True):
+def __validate_api_version(api, prod=True):
     """Require an API Version (e.g. api.foo.com/v1)."""
     if prod and not api.version:
         msg = 'RAML File does not define an API version.'
         raise InvalidRamlFileError(msg)
 
 
-def validate_base_uri(api):
+def __validate_base_uri(api):
     """Require a Base URI."""
     if not api.base_uri:
         msg = 'RAML File does not define the baseUri.'
         raise InvalidRamlFileError(msg)
 
 
-def validate_base_uri_params(api):
+def __validate_base_uri_params(api):
     """
     Require that Base URI Parameters have a ``default`` parameter set.
     """
@@ -79,7 +79,16 @@ def validate_base_uri_params(api):
                 raise InvalidRamlFileError(msg)
 
 
-def validate_resource_response(api):
+def __has_resources(api):
+    """
+    Require that RAML actually *defines* at least one Resource.
+    """
+    if not api.resources or len(api.resources) < 1:
+        msg = "No resources are defined."
+        raise InvalidRamlFileError(msg)
+
+
+def __validate_resource_response(api):
     """
     Assert only ``body``, ``headers``, and ``description`` are keys
     defined for a ``Response``.
@@ -95,7 +104,7 @@ def validate_resource_response(api):
                         raise InvalidRamlFileError(msg)
 
 
-def validate_root_documentation(api):
+def __validate_root_documentation(api):
     """
     Assert that if there is ``documentation`` defined in the root of the
     RAML file, that it contains a ``title`` and ``content``.
@@ -111,7 +120,7 @@ def validate_root_documentation(api):
                 raise InvalidRamlFileError(msg)
 
 
-def validate_security_schemes(api):
+def __validate_security_schemes(api):
     """
     Assert only valid Security Schemes are used.
     """
@@ -129,16 +138,17 @@ def validate_security_schemes(api):
 
 
 def validate_raml(raml_file, prod):
-    validate_raml_header(raml_file)
+    __validate_raml_header(raml_file)
     loader = RAMLLoader().load(raml_file)
-    api = APIRoot(loader)
-    validate_api_title(api)
-    validate_api_version(api, prod)
-    validate_base_uri(api)
-    validate_base_uri_params(api)
-    validate_resource_response(api)
-    validate_root_documentation(api)
-    validate_security_schemes(api)
+    api = parse_raml(loader)
+    __validate_api_title(api)
+    __validate_api_version(api, prod)
+    __validate_base_uri(api)
+    __validate_base_uri_params(api)
+    __has_resources(api)
+    __validate_resource_response(api)
+    __validate_root_documentation(api)
+    __validate_security_schemes(api)
 
 
 ## TODO:

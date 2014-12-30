@@ -42,7 +42,6 @@ mediaType: application/json
     put:
       description: |
         [Change a Playlist's Details](https://developer.spotify.com/web-api/change-playlist-details/)
-      securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
       body:
         application/x-www-form-urlencoded:
           formParameters:
