@@ -23,6 +23,13 @@ def find_params(string):
 
 
 def fill_reserved_params(resource, string):
+    """
+    Replaces parameters that are reserved according to the RAML spec.
+
+    :param Resource resource: Resource object to grab relevant information.
+    :param str string: string to modify
+    :returns: Modified string with the relevant replaced information.
+    """
     if "<<resourcePathName>>" in string:
         string = string.replace("<<resourcePathName>>", resource.name[1:])
     if "<<resourcePath>>" in string:
@@ -32,12 +39,6 @@ def fill_reserved_params(resource, string):
 
 
 class memoized(object):
-    """
-    Decorator. Caches a function's return value each time it is called.
-    If called later with the same arguments, the cached value is returned
-    (not reevaluated).
-    """
-
     def __init__(self, func):
         self.func = func
         self.cache = {}

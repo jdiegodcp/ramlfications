@@ -35,7 +35,7 @@ To parse a RAML file, include ramlfications in your project and call the parse f
 .. code-block:: python
 
    >>> api.resources
-   ['get-several-tracks', 'get-current-user', 'get-users-profile',..., 'delete-playlist-tracks']
+   [<Resource(method='GET', path='/tracks')>,..., <Resource(method='DELETE', path='/users/{user_id}/playlists/{playlist_id/tracks')>]
    >>> track = api.resources[4]
    >>> track.name
    '/{id}'

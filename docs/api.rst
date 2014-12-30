@@ -5,22 +5,35 @@ API Definition
 
 .. module:: ramlfications
 
+Helper functions
+----------------
+
+.. automodule:: ramlfications.__init__
+.. autofunction:: parse
+.. autofunction:: load
+.. autofunction:: validate
+
+
 :mod:`parser` Module
 --------------------
 
 .. automodule:: ramlfications.parser
-.. autoclass:: APIRoot
-   :members: resources, title, version, protocols, base_uri, uri_parameters, base_uri_parameters, media_type, resource_types, documentation, security_schemes, traits, schemas
+.. autofunction:: parse_raml
 
-   .. method:: get_parameters
+:mod:`raml` Module
+------------------
 
-      Returns any defined parameters denoted by double angle brackets, ``<<parameter>>``, for traits and/or resource_types
-
-.. autoclass:: ResourceStack
+.. automodule:: ramlfications.raml
+.. autoclass:: RAMLRoot
    :members:
 
 .. autoclass:: Resource
    :members:
+
+.. autoclass:: ResourceType
+   :members:
+
+.. autoclass:: Trait
 
 :mod:`parameters` Module
 ------------------------
@@ -63,10 +76,6 @@ API Definition
    :members:
    :undoc-members:
 
-.. autoclass:: ResourceType
-   :members:
-   :undoc-members:
-
 .. autoclass:: Documentation
    :members:
    :undoc-members:
@@ -102,3 +111,9 @@ API Definition
 
 .. automodule:: ramlfications.validate
    :members:
+
+:mod:`tree` Module
+------------------
+
+.. automodule:: ramlfications.tree
+   :members: ttree

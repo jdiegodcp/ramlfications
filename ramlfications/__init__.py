@@ -21,7 +21,7 @@ def parse(raml_file):
 
     :param str raml_file: String path to RAML file
     :return: parsed API
-    :rtype: APIRoot object
+    :rtype: RAMLRoot
     :raises LoadRamlFileError: If error occurred trying to load the RAML file
         (see ``loader.RAMLLoader``)
     :raises RAMLParserError: If error occurred during parsing of RAML file
@@ -37,7 +37,7 @@ def load(raml_file):
 
     :param str raml_file: String path to RAML file
     :return: loaded RAML file
-    :rtype: dict
+    :rtype: RAMLDict
     :raises LoadRamlFileError: If error occurred trying to load the RAML file
         (see ``loader.RAMLLoader``)
     """
@@ -55,7 +55,7 @@ def validate(raml_file, production=True):
     :raises LoadRamlFileError: If error occurred trying to load the RAML file
         (see ``loader.RAMLLoader``)
     :raises InvalidRamlFileError: If error occurred trying to validate the RAML
-        file (see ``validate``)
+        file (see ``validate.py``)
 
     """
     return validate_raml(raml_file, production)

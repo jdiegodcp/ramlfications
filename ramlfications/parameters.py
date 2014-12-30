@@ -231,13 +231,15 @@ class BaseParameter(object):
         definition, it defaults to ``string``.  (Optional)
 
         Valid types are:
-        * ``string``
-        * ``number`` - Floating point numbers allowed (as defined by YAML)
-        * ``integer`` - Floating point numbers **not** allowed.
-        * ``date`` - Acceptible date representations defined under Date/Time\
-        formats in [RFC2616](https://www.ietf.org/rfc/rfc2616.txt)
-        * ``boolean``
-        * ``file`` - only applicable in FormParameters
+
+            * ``string``
+            * ``number`` - Floating point numbers allowed (as defined by YAML)
+            * ``integer`` - Floating point numbers **not** allowed.
+            * ``date`` - Acceptible date representations defined under Date/\
+                Time formats in \
+                `RFC2616 <https://www.ietf.org/rfc/rfc2616.txt>`_
+            * ``boolean``
+            * ``file`` - only applicable in FormParameters
         """
         # TODO: Add test if 'type' isn't set in RAML
         item_type = self.data.get('type', 'string')

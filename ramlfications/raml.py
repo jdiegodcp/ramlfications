@@ -21,11 +21,6 @@ from .utils import memoized, fill_reserved_params
 HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
 AVAILABLE_METHODS = ['get', 'post', 'put', 'delete', 'patch', 'head',
                      'options', 'trace', 'connect']
-HTTP_METHODS = [
-    "get", "post", "put", "delete", "patch", "options",
-    "head", "trace", "connect", "get?", "post?", "put?", "delete?",
-    "patch?", "options?", "head?", "trace?", "connect?"
-]
 
 
 class RAMLParserError(Exception):
@@ -62,7 +57,7 @@ class RAMLRoot(object):
     @property
     def traits(self):
         """
-        Returns a list of traits, or ``None`` if non are defined.
+        Returns a list of traits, or ``None`` if none are defined.
         """
         return self.__traits
 
@@ -74,7 +69,7 @@ class RAMLRoot(object):
     @memoized
     def title(self):
         """
-        Returns the title property defined in the root section of the API.
+        Returns the title element defined in the root section of the API.
         """
         return self.raml.get('title')
 
@@ -82,7 +77,7 @@ class RAMLRoot(object):
     @memoized
     def version(self):
         """
-        Returns the API version.
+        Returns the API's version.
         """
         return self.raml.get('version')
 
@@ -91,7 +86,7 @@ class RAMLRoot(object):
     def protocols(self):
         """
         Returns the supported protocols of the API.  If not set, then
-        grabbed from ``base_uri``.
+        inferred from ``base_uri``.
         """
         protocol = re.findall(r"(https|http)", self.base_uri)
         return self.raml.get('protocols', protocol)
@@ -104,8 +99,8 @@ class RAMLRoot(object):
 
         **Note:** optional during development, required after implementation.
 
-        :raises RAMLParserError: if no ``version`` is defined but is\
-        referenced in the ``baseUri`` parameter.
+        :raises RAMLParserError: if no ``version`` is defined but is
+            referenced in the ``baseUri`` parameter.
         """
         base_uri = self.raml.get('baseUri')
         if base_uri:
@@ -132,7 +127,6 @@ class RAMLRoot(object):
 
         :raises RAMLParserError: if ``version`` is defined (``version``
             can only be used in ``baseUriParameters``).
-
         """
         uri_params = self.raml.get('uriParameters', {})
         params = []
@@ -149,8 +143,6 @@ class RAMLRoot(object):
         """
         Returns URI Parameters for meant specifically for the ``base_uri``.
         Returns ``None`` if no base URI parameters are defined.
-
-        **Note:** optional during development, required after implementation.
         """
         base_uri_params = self.raml.get('baseUriParameters', {})
         uri_params = []
@@ -168,12 +160,11 @@ class RAMLRoot(object):
 
         Valid media types:
 
-        * ``text/yaml``, ``text/x-yaml``, ``application/yaml``,\
-         ``application/x-yaml``
-        * Any defined in http://www.iana.org/assignments/media-types
-        * A custom type that follows the regex:\
-        ``application\/[A-Za-z.-0-1]*+?(json|xml)``
-
+            * ``text/yaml``, ``text/x-yaml``, ``application/yaml``,
+                ``application/x-yaml``
+            * Any defined in http://www.iana.org/assignments/media-types
+            * A custom type that follows the regex:
+                ``application\/[A-Za-z.-0-1]*+?(json|xml)``
         """
         return self.raml.get('mediaType')
 
@@ -202,9 +193,6 @@ class RAMLRoot(object):
         """
         Returns a list of SecurityScheme objects supported by the API,
         or ``None`` if none are defined.
-
-        Valid security schemes are: OAuth 1.0, OAuth 2.0, Basic Authentication,
-         Digest Authentication, and API-defined auth with ``x-{other}``.
         """
         return SecuritySchemes(self.raml).security_schemes
 
@@ -239,9 +227,8 @@ class _BaseResourceProperties(object):
     @memoized
     def headers(self):
         """
-        Returns a list of accepted Header objects.
-
-        Returns ``None`` if no headers defined.
+        Returns a list of accepted Header objects, or ``None`` if no
+        headers defined.
         """
         resource_headers = self.data.get('headers', {})
         headers = []
@@ -253,8 +240,8 @@ class _BaseResourceProperties(object):
     @memoized
     def body(self):
         """
-        Returns a list of Body objects of a request or
-        ``None`` if none defined.
+        Returns a list of Body objects of a request or ``None`` if
+        none are defined.
         """
         bodies = []
         resource_body = self.data.get('body', {})
@@ -268,6 +255,8 @@ class _BaseResourceProperties(object):
         """
         Returns a list of ``Response`` objects of a Trait, or ``None``
         if none are defined.
+
+        **Note:** Currently only supports HTTP/1.1-defined responses
 
         :raises RAMLParserError: Unsupported HTTP Response code
         """
@@ -352,7 +341,7 @@ class _BaseResourceProperties(object):
         attributes, or ``None`` if not defined.
 
         Assumes raw content is written in plain text or Markdown in RAML
-        per specification. (Optional)
+        per specification.
         """
         resource_desc = self.data.get('description')
         if resource_desc:
@@ -394,7 +383,8 @@ class _BaseResource(_BaseResourceProperties):
         Returns a list of strings denoting traits assign to Resource or
         Resource Type, or ``None`` if not defined.
 
-        Use ``resource.traits`` to get the actual ``Trait`` object.
+        Use ``resource.traits`` or ``resource_type.traits`` to get the
+        actual ``Trait`` object.
         """
         try:
             method_traits = self.data.get(self.method, {}).get('is', [])
@@ -515,6 +505,9 @@ class _BaseResource(_BaseResourceProperties):
         """
         Returns a list of Response objects of a Resource or ResourceType,
         or ``None`` if none defined.
+
+        **Note:** Currently only supports HTTP/1.1-defined responses
+
 
         :raises RAMLParserError: Unsupported HTTP Response code
         """
@@ -653,9 +646,6 @@ class _BaseResource(_BaseResourceProperties):
         """
         Returns ``DescriptiveContent`` object with ``raw`` and ``html``
         attributes, or ``None`` if not defined.
-
-        Assumes raw content is written in plain text or Markdown in RAML
-        per specification.
         """
         try:
             method_desc = self.data.get(self.method, {}).get('description')
@@ -770,6 +760,8 @@ class ResourceType(_BaseResource):
         """
         Returns a list of Response objects of a ResourceType, or ``None``
         if none are defined.
+
+        **Note:** Currently only supports HTTP/1.1-defined responses
 
         :raises RAMLParserError: Unsupported HTTP Response code
         """
@@ -1052,6 +1044,8 @@ class Resource(_BaseResource):
         Returns a list of Response objects of a Resource, or ``None``
         if none are defined.
 
+        **Note:** Currently only supports HTTP/1.1-defined responses
+
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         # TODO: does resource inherit responses from its parent?
@@ -1166,9 +1160,6 @@ class Resource(_BaseResource):
         """
         Returns ``DescriptiveContent`` object with ``raw`` and ``html``
         attributes, or ``None`` if not defined.
-
-        Assumes raw content is written in plain text or Markdown in RAML
-        per specification.
         """
         if super(Resource, self).description is not None:
             return super(Resource, self).description

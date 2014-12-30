@@ -37,7 +37,7 @@ def parse_raml(loaded_raml):
 
     :param ramlfications.loader.RAMLDict loaded_raml: Loaded RAML file
     :return: Parsed RAML file
-    :rtype RAMLRoot:
+    :rtype: RAMLRoot
     :raises RAMLParserError: If error occurred during parsing of the
         RAML file.
     """

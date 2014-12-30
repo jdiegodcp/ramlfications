@@ -138,6 +138,14 @@ def __validate_security_schemes(api):
 
 
 def validate_raml(raml_file, prod):
+    """
+    Helper function to validate required elements of a RAML file.
+
+    :param str raml_file: string representing the path to the RAML file
+    :param bool prod: True/False if want to assert API is in production;
+        use ``False`` if just testing
+    :raises InvalidRamlFileError: Error when validating the RAML file
+    """
     __validate_raml_header(raml_file)
     loader = RAMLLoader().load(raml_file)
     api = parse_raml(loader)
