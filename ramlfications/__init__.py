@@ -33,13 +33,13 @@ def parse(raml_file):
 
 def load(raml_file):
     """
-    Module helper function to load a RAML File using ``loader.RAMLLoader``.
+    Module helper function to load a RAML File using :py:class:`loader.RAMLLoader`.
 
     :param str raml_file: String path to RAML file
     :return: loaded RAML file
     :rtype: RAMLDict
     :raises LoadRamlFileError: If error occurred trying to load the RAML file
-        (see ``loader.RAMLLoader``)
+        (see :py:class:`loader.RAMLLoader`)
     """
     return RAMLLoader().load(raml_file)
 
@@ -53,9 +53,9 @@ def validate(raml_file, production=True):
     :param bool production: If the RAML file is meant to be production-ready
     :return: No return value if successful
     :raises LoadRamlFileError: If error occurred trying to load the RAML file
-        (see ``loader.RAMLLoader``)
+        (see :py:class:`loader.RAMLLoader`)
     :raises InvalidRamlFileError: If error occurred trying to validate the RAML
-        file (see ``validate.py``)
+        file (see :py:mod:`validate`)
 
     """
     return validate_raml(raml_file, production)

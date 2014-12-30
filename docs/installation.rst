@@ -19,7 +19,9 @@ first.
 System requirements:
 ^^^^^^^^^^^^^^^^^^^^
 
-- Python 2.6, 2.7, 3.3+ or PyPy
+- C Compiler (gcc/clang/etc.)
+- If on Linux - you'll need to install Python headers (e.g. ``apt-get install python-dev``)
+- Python 2.6, 2.7, 3.3+, or PyPy
 - virtualenv_
 
 Here's how to set your machine up::
