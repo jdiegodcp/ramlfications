@@ -462,33 +462,6 @@ class Documentation(object):
         return "<Documentation(title='{0}')>".format(self.title)
 
 
-class SecuritySchemes(object):
-    """
-    Security schemes supported by the API.
-    """
-    def __init__(self, raml_file):
-        self.raml = raml_file
-
-    def _get_security_schemes(self):
-        # Use self.raml.get('securitySchemes', []), get rid of the
-        # if/else below, never return None but prefer []
-        defined_schemes = self.raml.get('securitySchemes')
-        if defined_schemes:
-            schemes = []
-            for s in defined_schemes:
-                schemes.extend(
-                    [SecurityScheme(k, v) for k, v in list(s.items())]
-                )
-            return schemes
-        else:
-            return None
-
-    @property
-    def security_schemes(self):
-        """Returns a list of API-supported ``SecurityScheme`` objects."""
-        return self._get_security_schemes()
-
-
 class SecurityScheme(object):
     """
     Security scheme object defined by its type (OAuth 2.0, OAuth 1.0, etc).
@@ -564,7 +537,7 @@ class SecurityScheme(object):
             return self._get_oauth_scheme(self.name)(self.data.get('settings'))
 
     def __repr__(self):
-        return "<Security Scheme(name='{0}')>".format(self.name)
+        return "<SecurityScheme(name='{0}')>".format(self.name)
 
 
 class Oauth2Scheme(object):
@@ -573,13 +546,18 @@ class Oauth2Scheme(object):
     """
     def __init__(self, settings):
         self.settings = settings
+        self.__scopes = settings.get('scopes')
 
     @property
     def scopes(self):
         """
         Returns a list of strings of available scopes
         """
-        return self.settings.get('scopes')  # list of strings
+        return self.__scopes
+
+    @scopes.setter
+    def scopes(self, scope_list):
+        self.__scopes = scope_list
 
     @property
     def authorization_uri(self):

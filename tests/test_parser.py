@@ -782,11 +782,7 @@ class TestResource(BaseTestCase):
         for resource in resources:
             self.assertIsNotNone(resource.secured_by)
             for s in resource.security_schemes:
-                self.assertEqual(s.name, 'oauth_2_0')
-                self.assertIsInstance(s, parameters.SecurityScheme)
-                self.assertEqual(s.type, 'OAuth 2.0')
-                self.assertEqual(repr(s),
-                                 "<Security Scheme(name='oauth_2_0')>")
+                self.assertIsInstance(s, parameters.Oauth2Scheme)
 
     def test_no_secured_by(self):
         raml_file = os.path.join(EXAMPLES +
@@ -797,10 +793,9 @@ class TestResource(BaseTestCase):
             self.assertIsNone(res.secured_by)
 
     def test_not_secured(self):
-        raml_file = os.path.join(EXAMPLES +
-                                 "multiple-security-schemes.raml")
+        raml_file = os.path.join(EXAMPLES + "simple.raml")
         api = self.setup_parsed_raml(raml_file)
-        resource = api.resources[4]
+        resource = api.resources[0]
         self.assertIsNone(resource.secured_by)
 
     def test_base_uri_params(self):

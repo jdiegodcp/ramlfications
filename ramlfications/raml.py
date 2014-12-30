@@ -13,7 +13,7 @@ from six.moves import BaseHTTPServer as httpserver
 
 from .parameters import (
     FormParameter, URIParameter, QueryParameter,
-    Header, Response, Body, SecuritySchemes,
+    Header, Response, Body,
     Documentation, DescriptiveContent
 )
 from .utils import memoized, fill_reserved_params
@@ -34,6 +34,7 @@ class RAMLRoot(object):
         self.__resources = None
         self.__resource_types = None
         self.__traits = None
+        self.__security_schemes = None
 
     @property
     def resources(self):
@@ -64,6 +65,17 @@ class RAMLRoot(object):
     @traits.setter
     def traits(self, trait_objs):
         self.__traits = trait_objs
+
+    @property
+    def security_schemes(self):
+        """
+        Returns a list of security schemes, or ``None`` if none are defined.
+        """
+        return self.__security_schemes
+
+    @security_schemes.setter
+    def security_schemes(self, sec_objs):
+        self.__security_schemes = sec_objs
 
     @property
     @memoized
@@ -186,15 +198,6 @@ class RAMLRoot(object):
             doc = Documentation(doc.get('title'), doc.get('content'))
             docs.append(doc)
         return docs or None
-
-    @property
-    @memoized
-    def security_schemes(self):
-        """
-        Returns a list of SecurityScheme objects supported by the API,
-        or ``None`` if none are defined.
-        """
-        return SecuritySchemes(self.raml).security_schemes
 
     @property
     @memoized
@@ -414,12 +417,19 @@ class _BaseResource(_BaseResourceProperties):
     @memoized
     def secured_by(self):
         try:
-            method_secured = self.data.get(self.method, {}).get('securedBy')
+            if self.data.get(self.method, {}).get('securedBy'):
+                return self.data.get(self.method, {}).get('securedBy')
         except AttributeError:
             # self.method could exist, but return None
-            method_secured = []
-        resource_secured = self.data.get('securedBy')
-        return method_secured or resource_secured or None
+            pass
+
+        if self.data.get('securedBy'):
+            return self.data.get('securedBy')
+
+        if hasattr(self, 'parent'):
+            if self.parent and self.parent.secured_by:
+                return self.parent.secured_by
+        return None
 
     @property
     def security_schemes(self):

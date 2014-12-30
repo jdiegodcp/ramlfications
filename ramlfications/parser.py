@@ -15,7 +15,9 @@ except ImportError:  # pragma: no cover
 
 import json
 
+from six import iteritems
 
+from .parameters import SecurityScheme, Oauth2Scheme, Oauth1Scheme
 from .raml import RAMLRoot, Trait, ResourceType, Resource, RAMLParserError
 from .utils import fill_reserved_params
 
@@ -44,6 +46,7 @@ def parse_raml(loaded_raml):
     raml = loaded_raml.data
 
     root = RAMLRoot(loaded_raml)
+    root.security_schemes = _parse_security_schemes(raml, root)
     root.traits = _parse_traits(raml, root)
     root.resource_types = _parse_resource_types(raml, root)
     root.resources = _parse_resources(raml, root)
@@ -194,8 +197,20 @@ def _parse_resource_types(raml, root):
 # Logic for parsing of traits into Trait objects
 #####
 def _parse_traits(raml, root):
-    traits = raml.get('traits', [])
-    return [Trait(t.keys()[0], t.values()[0], root) for t in traits]
+    traits = raml.get('traits')
+    if traits:
+        return [Trait(t.keys()[0], t.values()[0], root) for t in traits]
+    return None
+
+
+#####
+# Logic for parsing of security schemes into SecurityScheme objects
+#####
+def _parse_security_schemes(raml, root):
+    schemes = raml.get('securitySchemes')
+    if schemes:
+        return [SecurityScheme(s.keys()[0], s.values()[0]) for s in schemes]
+    return None
 
 
 #####
@@ -344,8 +359,31 @@ def __get_resource_type(resource, root):
 #####
 # Logic for mapping of securitySchemes to its Resource/Resource Type
 #####
+def __set_scheme(scheme):
+    return {'oauth_2_0': Oauth2Scheme,
+            'oauth_1_0': Oauth1Scheme}[scheme]
+
+
+def __map_secured_by_str(secured, root):
+    for s in root.security_schemes:
+        if s.name == secured:
+            return s
+
+
+def __map_secured_by_dict(secured, root):
+    scheme = list(secured.keys())[0]
+
+    for s in root.security_schemes:
+        if s.name == scheme:
+            scheme_obj = __set_scheme(s.name)(s.data.get('settings'))
+
+    for k, v in iteritems(secured.values()[0]):
+        setattr(scheme_obj, k, v)
+
+    return scheme_obj
+
+
 def __get_secured_by(resource, root):
-    # TODO: set other properties for OAuth 2, Oauth1, and self-defined
     if not resource.secured_by:
         return
     if not root.security_schemes:
@@ -356,21 +394,18 @@ def __get_secured_by(resource, root):
 
     _secured_by = []
     for secured in resource.secured_by:
-        if isinstance(secured, dict):
-            scheme = list(secured.keys())[0]
-            #if 'scopes' in list(secured.values())[0]:
-            #    scopes = list(secured.values())[0].get('scopes')
+        if secured is None:
+            _secured_by.append(None)
+        elif isinstance(secured, dict):
+            _secured_by.append(__map_secured_by_dict(secured, root))
         elif isinstance(secured, str):
-            scheme = secured
-            #scopes = None
+            _secured_by.append(__map_secured_by_str(secured, root))
+        elif isinstance(secured, list):
+            for s in secured:
+                _secured_by.append(__map_secured_by_str(s, root))
         else:
             msg = "Error applying security scheme '{0}' to '{1}'.".format(
                 secured, resource.name)
             raise RAMLParserError(msg)
 
-        for s in root.security_schemes:
-            if s.name == scheme:
-                _secured_by.append(s)
-            #if scopes:
-                #resource.scopes = scopes
     return _secured_by
