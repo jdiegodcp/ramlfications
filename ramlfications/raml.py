@@ -28,7 +28,13 @@ class RAMLParserError(Exception):
 
 
 class RAMLRoot(object):
+    """
+    Parsed RAML object.
+    """
     def __init__(self, raml_obj):
+        """
+        :param loader.RAMLDict raml_obj: Loaded RAML file
+        """
         self.raml = raml_obj.data
         self.raml_file = raml_obj.raml_file
         self.__resources = None
@@ -39,7 +45,10 @@ class RAMLRoot(object):
     @property
     def resources(self):
         """
-        Returns a list of ``Resource`` objects.
+        Resources (endpoints) that the API supports.
+
+        :return: resources
+        :rtype: ``list`` of :py:class:`Resource` objects
         """
         return self.__resources
 
@@ -49,6 +58,12 @@ class RAMLRoot(object):
 
     @property
     def resource_types(self):
+        """
+        Resource Types that the API has defined, if any.
+
+        :return: resource types
+        :rtype: ``list`` of :py:class:`.ResourceType`, or ``None``
+        """
         return self.__resource_types
 
     @resource_types.setter
@@ -58,7 +73,10 @@ class RAMLRoot(object):
     @property
     def traits(self):
         """
-        Returns a list of traits, or ``None`` if none are defined.
+        API-supported traits, if any.
+
+        :returns: Traits
+        :rtype: ``list`` of :py:class:`.Trait` objects, or ``None``
         """
         return self.__traits
 
@@ -69,7 +87,10 @@ class RAMLRoot(object):
     @property
     def security_schemes(self):
         """
-        Returns a list of security schemes, or ``None`` if none are defined.
+        Security schemes that the API supports, if any.
+
+        :rtype: ``list`` of :py:class:`.parameters.SecurityScheme` objects, \
+        or ``None``.
         """
         return self.__security_schemes
 
@@ -78,41 +99,47 @@ class RAMLRoot(object):
         self.__security_schemes = sec_objs
 
     @property
-    @memoized
     def title(self):
         """
-        Returns the title element defined in the root section of the API.
+        Title element defined in the root section of the RAML API definition.
+
+        :returns: API Title
+        :rtype: string
         """
         return self.raml.get('title')
 
     @property
-    @memoized
     def version(self):
         """
-        Returns the API's version.
+        The API's version.
+
+        :returns: API Version
+        :rtype: string
         """
         return self.raml.get('version')
 
     @property
-    @memoized
     def protocols(self):
         """
-        Returns the supported protocols of the API.  If not set, then
-        inferred from ``base_uri``.
+        Supported protocols of the API.  If not set, then inferred from \
+        :py:obj:`.base_uri`.
+
+        :returns: supported protocols (`HTTP`, `HTTPS`)
+        :rtype: string
         """
         protocol = re.findall(r"(https|http)", self.base_uri)
         return self.raml.get('protocols', protocol)
 
     @property
-    @memoized
     def base_uri(self):
         """
         Returns the base URI of API.
 
-        **Note:** optional during development, required after implementation.
+        .. note::
+            ``base_uri`` is optional during development, required after implementation.
 
-        :raises RAMLParserError: if no ``version`` is defined but is
-            referenced in the ``baseUri`` parameter.
+        :raises RAMLParserError: if no ``version`` is defined but is \
+            referenced in the :py:obj:`.base_uri` parameter.
         """
         base_uri = self.raml.get('baseUri')
         if base_uri:
@@ -130,15 +157,13 @@ class RAMLRoot(object):
         return base_uri
 
     @property
-    @memoized
     def uri_parameters(self):
         """
-        Returns URI Parameters available for the baseUri and all
-        resources/endpoints.  Returns ``None`` if no URI parameters
-        are defined.
+        URI Parameters available for the baseUri and all resources/endpoints.
 
-        :raises RAMLParserError: if ``version`` is defined (``version``
-            can only be used in ``baseUriParameters``).
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
+        :raises RAMLParserError: if :py:obj:`.version` is defined (:py:obj:`.version` \
+            can only be used in :py:obj:`.base_uri_parameters`).
         """
         uri_params = self.raml.get('uriParameters', {})
         params = []
@@ -150,11 +175,11 @@ class RAMLRoot(object):
         return params or None
 
     @property
-    @memoized
     def base_uri_parameters(self):
         """
-        Returns URI Parameters for meant specifically for the ``base_uri``.
-        Returns ``None`` if no base URI parameters are defined.
+        Returns URI Parameters for meant specifically for :py:obj:`.base_uri`.
+
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
         """
         base_uri_params = self.raml.get('baseUriParameters', {})
         uri_params = []
@@ -163,30 +188,30 @@ class RAMLRoot(object):
         return uri_params or None
 
     @property
-    @memoized
     def media_type(self):
         # TODO: raise an error if not acceptable media type given
         """
-        Returns the supported Media Types of the API.  Returns ``None``
+        Returns the supported Media Type of the API.  Returns ``None``
         if no media types are defined.
 
         Valid media types:
 
-            * ``text/yaml``, ``text/x-yaml``, ``application/yaml``,
+            * ``text/yaml``, ``text/x-yaml``, ``application/yaml``, \
                 ``application/x-yaml``
-            * Any defined in http://www.iana.org/assignments/media-types
-            * A custom type that follows the regex:
+            * Any defined by the `IANA <http://www.iana.org/assignments/media-types>`_
+            * A custom type that follows the regex: \
                 ``application\/[A-Za-z.-0-1]*+?(json|xml)``
+
+        :rtype: string
         """
         return self.raml.get('mediaType')
 
     @property
-    @memoized
     def documentation(self):
         """
-        Returns a list of Documentation objects meant for user documentation
-        of the for the API, or ``None`` if no documentation is defined.
+        API documentation
 
+        :rtype: ``list`` of :py:class:`.parameters.Documentation` objects, or ``None``.
         :raises RAMLParserError: if can not parse documentation.
         """
         documentation = self.raml.get('documentation', [])
@@ -200,16 +225,16 @@ class RAMLRoot(object):
         return docs or None
 
     @property
-    @memoized
     def schemas(self):
         """
-        Returns a dict of user-defined schemas that may be applied anywhere
+        Returns a dictionary of user-defined schemas that may be applied anywhere
         in the API definition.
 
-        Current explicit supported types are XML, JSON, YAML. Other schema
-        definitions may work at your own risk.
+        .. note::
+            Current explicit supported types are XML, JSON, YAML. Other schema \
+            definitions may work at your own risk.
 
-        Returns ``None`` if no schema defined.
+        :rtype: ``dict``
         """
         return self.raml.get('schemas')
 
@@ -222,16 +247,21 @@ class _BaseResourceProperties(object):
     Base class from which Trait and _BaseResource inherit.
     """
     def __init__(self, name, data, api):
+        """
+        :param str name: Name of Trait
+        :param dict data: Data associated with Trait
+        :param RAMLRoot api: API with which the Trait is associated
+        """
         self.name = name
         self.data = data
         self.api = api
 
     @property
-    @memoized
     def headers(self):
         """
-        Returns a list of accepted Header objects, or ``None`` if no
-        headers defined.
+        Accepted headers for trait.
+
+        :rtype: ``list`` of :py:class:`.parameters.Header` objects, or ``None``.
         """
         resource_headers = self.data.get('headers', {})
         headers = []
@@ -240,11 +270,11 @@ class _BaseResourceProperties(object):
         return headers or None
 
     @property
-    @memoized
     def body(self):
         """
-        Returns a list of Body objects of a request or ``None`` if
-        none are defined.
+        Accepted body for trait.
+
+        :rtype: ``list`` of :py:class:`.parameters.Body` objects, or ``None``.
         """
         bodies = []
         resource_body = self.data.get('body', {})
@@ -253,14 +283,14 @@ class _BaseResourceProperties(object):
         return bodies or None
 
     @property
-    @memoized
     def responses(self):
         """
-        Returns a list of ``Response`` objects of a Trait, or ``None``
-        if none are defined.
+        Accepted responses for trait.
 
-        **Note:** Currently only supports HTTP/1.1-defined responses
+        .. note::
+             Currently only supports HTTP/1.1-defined responses.
 
+        :rtype: ``list`` of :py:class:`.parameters.Response` objects, or ``None``.
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         resps = []
@@ -275,11 +305,11 @@ class _BaseResourceProperties(object):
         return resps or None
 
     @property
-    @memoized
     def uri_params(self):
         """
-        Returns a list of ``URIParameter`` objects of a Trait, or
-        ``None`` if none are defined.
+        Accepted URI parameters for trait.
+
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
         """
         uri_params = []
         for k, v in list(self.data.get('uriParameters', {}).items()):
@@ -288,11 +318,11 @@ class _BaseResourceProperties(object):
         return uri_params or None
 
     @property
-    @memoized
     def base_uri_params(self):
         """
-        Returns a list of ``URIParameter`` objects of a Trait for
-        ``base_uri``, or ``None`` if none are defined.
+        Accepted base URI parameters for trait.
+
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
         """
         base_uri_params = []
         for k, v in list(self.data.get('baseUriParameters', {}).items()):
@@ -300,11 +330,11 @@ class _BaseResourceProperties(object):
         return base_uri_params or None
 
     @property
-    @memoized
     def query_params(self):
         """
-        Returns a list of ``QueryParameter`` objects of a Trait,
-        or ``None`` if no query parameters are defined.
+        Accepted query parameters for trait.
+
+        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, or ``None``.
         """
         resource_params = self.data.get('queryParameters', {})
 
@@ -314,11 +344,11 @@ class _BaseResourceProperties(object):
         return query_params or None
 
     @property
-    @memoized
     def form_params(self):
         """
-        Returns a list of FormParameter objects, or ``None`` if no form
-        parameters are defined.
+        Accepted form parameters for trait.
+
+        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, or ``None``.
         """
         form_params = []
         for k, v in list(self.data.get('formParameters', {}).items()):
@@ -326,25 +356,27 @@ class _BaseResourceProperties(object):
         return form_params or None
 
     @property
-    @memoized
     def req_mime_types(self):
         """
-        Returns a list of strings referring to MIME types that the
-        Trait supports, or ``None`` if none defined.
+        Supported MIME media types for trait.
+
+        :rtype: ``list`` of ``str`` s or ``None``.
         """
         mime_types = self.data.get('body', {}).keys()
 
         return mime_types or None
 
     @property
-    @memoized
     def description(self):
         """
-        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
-        attributes, or ``None`` if not defined.
+        Description of trait.
 
-        Assumes raw content is written in plain text or Markdown in RAML
-        per specification.
+        .. note:: 
+            Assumes raw content is written in plain text or Markdown in RAML \
+            per specification.
+
+        :rtype: ``list`` of :py:class:`.parameters.DescriptiveContent` objects, \
+        or ``None``.
         """
         resource_desc = self.data.get('description')
         if resource_desc:
@@ -357,10 +389,11 @@ class Trait(_BaseResourceProperties):
     Method-level properties to apply to a Resource or ResourceType.
     """
     @property
-    @memoized
     def usage(self):
         """
         Returns a string detailing how to use this trait.
+
+        :rtype: ``string``
         """
         return self.data.get('usage')
 
@@ -374,20 +407,28 @@ class _BaseResource(_BaseResourceProperties):
     of _BaseResourceProperties
     """
     def __init__(self, name, data, method, api):
+        """
+        :param str name: Name of Resource Type
+        :param dict data: Data associated with Resource Type
+        :param str method: HTTP Method associated with Resource Type
+        :param RAMLRoot api: API with which the Resource Type is associated
+        :param str type: Another ResourceType from which it inherits, if any
+        """
         _BaseResourceProperties.__init__(self, name, data, api)
         self.method = method
         self._traits = None
         self._security_schemes = None
 
     @property
-    @memoized
     def is_(self):
         """
-        Returns a list of strings denoting traits assign to Resource or
-        Resource Type, or ``None`` if not defined.
+        Trait(s) assigned to particular :py:class:`Resource` or :py:class:`ResourceType` \
+        object
 
-        Use ``resource.traits`` or ``resource_type.traits`` to get the
-        actual ``Trait`` object.
+        Use ``resource.traits`` or ``resource_type.traits`` to access actual \
+        :py:class:`.Trait` object(s), if any.
+
+        :rtype: ``list`` of ``str`` s referring to Trait names, or ``None``.
         """
         try:
             method_traits = self.data.get(self.method, {}).get('is', [])
@@ -401,11 +442,12 @@ class _BaseResource(_BaseResourceProperties):
     @property
     def traits(self):
         """
-        Returns a list of ``Trait`` objects assigned to the Resource or
-        ResourceType, if any.
+        :py:class:`.Trait` objects assigned to particular resource or resource type.
 
-        Use ``resource.is_`` to get a simple list of strings denoting the
-        names of applicable traits.
+        Use ``resource.is_`` or ``resource_type.is_`` to get a simple list of \
+        strings denoting the names of applicable traits.
+
+        :rtype: ``list`` of :py:class:`.Trait` objects, or ``None``
         """
         return self._traits
 
@@ -414,8 +456,16 @@ class _BaseResource(_BaseResourceProperties):
         self._traits = trait_objects
 
     @property
-    @memoized
     def secured_by(self):
+        """
+        Security Scheme(s) assigned to particular :py:class:`Resource` or 
+        :py:class:`ResourceType` object.
+
+        Use ``resource.security_schemes`` or ``resource_type.security_schemes`` \
+        to access actual :py:class:`.parameters.SecurityScheme` object(s), if any.
+
+        :rtype: ``list`` of ``str`` s referring to Security Scheme names, or ``None``.
+        """
         try:
             if self.data.get(self.method, {}).get('securedBy'):
                 return self.data.get(self.method, {}).get('securedBy')
@@ -439,6 +489,8 @@ class _BaseResource(_BaseResourceProperties):
 
         Use ``resource.secured_by`` to get a simple list of strings denoting
         the names of applicable security schemes.
+
+        :rtype: ``list`` of :py:class:`.parameters.SecurityScheme` objects, or ``None.
         """
         return self._security_schemes
 
@@ -447,13 +499,14 @@ class _BaseResource(_BaseResourceProperties):
         self._security_schemes = security_objs
 
     @property
-    @memoized
     def protocols(self):
         """
         Returns a list of supported protocols for the particular Resource or
         ResourceType.
 
-        Overrides the root API's protocols.  Returns ``None`` if not defined.
+        Overrides the root API's protocols if defined.
+
+        :rtype: ``list`` of ``str`` s
         """
         try:
             method_protocols = self.data.get(self.method).get('protocols')
@@ -466,18 +519,19 @@ class _BaseResource(_BaseResourceProperties):
         resource_protocols = self.data.get('protocols')
         if resource_protocols:
             return resource_protocols
-        return None
+        else:
+            return self.api.protocols
 
     #####
     # Following properties extend those from _BaseResourceProperies
     #####
 
     @property
-    @memoized
     def headers(self):
         """
-        Returns a list of accepted Header objects for Resource or
-        ResourceTypes, or  ``None`` if no headers defined.
+        Accepted headers for the Resource or Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.Header` objects, or ``None``.
         """
         try:
             method_headers = self.data.get(self.method, {}).get('headers', {})
@@ -492,11 +546,11 @@ class _BaseResource(_BaseResourceProperties):
         return headers or None
 
     @property
-    @memoized
     def body(self):
         """
-        Returns a list of Body objects of a request for Resource or
-        ResourceTypes, or ``None`` if none defined.
+        Accepted body for the Resource or Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.Body` objects, or ``None``.
         """
         bodies = super(_BaseResource, self).body or []
         try:
@@ -510,15 +564,14 @@ class _BaseResource(_BaseResourceProperties):
         return bodies or None
 
     @property
-    @memoized
     def responses(self):
         """
-        Returns a list of Response objects of a Resource or ResourceType,
-        or ``None`` if none defined.
+        Accepted responses for the Resource or Resource Type.
 
-        **Note:** Currently only supports HTTP/1.1-defined responses
+        .. note::
+            Currently only supports HTTP/1.1-defined responses
 
-
+        :rtype: ``list`` of :py:class:`.parameters.Response` objects, or ``None``.
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         resps = super(_BaseResource, self).responses or []
@@ -539,11 +592,11 @@ class _BaseResource(_BaseResourceProperties):
         return resps
 
     @property
-    @memoized
     def uri_params(self):
         """
-        Returns a list of ``URIParameter`` objects of a Resource or
-        ResourceType, or ``None`` if none are defined.
+        Accepted URI parameters for the Resource or Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
         """
         uri_params = super(_BaseResource, self).uri_params or []
         try:
@@ -558,11 +611,11 @@ class _BaseResource(_BaseResourceProperties):
         return uri_params or None
 
     @property
-    @memoized
     def base_uri_params(self):
         """
-        Returns a list of base ``URIParameter`` objects of a Resource or
-        ResourceType, or ``None`` if none are defined.
+        Accepted base URI parameters for the Resource or Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
         """
         base_params = super(_BaseResource, self).base_uri_params or []
         try:
@@ -577,11 +630,11 @@ class _BaseResource(_BaseResourceProperties):
         return base_params or None
 
     @property
-    @memoized
     def query_params(self):
         """
-        Returns a list of ``QueryParameter`` objects of a Resource or
-        ResourceType, or ``None`` if no query parameters are defined.
+        Accepted query parameters for the Resource or Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, or ``None``.
         """
         query_params = super(_BaseResource, self).query_params or []
         try:
@@ -596,11 +649,11 @@ class _BaseResource(_BaseResourceProperties):
         return query_params or None
 
     @property
-    @memoized
     def form_params(self):
         """
-        Returns a list of FormParameter objects of a Resource or
-        ResourceType, or ``None`` if no form parameters are defined.
+        Accepted form parameters for the Resource or Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, or ``None``.
         """
 
         form_params = super(_BaseResource, self).form_params or []
@@ -631,11 +684,11 @@ class _BaseResource(_BaseResourceProperties):
         return form_params or None
 
     @property
-    @memoized
     def req_mime_types(self):
         """
-        Returns a list of strings referring to MIME types that the
-        Resource or ResourceType supports, or ``None`` if none defined.
+        Accepted MIME media types for the Resource or Resource Type.
+
+        :rtype: ``list`` of ``str`` s, or ``None``.
         """
         method_mime = []
         if self.method in ["post", "put", "delete", "patch"]:
@@ -648,14 +701,14 @@ class _BaseResource(_BaseResourceProperties):
 
         mime_types = self.data.get('body', {}).keys() + method_mime
 
-        return mime_types or None
+        return mime_types or self.api.media_type
 
     @property
-    @memoized
     def description(self):
         """
-        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
-        attributes, or ``None`` if not defined.
+        Defined description of the Resource or Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.DescriptiveContent` objects, or ``None``
         """
         try:
             method_desc = self.data.get(self.method, {}).get('description')
@@ -684,7 +737,6 @@ class ResourceType(_BaseResource):
         return method
 
     @property
-    @memoized
     def usage(self):
         """
         Returns a string detailing how to use this ResourceType.
@@ -706,7 +758,6 @@ class ResourceType(_BaseResource):
     # Following properties extend those from _BaseResourceProperies
     #####
     @property
-    @memoized
     def protocols(self):
         """
         Returns a list of supported protocols for the particular ResourceType.
@@ -726,11 +777,11 @@ class ResourceType(_BaseResource):
         return protocols or None
 
     @property
-    @memoized
     def headers(self):
         """
-        Returns a list of accepted Header objects for ResourceType,
-        or  ``None`` if no headers defined.
+        Accepted headers for the Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.Header` objects, or ``None``.
         """
         try:
             opt_method_headers = self.data.get(self.orig_method, {}).get(
@@ -745,11 +796,11 @@ class ResourceType(_BaseResource):
         return headers or None
 
     @property
-    @memoized
     def body(self):
         """
-        Returns a list of Body objects of a request for ResourceType,
-        or ``None`` if none defined.
+        Accepted body for the Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.Body` objects, or ``None``.
         """
         bodies = super(ResourceType, self).body or []
         try:
@@ -765,14 +816,14 @@ class ResourceType(_BaseResource):
         return bodies or None
 
     @property
-    @memoized
     def responses(self):
         """
-        Returns a list of Response objects of a ResourceType, or ``None``
-        if none are defined.
+        Accepted responses for the Resource Type.
 
-        **Note:** Currently only supports HTTP/1.1-defined responses
+        .. note::
+            Currently only supports HTTP/1.1-defined responses
 
+        :rtype: ``list`` of :py:class:`.parameters.Response` objects, or ``None``.
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         resps = super(ResourceType, self).responses or []
@@ -793,11 +844,11 @@ class ResourceType(_BaseResource):
         return resps
 
     @property
-    @memoized
     def uri_params(self):
         """
-        Returns a list of ``URIParameter`` objects of a ResourceType, or
-        ``None`` if none are defined.
+        Accepted URI parameters for the Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.Body` objects, or ``None``.
         """
         uri_params = super(ResourceType, self).uri_params or []
         try:
@@ -812,11 +863,11 @@ class ResourceType(_BaseResource):
         return uri_params or None
 
     @property
-    @memoized
     def base_uri_params(self):
         """
-        Returns a list of base ``URIParameter`` objects of a ResourceType,
-        or ``None`` if none are defined.
+        Accepted base URI parameters for the Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.Body` objects, or ``None``.
         """
         base_params = super(ResourceType, self).base_uri_params or []
         try:
@@ -831,11 +882,11 @@ class ResourceType(_BaseResource):
         return base_params or None
 
     @property
-    @memoized
     def query_params(self):
         """
-        Returns a list of ``QueryParameter`` objects of a ResourceType,
-        or ``None`` if no query parameters are defined.
+        Accepted query parameters for the Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, or ``None``.
         """
         query_params = super(ResourceType, self).query_params or []
         try:
@@ -849,11 +900,11 @@ class ResourceType(_BaseResource):
         return query_params or None
 
     @property
-    @memoized
     def form_params(self):
         """
-        Returns a list of FormParameter objects of a ResourceType,
-        or ``None`` if no form parameters are defined.
+        Accepted form parameters for the Resource Type.
+
+        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, or ``None``.
         """
         form_params = super(ResourceType, self).form_params or []
 
@@ -887,11 +938,11 @@ class ResourceType(_BaseResource):
         return form_params or None
 
     @property
-    @memoized
     def req_mime_types(self):
         """
-        Returns a list of strings referring to MIME types that the
-        ResourceType supports, or ``None`` if none defined.
+        Accepted MIME media types for the Resource Type.
+
+        :rtype: ``list`` of ``str`` s, or ``None``.
         """
         mime_types = super(ResourceType, self).req_mime_types or []
         opt_method_mime = []
@@ -906,14 +957,11 @@ class ResourceType(_BaseResource):
         return mime_types + opt_method_mime or None
 
     @property
-    @memoized
     def description(self):
         """
-        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
-        attributes, or ``None`` if not defined.
+        Description of Resource Type.
 
-        Assumes raw content is written in plain text or Markdown in RAML
-        per specification.
+        :rtype: ``list`` of :py:class:`.parameters.DescriptiveContent` objects, or ``None``.
         """
         try:
             opt_method_desc = self.data.get(self.orig_method, {}).get(
@@ -932,19 +980,25 @@ class Resource(_BaseResource):
     slash, ``/``.
     """
     def __init__(self, name, data, method, api, parent=None):
+        """
+        :param str name: Name of Resource
+        :param dict data: Data associated with Resource
+        :param str method: HTTP method associated with Resource
+        :param RAMLRoot api: API with which the Resource is associated
+        :param Resource parent: Parent of Resource, if any
+        """
         _BaseResource.__init__(self, name, data, method, api)
         self.parent = parent
         self._resource_type = None
 
     @property
-    @memoized
     def display_name(self):
         """
-        Returns the Resource's display name.
-
-        A friendly name used only for display or documentation purposes.
+        The friendly name used only for display or documentation purposes.
 
         If ``displayName`` is not specified in RAML, it defaults to ``name``.
+
+        :rtype: ``str``
         """
         return self.data.get('displayName', self.name)
 
@@ -955,25 +1009,29 @@ class Resource(_BaseResource):
         return parent_path + node.name
 
     @property
-    @memoized
     def path(self):
         """
-        Returns a string of the URI path of Resource relative to
-        ``api.base_uri``.
+        Returns a string of the URI path of Resource relative to \
+        :py:class:`RAMLRoot.base_uri`.
 
-        Not explicitly defined in RAML but inferred based off of
-        the Resource ``name``.
+        .. note:: 
+            Not explicitly defined in RAML but inferred based off of \
+            the Resource ``name`` and its ``parent`` if any.
+
+        :rtype: ``str``
         """
         return self._get_path_to(self)
 
     @property
-    @memoized
     def absolute_uri(self):
         """
         Returns a string of the absolute URI path of Resource.
 
-        Not explicitly defined in RAML but inferred based off of
-        ``path`` and the API root's ``base_uri``.
+        .. note:: 
+            Not explicitly defined in RAML but inferred based off of \
+            :py:obj:`.path` and :py:class:`.RAMLRoot.base_uri`.
+
+        :rtype: ``str``
         """
         return self.api.base_uri + self.path
 
@@ -985,6 +1043,7 @@ class Resource(_BaseResource):
         Use ``resource.type`` to get the string name representation of the
         ResourceType applied.
 
+        :rtype: ``list`` of :py:class:`.ResourceType` objects
         :raises RAMLParserError: Too many resource types applied to one
             resource.
         :raises RAMLParserError: Resource not defined in the API Root.
@@ -998,7 +1057,6 @@ class Resource(_BaseResource):
         self._resource_type = resource_type_objs
 
     @property
-    @memoized
     def type(self):
         """
         Returns a string of the ``type`` associated with the corresponding
@@ -1007,6 +1065,8 @@ class Resource(_BaseResource):
         associated with it.
 
         Use ``resource.resource_type`` to get the actual ResourceType object.
+
+        :rtype: ``str``, ``dict``, or ``None``
         """
         resource_type = self.data.get('type')
         if not resource_type and self.parent:
@@ -1014,12 +1074,14 @@ class Resource(_BaseResource):
         return resource_type
 
     @property
-    @memoized
     def protocols(self):
         """
         Returns a list of supported protocols for the particular ResourceType.
 
-        Overrides the root API's protocols.  Returns ``None`` if not defined.
+        Overrides the root API's protocols.  Defaults to the API's definition \
+        if Resource-level protocol(s) is not defined.
+
+        :rtype: ``list`` of ``str`` s
         """
         protocols = super(Resource, self).protocols
         if protocols:
@@ -1027,15 +1089,14 @@ class Resource(_BaseResource):
 
         if self.resource_type:
             return self.resource_type.protocols
-
-        return None
+        return self.api.protocols
 
     @property
-    @memoized
     def headers(self):
         """
-        Returns a list of accepted Header objects for Resource,
-        or  ``None`` if no headers defined.
+        Accepted headers for the Resource.
+
+        :rtype: ``list`` of :py:class:`.parameters.Header` objects, or ``None``.
         """
         # TODO: does resource inherit headers from its parent?
         headers = []
@@ -1048,14 +1109,14 @@ class Resource(_BaseResource):
         return headers + _headers or None
 
     @property
-    @memoized
     def responses(self):
         """
-        Returns a list of Response objects of a Resource, or ``None``
-        if none are defined.
+        Accepted response for the Resource.
 
-        **Note:** Currently only supports HTTP/1.1-defined responses
+        .. note:: 
+            Currently only supports HTTP/1.1-defined responses
 
+        :rtype: ``list`` of :py:class:`.parameters.Response` objects, or ``None``.
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         # TODO: does resource inherit responses from its parent?
@@ -1069,11 +1130,11 @@ class Resource(_BaseResource):
         return resp + _resp or None
 
     @property
-    @memoized
     def body(self):
         """
-        Returns a list of Body objects of a request for Resource,
-        or ``None`` if none defined.
+        Accepted body for the Resource.
+
+        :rtype: ``list`` of :py:class:`.parameters.Body` objects, or ``None``.
         """
         # TODO: does resource inherit body from its parent?
         body = []
@@ -1086,11 +1147,11 @@ class Resource(_BaseResource):
         return body + _body or None
 
     @property
-    @memoized
     def query_params(self):
         """
-        Returns a list of ``QueryParameter`` objects of a Resource,
-        or ``None`` if no query parameters are defined.
+        Accepted query parameters for the Resource.
+
+        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, or ``None``.
         """
         params = []
         if self.resource_type:
@@ -1102,11 +1163,11 @@ class Resource(_BaseResource):
         return params + _params or None
 
     @property
-    @memoized
     def uri_params(self):
         """
-        Returns a list of ``URIParameter`` objects of a Resource, or
-        ``None`` if none are defined.
+        Accepted URI parameters for the Resource.
+
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
         """
         params = []
         if self.resource_type:
@@ -1120,11 +1181,11 @@ class Resource(_BaseResource):
         return params + _params or None
 
     @property
-    @memoized
     def base_uri_params(self):
         """
-        Returns a list of base ``URIParameter`` objects of a Resource,
-        or ``None`` if none are defined.
+        Accepted base URI parameters for the Resource.
+
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
         """
         params = []
         if self.resource_type:
@@ -1138,11 +1199,11 @@ class Resource(_BaseResource):
         return params + _params or None
 
     @property
-    @memoized
     def form_params(self):
         """
-        Returns a list of FormParameter objects of a Resource,
-        or ``None`` if no form parameters are defined.
+        Accepted form parameters for the Resource.
+
+        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, or ``None``.
         """
         params = []
         if self.resource_type:
@@ -1154,7 +1215,6 @@ class Resource(_BaseResource):
         return params + _params or None
 
     # @property
-    # @memoized
     # def traits(self):
     #     traits = []
     #     if self.resource_type:
@@ -1165,11 +1225,11 @@ class Resource(_BaseResource):
     #     return traits + _traits or None
 
     @property
-    @memoized
     def description(self):
         """
-        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
-        attributes, or ``None`` if not defined.
+        Description of the Resource.
+
+        :rtype: ``list`` of :py:class:`.parameters.DescriptiveContent` objects, or ``None``.
         """
         if super(Resource, self).description is not None:
             return super(Resource, self).description

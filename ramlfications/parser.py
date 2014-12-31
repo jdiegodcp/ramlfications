@@ -35,7 +35,7 @@ HTTP_METHODS = [
 #####
 def parse_raml(loaded_raml):
     """
-    Parses the given RAML file and creates a RAMLRoot object.
+    Parses the given RAML file and creates a :py:class:`.raml.RAMLRoot` object.
 
     :param ramlfications.loader.RAMLDict loaded_raml: Loaded RAML file
     :return: Parsed RAML file

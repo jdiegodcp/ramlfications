@@ -33,8 +33,8 @@ The Basics
    >>> api.protocols
    ['HTTPS']
 
-User Documentation
-^^^^^^^^^^^^^^^^^^
+API Documentation
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -166,9 +166,102 @@ Traits
     'The index of the first track to return'
 
 
-.. note::
-  When accessing ``traits`` or ``resource_types`` from a ``Resource`` object, the <<parameters>>
-  are mapped/replaced with their appropriate value as defined in the RAML file.
+Mapping of Properties and Elements from Traits & Resource Types to Resources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a resource has a trait and/or type assigned to it, or a resource type has another \
+resource type or a trait assigned to it, it inherits its properties.
+
+
+Also, the `RAML Spec`_ allows for parameters within Traits and ResourceTypes, denoted by \
+double brackets within the Trait/ResourceType definition, e.g. ``<<parameter>>``.  After the parsing \
+of the API definition, the appropriate parameters are filled in for the respective resource.
+
+For example, a simplified RAML file::
+
+    #%RAML 0.8
+    title: Example API - Mapped Traits
+    version: v1
+    resourceTypes:
+      - searchableCollection:
+          get:
+            queryParameters:
+              <<queryParamName>>:
+                description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+              <<fallbackParamName>>:
+                description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+      - collection:
+          usage: This resourceType should be used for any collection of items
+          description: The collection of <<resourcePathName>>
+          get:
+            description: Get all <<resourcePathName>>, optionally filtered
+          post:
+            description: Create a new <<resourcePathName | !singularize>>
+    traits:
+      - secured:
+          description: A secured method
+          queryParameters:
+            <<tokenName>>:
+              description: A valid <<tokenName>> is required
+      - paged:
+          queryParameters:
+            numPages:
+              description: The number of pages to return, not to exceed <<maxPages>>
+    /books:
+      type: { searchableCollection: { queryParamName: title, fallbackParamName: digest_all_fields } }
+      get:
+        is: [ secured: { tokenName: access_token }, paged: { maxPages: 10 } ]
+
+
+When parsed, the Python notation would look like this:
+
+.. code-block:: python
+
+    >>> RAML_FILE = "/path/to/simplified-api.raml"
+    >>> api = parse(RAML_FILE)
+
+.. code-block:: python
+
+    # accessing API-supported resource types
+    >>> api.resource_types
+    [<ResourceType(method='GET', name='searchableCollection')>,
+    <ResourceType(method='POST', name='collection')>,
+    <ResourceType(method='GET', name='collection')>]
+    >>> api.resource_types[0].query_params
+    [<QueryParameter(name='<<queryParamName>>')>,
+    <QueryParameter(name='<<fallbackParamName>>')>]
+    >>> api.resource_types[0].query_params[0].description
+    Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+
+.. code-block:: python
+
+    # accessing API-supported traits
+    >>> api.traits
+    [<Trait(name='secured')>, <Trait(name='paged')>]
+    >>> api.traits[0].query_params
+    [<QueryParameter(name='numPages')>]
+    >>> api.traits[0].query_params[0].description
+    The number of pages to return, not to exceed <<maxPages>>
+
+
+.. code-block:: python
+
+    # accessing a single resource
+    >>> books = api.resources[0]
+    >>> books
+    <Resource(method='GET', path='/books')>
+    >>> books.type
+    {'searchableCollection': {'fallbackParamName': 'digest_all_fields', 'queryParamName': 'title'}}
+    >>> books.traits
+    [<Trait(name='secured')>, <Trait(name='paged')>]
+    >>> books.query_params
+    [<QueryParameter(name='title')>, <QueryParameter(name='digest_all_fields')>, 
+    <QueryParameter(name='access_token')>, <QueryParameter(name='numPages')>]
+    >>> books.query_params[0].description
+    Return books that have their title matching the given value
+    >>> books.query_params[3].description
+    The number of pages to return, not to exceed 10
+
 
 Check out :doc:`api` for full definition of ``traits`` and ``resources``, and its associated attributes and objects.
 
@@ -228,3 +321,4 @@ Check out :doc:`api` for full definition of what is available for a ``resource``
 .. _`Spotify's Web API`: https://developer.spotify.com/web-api/
 .. _`RAML supports`: http://raml.org/spec.html#security
 .. _`resource types and traits`: http://raml.org/spec.html#resource-types-and-traits
+.. _`RAML spec`: http://raml.org/spec.html#resource-types-and-traits

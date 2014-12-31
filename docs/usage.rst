@@ -13,8 +13,9 @@ To parse a RAML file, include ramlfications in your project and call the parse f
 
    >>> import ramlfications
    >>> RAML_FILE = "/path/to/my-api.raml"
-   >>> loaded_raml = ramlfications.load(RAML_FILE)
-   >>> api = ramlfications.parse(loaded_raml)
+   >>> api = ramlfications.parse(RAML_FILE)
+   >>> api
+   <RAMLRoot(raml_file="path/to/my/awesome-api.raml")>
    >>> api.title
    'Spotify Web API'
 
@@ -56,7 +57,8 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> id_param.example
    '1zHlj4dQ8ZAtrayhuDDmkY'
 
-For more complete understanding of what's available when parsing a RAML file, check the :doc:`extendedusage`!
+For more complete understanding of what's available when parsing a RAML file, check the :doc:`extendedusage` \
+or the :doc:`api`.
 
 
 Validate
@@ -73,6 +75,13 @@ To validate a RAML file via the command line:
 .. code-block:: bash
 
    $ ramlfications validate /path/to/my-api.raml
+   Success! Valid RAML file: tests/data/examples/simple-tree.raml
+
+.. code-block:: bash
+
+    $ ramlfications validate /path/to/invalid-api.raml
+    Error validating file tests/data/examples/incorrect-raml-header.raml: Not a valid RAML header: #%FOO.
+
 
 To validate a RAML file with Python:
 
@@ -82,6 +91,18 @@ To validate a RAML file with Python:
    >>> RAML_FILE = "/path/to/my-api.raml"
    >>> validate(RAML_FILE)
    >>>
+
+.. code-block:: python
+
+   >>> from ramlfications import validate
+   >>> RAML_FILE = "/path/to/invalid-api.raml"
+   >>> validate(RAML_FILE)
+   InvalidRamlFileError: Not a valid RAML header: #%FOO.
+
+.. note:: 
+    When using ``validate`` within Python (versus the command line utility), if the RAML \
+    file is valid, then nothing is returned.  Only invalid files will return an \
+    ``InvalidRamlFileError``.
 
 
 Tree

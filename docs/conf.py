@@ -64,7 +64,11 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
+    'sphinx.ext.autosummary',
 ]
+autodoc_member_order = 'bysource'
+autodoc_default_flags = 'members', 'inherited-members', 'show-inheritance'
+autoclass_content = 'both'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

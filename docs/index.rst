@@ -4,7 +4,7 @@ Welcome to RAMLfications's documentation!
 Release v\ |release| (:doc:`What's new? <changelog>`).
 
 
-.. include:: ../README.rst
+.. include:: intro.rst
       :start-after: begin
 
 
@@ -12,16 +12,15 @@ User's Guide
 ============
 
 .. toctree::
-   :maxdepth: 1
 
    installation
    usage
    extendedusage
-   api
+   API Definition <api>
 
 
 Project Information
--------------------
+===================
 
 .. toctree::
    :maxdepth: 1
