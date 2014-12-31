@@ -14,8 +14,7 @@ import sys
 
 from termcolor import colored
 
-from .parser import APIRoot
-
+from .parser import parse_raml
 
 COLOR_MAP = {
     "light": (('white', None),
@@ -120,19 +119,31 @@ def _print_metadata(api, color):
     sys.stdout.write(head)
 
 
-def pprint_tree(api, ordered_resources, print_color, verbosity):
+def _print_tree(api, ordered_resources, print_color, verbosity):
     _print_metadata(api, print_color)
     _print_verbosity(ordered_resources, print_color, verbosity)
 
 
 def ttree(load_obj, color, output, verbosity):  # pragma: no cover
-    api = APIRoot(load_obj)
+    """
+    Main Tree functionality.
+
+    :param ramlfications.loader.RAMLDict load_obj: Loaded RAML File
+    :param str color: ``light``, ``dark`` or ``None`` for the color output
+    :param str output: Path to output file, if given
+    :param str verbosity: Level of verbosity to print out
+    :return: ASCII Tree representation of API
+    :rtype: stdout to screen or file
+    :raises InvalidRamlFileError: If error occured trying to validate the RAML
+        file (see ``validate.py``)
+    """
+    api = parse_raml(load_obj)
     resources = _get_tree(api)
     ordered_resources = _order_resources(resources)
 
     if output:
         sys.stdout = output  # file is opened via @click from __main__.py
-        pprint_tree(api, ordered_resources, color, verbosity)
+        _print_tree(api, ordered_resources, color, verbosity)
         output.close()
     else:
-        pprint_tree(api, ordered_resources, color, verbosity)
+        _print_tree(api, ordered_resources, color, verbosity)

@@ -15,8 +15,7 @@ from .validate import InvalidRamlFileError
 @click.group()
 def main():
     """The main routine."""
-    # Is this used for anything? Can it be removed and improved somehow?
-    # LR: @click.group() collects all below and attributes it to the main()
+    # Needed to collect the validate & tree commands
 
 
 @main.command(help="Validate a RAML file.")

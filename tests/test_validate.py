@@ -83,6 +83,11 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
+    def test_has_resources(self):
+        raml_file = os.path.join(VALIDATE, "no-resources.raml")
+        expected_msg = "No resources are defined."
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
     def test_validate_docs_title(self):
         raml_file = os.path.join(VALIDATE, "docs-no-title.raml")
 

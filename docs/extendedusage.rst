@@ -33,8 +33,8 @@ The Basics
    >>> api.protocols
    ['HTTPS']
 
-User Documentation
-^^^^^^^^^^^^^^^^^^
+API Documentation
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -52,14 +52,14 @@ With ``ramlfications``, documentation content and descriptions can either be vie
 
 .. code-block:: python
 
-   >>> doc.content_raw
+   >>> doc.content
    'Welcome to the _Spotify Web API_ specification. For more information about\nhow to use the API, check out [developer site](https://developer.spotify.com/web-api/).\n'
    >>>
-   >>> doc.content_html
+   >>> doc.content.html
    u'<p>Welcome to the <em>Spotify Web API</em> specification. For more information about\nhow to use the API, check out <a href="https://developer.spotify.com/web-api/">developer site</a>.</p>\n'
 
 
-Check out :doc:`api` for full definition of ``APIRoot`` and its associated attributes and objects.
+Check out :doc:`api` for full definition of ``RAMLRoot`` and its associated attributes and objects.
 
 
 Security Schemes
@@ -78,9 +78,9 @@ To parse auth schemes:
    'oauth_2_0'
    >>> oauth2.type
    'OAuth 2.0'
-   >>> oauth2.description_raw
+   >>> oauth2.description
    'Spotify supports OAuth 2.0 for authenticating all API requests.\n'
-   >>> oauth2.description_html
+   >>> oauth2.description.html
    u'<p>Spotify supports OAuth 2.0 for authenticating all API requests.</p>\n'
 
 And its related Headers and Responses:
@@ -94,16 +94,16 @@ And its related Headers and Responses:
    <HeaderParameter(name='Authorization')>
    >>> first_header.name
    'Authorization'
-   >>> first_headers.description_raw
+   >>> first_headers.description
    'Used to send a valid OAuth 2 access token.\n'
-   >>> first_headers.description_html
+   >>> first_headers.description.html
    u'<p>Used to send a valid OAuth 2 access token.</p>\n'
    >>> resps = oauth2.described_by['responses']
    >>> resps
    [<Response(code='401')>, <Response(code='403')>]
    >>> resp[0].code
    401
-   >>> resp[0].description_raw
+   >>> resp[0].description.raw
    'Bad or expired token. This can happen if the user revoked a token or\nthe access token has expired. You should re-authenticate the user.\n'
 
 Authentication settings (available for OAuth1, OAuth2, and any x-header that includes "settings" in the RAML definition).
@@ -138,7 +138,7 @@ Resource Types
     >>> collection = api.resource_types[0]
     >>> collection.name
     'collection'
-    >>> collection.description_raw
+    >>> collection.description
     'The collection of <<resourcePathName>>'
     >>> collection.usage
     'This resourceType should be used for any collection of items'
@@ -156,13 +156,112 @@ Traits
 .. code-block:: python
 
     >>> api.traits
-    [{'secured': <QueryParameter(name='<<tokenName>>')>}, {'paged': <QueryParameter(name='numPages')>}]
-    >>> secured = api.traits[0]
-    >>> first_query_param = secured.values()[0]
-    >>> first_query_param.name
-    '<<tokenName>>'
-    >>> first_query_param.description_raw
-    'A valid <<tokenName>> is required'
+    [<Trait(name='filtered')>, <Trait(name='paged')>]
+    >>> paged = api.traits[1]
+    >>> paged.query_params
+    [<QueryParameter(name='offset')>, <QueryParameter(name='limit')>]
+    >>> paged.query_params[0].name
+    'offset'
+    >>> paged.query_params[0].description
+    'The index of the first track to return'
+
+
+Mapping of Properties and Elements from Traits & Resource Types to Resources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a resource has a trait and/or type assigned to it, or a resource type has another \
+resource type or a trait assigned to it, it inherits its properties.
+
+
+Also, the `RAML Spec`_ allows for parameters within Traits and ResourceTypes, denoted by \
+double brackets within the Trait/ResourceType definition, e.g. ``<<parameter>>``.  After the parsing \
+of the API definition, the appropriate parameters are filled in for the respective resource.
+
+For example, a simplified RAML file::
+
+    #%RAML 0.8
+    title: Example API - Mapped Traits
+    version: v1
+    resourceTypes:
+      - searchableCollection:
+          get:
+            queryParameters:
+              <<queryParamName>>:
+                description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+              <<fallbackParamName>>:
+                description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+      - collection:
+          usage: This resourceType should be used for any collection of items
+          description: The collection of <<resourcePathName>>
+          get:
+            description: Get all <<resourcePathName>>, optionally filtered
+          post:
+            description: Create a new <<resourcePathName | !singularize>>
+    traits:
+      - secured:
+          description: A secured method
+          queryParameters:
+            <<tokenName>>:
+              description: A valid <<tokenName>> is required
+      - paged:
+          queryParameters:
+            numPages:
+              description: The number of pages to return, not to exceed <<maxPages>>
+    /books:
+      type: { searchableCollection: { queryParamName: title, fallbackParamName: digest_all_fields } }
+      get:
+        is: [ secured: { tokenName: access_token }, paged: { maxPages: 10 } ]
+
+
+When parsed, the Python notation would look like this:
+
+.. code-block:: python
+
+    >>> RAML_FILE = "/path/to/simplified-api.raml"
+    >>> api = parse(RAML_FILE)
+
+.. code-block:: python
+
+    # accessing API-supported resource types
+    >>> api.resource_types
+    [<ResourceType(method='GET', name='searchableCollection')>,
+    <ResourceType(method='POST', name='collection')>,
+    <ResourceType(method='GET', name='collection')>]
+    >>> api.resource_types[0].query_params
+    [<QueryParameter(name='<<queryParamName>>')>,
+    <QueryParameter(name='<<fallbackParamName>>')>]
+    >>> api.resource_types[0].query_params[0].description
+    Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+
+.. code-block:: python
+
+    # accessing API-supported traits
+    >>> api.traits
+    [<Trait(name='secured')>, <Trait(name='paged')>]
+    >>> api.traits[0].query_params
+    [<QueryParameter(name='numPages')>]
+    >>> api.traits[0].query_params[0].description
+    The number of pages to return, not to exceed <<maxPages>>
+
+
+.. code-block:: python
+
+    # accessing a single resource
+    >>> books = api.resources[0]
+    >>> books
+    <Resource(method='GET', path='/books')>
+    >>> books.type
+    {'searchableCollection': {'fallbackParamName': 'digest_all_fields', 'queryParamName': 'title'}}
+    >>> books.traits
+    [<Trait(name='secured')>, <Trait(name='paged')>]
+    >>> books.query_params
+    [<QueryParameter(name='title')>, <QueryParameter(name='digest_all_fields')>, 
+    <QueryParameter(name='access_token')>, <QueryParameter(name='numPages')>]
+    >>> books.query_params[0].description
+    Return books that have their title matching the given value
+    >>> books.query_params[3].description
+    The number of pages to return, not to exceed 10
+
 
 Check out :doc:`api` for full definition of ``traits`` and ``resources``, and its associated attributes and objects.
 
@@ -177,20 +276,20 @@ its parent URI).
 For example, `Spotify's Web API`_ defines ``/tracks`` as a resource (a
 "top-level resource" to be exact).  It also defines ``/{id}`` under ``/tracks``,
 making ``/{id}`` a nested resource, relative to ``/tracks``.  The relative path
-would be ``/tracks/{id}``, and the absolute path would be
+would be ``/tracks/{id}``, and the absolute URI path would be
 ``https://api.spotify.com/v1/tracks/{id}``.
 
 .. code-block:: python
 
    >>> api.resources
-   ['get-several-tracks', 'get-current-user', 'get-users-profile',..., 'delete-playlist-tracks']
+   [<Resource(method='GET', path='/tracks')>,..., <Resource(method='DELETE', path='/users/{user_id}/playlists/{playlist_id/tracks')>]
    >>>
    >>> track = resources[5]
    >>> track.name
    '/{id}'
-   >>> track.description_raw
+   >>> track.description
    '[Get a Track](https://developer.spotify.com/web-api/get-track/)\n'
-   >>> track.description_html
+   >>> track.description.html
    u'<p><a href="https://developer.spotify.com/web-api/get-track/">Get a Track</a></p>\n'
    >>> track.display_name
    'track'
@@ -198,7 +297,7 @@ would be ``/tracks/{id}``, and the absolute path would be
    'get'
    >>> track.path
    '/tracks/{id}'
-   >>> track.absolute_path
+   >>> track.absolute_uri
    'https://api.spotify.com/v1/tracks/{id}'
    >>> track.uri_params
    [<URIParameter(name='id')>]
@@ -210,9 +309,8 @@ would be ``/tracks/{id}``, and the absolute path would be
    'string'
    >>> id_param.example
    '1zHlj4dQ8ZAtrayhuDDmkY'
-   >>> tracks = track.parent
-   >>> tracks
-   <Resource(method='GET', path='/tracks/{id}')>
+   >>> track.parent
+   <Resource(method='GET', path='/tracks/')>
 
 Check out :doc:`api` for full definition of what is available for a ``resource`` object, and its associated attributes and objects.
 
@@ -223,3 +321,4 @@ Check out :doc:`api` for full definition of what is available for a ``resource``
 .. _`Spotify's Web API`: https://developer.spotify.com/web-api/
 .. _`RAML supports`: http://raml.org/spec.html#security
 .. _`resource types and traits`: http://raml.org/spec.html#resource-types-and-traits
+.. _`RAML spec`: http://raml.org/spec.html#resource-types-and-traits

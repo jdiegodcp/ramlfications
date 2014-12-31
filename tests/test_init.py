@@ -5,7 +5,7 @@
 import os
 
 from ramlfications import parse, load, validate
-from ramlfications.parser import APIRoot
+from ramlfications.raml import RAMLRoot
 from ramlfications.loader import LoadRamlFileError, RAMLDict
 from ramlfications.validate import InvalidRamlFileError
 
@@ -19,7 +19,7 @@ class TestParse(BaseTestCase):
     def test_parse(self):
         result = parse(self.raml_file)
         self.assertIsNotNone(result)
-        self.assertIsInstance(result, APIRoot)
+        self.assertIsInstance(result, RAMLRoot)
 
     def test_parse_nonexistant_file(self):
         raml_file = "/tmp/non-existant-raml-file.raml"

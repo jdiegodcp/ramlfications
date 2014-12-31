@@ -9,3 +9,11 @@
 .rst-content a {
     color: #81b900;
 }
+
+.rst-content dl:not(.docutils) dt {
+    padding: 2px;
+}
+
+dt#ramlfications.raml.RAMLRoot.resources {
+    padding: 2px;
+}

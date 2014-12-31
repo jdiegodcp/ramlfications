@@ -17,36 +17,83 @@ ramlfications: RAML reference implementation in Python
 
 .. begin
 
+Requirements and Installation
+=============================
 
-``ramlfications`` is an Apache 2.0-licensed reference implementation of a
-`RAML`_ parser in Python intended to be used for parsing API definitions
-(e.g. for static documentation-generation).
+User Setup
+----------
 
-If you’ve never heard of `RAML`_, you’re missing out:
+The latest stable version can be found on PyPI_, and you can install via pip_::
 
-    RESTful API Modeling Language (RAML) is a simple and succinct way of describing practically-RESTful APIs.
-    It encourages reuse, enables discovery and pattern-sharing, and aims for merit-based emergence of best practices.
-    The goal is to help our current API ecosystem by solving immediate problems and then encourage ever-better API patterns.
-    RAML is built on broadly-used standards such as YAML and JSON and is a non-proprietary, vendor-neutral open spec.
+   $ pip install ramlfications
 
-Why ``ramlfications`` and not `pyraml-parser`_?
------------------------------------------------
+``ramlfications`` runs on Python 2.6, 2.7, and 3.3+, and PyPy. Both Linux and OS X are supported.
 
-I chose to write a new library rather than wrestle with `pyraml-parser`_ as it
-was not developer-friendly to extend (in my PoV, others may have more success)
-and did not include required `RAML <http://raml.org/spec.html>`_ features
-(e.g. `uriParameters`_, parsing of security schemes, etc), as well as a lot
-of meta programming that is just simply over my head.  However, I do
-encourage you to check out `pyraml-parser`_! You may find it easier to work with than I did.
-
-About
------
-``ramlfications``\ ’s documentation lives at `Read the Docs`_, the code on GitHub_.
-It’s tested on Python 2.6, 2.7, 3.3+, and PyPy. Both Linux and OS X are supported.
+Continue onto :doc:`usage` to get started on using ``ramlfications``.
 
 
-.. _`Documentation Set`: http://raml.org/
-.. _`Read the Docs`: https://ramlfications.readthedocs.org/
-.. _`GitHub`:  https://github.com/spotify/ramlfications/
-.. _`pyraml-parser`: https://github.com/an2deg/pyraml-parser
-.. _`uriParameters`: https://github.com/an2deg/pyraml-parser/issues/6
+Developer Setup
+---------------
+
+If you'd like to contribute or develop upon ``ramlfications``, be sure to read :doc:`contributing` 
+first.
+
+System requirements:
+^^^^^^^^^^^^^^^^^^^^
+
+- C Compiler (gcc/clang/etc.)
+- If on Linux - you'll need to install Python headers (e.g. ``apt-get install python-dev``)
+- Python 2.6, 2.7, 3.3+, or PyPy
+- virtualenv_
+
+Here's how to set your machine up::
+
+    $ git clone git@github.com:spotify/ramlfications
+    $ cd ramlfications
+    $ virtualenv env
+    $ source env/bin/activate
+    (env) $ pip install -r dev-requirements.txt
+
+
+Run Tests
+^^^^^^^^^
+
+If you'd like to run tests for all supported Python versions, you must have all Python versions
+installed on your system.  I suggest pyenv_ to help with that.
+
+To run all tests::
+
+    (env) $ tox
+
+To run a specific test setup (options include: ``py26``, ``py27``, ``py33``, ``py34``, ``pypy``,
+``flake8``, ``verbose``, ``manifest``, ``docs``, ``setup``, ``setupcov``)::
+
+    (env) $ tox -e py26
+
+To run tests without tox::
+
+    (env) $ nosetests
+    (env) $ nosetests --with-coverage --cover-package=ramlfications
+
+
+Build Docs
+^^^^^^^^^^
+
+Documentation is build with Sphinx_, written in rST, uses the `Read the Docs`_ theme with
+a slightly customized CSS, and is hosted on `Read the Docs site`_.
+
+To rebuild docs locally, within the parent ``ramlfications`` directory::
+
+    (env) $ sphinx-build -b docs/ docs/_build
+
+Then within ``ramlfications/docs/_build`` you can open the index.html page in your browser.
+
+
+
+.. _pip: https://pip.pypa.io/en/latest/installing.html#install-pip
+.. _PyPI: https://pypi.python.org/project/ramlfications/
+.. _virtualenv: https://virtualenv.pypa.io/en/latest/
+.. _pyenv: https://github.com/yyuu/pyenv
+.. _Sphinx: http://sphinx-doc.org/
+.. _`Read the Docs`: https://github.com/snide/sphinx_rtd_theme
+.. _`Read the Docs site`: https://ramlfications.readthedocs.org

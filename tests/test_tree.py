@@ -8,7 +8,7 @@ import sys
 
 from six import StringIO
 
-from ramlfications import tree, parser, loader
+from ramlfications import tree, loader, parser
 
 from .base import BaseTestCase, EXAMPLES
 from .data.fixtures import tree_fixtures
@@ -16,9 +16,9 @@ from .data.fixtures import tree_fixtures
 
 class TestPrintTree(BaseTestCase):
     def setUp(self):
-        raml_file = os.path.join(EXAMPLES, "simple-tree.raml")
-        raml = loader.RAMLLoader().load(raml_file)
-        self.api = parser.APIRoot(raml)
+        raml_str = os.path.join(EXAMPLES, "simple-tree.raml")
+        loaded_raml = loader.RAMLLoader().load(raml_str)
+        self.api = parser.parse_raml(loaded_raml)
         self.held, sys.stdout = sys.stdout, StringIO()
 
     def test_get_tree(self):
@@ -30,33 +30,33 @@ class TestPrintTree(BaseTestCase):
 
         self.assertEqual(len(ttree), 4)
 
-    def pprint_tree(self, expected_result, color, verbosity):
+    def print_tree(self, expected_result, color, verbosity):
         resources = tree._get_tree(self.api)
         ordered_res = tree._order_resources(resources)
-        tree.pprint_tree(self.api, ordered_res, color, verbosity)
+        tree._print_tree(self.api, ordered_res, color, verbosity)
 
         self.assertEqual(sys.stdout.getvalue(), expected_result)
 
     def test_pprint_tree_no_color(self):
         expected_result = tree_fixtures.tree_no_color
-        self.pprint_tree(expected_result, None, 0)
+        self.print_tree(expected_result, None, 0)
 
     def test_pprint_tree_light(self):
         expected_result = tree_fixtures.tree_light
-        self.pprint_tree(expected_result, 'light', 0)
+        self.print_tree(expected_result, 'light', 0)
 
     def test_pprint_tree_dark(self):
         expected_result = tree_fixtures.tree_dark
-        self.pprint_tree(expected_result, 'dark', 0)
+        self.print_tree(expected_result, 'dark', 0)
 
     def test_pprint_tree_light_v(self):
         expected_result = tree_fixtures.tree_light_v
-        self.pprint_tree(expected_result, 'light', 1)
+        self.print_tree(expected_result, 'light', 1)
 
     def test_pprint_tree_light_vv(self):
         expected_result = tree_fixtures.tree_light_vv
-        self.pprint_tree(expected_result, 'light', 2)
+        self.print_tree(expected_result, 'light', 2)
 
     def test_pprint_tree_light_vvv(self):
         expected_result = tree_fixtures.tree_light_vvv
-        self.pprint_tree(expected_result, 'light', 3)
+        self.print_tree(expected_result, 'light', 3)

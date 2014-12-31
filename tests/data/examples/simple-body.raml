@@ -14,7 +14,6 @@ baseUri: https://api.spotify.com/{version}
   post:
     description: |
       [Create a Playlist](https://developer.spotify.com/web-api/create-playlist/)
-    securedBy: [ oauth_2_0: {scopes: ['playlist-modify-public', 'playlist-modify-private']}]
     body:
       application/json:
         schema: !include includes/post-playlist-schema.json
