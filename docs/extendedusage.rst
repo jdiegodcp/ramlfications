@@ -255,7 +255,7 @@ When parsed, the Python notation would look like this:
     >>> books.traits
     [<Trait(name='secured')>, <Trait(name='paged')>]
     >>> books.query_params
-    [<QueryParameter(name='title')>, <QueryParameter(name='digest_all_fields')>, 
+    [<QueryParameter(name='title')>, <QueryParameter(name='digest_all_fields')>,
     <QueryParameter(name='access_token')>, <QueryParameter(name='numPages')>]
     >>> books.query_params[0].description
     Return books that have their title matching the given value

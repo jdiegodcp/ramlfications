@@ -12,6 +12,7 @@ HTTP_METHODS = [
 ]
 
 
+# TODO: is this object really needed?
 class ContentType(object):
     """
     Supported Content Type of a resource (e.g. ``application/json``).
@@ -32,14 +33,15 @@ class ContentType(object):
 
 
 # NOTE: this is a class for extensibility, e.g. adding RTF support or whatevs
-class DescriptiveContent(object):
+class Content(object):
     """
     Returns documentable content from the RAML file (e.g. Documentation
     content, description) in either raw or parsed form.
-
-    :param str data: The raw/marked up content.
     """
     def __init__(self, data):
+        """
+        :param str data: The raw/marked up content
+        """
         self.data = data
 
     @property
@@ -52,7 +54,7 @@ class DescriptiveContent(object):
     @property
     def html(self):
         """
-        Returns parsed Markdown into HTML.
+        Returns text parsed from Markdown into HTML.
         """
         try:
             return markdown.markdown(self.data)
@@ -64,45 +66,58 @@ class DescriptiveContent(object):
 
 
 class String(object):
-    """String parameter type"""
+    """
+    Primative String type
+    """
     def __init__(self, name, data):
+        """
+        :param str name: Name of parameter
+        :param dict data: Data associated with parameter
+        """
         self.name = name
         self.data = data
 
     @property
     def enum(self):
         """
-        Returns the ``enum`` attribute that provides an enumeration of the
-        parameter's valid values. This MUST be an array.  Applicable only
-        for parameters of type ``string``.  Returns ``None`` if not set.
-        (Optional)
+        Returns the ``enum`` attribute, if any, that provides an \
+        enumeration of the :py:class:`.String` parameter's valid values.
+
+        :returns: enum
+        :rtype: ``list`` of ``str`` s, or ``None``
         """
         return self.data.get('enum')
 
     @property
     def pattern(self):
         """
-        Returns the pattern attribute that is a regular expression
-        that parameter of type ``string`` MUST match.
-        Returns ``None`` if not set.
+        Returns the pattern attribute, if any, that is a regular expression
+        that the :py:class:.`String` parameter MUST match.
+
+        :returns: regex pattern
+        :rtype: ``str``, or ``None``
         """
         return self.data.get('pattern')
 
     @property
     def min_length(self):
         """
-        Returns the parameter value's minimum number of characters.
-        Applicable only for parameters of type ``string``.
-        Returns ``None`` if not set.
+        Returns the minimum number of characters of the :py:class:`.String` \
+        parameter as defined in the API specification.
+
+        :returns: Minimum number of allowed characters
+        :rtype: ``int``, or ``None``
         """
         return self.data.get('min_length')
 
     @property
     def max_length(self):
         """
-        Returns the parameter value's maximum number of characters.
-        Applicable only for parameters of type ``string``.
-        Returns ``None`` if not set.
+        Returns the maximum number of characters of the :py:class:`.String` \
+        parameter as defined in the API specification.
+
+        :returns: Maximum number of allowed characters
+        :rtype: ``int``, or ``None``
         """
         return self.data.get('maxLength')
 
@@ -111,24 +126,36 @@ class String(object):
 
 
 class IntegerNumber(object):
-    """Integer or Number Parameter Type"""
+    """
+    Primative Integer or Number Parameter Type
+    """
     def __init__(self, name, data):
+        """
+        :param str name: Name of parameter
+        :param dict data: Data associated with parameter
+        """
         self.name = name
         self.data = data
 
     @property
     def minimum(self):
         """
-        Returns the parameter's minimum value.
-        Applicable only for parameters of type ``integer`` or ``number``.
+        Returns the minimum value of the :py:class:`.IntegerNumber` \
+        parameter as defined in the API specification.
+
+        :returns: Minimum value
+        :rtype: ``int``, ``float``, or ``None``
         """
         return self.data.get('minimum')
 
     @property
     def maximum(self):
         """
-        Returns the parameter's minimum value.
-        Applicable only for parameters of type ``integer`` or ``number``.
+        Returns the maximum value of the :py:class:`.IntegerNumber` \
+        parameter as defined in the API specification.
+
+        :returns: Maximum value
+        :rtype: ``int``, ``float``, or ``None``
         """
         return self.data.get('maximum')
 
@@ -137,15 +164,23 @@ class IntegerNumber(object):
 
 
 class Boolean(object):
-    """Boolean Parameter Type"""
+    """
+    Primative Boolean Parameter Type
+    """
     def __init__(self, name, data):
+        """
+        :param str name: Name of parameter
+        :param dict data: Data associated with parameter
+        """
         self.name = name
         self.data = data
 
     @property
     def repeat(self):
         """
-        Returns a boolean if the parameter can be repeated.
+        Returns if the parameter can be repeated.
+
+        :rtype: boolean; ``False`` if not defined
         """
         return self.data.get('repeat', False)
 
@@ -154,15 +189,23 @@ class Boolean(object):
 
 
 class Date(object):
-    """Date Parameter Type"""
+    """
+    Primative Date Parameter Type
+    """
     def __init__(self, name, data):
+        """
+        :param str name: Name of parameter
+        :param dict data: Data associated with parameter
+        """
         self.name = name
         self.data = data
 
     @property
     def repeat(self):
         """
-        Returns a boolean if the parameter can be repeated.
+        Returns if the parameter can be repeated.
+
+        :rtype: boolean; ``False`` if not defined
         """
         return self.data.get('repeat', False)
 
@@ -173,13 +216,19 @@ class Date(object):
 class File(object):
     """File Parameter Type"""
     def __init__(self, name, data):
+        """
+        :param str name: Name of parameter
+        :param dict data: Data associated with parameter
+        """
         self.name = name
         self.data = data
 
     @property
     def repeat(self):
         """
-        Returns a boolean if the parameter can be repeated.
+        Returns if the parameter can be repeated.
+
+        :rtype: boolean; ``False`` if not defined
         """
         return self.data.get('repeat', False)
 
@@ -189,16 +238,16 @@ class File(object):
 
 class BaseParameter(object):
     """
-    Base parameter with properties defined by the RAML spec's
-    'Named Parameters' section.
-
-    :param str name: The item name of parameter
-    :param dict data: All defined data of the item
-    :param str param_type: Type of parameter
+    Base parameter from which all objects that contain "Named Parameters"
+    per `RAML Spec <http://raml.org/spec.html#named-parameters>`_ can \
+    inherit.
     """
     def __init__(self, name, data, param_type):
-        # Input validation would be nice here.
-        # LR: Will do, but will add it to validate.py
+        """
+        :param str name: The item name of parameter
+        :param dict data: All defined data of the item
+        :param str param_type: Type of parameter
+        """
         self.name = name
         self.data = data
         self.param_type = param_type
@@ -206,11 +255,13 @@ class BaseParameter(object):
     @property
     def display_name(self):
         """
-        Returns the parameter's display name.  (Optional)
+        Returns the parameter's display name used for display or \
+        documentation purposes.
 
-        A friendly name used only for display or documentation purposes.
+        If ``displayName`` is not specified in RAML, it defaults to \
+        :py:obj:`.name`.
 
-        If ``displayName`` is not specified in RAML, it defaults to ``name``.
+        :rtype: ``str``
         """
         return self.data.get('displayName', self.name)
 
@@ -228,7 +279,7 @@ class BaseParameter(object):
     def type(self):
         """
         Primative type of Parameter.  If ``type`` is not specified in the RAML
-        definition, it defaults to ``string``.  (Optional)
+        definition, it defaults to :py:class:`.String`.
 
         Valid types are:
 
@@ -240,36 +291,35 @@ class BaseParameter(object):
                 `RFC2616 <https://www.ietf.org/rfc/rfc2616.txt>`_
             * ``boolean``
             * ``file`` - only applicable in FormParameters
+
+        :returns: Appropriate primative parameter object
         """
-        # TODO: Add test if 'type' isn't set in RAML
         item_type = self.data.get('type', 'string')
         return self._map_type(item_type)(self.name, self.data)
 
     @property
     def description(self):
         """
-        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
-        attributes, or ``None`` if not defined.
+        Returns :py:class:`.Content` object with ``raw`` and \
+        ``html`` attributes, or ``None`` if not defined.
 
-        Assumes raw content is written in plain text or Markdown in RAML
-        per specification. (Optional)
+        :rtype: :py:class:`.Content`
         """
-        return DescriptiveContent(self.data.get('description'))
+        return Content(self.data.get('description'))
 
     @property
     def example(self):
         """
-        Returns the example value for the property.  Returns ``None`` if
-        not set.  (Optional)
+        :returns: example value for the property if set, or ``None``
+        :rtype: appropriate primative type, e.g. ``str``, ``int``, ``bool``
         """
         return self.data.get('example')
 
     @property
     def default(self):
         """
-        Returns the default attribute for the property if the property
-        is omitted or its value is not specified.  Returns ``None`` if not
-        defined. (Optional)
+        :returns: default value for the property if set, or ``None``
+        :rtype: appropriate primative type, e.g. ``str``, ``int``, ``bool``
         """
         return self.data.get('default')
 
@@ -280,117 +330,119 @@ class BaseParameter(object):
 class URIParameter(BaseParameter):
     """
     URI parameter with properties defined by the RAML spec's
-    'Named Parameters' section, e.g. ``/foo/{id}`` where ``id``
-    is the name of URI parameter, and ``data`` are the
-    defined RAML attributes (e.g. ``required=True``, ``type=string``)
-
-    :param str param: The parameter name
-    :param dict data: All defined data of the parameter
-    :param bool required: Default is True
+    `Named Parameters <http://raml.org/spec.html#named-parameters>`_ section, \
+    e.g. ``/foo/{id}`` where ``id`` is the name of URI parameter, and \
+    ``data`` contains the defined RAML attributes.
     """
-    def __init__(self, param, data, required=True):
-        # Same concerns as in the class above. Will not mention it again
-        # below.
-        # LR: this does inherit BaseParameter, this is the new preferred way to
-        # call super() on classes that is compatible with py2 and py3
-        BaseParameter.__init__(self, param, data, "URI")
+    def __init__(self, name, data, required=True):
+        """
+        :param str name: The parameter name
+        :param dict data: All defined data of the parameter
+        :param bool required: Default is True
+        """
+        BaseParameter.__init__(self, name, data, "URI")
         self.required = required
 
 
 class QueryParameter(BaseParameter):
     """
     Query parameter with properties defined by the RAML spec's
-    'Named Parameters' section, e.g.:
+    `Named Parameters <http://raml.org/spec.html#named-parameters>`_ \
+    section, e.g.:
 
-    ``/foo/bar?baz=123``
+        ``/foo/bar?baz=123``
 
-    where ``baz`` is the Query Parameter name, and ``data`` are the
-    defined RAML attributes (e.g. ``required=True``, ``type=string``)
-
-    :param str param: The parameter name
-    :param dict data: All defined data of the parameter
-    :param bool required: Default is True
+    where ``baz`` is the Query Parameter name, and ``data`` \
+    contains the defined RAML attributes.
     """
-    def __init__(self, param, data):
-        BaseParameter.__init__(self, param, data, "Query")
+    def __init__(self, name, data):
+        """
+        :param str name: The parameter name
+        :param dict data: All defined data of the parameter
+        :param bool required: Default is True
+        """
+        BaseParameter.__init__(self, name, data, "Query")
 
     @property
     def required(self):
         """
-        Returns a boolean if the the parameter and its value MUST be present.
-        Defaults to ``False`` if not defined, except for ``URIParameter``,
-        where the default is ``True`` if omitted.
+        :returns: if the the parameter and its value MUST be present
+        :rtype: ``bool``, defaults to ``False`` if not defined
         """
-        return self.data.get('required', True)
+        return self.data.get('required', False)
 
 
 class FormParameter(BaseParameter):
     """
-    Form parameter with properties defined by the RAML spec's
-    'Named Parameters' section, e.g.:
+    Form parameter with properties defined by the RAML spec's \
+    `Named Parameters <http://raml.org/spec.html#named-parameters>`_ \
+    section, e.g.:
 
-    ``curl -X POST https://api.com/foo/bar -d baz=123``
+        ``curl -X POST https://api.com/foo/bar -d baz=123``
 
-    where ``baz`` is the Form Parameter name, and ``data`` are the
-    defined RAML attributes (e.g. ``required=True``, ``type=string``).
-
-    :param str param: The parameter name
-    :param dict data: All defined data of the parameter
+    where ``baz`` is the Form Parameter name, and ``data`` contains the \
+    defined RAML attributes.
     """
-    def __init__(self, param, data):
-        BaseParameter.__init__(self, param, data, "Form")
+    def __init__(self, name, data):
+        """
+        :param str name: The parameter name
+        :param dict data: All defined data of the parameter
+        """
+        BaseParameter.__init__(self, name, data, "Form")
 
     @property
     def required(self):
         """
-        Returns a boolean if the the parameter and its value MUST be present.
-        Defaults to ``False`` if not defined, except for ``URIParameter``,
-        where the default is ``True`` if omitted.
+        :returns: if the the parameter and its value MUST be present
+        :rtype: ``bool``, defaults to ``False`` if not defined
         """
-        return self.data.get('required', True)
+        return self.data.get('required', False)
 
 
 class Header(BaseParameter):
     """
     Header with properties defined by the RAML spec's
-    'Named Parameters' section, e.g.:
+    `Named Parameters <http://raml.org/spec.html#named-parameters>`_ \
+    section, e.g.:
 
-    ``curl -H 'X-Some-Header: foobar' ...``
+        ``curl -H 'X-Some-Header: foobar' ...``
 
-    where ``X-Some-Header`` is the Header name, and ``data`` are the
-    defined RAML attributes (e.g. ``required=True``, ``type=string``).
-
-    :param str param: The parameter name
-    :param dict data: All defined data of the parameter
+    where ``X-Some-Header`` is the Header name, and ``data`` contains the
+    defined RAML attributes.
     """
     def __init__(self, name, data, method=None):
+        """
+        :param str name: The parameter name
+        :param dict data: All defined data of the parameter
+        :param str method: Supported HTTP method
+        """
         BaseParameter.__init__(self, name, data, "Header")
         self.method = method
 
 
-# - Document if return types can be None, but even better return empty
-#   strings everywhere. I won't repeat that. (LR: Will do)
 class Body(object):
-    def __init__(self, name, data):
-        self.name = name
+    """
+    Body of a request or a :py:class:`.Response` with properties defined by \
+    the `RAML Spec <http://raml.org/spec.html#body>`_
+    """
+    def __init__(self, mime_type, data):
+        """
+        :param str name: Accepted MIME media types for the Body of the \
+            request/response.
+        :param dict data: All defined data of the parameter
+        """
+        self.mime_type = mime_type
         self.data = data
-
-    @property
-    def mime_type(self):
-        """
-        Accepted MIME media types for the Body of the request/response.
-        (Required)
-        """
-        return self.name
 
     @property
     def schema(self):
         """
-        Body schema definition.  Returns ``None`` if not set.
+        :returns: schema definition of :py:class:`.Body` object
+        :rtype: ``str`` representation of schema
 
-        Can **NOT** be set if ``mime_type`` is
-        ``application/x-www-form-urlencoded`` or ``multipart/form-data``.
-        (Optional)
+        .. note::
+            Schema can not be set if ``mime_type`` is \
+            ``application/x-www-form-urlencoded`` or ``multipart/form-data``.
         """
         schema = self.data.get("schema")
         if self.mime_type in ["application/x-www-form-urlencoded",
@@ -402,7 +454,8 @@ class Body(object):
     @property
     def example(self):
         """
-        Example of Body.  Returns ``None`` if not set. (Optional)
+        :returns: Example of Body
+        :rtype: ``str`` representation of example
         """
         return self.data.get("example")
 
@@ -411,7 +464,16 @@ class Body(object):
 
 
 class Response(object):
+    """
+    Expected response with properties defined by \
+    the `RAML Spec <http://raml.org/spec.html#responses>`_
+    """
     def __init__(self, code, data, method):
+        """
+        :param int code: Valid HTTP response code
+        :param dict data: Data defining the response
+        :param str method: Valid HTTP method
+        """
         self.code = code
         self.data = data
         self.method = method
@@ -419,18 +481,19 @@ class Response(object):
     @property
     def description(self):
         """
-        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
-        attributes, or ``None`` if not defined.
+        Returns :py:class:`.Content` object with ``raw`` and \
+        ``html`` attributes, or ``None`` if not defined.
 
-        Assumes raw content is written in plain text or Markdown in RAML
-        per specification. (Optional)
+        :rtype: :py:class:`.Content`
         """
-        return DescriptiveContent(self.data.get('description'))
+        return Content(self.data.get('description'))
 
     @property
     def headers(self):
         """
-        Returns a list of ``Header`` objects if defined, or ``None``
+        :returns: supported :py:class:`.Header` objects to be expected in \
+            the API's response
+        :rtype: ``list`` of :py:class:`.Header` objects, or ``None``
         """
         return [
             Header(k, v, self.method) for k, v in self.data.get(
@@ -440,7 +503,9 @@ class Response(object):
     @property
     def body(self):
         """
-        Returns a ``Body`` object of a response if defined, or ``None``
+        :returns: supported :py:class:`.Body` objects to be expected in \
+            the API's response
+        :rtype: ``list`` of :py:class:`.Body` objects, or ``None``
         """
         name = self.data.get('body').keys()[0]
         data = self.data.get('body').values()[0]
@@ -455,8 +520,20 @@ class Documentation(object):
     Returns Documentation defined in API Root.
     """
     def __init__(self, title, content):
+        """
+        :param str title: Title of documentation
+        :param str content: Documentation content in raw text
+        """
         self.title = title
-        self.content = DescriptiveContent(content)
+        self.__content = content
+
+    @property
+    def content(self):
+        """
+        :returns: Content of documentation
+        :rtype: :py:class:`.Content` object
+        """
+        return Content(self.__content)
 
     def __repr__(self):
         return "<Documentation(title='{0}')>".format(self.title)
@@ -464,16 +541,25 @@ class Documentation(object):
 
 class SecurityScheme(object):
     """
-    Security scheme object defined by its type (OAuth 2.0, OAuth 1.0, etc).
+    An endpoint's supported security scheme(s), if any, defined by its \
+    type (OAuth 2.0, OAuth 1.0, etc).
     """
     def __init__(self, name, data):
+        """
+        :param str name: Name of scheme (e.g. ``oauth_2_0``, ``oauth_1_0``)
+        :param dict data: Data associated security scheme assignment
+        """
         self.name = name
         self.data = data
 
     @property
     def type(self):
         """
-        Returns type of authentication.
+        Returns string representation of particular scheme.  Use
+        :py:obj:`.scheme` to access the type's object.
+
+        :returns: type of authentication.
+        :rtype: ``str`` representation of particular scheme
         """
         return self.data.get('type')
 
@@ -507,34 +593,52 @@ class SecurityScheme(object):
     @property
     def described_by(self):
         """
-        Returns ``describedBy`` information of the authentication scheme.
+        If security scheme is custom, or has extended properties.
+
+        :returns: ``describedBy`` information of the authentication scheme
+        :rtype: ``dict`` mapping ``headers``, ``responses``, and parameters
+            to respective objects, or ``None``.
         """
         return self._get_described_by()
 
-    @property
-    def description(self):
-        """
-        Returns ``DescriptiveContent`` object with ``raw`` and ``html``
-        attributes, or ``None`` if not defined.
-
-        Assumes raw content is written in plain text or Markdown in RAML
-        per specification. (Optional)
-        """
-        return DescriptiveContent(self.data.get('description'))
-
-    def _get_oauth_scheme(self, scheme):
+    def _get_scheme(self, scheme):
         return {'oauth_2_0': Oauth2Scheme,
                 'oauth_1_0': Oauth1Scheme}[scheme]
 
     @property
+    def scheme(self):
+        if self.name in ['oauth_2_0', 'oauth_1_0']:
+            return self.__get_scheme(self.name)(self.data.get('settings'))
+        elif self.name.startswith("x-"):
+            c = CustomAuthScheme(self.name, self.data.get('settings'))
+            for k, v in list(self.data.get('settings').items()):
+                setattr(c, k, v)
+            return c
+
+    @property
+    def description(self):
+        """
+        Returns :py:class:`.Content` object with ``raw`` and \
+        ``html`` attributes, or ``None`` if not defined.
+
+        :rtype: :py:class:`.Content`
+        """
+        return Content(self.data.get('description'))
+
+    @property
     def settings(self):
         """
-        Returns the settings if defined for either OAuth 2.0, OAuth 1.0
+        Schema-specific information for either OAuth 2.0, OAuth 1.0, \
         or a API-defined authentication method denoted by ``x-{name}``.
+
+        :rtype: ``dict``, or ``None``
         """
         schemes = ['oauth_2_0', 'oauth_1_0']
-        if self.name in schemes or self.name.startswith("x-"):
-            return self._get_oauth_scheme(self.name)(self.data.get('settings'))
+        if self.name in schemes:
+            return self.data.get('settings')
+        elif self.name.startswith("x-"):
+            return self.data.get('settings')
+        return None
 
     def __repr__(self):
         return "<SecurityScheme(name='{0}')>".format(self.name)
@@ -608,3 +712,16 @@ class Oauth1Scheme(object):
         Returns a string of the Token Credentials URI
         """
         return self.settings.get('tokenCredentialsUri')
+
+
+class CustomAuthScheme(object):
+    """
+    Custom Authentication scheme
+    """
+    def __init__(self, name, settings):
+        """
+        :param str name: Name of auth scheme
+        :param dict settings: Settings associated with auth scheme
+        """
+        self.name = name
+        self.settings = settings

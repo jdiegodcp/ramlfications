@@ -14,9 +14,9 @@ from six.moves import BaseHTTPServer as httpserver
 from .parameters import (
     FormParameter, URIParameter, QueryParameter,
     Header, Response, Body,
-    Documentation, DescriptiveContent
+    Documentation, Content
 )
-from .utils import memoized, fill_reserved_params
+from .utils import fill_reserved_params
 
 HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
 AVAILABLE_METHODS = ['get', 'post', 'put', 'delete', 'patch', 'head',
@@ -136,7 +136,8 @@ class RAMLRoot(object):
         Returns the base URI of API.
 
         .. note::
-            ``base_uri`` is optional during development, required after implementation.
+            ``base_uri`` is optional during development, required after \
+            implementation.
 
         :raises RAMLParserError: if no ``version`` is defined but is \
             referenced in the :py:obj:`.base_uri` parameter.
@@ -161,9 +162,11 @@ class RAMLRoot(object):
         """
         URI Parameters available for the baseUri and all resources/endpoints.
 
-        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
-        :raises RAMLParserError: if :py:obj:`.version` is defined (:py:obj:`.version` \
-            can only be used in :py:obj:`.base_uri_parameters`).
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, \
+            or ``None``.
+        :raises RAMLParserError: if :py:obj:`.version` is defined \
+            (:py:obj:`.version` can only be used in \
+             :py:obj:`.base_uri_parameters`).
         """
         uri_params = self.raml.get('uriParameters', {})
         params = []
@@ -179,7 +182,8 @@ class RAMLRoot(object):
         """
         Returns URI Parameters for meant specifically for :py:obj:`.base_uri`.
 
-        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, \
+            or ``None``.
         """
         base_uri_params = self.raml.get('baseUriParameters', {})
         uri_params = []
@@ -198,7 +202,8 @@ class RAMLRoot(object):
 
             * ``text/yaml``, ``text/x-yaml``, ``application/yaml``, \
                 ``application/x-yaml``
-            * Any defined by the `IANA <http://www.iana.org/assignments/media-types>`_
+            * Any defined by the \
+                `IANA <http://www.iana.org/assignments/media-types>`_
             * A custom type that follows the regex: \
                 ``application\/[A-Za-z.-0-1]*+?(json|xml)``
 
@@ -211,7 +216,8 @@ class RAMLRoot(object):
         """
         API documentation
 
-        :rtype: ``list`` of :py:class:`.parameters.Documentation` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Documentation` objects, \
+            or ``None``.
         :raises RAMLParserError: if can not parse documentation.
         """
         documentation = self.raml.get('documentation', [])
@@ -227,12 +233,12 @@ class RAMLRoot(object):
     @property
     def schemas(self):
         """
-        Returns a dictionary of user-defined schemas that may be applied anywhere
-        in the API definition.
+        Returns a dictionary of user-defined schemas that may be applied \
+        anywhere in the API definition.
 
         .. note::
-            Current explicit supported types are XML, JSON, YAML. Other schema \
-            definitions may work at your own risk.
+            Current explicit supported types are XML, JSON, YAML. Other \
+            schema definitions may work at your own risk.
 
         :rtype: ``dict``
         """
@@ -261,7 +267,8 @@ class _BaseResourceProperties(object):
         """
         Accepted headers for trait.
 
-        :rtype: ``list`` of :py:class:`.parameters.Header` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Header` objects, \
+            or ``None``.
         """
         resource_headers = self.data.get('headers', {})
         headers = []
@@ -290,7 +297,8 @@ class _BaseResourceProperties(object):
         .. note::
              Currently only supports HTTP/1.1-defined responses.
 
-        :rtype: ``list`` of :py:class:`.parameters.Response` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Response` objects, \
+            or ``None``.
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         resps = []
@@ -309,7 +317,8 @@ class _BaseResourceProperties(object):
         """
         Accepted URI parameters for trait.
 
-        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, \
+            or ``None``.
         """
         uri_params = []
         for k, v in list(self.data.get('uriParameters', {}).items()):
@@ -322,7 +331,8 @@ class _BaseResourceProperties(object):
         """
         Accepted base URI parameters for trait.
 
-        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, \
+            or ``None``.
         """
         base_uri_params = []
         for k, v in list(self.data.get('baseUriParameters', {}).items()):
@@ -334,7 +344,8 @@ class _BaseResourceProperties(object):
         """
         Accepted query parameters for trait.
 
-        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, \
+            or ``None``.
         """
         resource_params = self.data.get('queryParameters', {})
 
@@ -348,7 +359,8 @@ class _BaseResourceProperties(object):
         """
         Accepted form parameters for trait.
 
-        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, \
+            or ``None``.
         """
         form_params = []
         for k, v in list(self.data.get('formParameters', {}).items()):
@@ -371,16 +383,16 @@ class _BaseResourceProperties(object):
         """
         Description of trait.
 
-        .. note:: 
+        .. note::
             Assumes raw content is written in plain text or Markdown in RAML \
             per specification.
 
-        :rtype: ``list`` of :py:class:`.parameters.DescriptiveContent` objects, \
+        :rtype: ``list`` of :py:class:`.parameters.Content` objects, \
         or ``None``.
         """
         resource_desc = self.data.get('description')
         if resource_desc:
-            return DescriptiveContent(resource_desc)
+            return Content(resource_desc)
         return None
 
 
@@ -422,8 +434,8 @@ class _BaseResource(_BaseResourceProperties):
     @property
     def is_(self):
         """
-        Trait(s) assigned to particular :py:class:`Resource` or :py:class:`ResourceType` \
-        object
+        Trait(s) assigned to particular :py:class:`Resource` or \
+            :py:class:`ResourceType` object
 
         Use ``resource.traits`` or ``resource_type.traits`` to access actual \
         :py:class:`.Trait` object(s), if any.
@@ -442,7 +454,8 @@ class _BaseResource(_BaseResourceProperties):
     @property
     def traits(self):
         """
-        :py:class:`.Trait` objects assigned to particular resource or resource type.
+        :py:class:`.Trait` objects assigned to particular resource or \
+            resource type.
 
         Use ``resource.is_`` or ``resource_type.is_`` to get a simple list of \
         strings denoting the names of applicable traits.
@@ -458,13 +471,15 @@ class _BaseResource(_BaseResourceProperties):
     @property
     def secured_by(self):
         """
-        Security Scheme(s) assigned to particular :py:class:`Resource` or 
+        Security Scheme(s) assigned to particular :py:class:`Resource` or
         :py:class:`ResourceType` object.
 
-        Use ``resource.security_schemes`` or ``resource_type.security_schemes`` \
-        to access actual :py:class:`.parameters.SecurityScheme` object(s), if any.
+        Use ``resource.security_schemes`` or \
+        ``resource_type.security_schemes`` to access actual \
+        :py:class:`.parameters.SecurityScheme` object(s), if any.
 
-        :rtype: ``list`` of ``str`` s referring to Security Scheme names, or ``None``.
+        :rtype: ``list`` of ``str`` s referring to Security Scheme names, \
+            or ``None``.
         """
         try:
             if self.data.get(self.method, {}).get('securedBy'):
@@ -484,13 +499,14 @@ class _BaseResource(_BaseResourceProperties):
     @property
     def security_schemes(self):
         """
-        Returns a list of ``SecurityScheme`` objects assigned to the Resource
+        Returns a list of ``SecurityScheme`` objects assigned to the Resource \
         or ResourceType, or ``None`` if none assigned.
 
-        Use ``resource.secured_by`` to get a simple list of strings denoting
+        Use ``resource.secured_by`` to get a simple list of strings denoting \
         the names of applicable security schemes.
 
-        :rtype: ``list`` of :py:class:`.parameters.SecurityScheme` objects, or ``None.
+        :rtype: ``list`` of :py:class:`.parameters.SecurityScheme` objects, \
+            or ``None.
         """
         return self._security_schemes
 
@@ -531,7 +547,8 @@ class _BaseResource(_BaseResourceProperties):
         """
         Accepted headers for the Resource or Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.Header` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Header` objects, \
+            or ``None``.
         """
         try:
             method_headers = self.data.get(self.method, {}).get('headers', {})
@@ -571,7 +588,8 @@ class _BaseResource(_BaseResourceProperties):
         .. note::
             Currently only supports HTTP/1.1-defined responses
 
-        :rtype: ``list`` of :py:class:`.parameters.Response` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Response` objects, \
+            or ``None``.
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         resps = super(_BaseResource, self).responses or []
@@ -596,7 +614,8 @@ class _BaseResource(_BaseResourceProperties):
         """
         Accepted URI parameters for the Resource or Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, \
+            or ``None``.
         """
         uri_params = super(_BaseResource, self).uri_params or []
         try:
@@ -615,7 +634,8 @@ class _BaseResource(_BaseResourceProperties):
         """
         Accepted base URI parameters for the Resource or Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, \
+            or ``None``.
         """
         base_params = super(_BaseResource, self).base_uri_params or []
         try:
@@ -634,7 +654,8 @@ class _BaseResource(_BaseResourceProperties):
         """
         Accepted query parameters for the Resource or Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, \
+            or ``None``.
         """
         query_params = super(_BaseResource, self).query_params or []
         try:
@@ -653,7 +674,8 @@ class _BaseResource(_BaseResourceProperties):
         """
         Accepted form parameters for the Resource or Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, \
+            or ``None``.
         """
 
         form_params = super(_BaseResource, self).form_params or []
@@ -708,12 +730,13 @@ class _BaseResource(_BaseResourceProperties):
         """
         Defined description of the Resource or Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.DescriptiveContent` objects, or ``None``
+        :rtype: ``list`` of :py:class:`.parameters.Content` objects, \
+            or ``None``
         """
         try:
             method_desc = self.data.get(self.method, {}).get('description')
             if method_desc:
-                return DescriptiveContent(method_desc)
+                return Content(method_desc)
         except AttributeError:
             # self.method could exist, but return None
             pass
@@ -781,7 +804,8 @@ class ResourceType(_BaseResource):
         """
         Accepted headers for the Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.Header` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Header` objects, \
+            or ``None``.
         """
         try:
             opt_method_headers = self.data.get(self.orig_method, {}).get(
@@ -823,7 +847,8 @@ class ResourceType(_BaseResource):
         .. note::
             Currently only supports HTTP/1.1-defined responses
 
-        :rtype: ``list`` of :py:class:`.parameters.Response` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Response` objects, \
+            or ``None``.
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         resps = super(ResourceType, self).responses or []
@@ -886,7 +911,8 @@ class ResourceType(_BaseResource):
         """
         Accepted query parameters for the Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, \
+            or ``None``.
         """
         query_params = super(ResourceType, self).query_params or []
         try:
@@ -904,7 +930,8 @@ class ResourceType(_BaseResource):
         """
         Accepted form parameters for the Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, \
+            or ``None``.
         """
         form_params = super(ResourceType, self).form_params or []
 
@@ -961,13 +988,14 @@ class ResourceType(_BaseResource):
         """
         Description of Resource Type.
 
-        :rtype: ``list`` of :py:class:`.parameters.DescriptiveContent` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Content` objects, \
+            or ``None``.
         """
         try:
             opt_method_desc = self.data.get(self.orig_method, {}).get(
                 'description')
             if opt_method_desc:
-                return DescriptiveContent(opt_method_desc)
+                return Content(opt_method_desc)
         except AttributeError:
             # self.method could exist, but return None
             pass
@@ -1014,7 +1042,7 @@ class Resource(_BaseResource):
         Returns a string of the URI path of Resource relative to \
         :py:class:`RAMLRoot.base_uri`.
 
-        .. note:: 
+        .. note::
             Not explicitly defined in RAML but inferred based off of \
             the Resource ``name`` and its ``parent`` if any.
 
@@ -1027,7 +1055,7 @@ class Resource(_BaseResource):
         """
         Returns a string of the absolute URI path of Resource.
 
-        .. note:: 
+        .. note::
             Not explicitly defined in RAML but inferred based off of \
             :py:obj:`.path` and :py:class:`.RAMLRoot.base_uri`.
 
@@ -1096,7 +1124,8 @@ class Resource(_BaseResource):
         """
         Accepted headers for the Resource.
 
-        :rtype: ``list`` of :py:class:`.parameters.Header` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Header` objects, \
+            or ``None``.
         """
         # TODO: does resource inherit headers from its parent?
         headers = []
@@ -1113,10 +1142,11 @@ class Resource(_BaseResource):
         """
         Accepted response for the Resource.
 
-        .. note:: 
+        .. note::
             Currently only supports HTTP/1.1-defined responses
 
-        :rtype: ``list`` of :py:class:`.parameters.Response` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Response` objects, \
+            or ``None``.
         :raises RAMLParserError: Unsupported HTTP Response code
         """
         # TODO: does resource inherit responses from its parent?
@@ -1151,7 +1181,8 @@ class Resource(_BaseResource):
         """
         Accepted query parameters for the Resource.
 
-        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.QueryParameter` objects, \
+            or ``None``.
         """
         params = []
         if self.resource_type:
@@ -1167,7 +1198,8 @@ class Resource(_BaseResource):
         """
         Accepted URI parameters for the Resource.
 
-        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, \
+            or ``None``.
         """
         params = []
         if self.resource_type:
@@ -1185,7 +1217,8 @@ class Resource(_BaseResource):
         """
         Accepted base URI parameters for the Resource.
 
-        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.URIParameter` objects, \
+            or ``None``.
         """
         params = []
         if self.resource_type:
@@ -1203,7 +1236,8 @@ class Resource(_BaseResource):
         """
         Accepted form parameters for the Resource.
 
-        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.FormParameter` objects, \
+            or ``None``.
         """
         params = []
         if self.resource_type:
@@ -1229,14 +1263,15 @@ class Resource(_BaseResource):
         """
         Description of the Resource.
 
-        :rtype: ``list`` of :py:class:`.parameters.DescriptiveContent` objects, or ``None``.
+        :rtype: ``list`` of :py:class:`.parameters.Content` objects, \
+        or ``None``.
         """
         if super(Resource, self).description is not None:
             return super(Resource, self).description
         elif self.resource_type and self.resource_type.description:
             desc = fill_reserved_params(self,
                                         self.resource_type.description.raw)
-            return DescriptiveContent(desc)
+            return Content(desc)
         elif self.parent:
             return self.parent.description
         return None

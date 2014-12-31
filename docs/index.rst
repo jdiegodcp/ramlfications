@@ -16,7 +16,7 @@ User's Guide
    installation
    usage
    extendedusage
-   API Definition <api>
+   api
 
 
 Project Information

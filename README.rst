@@ -1,4 +1,4 @@
-NON PUBLIC DOCS: `https://ghe.spotify.net/pages/lynn/ramlfications <https://ghe.spotify.net/pages/lynn/ramlfications>`_
+TEMPORARY DOCS LOCATION: `GHE Pages <https://ghe.spotify.net/pages/lynn/ramlfications <https://ghe.spotify.net/pages/lynn/ramlfications>`_
 
 ramlfications: RAML reference implementation in Python
 ======================================================
@@ -35,7 +35,7 @@ Continue onto :doc:`usage` to get started on using ``ramlfications``.
 Developer Setup
 ---------------
 
-If you'd like to contribute or develop upon ``ramlfications``, be sure to read :doc:`contributing` 
+If you'd like to contribute or develop upon ``ramlfications``, be sure to read :doc:`contributing`
 first.
 
 System requirements:
