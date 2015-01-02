@@ -69,10 +69,9 @@ def validate(raml_file, production=True):
         file (see :py:mod:`.validate`)
 
     """
-    tmp = os.environ.get('RAML_VALIDATE')
     os.environ['RAML_VALIDATE'] = '1'
     loader = RAMLLoader().load(raml_file)
     try:
         parse_raml(loader, parse=False)
     finally:
-        os.environ['RAML_VALIDATE'] = tmp
+        os.environ.pop('RAML_VALIDATE')
