@@ -92,19 +92,43 @@ def __map_item_type(item):
     }[item]
 
 
+def __set_body(r, property, inherit=False):
+    body_objs = []
+    method = r.data.get(r.method, {}).get('body', {})
+    resource = r.data.get('body', {})
+    if r.resource_type:
+        if hasattr(r.resource_type, 'body'):
+            if getattr(r.resource_type, 'body') is not None:
+                body_objs.extend(getattr(r.resource_type, 'body'))
+
+    items = dict(list(method.items()) + list(resource.items()))
+
+    for k, v in iteritems(items):
+        body_objs.append(Body(k, v, r))
+
+    for p in body_objs:
+        if p.mime_type in ["application/x-www-form-urlencoded", "multipart/form-data"]:
+            form_params = p.data.get('formParameters')
+            if form_params:
+                params = []
+                for i, j in iteritems(form_params):
+                    params.append(FormParameter(i, j, r))
+            if r.form_params:
+                r.form_params += params
+            else:
+                r.form_params = params
+
+    return body_objs
+
+
 @validate_property
-def __set_property_objects(r, property, inherit=False):
+def __set_resource_properties(r, property, inherit=False):
     properties = []
-    if isinstance(r, ResourceType):
-        method = r.data.get(r.orig_method, {}).get(property, {})
-    elif isinstance(r, Resource):
-        method = r.data.get(r.method, {}).get(property, {})
-        if r.resource_type:
-            if hasattr(r.resource_type, property):
-                if getattr(r.resource_type, property) is not None:
-                    properties.extend(getattr(r.resource_type, property))
-    else:
-        method = {}
+    method = r.data.get(r.method, {}).get(property, {})
+    if r.resource_type:
+        if hasattr(r.resource_type, property):
+            if getattr(r.resource_type, property) is not None:
+                properties.extend(getattr(r.resource_type, property))
 
     resource = r.data.get(property, {})
 
@@ -114,13 +138,58 @@ def __set_property_objects(r, property, inherit=False):
         obj = __map_obj(property)
         properties.append(obj(k, v, r))
 
-    if not isinstance(r, Trait):
-        if r.traits:
-            for t in r.traits:
-                item = __map_item_type(property)
-                if hasattr(t, item):
-                    if getattr(t, item) is not None:
-                        properties.extend(getattr(t, item))
+    if r.traits:
+        for t in r.traits:
+            item = __map_item_type(property)
+            if hasattr(t, item):
+                if getattr(t, item) is not None:
+                    properties.extend(getattr(t, item))
+
+    if inherit:
+        item = __map_item_type(property)
+        if hasattr(r.parent, item):
+            if getattr(r.parent, item) is not None:
+                properties.extend(getattr(r.parent, item))
+
+    return properties or None
+
+
+@validate_property
+def __set_resource_type_properties(r, property, inherit=False):
+    properties = []
+
+    method = r.data.get(r.orig_method, {}).get(property, {})
+    resource = r.data.get(property, {})
+    items = dict(list(method.items()) + list(resource.items()))
+
+    for k, v in iteritems(items):
+        obj = __map_obj(property)
+        properties.append(obj(k, v, r))
+
+    if r.traits:
+        for t in r.traits:
+            item = __map_item_type(property)
+            if hasattr(t, item):
+                if getattr(t, item) is not None:
+                    properties.extend(getattr(t, item))
+
+    if inherit:
+        item = __map_item_type(property)
+        if hasattr(r.parent, item):
+            if getattr(r.parent, item) is not None:
+                properties.extend(getattr(r.parent, item))
+
+    return properties or None
+
+
+@validate_property
+def __set_trait_properties(r, property, inherit=False):
+    properties = []
+
+    resource = r.data.get(property, {})
+    for k, v in iteritems(resource):
+        obj = __map_obj(property)
+        properties.append(obj(k, v, r))
 
     if inherit:
         item = __map_item_type(property)
@@ -260,14 +329,15 @@ def __add_properties_to_resources(sorted_resources, root):
         r.resource_type = __get_resource_type(r, root)
         r.security_schemes = __get_secured_by(r, root)
         r.display_name = __set_display_name(r)
-        r.base_uri_params = __set_property_objects(r, 'baseUriParameters',
-                                                   inherit=True)
-        r.query_params = __set_property_objects(r, 'queryParameters')
-        r.uri_params = __set_property_objects(r, 'uriParameters', inherit=True)
-        r.form_params = __set_property_objects(r, 'formParameters')
-        r.headers = __set_property_objects(r, 'headers')
-        r.body = __set_property_objects(r, 'body')
-        r.responses = __set_property_objects(r, 'responses')
+        r.base_uri_params = __set_resource_properties(r, 'baseUriParameters',
+                                                      inherit=True)
+        r.query_params = __set_resource_properties(r, 'queryParameters')
+        r.uri_params = __set_resource_properties(r, 'uriParameters',
+                                                 inherit=True)
+        r.form_params = __set_resource_properties(r, 'formParameters')
+        r.headers = __set_resource_properties(r, 'headers')
+        r.body = __set_body(r, 'body')
+        r.responses = __set_resource_properties(r, 'responses')
         r.protocols = __set_simple_property(r, 'protocols') or root.protocols
         r.media_types = __set_simple_property(r, 'body').keys() \
             or [root.media_type]
@@ -428,13 +498,13 @@ def __add_properties_to_resource_types(resources, root):
         r.traits = __get_traits(r, root)
         r.security_schemes = __get_secured_by(r, root)
         r.usage = __set_usage(r)
-        r.query_params = __set_property_objects(r, 'queryParameters')
-        r.uri_params = __set_property_objects(r, 'uriParameters')
-        r.base_uri_params = __set_property_objects(r, 'baseUriParameters')
-        r.form_params = __set_property_objects(r, 'formParameters')
-        r.headers = __set_property_objects(r, 'headers')
-        r.body = __set_property_objects(r, 'body')
-        r.responses = __set_property_objects(r, 'responses')
+        r.query_params = __set_resource_type_properties(r, 'queryParameters')
+        r.uri_params = __set_resource_type_properties(r, 'uriParameters')
+        r.base_uri_params = __set_resource_type_properties(r, 'baseUriParameters')
+        r.form_params = __set_resource_type_properties(r, 'formParameters')
+        r.headers = __set_resource_type_properties(r, 'headers')
+        r.body = __set_resource_type_properties(r, 'body')
+        r.responses = __set_resource_type_properties(r, 'responses')
         r.protocols = __set_simple_property(r, 'protocols') or root.protocols
         r.media_types = __set_simple_property(r, 'body').keys() or None
 
@@ -592,12 +662,12 @@ def __get_traits(resource, root):
 def __add_properties_to_traits(traits):
     for t in traits:
         t.usage = __set_usage(t)
-        t.query_params = __set_property_objects(t, 'queryParameters')
-        t.uri_params = __set_property_objects(t, 'uriParameters')
-        t.form_params = __set_property_objects(t, 'formParameters')
-        t.headers = __set_property_objects(t, 'headers')
-        t.body = __set_property_objects(t, 'body')
-        t.responses = __set_property_objects(t, 'responses')
+        t.query_params = __set_trait_properties(t, 'queryParameters')
+        t.uri_params = __set_trait_properties(t, 'uriParameters')
+        t.form_params = __set_trait_properties(t, 'formParameters')
+        t.headers = __set_trait_properties(t, 'headers')
+        t.body = __set_trait_properties(t, 'body')
+        t.responses = __set_trait_properties(t, 'responses')
         t.description = __set_simple_property(t, 'description')
         t.media_types = __set_simple_property(t, 'body').keys() or None
     return traits
