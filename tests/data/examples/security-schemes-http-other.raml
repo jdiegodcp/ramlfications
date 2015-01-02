@@ -17,7 +17,7 @@ securitySchemes:
       description: |
         The Foo Web API supports HTTP Digest Authentication
       type: Digest Authentication
-  - xFooAuth:
+  - x-FooAuth:
       description: |
         The Foo Web API supports its home-grown authentication, Foo Auth
       type: x-foo-auth
@@ -28,3 +28,7 @@ securitySchemes:
             description: |
               Foo's super awesome home-grown authentication.  Complete with
               our own home-grown cryptography! /s
+/foo:
+  description: bar
+  get:
+    description: foobar

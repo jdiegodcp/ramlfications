@@ -4,13 +4,14 @@
 
 from __future__ import absolute_import, division, print_function
 
-import ConfigParser
 import os
 
+from six import iterkeys
+from six.moves import configparser
 from six.moves import BaseHTTPServer as httpserver
 
 
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 config_file = os.path.dirname(os.path.realpath(__file__)) + '/config.ini'
 config.read(config_file)
 
@@ -30,11 +31,11 @@ MEDIA_TYPES = [
 ]
 AUTH_SCHEMES = [
     'oauth_1_0', 'oauth_2_0',
-    'basic', 'basic_auth', 'basicAuth', 'basicAuthentication',
+    'basic', 'basic_auth', 'basicAuth', 'basicAuthentication', 'http_basic',
     'basic_authentication', 'digest', 'digest_auth', 'digestAuth',
-    'digestAuthentication', 'digest_authentication'
+    'digestAuthentication', 'digest_authentication', 'http_digest'
 ]
-HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
+HTTP_RESP_CODES = list(iterkeys(httpserver.BaseHTTPRequestHandler.responses))
 PRIM_TYPES = ['string', 'integer', 'number', 'boolean', 'date', 'file']
 
 HTTP_RESP_CODES.extend(config.get('custom_add', 'resp_codes'))

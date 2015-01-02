@@ -440,6 +440,8 @@ class _BaseResource(_BaseResourceProperties):
         self._traits = None
         self._security_schemes = None
         self._protocols = None
+        self._is = None
+        self._secured_by = None
 
     @property
     def is_(self):
@@ -452,14 +454,11 @@ class _BaseResource(_BaseResourceProperties):
 
         :rtype: ``list`` of ``str`` s referring to Trait names, or ``None``.
         """
-        try:
-            method_traits = self.data.get(self.method, {}).get('is', [])
-        except AttributeError:
-            # self.method could exist, but return None
-            method_traits = []
+        return self._is
 
-        resource_traits = self.data.get('is', [])
-        return method_traits + resource_traits or None
+    @is_.setter
+    def is_(self, is_):
+        self._is = is_
 
     @property
     def traits(self):
@@ -491,20 +490,11 @@ class _BaseResource(_BaseResourceProperties):
         :rtype: ``list`` of ``str`` s referring to Security Scheme names, \
             or ``None``.
         """
-        try:
-            if self.data.get(self.method, {}).get('securedBy'):
-                return self.data.get(self.method, {}).get('securedBy')
-        except AttributeError:
-            # self.method could exist, but return None
-            pass
+        return self._secured_by
 
-        if self.data.get('securedBy'):
-            return self.data.get('securedBy')
-
-        if hasattr(self, 'parent'):
-            if self.parent and self.parent.secured_by:
-                return self.parent.secured_by
-        return None
+    @secured_by.setter
+    def secured_by(self, secured_by):
+        self._secured_by = secured_by
 
     @property
     def security_schemes(self):

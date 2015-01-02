@@ -113,10 +113,10 @@ def __set_body(r, property, inherit=False):
                 params = []
                 for i, j in iteritems(form_params):
                     params.append(FormParameter(i, j, r))
-            if r.form_params:
-                r.form_params += params
-            else:
-                r.form_params = params
+                if r.form_params:
+                    r.form_params += params
+                else:
+                    r.form_params = params
 
     return body_objs
 
@@ -254,7 +254,10 @@ def _set_version(raml, production=False):
 
 @validate
 def _set_base_uri(raml):
-    return raml.get('baseUri')
+    base_uri = raml.get('baseUri')
+    if "{version}" in base_uri:
+        base_uri = base_uri.replace('{version}', str(raml.get('version')))
+    return base_uri
 
 
 @validate
@@ -324,10 +327,12 @@ def _parse_resources(raml, root):
 @validate
 def __add_properties_to_resources(sorted_resources, root):
     for r in sorted_resources:
+        r.is_ = __set_resource_is(r, root)
         r.traits = __get_traits(r, root)
         r.type = __set_type(r, root)
         r.resource_type = __get_resource_type(r, root)
         r.security_schemes = __get_secured_by(r, root)
+        r.secured_by = __set_secured_by_resource(r, root)
         r.display_name = __set_display_name(r)
         r.base_uri_params = __set_resource_properties(r, 'baseUriParameters',
                                                       inherit=True)
@@ -423,6 +428,67 @@ def __set_type(resource, root):
     return None
 
 
+def __set_secured_by_resource(resource, root):
+    method_sec = resource.data.get(resource.method, {}).get('securedBy')
+    if method_sec:
+        return method_sec
+    resource_sec = resource.data.get('securedBy')
+    if resource_sec:
+        return resource_sec
+    if hasattr(resource, 'parent'):
+        if hasattr(resource.parent, 'secured_by'):
+            return resource.parent.secured_by
+    return None
+
+
+def __set_resource_is(resource, root):
+    resource_traits = resource.data.get('is', [])
+    method_traits = resource.data.get(resource.method, {}).get('is', [])
+
+    traits = resource_traits + method_traits
+    ret = []
+    if traits:
+        defined_traits = [t.name for t in root.traits]
+        for t in traits:
+            if isinstance(t, dict):
+                if t.keys()[0] in defined_traits:
+                    ret.append(t)
+            if isinstance(t, list):
+                ret.append([i for i in t if i in defined_traits])
+            if isinstance(t, str):
+                if t in traits:
+                    ret.append(t)
+
+        return ret or None
+    return None
+
+
+def __set_resource_type_is(resource, root):
+    resource_traits = resource.data.get('is', [])
+    method_traits = resource.data.get(resource.orig_method, {}).get('is', [])
+
+    traits = resource_traits + method_traits
+    if traits:
+        defined_traits = root.traits
+        available_traits = [t for t in defined_traits if t.name in traits]
+
+        if available_traits:
+            return traits
+    return None
+
+
+def __set_secured_by_resource_type(resource, root):
+    method_sec = resource.data.get(resource.orig_method, {}).get('securedBy')
+    if method_sec:
+        return method_sec
+    resource_sec = resource.data.get('securedBy')
+    if resource_sec:
+        return resource_sec
+    if hasattr(resource, 'parent'):
+        if hasattr(resource.parent, 'secured_by'):
+            return resource.parent.secured_by
+    return None
+
 #####
 # RESOURCE TYPES
 #####
@@ -453,19 +519,21 @@ def __get_union(resource, inherited_resource):
 
 
 # Returns data dict of particular resourceType
-def __get_inherited_resource(res_name, resource_types):
-    for r in resource_types:
-        if res_name == list(r.keys())[0]:
-            return dict(r.values())
+def __get_inherited_resource(res_name, raml):
+    res_types = raml.get('resourceTypes')
+    for t in res_types:
+        if t.keys()[0] == res_name:
+            return t
+    return None
 
 
-def __map_inherited_resource_types(root, resource, inherited, types):
+def __map_inherited_resource_types(root, resource, inherited, raml):
     resources = []
-    inherited_res = __get_inherited_resource(inherited, types)
+    inherited_res = __get_inherited_resource(inherited, raml)
     for k, v in iteritems(resource):
         for i in v.keys():
             if i in config.get('defaults', 'http_methods'):
-                data = __get_union(v.get(i, {}),
+                data = __get_union(resource,
                                    inherited_res.get(i, {}))
                 resources.append(ResourceType(k, data, i, root,
                                               type=inherited))
@@ -481,7 +549,7 @@ def _parse_resource_types(raml, root):
             if 'type' in list(iterkeys(v)):
                 r = __map_inherited_resource_types(root, resource,
                                                    v.get('type'),
-                                                   resource_types)
+                                                   raml)
                 resources.extend(r)
             # else just create a ResourceType
             else:
@@ -495,8 +563,10 @@ def _parse_resource_types(raml, root):
 
 def __add_properties_to_resource_types(resources, root):
     for r in resources:
+        r.is_ = __set_resource_type_is(r, root)
         r.traits = __get_traits(r, root)
         r.security_schemes = __get_secured_by(r, root)
+        r.secured_by = __set_secured_by_resource_type(r, root)
         r.usage = __set_usage(r)
         r.query_params = __set_resource_type_properties(r, 'queryParameters')
         r.uri_params = __set_resource_type_properties(r, 'uriParameters')

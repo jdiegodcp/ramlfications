@@ -172,7 +172,7 @@ def __base_uri_params(raml, *args, **kw):
     """
     base_uri_params = raml.get('baseUriParameters', {})
     for k, v in iteritems(base_uri_params):
-        values = list(itervalues(v))
+        values = list(iterkeys(v))
         if 'default' not in values:
             msg = ("The 'default' parameter is not set for base URI "
                    "parameter '{0}'".format(k))
@@ -212,7 +212,7 @@ def __security_schemes(raml, *args, **kw):
     """
 
     schemes = raml.get('securitySchemes', {})
-    schemes = [s.keys()[0] for s in schemes]
+    schemes = [list(iterkeys(s))[0] for s in schemes]
     if schemes:
         for s in schemes:
             if s not in config.get('custom', 'auth_schemes') and not s.startswith("x-"):
@@ -371,7 +371,7 @@ def __secured_by(resource, *args, **kw):
 
     for s in resource.secured_by:
         if isinstance(s, dict):
-            scheme = s.keys()[0]
+            scheme = list(iterkeys(s))[0]
         else:
             scheme = s
         scheme_names = [r.name for r in root.security_schemes]
