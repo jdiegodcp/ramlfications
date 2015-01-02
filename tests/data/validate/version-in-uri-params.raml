@@ -1,0 +1,11 @@
+#%RAML 0.8
+title: Spotify Web API Demo - version in URI params
+version: v1
+baseUri: https://foo.bar/{version}
+documentation:
+  - title: Spotify Web API Docs
+    content: FooBar
+uriParameters:
+  version:
+    type: string
+    description: version parameter that is supposed to be in baseUriParameters

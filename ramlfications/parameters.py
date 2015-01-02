@@ -5,31 +5,12 @@
 from __future__ import absolute_import, division, print_function
 
 import markdown2 as markdown
+from six import iterkeys, itervalues
 
 HTTP_METHODS = [
     "get", "post", "put", "delete", "patch", "options",
     "head", "trace", "connect"
 ]
-
-
-# TODO: is this object really needed?
-class ContentType(object):
-    """
-    Supported Content Type of a resource (e.g. ``application/json``).
-
-    :param str name: The name of content type
-    :param dict schema: Schema definition of content type
-    :param str example: Example usage of content type
-    """
-    def __init__(self, name, schema, example):
-        # Input validation would be nice here.
-        # LR: Will do, but will add it to validate.py
-        self.name = name
-        self.schema = schema
-        self.example = example
-
-    def __repr__(self):
-        return "<ContentType(name='{0}')>".format(self.name)
 
 
 # NOTE: this is a class for extensibility, e.g. adding RTF support or whatevs
@@ -242,7 +223,7 @@ class BaseParameter(object):
     per `RAML Spec <http://raml.org/spec.html#named-parameters>`_ can \
     inherit.
     """
-    def __init__(self, name, data, param_type):
+    def __init__(self, name, data, resource, param_type):
         """
         :param str name: The item name of parameter
         :param dict data: All defined data of the item
@@ -251,6 +232,7 @@ class BaseParameter(object):
         self.name = name
         self.data = data
         self.param_type = param_type
+        self.__resource = resource
 
     @property
     def display_name(self):
@@ -334,13 +316,13 @@ class URIParameter(BaseParameter):
     e.g. ``/foo/{id}`` where ``id`` is the name of URI parameter, and \
     ``data`` contains the defined RAML attributes.
     """
-    def __init__(self, name, data, required=True):
+    def __init__(self, name, data, resource, required=True):
         """
         :param str name: The parameter name
         :param dict data: All defined data of the parameter
         :param bool required: Default is True
         """
-        BaseParameter.__init__(self, name, data, "URI")
+        BaseParameter.__init__(self, name, data, resource, "URI")
         self.required = required
 
 
@@ -355,13 +337,13 @@ class QueryParameter(BaseParameter):
     where ``baz`` is the Query Parameter name, and ``data`` \
     contains the defined RAML attributes.
     """
-    def __init__(self, name, data):
+    def __init__(self, name, data, resource):
         """
         :param str name: The parameter name
         :param dict data: All defined data of the parameter
         :param bool required: Default is True
         """
-        BaseParameter.__init__(self, name, data, "Query")
+        BaseParameter.__init__(self, name, data, resource, "Query")
 
     @property
     def required(self):
@@ -383,12 +365,12 @@ class FormParameter(BaseParameter):
     where ``baz`` is the Form Parameter name, and ``data`` contains the \
     defined RAML attributes.
     """
-    def __init__(self, name, data):
+    def __init__(self, name, data, resource):
         """
         :param str name: The parameter name
         :param dict data: All defined data of the parameter
         """
-        BaseParameter.__init__(self, name, data, "Form")
+        BaseParameter.__init__(self, name, data, resource, "Form")
 
     @property
     def required(self):
@@ -410,14 +392,20 @@ class Header(BaseParameter):
     where ``X-Some-Header`` is the Header name, and ``data`` contains the
     defined RAML attributes.
     """
-    def __init__(self, name, data, method=None):
+    def __init__(self, name, data, resource=None):
         """
         :param str name: The parameter name
         :param dict data: All defined data of the parameter
         :param str method: Supported HTTP method
         """
-        BaseParameter.__init__(self, name, data, "Header")
-        self.method = method
+        BaseParameter.__init__(self, name, data, resource, "Header")
+        self.resource = resource
+
+    @property
+    def method(self):
+        if self.resource:
+            return self.resource.method
+        return None
 
 
 class Body(object):
@@ -425,7 +413,7 @@ class Body(object):
     Body of a request or a :py:class:`.Response` with properties defined by \
     the `RAML Spec <http://raml.org/spec.html#body>`_
     """
-    def __init__(self, mime_type, data):
+    def __init__(self, mime_type, data, resource):
         """
         :param str name: Accepted MIME media types for the Body of the \
             request/response.
@@ -433,6 +421,7 @@ class Body(object):
         """
         self.mime_type = mime_type
         self.data = data
+        self.__resource = resource
 
     @property
     def schema(self):
@@ -444,12 +433,7 @@ class Body(object):
             Schema can not be set if ``mime_type`` is \
             ``application/x-www-form-urlencoded`` or ``multipart/form-data``.
         """
-        schema = self.data.get("schema")
-        if self.mime_type in ["application/x-www-form-urlencoded",
-                              "multipart/form-data"]:
-            # TODO: this needs to raise a validation error
-            schema = None
-        return schema
+        return self.data.get("schema")
 
     @property
     def example(self):
@@ -460,7 +444,7 @@ class Body(object):
         return self.data.get("example")
 
     def __repr__(self):
-        return "<Body(name='{0}')>".format(self.name)
+        return "<Body(mime='{0}')>".format(self.mime_type)
 
 
 class Response(object):
@@ -468,7 +452,7 @@ class Response(object):
     Expected response with properties defined by \
     the `RAML Spec <http://raml.org/spec.html#responses>`_
     """
-    def __init__(self, code, data, method):
+    def __init__(self, code, data, resource=None):
         """
         :param int code: Valid HTTP response code
         :param dict data: Data defining the response
@@ -476,7 +460,13 @@ class Response(object):
         """
         self.code = code
         self.data = data
-        self.method = method
+        self.resource = resource
+
+    @property
+    def method(self):
+        if self.resource:
+            return self.resource.method
+        return None
 
     @property
     def description(self):
@@ -507,9 +497,9 @@ class Response(object):
             the API's response
         :rtype: ``list`` of :py:class:`.Body` objects, or ``None``
         """
-        name = self.data.get('body').keys()[0]
-        data = self.data.get('body').values()[0]
-        return Body(name, data) or None
+        name = list(iterkeys(self.data.get('body')))[0]
+        data = list(itervalues(self.data.get('body')))[0]
+        return Body(name, data, self) or None
 
     def __repr__(self):
         return "<Response(code='{0}')>".format(self.code)
@@ -551,6 +541,10 @@ class SecurityScheme(object):
         """
         self.name = name
         self.data = data
+        self._description = None
+        self._type = None
+        self._described_by = None
+        self._settings = None
 
     @property
     def type(self):
@@ -561,34 +555,11 @@ class SecurityScheme(object):
         :returns: type of authentication.
         :rtype: ``str`` representation of particular scheme
         """
-        return self.data.get('type')
+        return self._type
 
-    def _convert_items(self, items, obj, **kw):
-        return [obj(k, v, **kw) for k, v in list(items.items())]
-
-    def _get_described_by(self):
-        _d = self.data.get('describedBy')
-
-        if _d:
-            return {
-                'headers': self._convert_items(
-                    _d.get('headers', {}), Header, method=None
-                ),
-                'responses': self._convert_items(
-                    _d.get('responses', {}), Response, method=None
-                ),
-                'query_parameters': self._convert_items(
-                    _d.get('queryParameters', {}), QueryParameter
-                ),
-                'uri_parameters': self._convert_items(
-                    _d.get('uriParameters', {}), URIParameter
-                ),
-                'form_parameters': self._convert_items(
-                    _d.get('formParameters', {}), FormParameter
-                )
-            }
-
-        return None
+    @type.setter
+    def type(self, type_):
+        self._type = type_
 
     @property
     def described_by(self):
@@ -599,21 +570,11 @@ class SecurityScheme(object):
         :rtype: ``dict`` mapping ``headers``, ``responses``, and parameters
             to respective objects, or ``None``.
         """
-        return self._get_described_by()
+        return self._described_by
 
-    def _get_scheme(self, scheme):
-        return {'oauth_2_0': Oauth2Scheme,
-                'oauth_1_0': Oauth1Scheme}[scheme]
-
-    @property
-    def scheme(self):
-        if self.name in ['oauth_2_0', 'oauth_1_0']:
-            return self.__get_scheme(self.name)(self.data.get('settings'))
-        elif self.name.startswith("x-"):
-            c = CustomAuthScheme(self.name, self.data.get('settings'))
-            for k, v in list(self.data.get('settings').items()):
-                setattr(c, k, v)
-            return c
+    @described_by.setter
+    def described_by(self, desc_objs):
+        self._described_by = desc_objs
 
     @property
     def description(self):
@@ -623,105 +584,34 @@ class SecurityScheme(object):
 
         :rtype: :py:class:`.Content`
         """
-        return Content(self.data.get('description'))
+        return self._description
+
+    @description.setter
+    def description(self, desc):
+        self._description = desc
 
     @property
     def settings(self):
         """
-        Schema-specific information for either OAuth 2.0, OAuth 1.0, \
-        or a API-defined authentication method denoted by ``x-{name}``.
+        Schema-specific information.
+
+        .. note::
+            If defined, every key in the :py:obj:`.settings` dictionary \
+            is also a \ dynamically-added property of the \
+            :py:class:`.SecurityScheme` during the time of parsing.
+
+            For OAuth 1.0 & OAuth 2.0, there are specific required properties \
+            as defined in the \
+            `RAML Spec <http://raml.org/spec.html#security>`_.  For custom \
+            authentication, :py:obj:`.settings` is required.
 
         :rtype: ``dict``, or ``None``
         """
-        schemes = ['oauth_2_0', 'oauth_1_0']
-        if self.name in schemes:
-            return self.data.get('settings')
-        elif self.name.startswith("x-"):
-            return self.data.get('settings')
-        return None
+        return self._settings
+
+    @settings.setter
+    def settings(self, settings):
+        self._settings = settings
 
     def __repr__(self):
         return "<SecurityScheme(name='{0}')>".format(self.name)
-
-
-class Oauth2Scheme(object):
-    """
-    OAuth 2 Authentication protocol scheme
-    """
-    def __init__(self, settings):
-        self.settings = settings
-        self.__scopes = settings.get('scopes')
-
-    @property
-    def scopes(self):
-        """
-        Returns a list of strings of available scopes
-        """
-        return self.__scopes
-
-    @scopes.setter
-    def scopes(self, scope_list):
-        self.__scopes = scope_list
-
-    @property
-    def authorization_uri(self):
-        """
-        Returns a string of the authorization URI
-        """
-        return self.settings.get('authorizationUri')  # string
-
-    @property
-    def access_token_uri(self):
-        """
-        Returns a string of the access token URI
-        """
-        return self.settings.get('accessTokenUri')  # string
-
-    @property
-    def authorization_grants(self):
-        """
-        Returns a list of strings of authorization grants
-        """
-        return self.settings.get('authorizationGrants')  # list of strings
-
-
-class Oauth1Scheme(object):
-    """
-    OAuth 1 Authentication protocol scheme
-    """
-    def __init__(self, settings):
-        self.settings = settings
-
-    @property
-    def request_token_uri(self):
-        """
-        Returns a string of the Request Token URI
-        """
-        return self.settings.get('requestTokenUri')
-
-    @property
-    def authorization_uri(self):
-        """
-        Returns a string of the Authorization URI
-        """
-        return self.settings.get('authorizationUri')
-
-    @property
-    def token_credentials_uri(self):
-        """
-        Returns a string of the Token Credentials URI
-        """
-        return self.settings.get('tokenCredentialsUri')
-
-
-class CustomAuthScheme(object):
-    """
-    Custom Authentication scheme
-    """
-    def __init__(self, name, settings):
-        """
-        :param str name: Name of auth scheme
-        :param dict settings: Settings associated with auth scheme
-        """
-        self.name = name
-        self.settings = settings

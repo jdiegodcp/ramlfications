@@ -1,0 +1,15 @@
+#%RAML 0.8
+title: Foo Web API - Invalid Security Scheme
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.foo.com/{version}
+mediaType: application/json
+documentation:
+  - title: Foo Web API Docs
+    content: |
+      Welcome to the _Foo Web API_ specification.
+/foo:
+  description: FooBar
+  securedBy: [ oauth_2_0 ]
+  get:
+    description: Get some FooBar

@@ -1,6 +1,7 @@
 #%RAML 0.8
 title: Example API - Mapped Traits
 version: v1
+baseUri: https://api.example.com
 resourceTypes:
   - searchableCollection:
       get:
@@ -34,6 +35,8 @@ traits:
   type: { searchableCollection: { queryParamName: title, fallbackParamName: digest_all_fields } }
   get:
     is: [ secured: { tokenName: access_token }, paged: { maxPages: 10 } ]
+  post:
+    description: Should not have query parameters assigned even though parent type is searchableCollection
 /magazines:
   type: collection
   get:

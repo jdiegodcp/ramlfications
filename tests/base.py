@@ -35,7 +35,14 @@ class BaseTestCase(unittest.TestCase):
                 self.fixture_data[self.fixture] = json.load(f)
             return self.fixture_data
 
-    # This helper function might already exist in unnittest.
+    # Helper function to assert an object/instance type is in list
+    def assertObjInList(self, instance, obj_list):
+        for item in obj_list:
+            if isinstance(item, instance):
+                return True
+        return False
+
+    # This helper function might already exist in unittest.
     def assertItemInList(self, item, items):
         self.assertTrue(item in items)
 

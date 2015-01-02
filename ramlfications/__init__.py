@@ -8,34 +8,41 @@ __author__ = 'Lynn Root'
 __version__ = '0.1.0'
 __license__ = 'Apache 2.0'
 
+import os
 
 from ramlfications.loader import *  # NOQA
 from ramlfications.parser import *  # NOQA
-from ramlfications.validate import *  # NOQA
+#from ramlfications.validate import *  # NOQA
 
 
 def parse(raml_file):
     """
     Module helper function to parse a RAML File.  First loads the RAML file
-    with :py:class:`.loader.RAMLLoader` then parses with 
+    with :py:class:`.loader.RAMLLoader` then parses with
     :py:func:`.parser.parse_raml` to return a :py:class:`.raml.RAMLRoot`
     object.
 
     :param str raml_file: String path to RAML file
+    :param bool validate: Whether or not to validate the RAML file \
+        while parsing
+    :param bool parse: If ``False``, then just validate
     :return: parsed API
     :rtype: RAMLRoot
     :raises LoadRamlFileError: If error occurred trying to load the RAML file
         (see :py:class:`.loader.RAMLLoader`)
     :raises RAMLParserError: If error occurred during parsing of RAML file
         (see :py:class:`.raml.RAMLRoot`)
+    :raises InvalidRamlFileError: RAML file is invalid according to RAML \
+        `specification <http://raml.org/spec.html>`_.
     """
     loader = RAMLLoader().load(raml_file)
-    return parse_raml(loader)
+    return parse_raml(loader, parse=True)
 
 
 def load(raml_file):
     """
-    Module helper function to load a RAML File using :py:class:`.loader.RAMLLoader`.
+    Module helper function to load a RAML File using \
+    :py:class:`.loader.RAMLLoader`.
 
     :param str raml_file: String path to RAML file
     :return: loaded RAML file
@@ -48,8 +55,10 @@ def load(raml_file):
 
 def validate(raml_file, production=True):
     """
-    Module helper function to validate a RAML File.  First loads the RAML file
-    with :py:class:`.loader.RAMLLoader` then validates with :py:func:`.validate.validate_raml`.
+    Module helper function to validate a RAML File.  First loads \
+    the RAML file \
+    with :py:class:`.loader.RAMLLoader` then validates with \
+    :py:func:`.validate.validate_raml`.
 
     :param str raml_file: String path to RAML file
     :param bool production: If the RAML file is meant to be production-ready
@@ -60,4 +69,10 @@ def validate(raml_file, production=True):
         file (see :py:mod:`.validate`)
 
     """
-    return validate_raml(raml_file, production)
+    tmp = os.environ.get('RAML_VALIDATE')
+    os.environ['RAML_VALIDATE'] = '1'
+    loader = RAMLLoader().load(raml_file)
+    try:
+        parse_raml(loader, parse=False)
+    finally:
+        os.environ['RAML_VALIDATE'] = tmp
