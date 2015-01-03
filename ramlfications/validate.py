@@ -74,7 +74,8 @@ def __map_to_validate_func(func_name):
         '__get_resource_type': __resource_type,
         '__set_settings_dict': __security_settings,
         '__get_secured_by': __secured_by,
-        '__add_properties_to_resources': __has_resources
+        '__add_properties_to_resources': __has_resources,
+        '__set_type': __set_type
     }[func_name]
 
 
@@ -350,7 +351,32 @@ def __body_media_type(body):
                 raise InvalidRamlFileError(msg)
 
 
+def __set_type(resource, *args, **kw):
+    assigned = resource.data.get('type')
+    if not assigned:
+        return
+    if isinstance(assigned, dict) or isinstance(assigned, list):
+        if len(assigned) > 1:
+            msg = "Too many resource types applied to '{0}'.".format(
+                resource.name)
+            raise InvalidRamlFileError(msg)
+    if isinstance(assigned, dict):
+        assigned = assigned.keys()[0]
+    elif isinstance(assigned, list):
+        assigned = assigned[0]
+    else:
+        assigned = assigned
+
+    root = args[0]
+    valid_resource_types = [r.name for r in root.resource_types]
+    if assigned not in valid_resource_types:
+        msg = "'{0}' is not defined in resourceTypes".format(assigned)
+        raise InvalidRamlFileError(msg)
+
+
 def __resource_type(resource, *args, **kw):
+    print('flafj')
+    print(resource.type)
     if not resource.type:
         return
     if isinstance(resource.type, dict) or isinstance(resource.type, list):
@@ -358,6 +384,20 @@ def __resource_type(resource, *args, **kw):
             msg = "Too many resource types applied to '{0}'.".format(
                 resource.name)
             raise InvalidRamlFileError(msg)
+    print('bar')
+    if isinstance(resource.type, dict):
+        assigned = resource.type.keys()[0]
+    elif isinstance(resource.type, list):
+        assigned = resource.type[0]
+    else:
+        assigned = resource.type
+
+    print('yyy')
+    root = args[0]
+    valid_resource_types = [r.name for r in root.resource_types]
+    if assigned not in valid_resource_types:
+        msg = "'{0}' is not defined in resourceTypes".format(assigned)
+        raise InvalidRamlFileError(msg)
 
 
 def __secured_by(resource, *args, **kw):

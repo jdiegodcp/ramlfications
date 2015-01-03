@@ -416,13 +416,20 @@ def __set_display_name(resource):
     return resource.data.get('displayName', resource.name)
 
 
+@validate
 def __set_type(resource, root):
     resource_type = resource.data.get('type')
     if resource_type:
-        defined_res_types = root.resource_types
-        available_types = [t for t in defined_res_types if t.name in resource_type]
-        set_type = [t for t in available_types if t.method == resource.method]
+        if isinstance(resource_type, dict):
+            type_name = resource_type.keys()[0]
+        elif isinstance(resource_type, list):
+            type_name = resource_type[0]
+        else:
+            type_name = resource_type
 
+        defined_res_types = root.resource_types
+        available_types = [t for t in defined_res_types if t.name == type_name]
+        set_type = [t for t in available_types if t.method == resource.method]
         if set_type:
             return resource_type
     return None

@@ -726,7 +726,6 @@ class TestResource(BaseTestCase):
 
         self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
 
-    @unittest.skip("TODO: add validation function")
     def test_resource_types_invalid_mapped_type(self):
         raml_path = "mapped-types-incorrect-resource-type.raml"
         raml_file = os.path.join(EXAMPLES + raml_path)
