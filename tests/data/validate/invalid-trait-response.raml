@@ -1,0 +1,15 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Invalid Trait Response
+version: v1
+baseUri: https://api.spotify.com/{version}
+traits:
+  - paged:
+      responses:
+        678:
+          headers:
+            x-invalid-resp-code:
+              displayName: Invalid Response Code
+/foo/bar:
+  is: [ paged ]
+  get:
+    displayName: Foo Bar Baz

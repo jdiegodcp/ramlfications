@@ -189,7 +189,8 @@ def __protocols(raml, *args, **kw):
     if protocols:
         for p in protocols:
             if p not in config.get('defaults', 'protocols'):
-                msg = "'{0}' not a valid protocol for a RAML-defined API."
+                msg = ("'{0}' not a valid protocol for a RAML-defined "
+                       "API.".format(p))
                 raise InvalidRamlFileError(msg)
 
 
@@ -236,11 +237,9 @@ def __uri_params(raml, *args, **kw):
 
 
 def __responses(resource, *args, **kw):
-    if hasattr(resource, 'method'):
-        if resource.data.get(resource.method) is not None:
-            resp = resource.data.get(resource.method, {}).get('responses', {})
-        else:
-            resp = {}
+    if hasattr(resource, 'method') and resource.data.get(resource.method) is not None:
+        resp = resource.data.get(resource.method, {}).get('responses', {})
+
     elif hasattr(resource, 'orig_method'):
         resp = resource.data.get(resource.orig_method, {}).get('responses', {})
     else:

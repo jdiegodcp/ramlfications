@@ -1,0 +1,21 @@
+#%RAML 0.8
+title: API Demo - Invalid Media Type
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.example.com/{version}
+mediaType: awesome/sauce
+
+/barfoo:
+  displayName: barfoo
+  get:
+    description: Totally uncreative get-barfoo description
+    formParameters:
+      validParamType:
+        displayName: FooBarType
+        description: Some Valid Primative Parameter Type
+        type: string
+        required: false
+        repeat: false
+
+
+

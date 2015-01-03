@@ -87,6 +87,19 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
+    def test_validate_trait_responses(self):
+        raml_file = os.path.join(VALIDATE, "invalid-trait-response.raml")
+        expected_msg = "'678' not a valid response code."
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_validate_resource_type_responses(self):
+        raml_file = os.path.join(VALIDATE,
+                                 "invalid-resource-type-response.raml")
+        expected_msg = "'678' not a valid response code."
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
     def test_has_resources(self):
         raml_file = os.path.join(VALIDATE, "no-resources.raml")
         expected_msg = "No resources are defined."
@@ -109,5 +122,19 @@ class TestValidateRAML(BaseTestCase):
         invalid_sec_scheme = "invalid-security-scheme.raml"
         raml_file = os.path.join(VALIDATE, invalid_sec_scheme)
         expected_msg = "'invalid-scheme' is not a valid Security Scheme."
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_validate_protocols(self):
+        invalid_protocols = "invalid-protocols.raml"
+        raml_file = os.path.join(VALIDATE, invalid_protocols)
+        expected_msg = "'FTP' not a valid protocol for a RAML-defined API."
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_media_type(self):
+        invalid_media_type = "invalid-media-type.raml"
+        raml_file = os.path.join(VALIDATE, invalid_media_type)
+        expected_msg = "Unsupported MIME Media Type: 'awesome/sauce'."
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
