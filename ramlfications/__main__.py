@@ -8,8 +8,8 @@ import click
 
 from .loader import RAMLLoader
 from .tree import ttree
-from .validate import validate_raml
 from .validate import InvalidRamlFileError
+from ramlfications import validate as vvalidate
 
 
 @click.group()
@@ -23,7 +23,7 @@ def main():
 def validate(ramlfile):
     """Validate a given RAML file."""
     try:
-        validate_raml(ramlfile, prod=True)
+        vvalidate(ramlfile, production=True)
         click.secho("Success! Valid RAML file: {0}".format(ramlfile),
                     fg="green")
 
@@ -42,12 +42,15 @@ def validate(ramlfile):
               help=("Save tree output to file"))
 @click.option("-v", "--verbose", default=0, count=True,
               help="Include methods for each endpoint")
-def tree(ramlfile, color, output, verbose):
+@click.option("-V", "--validate", default=False, is_flag=True,
+              help="Validate RAML file")
+def tree(ramlfile, color, output, verbose, validate):
     """Pretty-print a tree of the RAML-defined API."""
     try:
         load_obj = RAMLLoader().load(ramlfile)
-        validate_raml(ramlfile, prod=True)
-        ttree(load_obj, color, output, verbose)
+        if validate:
+            vvalidate(ramlfile, production=True)
+        ttree(load_obj, color, output, verbose, validate)
     except InvalidRamlFileError as e:
         msg = '"{0}" is not a valid RAML file: {1}'.format(
             click.format_filename(load_obj.raml_file), e)
