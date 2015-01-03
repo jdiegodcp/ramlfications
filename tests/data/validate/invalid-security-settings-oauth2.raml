@@ -17,6 +17,7 @@ securitySchemes:
           Spotify supports OAuth 2.0 for authenticating all API requests.
       type: OAuth 2.0
       settings:
+        authorizationUri: https://foo.bar
         authorizationGrants: [ code, token ]
         scopes:
           - "playlist-read-private"

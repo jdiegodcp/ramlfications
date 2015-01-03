@@ -29,7 +29,7 @@ class TestValidateRAML(BaseTestCase):
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
     def test_no_raml_header(self):
-        raml_file = os.path.join(EXAMPLES, "no-raml-header.raml")
+        raml_file = os.path.join(VALIDATE, "no-raml-header.raml")
         expected_msg = ("RAML header empty. Please make sure the first line "
                         "of the file contains a valid RAML file definition.")
 
@@ -56,6 +56,12 @@ class TestValidateRAML(BaseTestCase):
     def test_validate_version_base_uri(self):
         raml_file = os.path.join(VALIDATE, "no-version.raml")
         expected_msg = 'RAML File does not define an API version.'
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_validate_version_uri_params(self):
+        raml_file = os.path.join(VALIDATE, "version-in-uri-params.raml")
+        expected_msg = "'version' can only be defined in baseUriParameters."
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
@@ -136,5 +142,61 @@ class TestValidateRAML(BaseTestCase):
         invalid_media_type = "invalid-media-type.raml"
         raml_file = os.path.join(VALIDATE, invalid_media_type)
         expected_msg = "Unsupported MIME Media Type: 'awesome/sauce'."
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_invalid_body_keys(self):
+        invalid_body = "invalid-body.raml"
+        raml_file = os.path.join(VALIDATE, invalid_body)
+        expected_msg = ("'schema' may not be specified when the body's media "
+                        "type is application/x-www-form-urlencoded or "
+                        "multipart/form-data.")
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_invalid_secured_by(self):
+        invalid_secured_by = "invalid-secured-by.raml"
+        raml_file = os.path.join(VALIDATE, invalid_secured_by)
+        expected_msg = ("'not_a_scheme' is applied to '/foo' but is not "
+                        "defined in the securitySchemes")
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_no_security_schemes(self):
+        no_security_scheme = "no-security-scheme.raml"
+        raml_file = os.path.join(VALIDATE, no_security_scheme)
+        expected_msg = ("No Security Schemes are defined in RAML file but "
+                        "['oauth_2_0'] scheme is assigned to '/foo'.")
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_validate_oauth_1_settings(self):
+        oauth_1_settings = "invalid-security-settings-oauth1.raml"
+        raml_file = os.path.join(VALIDATE, oauth_1_settings)
+        expected_msg = ("Need to defined 'tokenCredentialsUri' in "
+                        "securitySchemas settings for a valid OAuth 1.0 "
+                        "scheme")
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_validate_oauth_2_settings(self):
+        oauth_1_settings = "invalid-security-settings-oauth2.raml"
+        raml_file = os.path.join(VALIDATE, oauth_1_settings)
+        expected_msg = ("Need to defined 'accessTokenUri' in securitySchemas "
+                        "settings for a valid OAuth 2.0 scheme")
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_validate_data_exists(self):
+        only_raml_header = "only-raml-header.raml"
+        raml_file = os.path.join(VALIDATE, only_raml_header)
+        expected_msg = "No RAML data to parse."
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_validate_empty_file(self):
+        empty_file = "empty-file.raml"
+        raml_file = os.path.join(VALIDATE, empty_file)
+        expected_msg = "RAML File is empty"
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)

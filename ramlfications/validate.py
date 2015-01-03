@@ -119,30 +119,36 @@ def __version(raml, *args, **kw):
 
 def __raml_header(raml_file):
     """Validate Header of RAML File"""
-    try:
-        with open(raml_file, 'r') as r:
-            # Returns None if empty file lines
-            raml_header = r.readline().split('\n')[0]
-            if not raml_header:
-                msg = ("RAML header empty. Please make sure the first line "
-                       "of the file contains a valid RAML file definition.")
-                raise InvalidRamlFileError(msg)
+    # loader.load catches if RAML file doesn't exist
+    if os.path.getsize(raml_file) == 0:
+        msg = "RAML File is empty"
+        raise InvalidRamlFileError(msg)
 
-            try:
-                raml_def, version = raml_header.split()
-            except ValueError:
-                msg = ("Not a valid RAML header: {0}.".format(raml_header))
-                raise InvalidRamlFileError(msg)
+    with open(raml_file, 'r') as r:
+        raml_header = r.readline().split('\n')[0]
+        if not raml_header:
+            msg = ("RAML header empty. Please make sure the first line "
+                   "of the file contains a valid RAML file definition.")
+            raise InvalidRamlFileError(msg)
 
-            if raml_def != "#%RAML":
-                msg = "Not a valid RAML header: {0}.".format(raml_def)
-                raise InvalidRamlFileError(msg)
+        try:
+            raml_def, version = raml_header.split()
+        except ValueError:
+            msg = ("Not a valid RAML header: {0}.".format(raml_header))
+            raise InvalidRamlFileError(msg)
 
-            if version not in config.get('defaults', 'raml_versions'):
-                msg = "Not a valid version of RAML: {0}.".format(version)
-                raise InvalidRamlFileError(msg)
-    except IOError as e:
-        raise InvalidRamlFileError(e)
+        if raml_def != "#%RAML":
+            msg = "Not a valid RAML header: {0}.".format(raml_def)
+            raise InvalidRamlFileError(msg)
+
+        if version not in config.get('defaults', 'raml_versions'):
+            msg = "Not a valid version of RAML: {0}.".format(version)
+            raise InvalidRamlFileError(msg)
+
+        # If only header and nothing else
+        if not r.readlines():
+            msg = "No RAML data to parse."
+            raise InvalidRamlFileError(msg)
 
 
 def __api_title(raml):
@@ -326,7 +332,6 @@ def __body(resource, *args, **kw):
         body = resource.data.get(resource.orig_method, {}).get('body', {})
     else:  # trait
         body = resource.data.get('body', {})
-
     __body_media_type(body)
 
 
@@ -338,24 +343,25 @@ def __base_uri_params_resource(resource, *args, **kw):
     pass
 
 
-def __body_media_type(body):
-    def check_type(media_type):
-        if media_type in config.get('defaults', 'media_types'):
-            return
-        if media_type in ['schema', 'example']:
-            return
-        regex_str = re.compile(r"application\/[A-Za-z.-0-1]*?(json|xml)")
-        match = re.search(regex_str, media_type)
-        if match:
-            return
-        else:
-            msg = "Unsupported MIME Media Type: '{0}'.".format(media_type)
-            raise InvalidRamlFileError(msg)
+def __check_media_type(media_type):
+    if media_type in config.get('defaults', 'media_types'):
+        return
+    if media_type in ['schema', 'example']:
+        return
+    regex_str = re.compile(r"application\/[A-Za-z.-0-1]*?(json|xml)")
+    match = re.search(regex_str, media_type)
+    if match:
+        return
+    else:
+        msg = "Unsupported MIME Media Type: '{0}'.".format(media_type)
+        raise InvalidRamlFileError(msg)
 
+
+def __body_media_type(body):
     for k, v in iteritems(body):
-        check_type(k)
+        __check_media_type(k)
         if k in ['application/x-www-form-urlencoded', 'multipart/form-data']:
-            props = list(iterkeys(k))
+            props = list(iterkeys(v))
             if 'schema' in props:
                 msg = ("'schema' may not be specified when the body's media "
                        "type is application/x-www-form-urlencoded or "
@@ -409,17 +415,17 @@ def __resource_type(resource, *args, **kw):
 
 
 def __secured_by(resource, *args, **kw):
-    if not resource.secured_by:
+    if not resource.data.get('securedBy'):
         return
 
     root = args[0]
     if not root.security_schemes:
-        msg = ("No Security Schemes are defined in RAML file but '{0}' "
-               "scheme is assigned to '{1}'.".format(resource.secured_by,
-                                                     resource.name))
+        msg = ("No Security Schemes are defined in RAML file but {0} "
+               "scheme is assigned to "
+               "'{1}'.".format(resource.data.get('securedBy'), resource.name))
         raise InvalidRamlFileError(msg)
 
-    for s in resource.secured_by:
+    for s in resource.data.get('securedBy'):
         if isinstance(s, dict):
             scheme = list(iterkeys(s))[0]
         else:

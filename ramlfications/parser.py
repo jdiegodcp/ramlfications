@@ -92,6 +92,7 @@ def __map_item_type(item):
     }[item]
 
 
+@validate_property
 def __set_body(r, property, inherit=False):
     body_objs = []
     if r.data.get(r.method) is not None:
