@@ -35,6 +35,10 @@ class BaseTestCase(unittest.TestCase):
                 self.fixture_data[self.fixture] = json.load(f)
             return self.fixture_data
 
+    # Helper function to assert attribute set in object
+    def assertHasAttr(self, obj, property):
+        return hasattr(obj, property)
+
     # Helper function to assert an object/instance type is in list
     def assertObjInList(self, instance, obj_list):
         for item in obj_list:

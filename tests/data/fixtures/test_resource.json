@@ -197,5 +197,44 @@
     "required": true,
     "type": "string",
     "example": "7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B"
+  },
+  "test_applied_security_scheme": {
+    "description": "Spotify supports OAuth 2.0 for authenticating all API requests.",
+    "type": "OAuth 2.0",
+    "describedBy": {
+      "queryParameters": {
+        "foo": {
+          "description": "Foo Query Parameter",
+          "type": "string",
+          "example": "fooooo"
+        }
+      },
+      "uriParameters": {
+        "bar": {
+          "description": "Bar URI Parameter",
+          "type": "string",
+          "example": "baaaar"
+        },
+        "formParameters": {
+          "blarg": {
+            "description": "Blarg Form Parameter",
+            "type": "string",
+            "example": "bllaaaarrgg"
+          }
+        },
+        "headers": {
+          "Authorization": {
+            "description": "Used to send a valid OAuth 2 access token.",
+            "type": "string"
+          }
+        },
+        "settings": {
+          "authorizationUri": "https://accounts.spotify.com/authorize",
+          "accessTokenUri": "https://accounts.spotify.com/api/token",
+          "authorizationGrants": [ "code", "token" ],
+          "scopes": ["playlist-read-private", "playlist-modify-public", "playlist-modify-private", "user-library-read", "user-library-modify", "user-read-private", "user-read-emai"]
+        }
+      }
+    }
   }
 }

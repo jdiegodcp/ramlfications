@@ -7,6 +7,15 @@
                 "displayName": "API Path"
         }
     }],
+    "test_base_uri_parameters": [{
+        "domainName": {
+                "description": "Domain Root Name",
+                "type": "string",
+                "example": "blarg",
+                "displayName": "Domain root name",
+                "default": "blarg-domain"
+        }
+    }],
     "FIXME - test_resource_type": {
         "foo": {
             "get": {

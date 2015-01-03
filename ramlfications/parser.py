@@ -818,11 +818,11 @@ def __add_properties_to_security_schemes(schemes):
 # Logic for mapping of securitySchemes to its Resource/Resource Type
 @validate
 def __get_secured_by(resource, root):
-    if not resource.secured_by:
+    if not resource.data.get('securedBy'):
         return
 
     _secured_by = []
-    for secured in resource.secured_by:
+    for secured in resource.data.get('securedBy'):
         if secured is None:
             _secured_by.append(None)
         elif isinstance(secured, list) or \

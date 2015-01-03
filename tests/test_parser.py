@@ -42,6 +42,10 @@ class TestAPIRoot(BaseTestCase):
         title = "Spotify Web API Demo"
         self.assertEqual(self.api.title, title)
 
+    def test_version(self):
+        version = 'v1'
+        self.assertEqual(self.api.version, version)
+
     def test_protocols(self):
         protocols = ["HTTPS"]
         self.assertEqual(self.api.protocols, protocols)
@@ -49,6 +53,26 @@ class TestAPIRoot(BaseTestCase):
     def test_base_uri(self):
         base_uri = "https://api.spotify.com/v1"
         self.assertEqual(self.api.base_uri, base_uri)
+
+    def test_base_uri_params(self):
+        data = self.f('test_base_uri_parameters')
+        raml_file = os.path.join(EXAMPLES, "base-uri-parameters.raml")
+        api = self.setup_parsed_raml(raml_file)
+
+        results = api.base_uri_params
+
+        for i, r in enumerate(results):
+            self.assertIsInstance(r, parameters.URIParameter)
+            self.assertEqual(r.name, list(data[i].keys())[0])
+            self.assertEqual(r.description.raw,
+                             list(data[i].values())[0].get('description'))
+            self.assertEqual(repr(r.type), "<String(name='domainName')>")
+            self.assertEqual(r.example,
+                             list(data[i].values())[0].get('example'))
+            self.assertEqual(r.display_name,
+                             list(data[i].values())[0].get('displayName'))
+            self.assertEqual(r.default,
+                             list(data[i].values())[0].get('default'))
 
     def test_base_uri_throws_exception(self):
         raml_file = os.path.join(EXAMPLES + "no-version.raml")
@@ -471,15 +495,46 @@ class TestDocumentation(BaseTestCase):
         self.assertEqual(documentation.content.html, expected_html)
 
 
-class TestResource(BaseTestCase):
-    fixture = 'test_resource.json'
+class TestTrait(BaseTestCase):
 
     def setup_parsed_raml(self, ramlfile):
         return parse(ramlfile)
 
+    def setup(self):
+        raml_file = os.path.join(EXAMPLES, "spotify-web-api.raml")
+        self.api = parse(raml_file)
+        self.resources = self.api.resources
+
+    def test_trait_instance(self):
+        raml_file = os.path.join(EXAMPLES, "simple-traits.raml")
+        api = self.setup_parsed_raml(raml_file)
+        traits = api.traits
+
+        for t in traits:
+            self.assertIsInstance(t, raml.Trait)
+
+    def test_trait_usage(self):
+        raml_file = os.path.join(EXAMPLES, "trait-usage.raml")
+        api = self.setup_parsed_raml(raml_file)
+        trait = api.traits[0]
+
+        exp_usage = "Apply this trait to any method that supports pagination"
+
+        self.assertEqual(trait.usage, exp_usage)
+
+
+class TestResource(BaseTestCase):
+    fixture = 'test_resource.json'
+
+    def setup_parsed_raml(self, ramlfile):
+        api = parse(ramlfile)
+        print('xxx')
+        print(api.resources[0].security_schemes)
+        return api
+
     def setUp(self):
         self.f = self.fixture_data.get(self.fixture).get  # fixtures setup
-        raml_file = os.path.join(EXAMPLES + "spotify-web-api.raml")
+        raml_file = os.path.join(EXAMPLES, "spotify-web-api.raml")
         self.api = parse(raml_file)
         self.resources = self.api.resources
 
@@ -1066,7 +1121,7 @@ class TestResource(BaseTestCase):
 
         self.assertEqual(html_result, expected_result)
 
-    def test_req_content_types(self):
+    def test_req_media_types(self):
         raml_file = os.path.join(EXAMPLES + "req-content-type.raml")
         api = self.setup_parsed_raml(raml_file)
         resources = api.resources
@@ -1090,3 +1145,25 @@ class TestResource(BaseTestCase):
                                      expected_post_playlist_schema)
                 self.assertDictEqual(c_type.example,
                                      expected_post_playlist_example)
+
+    def test_security_schemes(self):
+        raml_file = os.path.join(EXAMPLES, "applied-security-scheme.raml")
+        api = self.setup_parsed_raml(raml_file)
+        applied_schemes = api.resources[0].security_schemes
+        print(api.security_schemes)
+        exp_data = self.f('test_applied_security_scheme')
+        exp_desc = exp_data.get("description")
+        self.assertIsInstance(applied_schemes, list)
+
+        for s in applied_schemes:
+            self.assertIsInstance(s, parameters.SecurityScheme)
+            self.assertEqual(s.name, 'oauth_2_0')
+            self.assertDictEqual(s.data, exp_data)
+            self.assertEqual(s.type, 'OAuth 2.0')
+            self.assertIsInstance(s.described_by, dict)
+            self.assertEqual(s.description.raw, exp_desc)
+            self.assertIsNotNone(s.settings)
+            self.assertHasAttr(s, 'authorizationUri')
+            self.assertHasAttr(s, 'accessTokenUri')
+            self.assertHasAttr(s, 'authorizationGrants')
+            self.asserthasAttr(s, 'scopes')

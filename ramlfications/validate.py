@@ -326,10 +326,14 @@ def __headers(resource, *args, **kw):
 
 
 def __body(resource, *args, **kw):
-    if hasattr(resource, 'method'):  # resource
-        body = resource.data.get(resource.method, {}).get('body', {})
-    elif hasattr(resource, 'orig_method'):  # resource type
+    if hasattr(resource, 'orig_method'):  # resource type
         body = resource.data.get(resource.orig_method, {}).get('body', {})
+    if hasattr(resource, 'method'):
+        if resource.data.get(resource.method) is not None:
+            body = resource.data.get(resource.method, {}).get('body', {})
+        else:
+            body = resource.data.get('body', {})
+
     else:  # trait
         body = resource.data.get('body', {})
     __body_media_type(body)
