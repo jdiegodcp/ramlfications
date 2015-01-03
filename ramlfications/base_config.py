@@ -27,7 +27,7 @@ RAML_VERSIONS = ["0.8"]
 HTTP_PROTOCOLS = ["HTTP", "HTTPS"]
 MEDIA_TYPES = [
     "text/yaml", "text-x-yaml", "application/yaml", "application/x-yaml",
-    "multipart/form-data"
+    "multipart/form-data", "text/html"
 ]
 AUTH_SCHEMES = [
     'oauth_1_0', 'oauth_2_0',
@@ -38,8 +38,14 @@ AUTH_SCHEMES = [
 HTTP_RESP_CODES = list(iterkeys(httpserver.BaseHTTPRequestHandler.responses))
 PRIM_TYPES = ['string', 'integer', 'number', 'boolean', 'date', 'file']
 
-HTTP_RESP_CODES.extend(config.get('custom_add', 'resp_codes'))
-AUTH_SCHEMES.extend(config.get('custom_add', 'auth_schemes'))
+custom_resp_codes = config.get('custom_add', 'resp_codes').strip().split(',')
+HTTP_RESP_CODES.extend([int(c) for c in custom_resp_codes])
+
+custom_auth_schemes = config.get('custom_add', 'auth_schemes').strip().split(',')
+AUTH_SCHEMES.extend(custom_auth_schemes)
+
+custom_media_types = config.get('custom_add', 'media_types').strip().split(',')
+MEDIA_TYPES.extend(custom_media_types)
 
 config.add_section('defaults')
 config.set('defaults', 'available_methods', AVAILABLE_METHODS)

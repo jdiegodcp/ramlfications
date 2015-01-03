@@ -329,6 +329,8 @@ def __body_media_type(body):
     def check_type(media_type):
         if media_type in config.get('defaults', 'media_types'):
             return
+        if media_type in ['schema', 'example']:
+            return
         regex_str = re.compile(r"application\/[A-Za-z.-0-1]*?(json|xml)")
         match = re.search(regex_str, media_type)
         if match:
