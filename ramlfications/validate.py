@@ -375,8 +375,6 @@ def __set_type(resource, *args, **kw):
 
 
 def __resource_type(resource, *args, **kw):
-    print('flafj')
-    print(resource.type)
     if not resource.type:
         return
     if isinstance(resource.type, dict) or isinstance(resource.type, list):
@@ -384,7 +382,6 @@ def __resource_type(resource, *args, **kw):
             msg = "Too many resource types applied to '{0}'.".format(
                 resource.name)
             raise InvalidRamlFileError(msg)
-    print('bar')
     if isinstance(resource.type, dict):
         assigned = resource.type.keys()[0]
     elif isinstance(resource.type, list):
@@ -392,7 +389,6 @@ def __resource_type(resource, *args, **kw):
     else:
         assigned = resource.type
 
-    print('yyy')
     root = args[0]
     valid_resource_types = [r.name for r in root.resource_types]
     if assigned not in valid_resource_types:
