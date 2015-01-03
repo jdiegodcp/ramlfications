@@ -5,7 +5,8 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
-from ramlfications.validate import InvalidRamlFileError, validate_raml
+from ramlfications import validate
+from ramlfications.validate import InvalidRamlFileError
 
 from .base import BaseTestCase, EXAMPLES, VALIDATE
 
@@ -14,18 +15,12 @@ class TestValidateRAML(BaseTestCase):
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
 
-    def fail_validate(self, error_class, raml_file, expected_msg):
+    def fail_validate(self, error_class, raml_file, expected_msg, prod=True):
         self.raml_file = raml_file
-        e = self.assert_raises(error_class, validate_raml,
-                               raml_file=self.raml_file, prod=True)
+        e = self.assert_raises(error_class, validate,
+                               raml_file=self.raml_file, production=prod)
 
         self.assertEqual(expected_msg, str(e))
-
-    def test_nonexistant_raml_file(self):
-        raml_file = os.path.join(EXAMPLES, "this-file-doesnt-exist.raml")
-        expected_msg = ("[Errno 2] No such file or directory: '" + EXAMPLES +
-                        "this-file-doesnt-exist.raml'")
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
     def test_validate_raml_header(self):
         raml_file = os.path.join(EXAMPLES, "incorrect-raml-header.raml")
@@ -58,11 +53,19 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    def test_validate_version(self):
+    def test_validate_version_base_uri(self):
         raml_file = os.path.join(VALIDATE, "no-version.raml")
         expected_msg = 'RAML File does not define an API version.'
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_validate_version(self):
+        raml_file = os.path.join(VALIDATE, "no-version-base-uri.raml")
+        expected_msg = ("RAML File's baseUri includes {version} parameter but "
+                        "no version is defined.")
+
+        self.fail_validate(InvalidRamlFileError, raml_file,
+                           expected_msg, prod=False)
 
     def test_validate_base_uri(self):
         raml_file = os.path.join(VALIDATE, "no-base-uri.raml")
@@ -73,13 +76,14 @@ class TestValidateRAML(BaseTestCase):
     def test_validate_base_params(self):
         no_default_param = "no-default-base-uri-params.raml"
         raml_file = os.path.join(VALIDATE, no_default_param)
-        expected_msg = "'domainName' needs a default parameter."
+        expected_msg = ("The 'default' parameter is not set for base URI "
+                        "parameter 'domainName'")
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
     def test_validate_resource_responses(self):
-        raml_file = os.path.join(VALIDATE, "responses.raml")
-        expected_msg = "'anInvalidKey' not a valid Response parameter."
+        raml_file = os.path.join(VALIDATE, "invalid-response-body.raml")
+        expected_msg = "Unsupported MIME Media Type: \'invalid/mediatype\'."
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
@@ -104,6 +108,6 @@ class TestValidateRAML(BaseTestCase):
     def test_validate_security_scheme(self):
         invalid_sec_scheme = "invalid-security-scheme.raml"
         raml_file = os.path.join(VALIDATE, invalid_sec_scheme)
-        expected_msg = "'Invalid Scheme' is not a valid Security Scheme."
+        expected_msg = "'invalid-scheme' is not a valid Security Scheme."
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)

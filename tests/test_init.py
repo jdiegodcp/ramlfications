@@ -7,7 +7,6 @@ import os
 from ramlfications import parse, load, validate
 from ramlfications.raml import RAMLRoot
 from ramlfications.loader import LoadRamlFileError, RAMLDict
-from ramlfications.validate import InvalidRamlFileError
 
 from .base import BaseTestCase, EXAMPLES
 
@@ -44,7 +43,7 @@ class TestParse(BaseTestCase):
 
     def test_validate_nonexistant_file(self):
         raml_file = "/tmp/non-existant-raml-file.raml"
-        e = self.assert_raises(InvalidRamlFileError,
+        e = self.assert_raises(LoadRamlFileError,
                                validate, raml_file=raml_file)
         msg = "[Errno 2] No such file or directory: '{0}'".format(raml_file)
         self.assertEqual(msg, str(e))

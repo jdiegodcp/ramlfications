@@ -33,10 +33,6 @@ class RAMLDict(object):
         self.raml_file = raml_file
         self.data = data
 
-    # Remove this function
-    def __repr__(self):
-        return '<RAMLDict(name="{0}")>'.format(self.name)
-
 
 class RAMLLoader(object):
     """
@@ -68,7 +64,7 @@ class RAMLLoader(object):
         with open(file_name) as inputfile:
             return yaml.load(inputfile)
 
-    def _ordered_load(self, stream, loader=yaml.Loader, object_pairs_hook=OrderedDict):
+    def _ordered_load(self, stream, loader=yaml.Loader):
         """
         Preserves order set in RAML file.
         """
@@ -77,10 +73,10 @@ class RAMLLoader(object):
 
         def construct_mapping(loader, node):
             loader.flatten_mapping(node)
-            return object_pairs_hook(loader.construct_pairs(node))
+            return OrderedDict(loader.construct_pairs(node))
         OrderedLoader.add_constructor("!include", self._yaml_include)
-        OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-                                      construct_mapping)
+        OrderedLoader.add_constructor(
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
         return yaml.load(stream, OrderedLoader)
 
     # Get rid of state in the Loader class and either return a tuple
@@ -105,7 +101,3 @@ class RAMLLoader(object):
                 return RAMLDict(raml.name, raml_file, loaded_raml)
         except IOError as e:
             raise LoadRamlFileError(e)
-
-    # Remove this function
-    def __repr__(self):
-        return '<RAMLLoader(raml_file="{0}")>'.format(self.raml_file)

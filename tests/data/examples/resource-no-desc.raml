@@ -11,60 +11,6 @@ documentation:
       specification, and is meant for testing purposes within this RAML specification.
       For more information about how to use the API, check out [developer
        site](https://developer.spotify.com/web-api/).
-schemas:
-  - Playlist: !include includes/post-playlist-schema.json
-resourceTypes:
-  - base:
-      get?: &common
-        headers:
-          Accept:
-            description: Is used to set specified media type.
-            type: string
-        responses:
-          403:
-            description: |
-              API rate limit exceeded. See http://developer.spotify.com/web-api/#rate-limiting for details.
-      post?: *common
-  - item:
-      type: base
-      get?:
-  - collection:
-      type: base
-      get?:
-securitySchemes:
-  - oauth_2_0:
-      description: |
-          Spotify supports [OAuth 2.0](https://developer.spotify.com/web-api/authorization-guide/)
-          for authenticating all API requests.
-      type: OAuth 2.0
-      describedBy:
-        headers:
-          Authorization:
-            description: |
-              Used to send a valid OAuth 2 access token.
-            type: string
-        responses:
-          401:
-            description: |
-              Bad or expired token. This can happen if the user revoked a token or
-              the access token has expired. You should re-authenticate the user.
-          403:
-            description: |
-              Bad OAuth request (wrong consumer key, bad nonce, expired
-              timestamp...). Unfortunately, re-authenticating the user won't help here.
-      settings:
-        authorizationUri: https://accounts.spotify.com/authorize
-        accessTokenUri: https://accounts.spotify.com/api/token
-        authorizationGrants: [ code, token ]
-        scopes:
-          - "playlist-read-private"
-          - "playlist-modify-public"
-          - "playlist-modify-private"
-          - "user-library-read"
-          - "user-library-modify"
-          - "user-read-private"
-          - "user-read-email"
-
 /artists:
   displayName: several-artists
   get:

@@ -47,9 +47,9 @@ def validate_property(func):
     @wraps(func)
     def func_wrapper(resource, property, *args, **kw):
         validate = os.environ.get('RAML_VALIDATE') == '1'
-        if validate is False:
-            validate = config.get('main', 'validate')
-        if validate is True:
+        if not validate:
+            validate = config.get('main', 'validate') == 'True'
+        if validate:
             __map_to_validate_prop(property)(resource, *args, **kw)
         return func(resource, property, *args, **kw)
     return func_wrapper
@@ -62,7 +62,7 @@ def __map_to_validate_func(func_name):
     return {
         '_set_base_uri': __base_uri,
         '_set_version': __version,
-        '_raml_header': __raml_header,
+        '__raml_header': __raml_header,
         '_set_title': __api_title,
         '_set_docs': __documentation,
         '_set_base_uri_params': __base_uri_params,
@@ -104,8 +104,8 @@ def __base_uri(raml):
         raise InvalidRamlFileError(msg)
 
 
-def __version(raml, **kw):
-    prod = kw.get('prod')
+def __version(raml, *args, **kw):
+    prod = args[0]
     """Require an API Version (e.g. api.foo.com/v1)."""
     v = raml.get('version')
     if prod and not v:
@@ -216,7 +216,8 @@ def __security_schemes(raml, *args, **kw):
     schemes = [list(iterkeys(s))[0] for s in schemes]
     if schemes:
         for s in schemes:
-            if s not in config.get('custom', 'auth_schemes') and not s.startswith("x-"):
+            if s not in config.get('custom',
+                                   'auth_schemes') and not s.startswith("x-"):
                 msg = "'{0}' is not a valid Security Scheme.".format(s)
                 raise InvalidRamlFileError(msg)
 
@@ -236,7 +237,10 @@ def __uri_params(raml, *args, **kw):
 
 def __responses(resource, *args, **kw):
     if hasattr(resource, 'method'):
-        resp = resource.data.get(resource.method, {}).get('responses', {})
+        if resource.data.get(resource.method) is not None:
+            resp = resource.data.get(resource.method, {}).get('responses', {})
+        else:
+            resp = {}
     elif hasattr(resource, 'orig_method'):
         resp = resource.data.get(resource.orig_method, {}).get('responses', {})
     else:
@@ -258,12 +262,15 @@ def __query_params(resource, *args, **kw):
         method_params = resource.data.get(resource.orig_method, {}).get(
             'queryParameters', {})
     elif hasattr(resource, 'method'):
-        method_params = resource.data.get(resource.method, {}).get(
-            'queryParameters', {})
+        if resource.data.get(resource.method) is not None:
+            method_params = resource.data.get(resource.method, {}).get(
+                'queryParameters', {})
+        else:
+            method_params = {}
     else:
         method_params = {}
 
-    params = dict(list(method_params.items()) + resource_params.items())
+    params = dict(list(method_params.items()) + list(resource_params.items()))
 
     if params:
         __primative_parameter(params)
@@ -275,12 +282,15 @@ def __uri_params_resource(resource, *args, **kw):
         method_params = resource.data.get(resource.orig_method, {}).get(
             'uriParameters', {})
     elif hasattr(resource, 'method'):
-        method_params = resource.data.get(resource.method, {}).get(
-            'uriParameters', {})
+        if resource.data.get(resource.method) is not None:
+            method_params = resource.data.get(resource.method, {}).get(
+                'uriParameters', {})
+        else:
+            method_params = {}
     else:
         method_params = {}
 
-    params = dict(list(method_params.items()) + resource_params.items())
+    params = dict(list(method_params.items()) + list(resource_params.items()))
 
     if params:
         __primative_parameter(params)
@@ -292,12 +302,15 @@ def __form_params(resource, *args, **kw):
         method_params = resource.data.get(resource.orig_method, {}).get(
             'formParameters', {})
     elif hasattr(resource, 'method'):
-        method_params = resource.data.get(resource.method, {}).get(
-            'formParameters', {})
+        if resource.data.get(resource.method) is not None:
+            method_params = resource.data.get(resource.method, {}).get(
+                'formParameters', {})
+        else:
+            method_params = {}
     else:
         method_params = {}
 
-    params = dict(list(method_params.items()) + resource_params.items())
+    params = dict(list(method_params.items()) + list(resource_params.items()))
 
     if params:
         __primative_parameter(params)
@@ -361,7 +374,7 @@ def __set_type(resource, *args, **kw):
                 resource.name)
             raise InvalidRamlFileError(msg)
     if isinstance(assigned, dict):
-        assigned = assigned.keys()[0]
+        assigned = list(iterkeys(assigned))[0]
     elif isinstance(assigned, list):
         assigned = assigned[0]
     else:
@@ -383,7 +396,7 @@ def __resource_type(resource, *args, **kw):
                 resource.name)
             raise InvalidRamlFileError(msg)
     if isinstance(resource.type, dict):
-        assigned = resource.type.keys()[0]
+        assigned = list(iterkeys(resource.type))[0]
     elif isinstance(resource.type, list):
         assigned = resource.type[0]
     else:
@@ -427,7 +440,7 @@ def __security_settings(scheme, *args, **kw):
     if not settings:
         return
 
-    attrs = settings.keys()
+    attrs = list(iterkeys(settings))
 
     if scheme.type == 'OAuth 2.0':
         oauth2_attrs = [
@@ -455,8 +468,9 @@ def __security_settings(scheme, *args, **kw):
 # Parameter validation (Query, URI, Form)
 #####
 def __primative_parameter(parameter, *args, **kw):
-    prim_type = parameter.values()[0].get('type')
-    if prim_type not in config.get('defaults', 'prim_types') and prim_type is not None:
+    prim_type = list(itervalues(parameter))[0].get('type')
+    if prim_type not in config.get('defaults',
+                                   'prim_types') and prim_type is not None:
         msg = "'{0}' is not a valid primative parameter type".format(prim_type)
         raise InvalidRamlFileError(msg)
 
@@ -468,38 +482,3 @@ def __has_resources(resources, *args, **kw):
     if not resources or len(resources) < 1:
         msg = "No resources are defined."
         raise InvalidRamlFileError(msg)
-
-
-
-# def validate_raml(raml_file, prod):
-#     """
-#     Helper function to validate required elements of a RAML file.
-
-#     :param str raml_file: string representing the path to the RAML file
-#     :param bool prod: True/False if want to assert API is in production;
-#         use ``False`` if just testing
-#     :raises InvalidRamlFileError: Error when validating the RAML file
-#     """
-#     __raml_header(raml_file)
-#     loader = RAMLLoader().load(raml_file)
-#     api = parse_raml(loader)
-#     __api_title(api)
-#     __api_version(api, prod)
-#     __base_uri(api)
-#     __base_uri_params(api)
-#     __has_resources(api)
-#     __resource_response(api)
-#     __root_documentation(api)
-#     __security_schemes(api)
-
-
-## TODO:
-#
-# Resource validation:
-#  - At least one resource *is* defined
-#  - Body has valid Response Content Type keys
-#  - Body has valid Schema
-#  - Body has a valid MIME media key/type
-#  - Body does not have a schema defined if form
-#  - ResourceType: only "?" is allowed in non-scalar properties
-#    (e.g. usage & displayName)

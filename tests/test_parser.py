@@ -4,7 +4,6 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import unittest
 import markdown2 as markdown
 
 from ramlfications import raml, loader, parameters
@@ -228,7 +227,8 @@ class TestAPIRoot(BaseTestCase):
         expected_data = self.f('test_documentation')
 
         self.assertIsNotNone(self.api.documentation)
-        self.assertIsInstance(self.api.documentation[0], parameters.Documentation)
+        self.assertIsInstance(self.api.documentation[0],
+                              parameters.Documentation)
         self.assertEqual(self.api.documentation[0].title,
                          expected_data.get('title'))
         self.assertEqual(self.api.documentation[0].content.raw,
@@ -534,7 +534,6 @@ class TestResource(BaseTestCase):
 
         self.assertEqual(html_result, expected_result)
 
-    @unittest.skip("TODO: FIXME")
     def test_no_description(self):
         raml_file = os.path.join(EXAMPLES + "resource-no-desc.raml")
         api = self.setup_parsed_raml(raml_file)
@@ -665,13 +664,11 @@ class TestResource(BaseTestCase):
             self.assertIsInstance(h, parameters.Header)
             self.assertDictEqual(h.data, exp_headers)
 
-    @unittest.skip("TODO: FIXME")
     def test_raises_incorrect_response_code(self):
         raml_file = os.path.join(EXAMPLES + "invalid-resp-code.raml")
-        api = self.setup_parsed_raml(raml_file)
-        resource = api.resources[0]
+        api = self.setup_parsed_raml
 
-        self.assertRaises(raml.RAMLParserError, lambda: resource.responses)
+        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
 
     def test_headers(self):
         raml_file = os.path.join(EXAMPLES + "headers.raml")
@@ -733,7 +730,6 @@ class TestResource(BaseTestCase):
 
         self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
 
-    @unittest.skip("TODO: FIXME")
     def test_mapped_traits(self):
         raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
         api = self.setup_parsed_raml(raml_file)
@@ -744,7 +740,7 @@ class TestResource(BaseTestCase):
         first_expected_name = 'searchableCollection'
         second_expected_name = 'collection'
 
-        second_res = api.resources[2]
+        second_res = api.resources[3]
 
         second_expected_data = self.f('test_mapped_traits').get('second')
 
@@ -1010,7 +1006,6 @@ class TestResource(BaseTestCase):
         self.assertEqual(repr(param.type), "<String(name='ids')>")
         self.assertDictEqual(param.data, expected_data)
 
-    @unittest.skip("TODO: FIXME")
     def test_form_params(self):
         raml_file = os.path.join(EXAMPLES + "form-parameters.raml")
         api = self.setup_parsed_raml(raml_file)

@@ -40,10 +40,6 @@ def _get_node_level(node, count):
 
 def _get_tree(api):
     resources = OrderedDict()
-    # Can _resources be None? If yes, the next line crashes.
-    # LR: hmm if resources are none, then no endpoints are defined in RAML
-    # pretty much required
-    # TODO: add validation if no resources are defined
     for r in api.resources:
         resources[r] = (r.method.upper(), r)
 
@@ -51,7 +47,6 @@ def _get_tree(api):
 
 
 def _order_resources(resources):
-    #return OrderedDict(sorted(resources.items(), key=lambda t: t[0]))
     return resources
 
 
@@ -124,7 +119,7 @@ def _print_tree(api, ordered_resources, print_color, verbosity):
     _print_verbosity(ordered_resources, print_color, verbosity)
 
 
-def ttree(load_obj, color, output, verbosity):  # pragma: no cover
+def ttree(load_obj, color, output, verbosity, validate):  # pragma: no cover
     """
     Main Tree functionality.
 
@@ -137,7 +132,7 @@ def ttree(load_obj, color, output, verbosity):  # pragma: no cover
     :raises InvalidRamlFileError: If error occured trying to validate the RAML
         file (see ``validate.py``)
     """
-    api = parse_raml(load_obj)
+    api = parse_raml(load_obj, production=validate, parse=True)
     resources = _get_tree(api)
     ordered_resources = _order_resources(resources)
 

@@ -32,7 +32,7 @@ from .validate import validate, validate_property
 #####
 # Main parser function from which __init__:parse calls
 #####
-def parse_raml(loaded_raml, parse):
+def parse_raml(loaded_raml, production, parse):
     """
     Parses the given RAML file and creates a :py:class:`.raml.RAMLRoot` object.
 
@@ -43,12 +43,12 @@ def parse_raml(loaded_raml, parse):
         RAML file.
     """
     raml = loaded_raml.data
-
+    __raml_header(loaded_raml.raml_file)
     root = RAMLRoot(loaded_raml)
     root.base_uri = _set_base_uri(raml)
     root.base_uri_params = _set_base_uri_params(raml, root)
     root.protocols = _set_protocols(raml, root)
-    root.version = _set_version(raml)
+    root.version = _set_version(raml, production)
     root.title = _set_title(raml)
     root.documentation = _set_docs(raml)
     root.media_type = _set_media_type(raml)
@@ -88,13 +88,16 @@ def __map_item_type(item):
         'queryParameters': 'query_params',
         'uriParameters': 'uri_params',
         'formParameters': 'form_params',
-        'baseUriParameters': 'base_uri_params'
+        'baseUriParameters': 'base_uri_params',
     }[item]
 
 
 def __set_body(r, property, inherit=False):
     body_objs = []
-    method = r.data.get(r.method, {}).get('body', {})
+    if r.data.get(r.method) is not None:
+        method = r.data.get(r.method, {}).get('body', {})
+    else:
+        method = {}
     resource = r.data.get('body', {})
     if r.resource_type:
         if hasattr(r.resource_type, 'body'):
@@ -107,7 +110,8 @@ def __set_body(r, property, inherit=False):
         body_objs.append(Body(k, v, r))
 
     for p in body_objs:
-        if p.mime_type in ["application/x-www-form-urlencoded", "multipart/form-data"]:
+        if p.mime_type in ["application/x-www-form-urlencoded",
+                           "multipart/form-data"]:
             form_params = p.data.get('formParameters')
             if form_params:
                 params = []
@@ -124,7 +128,11 @@ def __set_body(r, property, inherit=False):
 @validate_property
 def __set_resource_properties(r, property, inherit=False):
     properties = []
-    method = r.data.get(r.method, {}).get(property, {})
+    resource_method = r.data.get(r.method, {})
+    if resource_method is not None:
+        method = resource_method.get(property, {})
+    else:
+        method = {}
     if r.resource_type:
         if hasattr(r.resource_type, property):
             if getattr(r.resource_type, property) is not None:
@@ -204,17 +212,20 @@ def __set_simple_property(r, property):
     if isinstance(r, ResourceType):
         method = r.data.get(r.orig_method, {}).get(property, None)
     elif isinstance(r, Resource):
-        method = r.data.get(r.method, {}).get(property, None)
+        if r.data.get(r.method) is not None:
+            method = r.data.get(r.method, {}).get(property, None)
+        else:
+            method = None
     else:
         method = None
 
     if method:
         return method
 
-    resource = r.data.get(property)
+    resource_property = r.data.get(property)
 
-    if resource:
-        return resource
+    if resource_property:
+        return resource_property
 
     if isinstance(r, Resource):
         if r.resource_type:
@@ -225,7 +236,7 @@ def __set_simple_property(r, property):
 
 
 def __fill_params(string, key, value, resource):
-    if key in string:
+    if key:
         string = string.replace("<<" + key + ">>", str(value))
     string = fill_reserved_params(resource, string)
     return string
@@ -247,6 +258,11 @@ def __pythonic_property_name(property):
 #####
 # API Metadata
 #####
+@validate
+def __raml_header(raml_file):
+    pass
+
+
 @validate
 def _set_version(raml, production=False):
     return raml.get('version')
@@ -349,7 +365,11 @@ def __add_properties_to_resources(sorted_resources, root):
 
         desc = __set_simple_property(r, 'description')
         if desc:
-            r.description = Content(desc)
+            if isinstance(desc, Content):
+                assigned_desc = __fill_params(desc.raw, None, None, r)
+            else:
+                assigned_desc = __fill_params(desc, None, None, r)
+            r.description = Content(assigned_desc)
         else:
             r.description = None
 
@@ -378,7 +398,8 @@ def __create_resource_stack(items, resource_stack, root):
     for k, v in iteritems(items):
         if k.startswith("/"):
             keys = items[k].keys()
-            methods = [m for m in config.get('defaults', 'available_methods') if m in keys]
+            methods = [m for m in config.get('defaults',
+                                             'available_methods') if m in keys]
             if methods:
                 for m in config.get('defaults', 'available_methods'):
                     if m in items[k].keys():
@@ -421,7 +442,7 @@ def __set_type(resource, root):
     resource_type = resource.data.get('type')
     if resource_type:
         if isinstance(resource_type, dict):
-            type_name = resource_type.keys()[0]
+            type_name = list(iterkeys(resource_type))[0]
         elif isinstance(resource_type, list):
             type_name = resource_type[0]
         else:
@@ -436,9 +457,11 @@ def __set_type(resource, root):
 
 
 def __set_secured_by_resource(resource, root):
-    method_sec = resource.data.get(resource.method, {}).get('securedBy')
-    if method_sec:
-        return method_sec
+    resource_method = resource.data.get(resource.method)
+    if resource_method is not None:
+        method_sec = resource.data.get(resource.method, {}).get('securedBy')
+        if method_sec:
+            return method_sec
     resource_sec = resource.data.get('securedBy')
     if resource_sec:
         return resource_sec
@@ -450,7 +473,11 @@ def __set_secured_by_resource(resource, root):
 
 def __set_resource_is(resource, root):
     resource_traits = resource.data.get('is', [])
-    method_traits = resource.data.get(resource.method, {}).get('is', [])
+    resource_method = resource.data.get(resource.method)
+    if resource_method is not None:
+        method_traits = resource_method.get('is', [])
+    else:
+        method_traits = []
 
     traits = resource_traits + method_traits
     ret = []
@@ -458,7 +485,7 @@ def __set_resource_is(resource, root):
         defined_traits = [t.name for t in root.traits]
         for t in traits:
             if isinstance(t, dict):
-                if t.keys()[0] in defined_traits:
+                if list(iterkeys(t))[0] in defined_traits:
                     ret.append(t)
             if isinstance(t, list):
                 ret.append([i for i in t if i in defined_traits])
@@ -496,10 +523,10 @@ def __set_secured_by_resource_type(resource, root):
             return resource.parent.secured_by
     return None
 
+
 #####
 # RESOURCE TYPES
 #####
-
 # Logic for parsing of resourceTypes into ResourceType objects
 def __set_usage(resource):
     return resource.data.get('usage')
@@ -529,7 +556,7 @@ def __get_union(resource, inherited_resource):
 def __get_inherited_resource(res_name, raml):
     res_types = raml.get('resourceTypes')
     for t in res_types:
-        if t.keys()[0] == res_name:
+        if list(iterkeys(t))[0] == res_name:
             return t
     return None
 
@@ -569,19 +596,20 @@ def _parse_resource_types(raml, root):
 
 
 def __add_properties_to_resource_types(resources, root):
+    _s = __set_resource_type_properties
     for r in resources:
         r.is_ = __set_resource_type_is(r, root)
         r.traits = __get_traits(r, root)
         r.security_schemes = __get_secured_by(r, root)
         r.secured_by = __set_secured_by_resource_type(r, root)
         r.usage = __set_usage(r)
-        r.query_params = __set_resource_type_properties(r, 'queryParameters')
-        r.uri_params = __set_resource_type_properties(r, 'uriParameters')
-        r.base_uri_params = __set_resource_type_properties(r, 'baseUriParameters')
-        r.form_params = __set_resource_type_properties(r, 'formParameters')
-        r.headers = __set_resource_type_properties(r, 'headers')
-        r.body = __set_resource_type_properties(r, 'body')
-        r.responses = __set_resource_type_properties(r, 'responses')
+        r.query_params = _s(r, 'queryParameters')
+        r.uri_params = _s(r, 'uriParameters')
+        r.base_uri_params = _s(r, 'baseUriParameters')
+        r.form_params = _s(r, 'formParameters')
+        r.headers = _s(r, 'headers')
+        r.body = _s(r, 'body')
+        r.responses = _s(r, 'responses')
         r.protocols = __set_simple_property(r, 'protocols') or root.protocols
         r.media_types = __set_simple_property(r, 'body').keys() or None
 
@@ -662,7 +690,8 @@ def __get_resource_type(resource, root):
 def _parse_traits(raml, root):
     raw_traits = raml.get('traits')
     if raw_traits:
-        traits = [Trait(list(t.keys())[0], list(t.values())[0], root) for t in raw_traits]
+        traits = [Trait(list(t.keys())[0], list(t.values())[0],
+                        root) for t in raw_traits]
         return __add_properties_to_traits(traits)
     return None
 
@@ -759,7 +788,8 @@ def __add_properties_to_traits(traits):
 def _parse_security_schemes(raml, root):
     schemes = raml.get('securitySchemes')
     if schemes:
-        s = [SecurityScheme(list(s.keys())[0], list(s.values())[0]) for s in schemes]
+        s = [SecurityScheme(list(s.keys())[0],
+                            list(s.values())[0]) for s in schemes]
         return __add_properties_to_security_schemes(s)
     return None
 
@@ -774,8 +804,10 @@ def __get_secured_by(resource, root):
     for secured in resource.secured_by:
         if secured is None:
             _secured_by.append(None)
-        elif isinstance(secured, list) or isinstance(secured, dict) or isinstance(secured, str):
-            _secured_by.append(secured)
+        elif isinstance(secured, list) or \
+            isinstance(secured, dict) or \
+                isinstance(secured, str):
+                _secured_by.append(secured)
         else:
             msg = "Error applying security scheme '{0}' to '{1}'.".format(
                 secured, resource.name)

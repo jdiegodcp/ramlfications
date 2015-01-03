@@ -12,10 +12,9 @@ import os
 
 from ramlfications.loader import *  # NOQA
 from ramlfications.parser import *  # NOQA
-#from ramlfications.validate import *  # NOQA
 
 
-def parse(raml_file):
+def parse(raml_file, production=True):
     """
     Module helper function to parse a RAML File.  First loads the RAML file
     with :py:class:`.loader.RAMLLoader` then parses with
@@ -36,7 +35,7 @@ def parse(raml_file):
         `specification <http://raml.org/spec.html>`_.
     """
     loader = RAMLLoader().load(raml_file)
-    return parse_raml(loader, parse=True)
+    return parse_raml(loader, production, parse=True)
 
 
 def load(raml_file):
@@ -72,6 +71,6 @@ def validate(raml_file, production=True):
     os.environ['RAML_VALIDATE'] = '1'
     loader = RAMLLoader().load(raml_file)
     try:
-        parse_raml(loader, parse=False)
+        parse_raml(loader, production, parse=False)
     finally:
         os.environ.pop('RAML_VALIDATE')
