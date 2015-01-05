@@ -75,7 +75,8 @@ def __map_to_validate_func(func_name):
         '__set_settings_dict': __security_settings,
         '__get_secured_by': __secured_by,
         '__add_properties_to_resources': __has_resources,
-        '__set_type': __set_type
+        '__set_type': __set_type,
+        '__set_traits': __set_traits
     }[func_name]
 
 
@@ -96,27 +97,6 @@ def __map_to_validate_prop(property):
 #####
 # API Metadata Validation
 #####
-
-def __base_uri(raml):
-    """Require a Base URI."""
-    if not raml.get('baseUri'):
-        msg = 'RAML File does not define the baseUri.'
-        raise InvalidRamlFileError(msg)
-
-
-def __version(raml, *args, **kw):
-    prod = args[0]
-    """Require an API Version (e.g. api.foo.com/v1)."""
-    v = raml.get('version')
-    if prod and not v:
-        msg = 'RAML File does not define an API version.'
-        raise InvalidRamlFileError(msg)
-    elif '{version}' in raml.get('baseUri') and not v:
-        msg = ("RAML File's baseUri includes {version} parameter but no "
-               "version is defined.")
-        raise InvalidRamlFileError(msg)
-
-
 def __raml_header(raml_file):
     """Validate Header of RAML File"""
     # loader.load catches if RAML file doesn't exist
@@ -149,6 +129,26 @@ def __raml_header(raml_file):
         if not r.readlines():
             msg = "No RAML data to parse."
             raise InvalidRamlFileError(msg)
+
+
+def __base_uri(raml):
+    """Require a Base URI."""
+    if not raml.get('baseUri'):
+        msg = 'RAML File does not define the baseUri.'
+        raise InvalidRamlFileError(msg)
+
+
+def __version(raml, *args, **kw):
+    prod = args[0]
+    """Require an API Version (e.g. api.foo.com/v1)."""
+    v = raml.get('version')
+    if prod and not v:
+        msg = 'RAML File does not define an API version.'
+        raise InvalidRamlFileError(msg)
+    elif '{version}' in raml.get('baseUri') and not v:
+        msg = ("RAML File's baseUri includes {version} parameter but no "
+               "version is defined.")
+        raise InvalidRamlFileError(msg)
 
 
 def __api_title(raml):
@@ -237,11 +237,18 @@ def __uri_params(raml, *args, **kw):
             raise InvalidRamlFileError(msg)
 
 
+def __has_resources(resources, *args, **kw):
+    """
+    Require that RAML actually *defines* at least one Resource.
+    """
+    if not resources or len(resources) < 1:
+        msg = "No resources are defined."
+        raise InvalidRamlFileError(msg)
+
+
 #####
 # Trait, ResourceType, and Resource validation
 #####
-
-
 def __responses(resource, *args, **kw):
     if hasattr(resource, 'method') and resource.data.get(resource.method) is not None:
         resp = resource.data.get(resource.method, {}).get('responses', {})
@@ -441,6 +448,17 @@ def __secured_by(resource, *args, **kw):
             raise InvalidRamlFileError(msg)
 
 
+def __set_traits(resource, *args, **kw):
+    method_level = resource.data.get(resource.method).get('is', [])
+    resource_level = resource.data.get('is', [])
+
+    if not isinstance(method_level, list) or not isinstance(method_level, str) or not isinstance(method_level, dict):
+        if not isinstance(resource_level, list) or not isinstance(resource_level, str) or not isinstance(resource_level, dict):
+            msg = ("'{0}' needs to be a string or a list of strings referring to "
+                   "trait(s) or a dictionary mapping parameter values to a "
+                   "trait".format(trait))
+            raise RAMLParserError(msg)
+
 #####
 # Security Scheme validation
 #####
@@ -481,13 +499,4 @@ def __primative_parameter(parameter, *args, **kw):
     if prim_type not in config.get('defaults',
                                    'prim_types') and prim_type is not None:
         msg = "'{0}' is not a valid primative parameter type".format(prim_type)
-        raise InvalidRamlFileError(msg)
-
-
-def __has_resources(resources, *args, **kw):
-    """
-    Require that RAML actually *defines* at least one Resource.
-    """
-    if not resources or len(resources) < 1:
-        msg = "No resources are defined."
         raise InvalidRamlFileError(msg)

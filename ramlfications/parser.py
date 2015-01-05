@@ -27,6 +27,8 @@ from .parameters import (
 from .raml import RAMLRoot, Trait, ResourceType, Resource, RAMLParserError
 from .utils import fill_reserved_params
 from .validate import validate, validate_property
+from .parse_traits import _parse_traits
+from .parse_resource_types import _parse_resource_types
 
 
 #####
@@ -128,8 +130,11 @@ def __set_body(r, property, inherit=False):
 
 # TODO: this only checks resource-level defined "is", not method-level
 # TODO: the "else" should actually be caught in __set_resource_is
+@validate
 def __set_traits(resource, root):
-    if not resource.data.get('is'):
+    method_level = resource.data.get(resource.method).get('is', [])
+    resource_level = resource.data.get('is', [])
+    if not method_level and not resource_level:
         return
     if not root.traits:
         msg = ("No traits are defined in RAML file but '{0}' trait is "
@@ -137,28 +142,29 @@ def __set_traits(resource, root):
         raise RAMLParserError(msg)
 
     trait_objects = []
-    trait = resource.is_
+    assigned_traits = method_level + resource_level
     trait_names = [t.name for t in root.traits]
 
-    if isinstance(trait, str) or isinstance(trait, list):
-        if trait not in trait_names:
-            msg = "'{0}' not defined under traits in RAML.".format(
-                trait)
+    for trait in assigned_traits:
+        if isinstance(trait, str) or isinstance(trait, list):
+            if trait not in trait_names:
+                msg = "'{0}' not defined under traits in RAML.".format(
+                    trait)
+                raise RAMLParserError(msg)
+            str_trait = __get_traits_str(trait, root)
+            trait_objects.append(str_trait)
+        elif isinstance(trait, dict):
+            if list(iterkeys(trait))[0] not in trait_names:
+                msg = "'{0}' not defined under traits in RAML.".format(
+                    trait)
+                raise RAMLParserError(msg)
+            dict_trait = __get_traits_dict(trait, root, resource)
+            trait_objects.append(dict_trait)
+        else:
+            msg = ("'{0}' needs to be a string referring to a trait, "
+                   "or a dictionary mapping parameter values to a "
+                   "trait".format(trait))
             raise RAMLParserError(msg)
-        str_trait = __get_traits_str(trait, root)
-        trait_objects.append(str_trait)
-    elif isinstance(trait, dict):
-        if list(iterkeys(trait))[0] not in trait_names:
-            msg = "'{0}' not defined under traits in RAML.".format(
-                trait)
-            raise RAMLParserError(msg)
-        dict_trait = __get_traits_dict(trait, root, resource)
-        trait_objects.append(dict_trait)
-    else:
-        msg = ("'{0}' needs to be a string referring to a trait, "
-               "or a dictionary mapping parameter values to a "
-               "trait".format(trait))
-        raise RAMLParserError(msg)
 
     return trait_objects or None
 
@@ -225,52 +231,6 @@ def __set_resource_properties(r, property, inherit=False):
             if hasattr(t, item):
                 if getattr(t, item) is not None:
                     properties.extend(getattr(t, item))
-
-    if inherit:
-        item = __map_item_type(property)
-        if hasattr(r.parent, item):
-            if getattr(r.parent, item) is not None:
-                properties.extend(getattr(r.parent, item))
-
-    return properties or None
-
-
-@validate_property
-def __set_resource_type_properties(r, property, inherit=False):
-    properties = []
-
-    method = r.data.get(r.orig_method, {}).get(property, {})
-    resource = r.data.get(property, {})
-    items = dict(list(method.items()) + list(resource.items()))
-
-    for k, v in iteritems(items):
-        obj = __map_obj(property)
-        properties.append(obj(k, v, r))
-
-    if r.traits:
-        for t in r.traits:
-            item = __map_item_type(property)
-            if hasattr(t, item):
-                if getattr(t, item) is not None:
-                    properties.extend(getattr(t, item))
-
-    if inherit:
-        item = __map_item_type(property)
-        if hasattr(r.parent, item):
-            if getattr(r.parent, item) is not None:
-                properties.extend(getattr(r.parent, item))
-
-    return properties or None
-
-
-@validate_property
-def __set_trait_properties(r, property, inherit=False):
-    properties = []
-
-    resource = r.data.get(property, {})
-    for k, v in iteritems(resource):
-        obj = __map_obj(property)
-        properties.append(obj(k, v, r))
 
     if inherit:
         item = __map_item_type(property)
@@ -649,143 +609,6 @@ def __map_resource_dict(resource, root):
 #####
 # RESOURCE TYPES
 #####
-# Logic for parsing of resourceTypes into ResourceType objects
-def _parse_resource_types(raml, root):
-    resource_types = raml.get('resourceTypes', [])
-    resources = []
-    for resource in resource_types:
-        for k, v in iteritems(resource):
-            # first parse out if it inherits another resourceType
-            if 'type' in list(iterkeys(v)):
-                r = __map_inherited_resource_types(root, resource,
-                                                   v.get('type'),
-                                                   raml)
-                resources.extend(r)
-            # else just create a ResourceType
-            else:
-                for i in list(iterkeys(v)):
-                    if i in config.get('defaults', 'http_methods'):
-                        resources.append(ResourceType(k, v, i, root))
-
-    resources = __add_properties_to_resource_types(resources, root)
-    return resources or None
-
-
-def __add_properties_to_resource_types(resources, root):
-    _s = __set_resource_type_properties
-    for r in resources:
-        r.is_ = __set_resource_type_is(r, root)
-        r.traits = __set_traits(r, root)
-        r.security_schemes = __get_secured_by(r, root)
-        r.secured_by = __set_secured_by_resource_type(r, root)
-        r.usage = __set_usage(r)
-        r.query_params = _s(r, 'queryParameters')
-        r.uri_params = _s(r, 'uriParameters')
-        r.base_uri_params = _s(r, 'baseUriParameters')
-        r.form_params = _s(r, 'formParameters')
-        r.headers = _s(r, 'headers')
-        r.body = _s(r, 'body')
-        r.responses = _s(r, 'responses')
-        r.protocols = __set_simple_property(r, 'protocols') or root.protocols
-        r.media_types = __set_simple_property(r, 'body').keys() or None
-
-        desc = __set_simple_property(r, 'description')
-        if desc:
-            r.description = Content(desc)
-        else:
-            r.description = None
-    return resources
-
-
-# Setting properties to ResourceType object
-def __set_usage(resource):
-    return resource.data.get('usage')
-
-
-# Allow resource(types) to add/replace resource type properties if
-# explicitly defined
-def __get_union(resource, inherited_resource):
-    if inherited_resource is {}:
-        return resource
-    union = {}
-    if not resource:
-        return inherited_resource
-    for k, v in iteritems(inherited_resource):
-        if k not in resource.keys():
-            union[k] = v
-        else:
-            resource_values = resource.get(k)
-            inherited_values = inherited_resource.get(k, {})
-            union[k] = dict(iteritems(inherited_values) +
-                            iteritems(resource_values))
-    for k, v in iteritems(resource):
-        if k not in inherited_resource.keys():
-            union[k] = v
-    return union
-
-
-# Returns data dict of particular resourceType
-def __get_inherited_resource(res_name, raml):
-    res_types = raml.get('resourceTypes')
-    for t in res_types:
-        if list(iterkeys(t))[0] == res_name:
-            return t
-    return None
-
-
-# If resource type inherits another resource type, grab elements
-def __map_inherited_resource_types(root, resource, inherited, raml):
-    resources = []
-    inherited_res = __get_inherited_resource(inherited, raml)
-    for k, v in iteritems(resource):
-        for i in v.keys():
-            if i in config.get('defaults', 'http_methods'):
-                data = __get_union(resource,
-                                   inherited_res.get(i, {}))
-                resources.append(ResourceType(k, data, i, root,
-                                              type=inherited))
-    return resources
-
-
-def __set_secured_by_resource_type(resource, root):
-    method_sec = resource.data.get(resource.orig_method, {}).get('securedBy')
-    if method_sec:
-        return method_sec
-    resource_sec = resource.data.get('securedBy')
-    if resource_sec:
-        return resource_sec
-    if hasattr(resource, 'parent'):
-        if hasattr(resource.parent, 'secured_by'):
-            return resource.parent.secured_by
-    return None
-
-
-#####
-# TRAITS
-#####
-
-# Logic for parsing of traits into Trait objects
-def _parse_traits(raml, root):
-    raw_traits = raml.get('traits')
-    if raw_traits:
-        traits = [Trait(list(t.keys())[0], list(t.values())[0],
-                        root) for t in raw_traits]
-        return __add_properties_to_traits(traits)
-    return None
-
-
-def __add_properties_to_traits(traits):
-    for t in traits:
-        t.usage = __set_usage(t)
-        t.query_params = __set_trait_properties(t, 'queryParameters')
-        t.uri_params = __set_trait_properties(t, 'uriParameters')
-        t.form_params = __set_trait_properties(t, 'formParameters')
-        t.headers = __set_trait_properties(t, 'headers')
-        t.body = __set_trait_properties(t, 'body')
-        t.responses = __set_trait_properties(t, 'responses')
-        t.description = __set_simple_property(t, 'description')
-        t.media_types = __set_simple_property(t, 'body').keys() or None
-    return traits
 
 
 #####
@@ -892,4 +715,3 @@ def __set_described_by(scheme):
 
 def __set_security_type(scheme):
     return scheme.data.get('type')
-
