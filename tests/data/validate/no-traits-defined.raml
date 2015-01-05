@@ -1,0 +1,10 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Undefined Traits
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.spotify.com/{version}
+/users/{user_id}/playlists:
+  is: [ undefiend_traits ]
+  get:
+    description: |
+      [Get a List of a User's Playlists](https://developer.spotify.com/web-api/get-list-users-playlists/)

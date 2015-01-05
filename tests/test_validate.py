@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import unittest
 
 from ramlfications import validate
 from ramlfications.validate import InvalidRamlFileError
@@ -106,6 +107,25 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
+    def test_raises_incorrect_response_code(self):
+        raml_file = os.path.join(EXAMPLES + "invalid-resp-code.raml")
+        api = self.setup_parsed_raml
+
+        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+
+    def test_resource_types_too_many(self):
+        raml_file = os.path.join(EXAMPLES + "mapped-types-too-many.raml")
+        api = self.setup_parsed_raml
+
+        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+
+    def test_resource_types_invalid_mapped_type(self):
+        raml_path = "mapped-types-incorrect-resource-type.raml"
+        raml_file = os.path.join(EXAMPLES + raml_path)
+        api = self.setup_parsed_raml
+
+        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+
     def test_has_resources(self):
         raml_file = os.path.join(VALIDATE, "no-resources.raml")
         expected_msg = "No resources are defined."
@@ -200,3 +220,29 @@ class TestValidateRAML(BaseTestCase):
         expected_msg = "RAML File is empty"
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    # Move this from parser to validate
+    @unittest.skip("FIXME this raise error needs to move to __get_resource_is")
+    def test_traits_invalid_type(self):
+        invalid_trait_obj = os.path.join(EXAMPLES, "invalid-trait-obj.raml")
+        api = self.setup_parsed_raml
+
+        self.assertRaises(InvalidRamlFileError, lambda: api(invalid_trait_obj))
+
+    def test_base_uri_throws_exception(self):
+        raml_file = os.path.join(EXAMPLES + "no-version.raml")
+        api = self.setup_parsed_raml
+
+        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+
+    def test_uri_parameters_throws_exception(self):
+        raml_file = os.path.join(EXAMPLES + "uri-parameters-error.raml")
+        api = self.setup_parsed_raml
+
+        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+
+    def test_documentation_no_title(self):
+        raml_file = os.path.join(EXAMPLES + "docs-no-title-parameter.raml")
+        api = self.setup_parsed_raml
+
+        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))

@@ -126,8 +126,10 @@ def __set_body(r, property, inherit=False):
     return body_objs
 
 
+# TODO: this only checks resource-level defined "is", not method-level
+# TODO: the "else" should actually be caught in __set_resource_is
 def __set_traits(resource, root):
-    if not resource.is_:
+    if not resource.data.get('is'):
         return
     if not root.traits:
         msg = ("No traits are defined in RAML file but '{0}' trait is "
@@ -135,27 +137,28 @@ def __set_traits(resource, root):
         raise RAMLParserError(msg)
 
     trait_objects = []
-    for trait in resource.is_:
-        trait_names = [t.name for t in root.traits]
-        if isinstance(trait, str):
-            if trait not in trait_names:
-                msg = "'{0}' not defined under traits in RAML.".format(
-                    trait)
-                raise RAMLParserError(msg)
-            str_trait = __get_traits_str(trait, root)
-            trait_objects.append(str_trait)
-        elif isinstance(trait, dict):
-            if list(iterkeys(trait))[0] not in trait_names:
-                msg = "'{0}' not defined under traits in RAML.".format(
-                    trait)
-                raise RAMLParserError(msg)
-            dict_trait = __get_traits_dict(trait, root, resource)
-            trait_objects.append(dict_trait)
-        else:
-            msg = ("'{0}' needs to be a string referring to a trait, "
-                   "or a dictionary mapping parameter values to a "
-                   "trait".format(trait))
+    trait = resource.is_
+    trait_names = [t.name for t in root.traits]
+
+    if isinstance(trait, str) or isinstance(trait, list):
+        if trait not in trait_names:
+            msg = "'{0}' not defined under traits in RAML.".format(
+                trait)
             raise RAMLParserError(msg)
+        str_trait = __get_traits_str(trait, root)
+        trait_objects.append(str_trait)
+    elif isinstance(trait, dict):
+        if list(iterkeys(trait))[0] not in trait_names:
+            msg = "'{0}' not defined under traits in RAML.".format(
+                trait)
+            raise RAMLParserError(msg)
+        dict_trait = __get_traits_dict(trait, root, resource)
+        trait_objects.append(dict_trait)
+    else:
+        msg = ("'{0}' needs to be a string referring to a trait, "
+               "or a dictionary mapping parameter values to a "
+               "trait".format(trait))
+        raise RAMLParserError(msg)
 
     return trait_objects or None
 
@@ -552,7 +555,7 @@ def __set_resource_is(resource, root):
 
     traits = resource_traits + method_traits
     ret = []
-    if traits:
+    if traits and root.traits:
         defined_traits = [t.name for t in root.traits]
         for t in traits:
             if isinstance(t, dict):
