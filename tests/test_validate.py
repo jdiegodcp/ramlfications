@@ -4,9 +4,8 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import unittest
 
-from ramlfications import validate
+from ramlfications import validate, parse
 from ramlfications.validate import InvalidRamlFileError
 
 from .base import BaseTestCase, EXAMPLES, VALIDATE
@@ -16,13 +15,17 @@ class TestValidateRAML(BaseTestCase):
     def setUp(self):
         self.here = os.path.abspath(os.path.dirname(__file__))
 
+    # TODO: get rid of
+    def setup_parsed_raml(self, raml_file):
+        raml_file = os.path.join(raml_file[0], raml_file[1])
+        return parse(raml_file)
+
     def fail_validate(self, error_class, raml_file, expected_msg, prod=True):
         raml_file = os.path.join(raml_file[0], raml_file[1])
         e = self.assert_raises(error_class, validate, raml_file=raml_file,
                                production=prod)
 
         self.assertEqual(expected_msg, str(e))
-
 
     #####
     # API Metadata Validation
@@ -83,9 +86,8 @@ class TestValidateRAML(BaseTestCase):
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
     # __documentation
-    def test_validate_docs_title(self):
-        raml_file = (VALIDATE, "docs-no-title.raml")
-
+    def test_documentation_no_title(self):
+        raml_file = (EXAMPLES, "docs-no-title-parameter.raml")
         expected_msg = "API Documentation requires a title."
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
@@ -172,27 +174,25 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    @unittest.skip("FIXME: update to self.fail_validate")
     def test_raises_incorrect_response_code(self):
-        raml_file = (EXAMPLES + "invalid-resp-code.raml")
-        api = self.setup_parsed_raml
+        raml_file = (EXAMPLES, "invalid-resp-code.raml")
+        expected_msg = "'299' not a valid response code."
 
-        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    @unittest.skip("FIXME: update to self.fail_validate")
     def test_resource_types_too_many(self):
-        raml_file = (EXAMPLES + "mapped-types-too-many.raml")
-        api = self.setup_parsed_raml
+        raml_file = (EXAMPLES, "mapped-types-too-many.raml")
+        expected_msg = "Too many resource types applied to '/magazines'."
 
-        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    @unittest.skip("FIXME: update to self.fail_validate")
     def test_resource_types_invalid_mapped_type(self):
         raml_path = "mapped-types-incorrect-resource-type.raml"
-        raml_file = (EXAMPLES + raml_path)
-        api = self.setup_parsed_raml
+        raml_file = (EXAMPLES, raml_path)
 
-        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+        expected_msg = "'invalidResourceType' is not defined in resourceTypes"
+
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
     def test_invalid_body_keys(self):
         invalid_body = "invalid-body.raml"
@@ -250,31 +250,21 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    # Move this from parser to validate
-    @unittest.skip("FIXME this raise error needs to move to __get_resource_is")
     def test_traits_invalid_type(self):
-        invalid_trait_obj = (EXAMPLES, "invalid-trait-obj.raml")
-        api = self.setup_parsed_raml
+        raml_file = (EXAMPLES, "invalid-trait-obj.raml")
+        expected_msg = ("'1' needs to be a string referring to a trait, or a "
+                        "dictionary mapping parameter values to a trait")
 
-        self.assertRaises(InvalidRamlFileError, lambda: api(invalid_trait_obj))
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    @unittest.skip("FIXME: update to self.fail_validate")
     def test_base_uri_throws_exception(self):
-        raml_file = (EXAMPLES + "no-version.raml")
-        api = self.setup_parsed_raml
+        raml_file = (EXAMPLES, "no-version.raml")
+        expected_msg = "RAML File does not define an API version."
 
-        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    @unittest.skip("FIXME: update to self.fail_validate")
     def test_uri_parameters_throws_exception(self):
-        raml_file = (EXAMPLES + "uri-parameters-error.raml")
-        api = self.setup_parsed_raml
+        raml_file = (EXAMPLES, "uri-parameters-error.raml")
+        expected_msg = "'version' can only be defined in baseUriParameters."
 
-        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
-
-    @unittest.skip("FIXME: update to self.fail_validate")
-    def test_documentation_no_title(self):
-        raml_file = (EXAMPLES + "docs-no-title-parameter.raml")
-        api = self.setup_parsed_raml
-
-        self.assertRaises(InvalidRamlFileError, lambda: api(raml_file))
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)

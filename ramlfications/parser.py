@@ -505,44 +505,63 @@ def __set_secured_by_resource(resource, root):
     return None
 
 
+@validate
 def __set_resource_is(resource, root):
-    resource_traits = resource.data.get('is', [])
-    resource_method = resource.data.get(resource.method)
+    resource_level = resource.data.get('is', [])
+    resource_method = resource.data.get(resource.method, [])
     if resource_method is not None:
-        method_traits = resource_method.get('is', [])
+        method_level = resource_method.get('is', [])
     else:
-        method_traits = []
+        method_level = []
 
-    traits = resource_traits + method_traits
-    ret = []
-    if traits and root.traits:
-        defined_traits = [t.name for t in root.traits]
-        for t in traits:
-            if isinstance(t, dict):
-                if list(iterkeys(t))[0] in defined_traits:
-                    ret.append(t)
-            if isinstance(t, list):
-                ret.append([i for i in t if i in defined_traits])
-            if isinstance(t, str):
-                if t in traits:
-                    ret.append(t)
+    trait_names = []
 
-        return ret or None
-    return None
+    if isinstance(method_level, str):
+        trait_names.append(method_level)
+    elif isinstance(method_level, dict):
+        trait_names.append(list(iterkeys(method_level)))
+    elif isinstance(method_level, list):
+        for t in method_level:
+            trait_names.append(t)
+
+    if isinstance(resource_level, str):
+        trait_names.append(resource_level)
+    elif isinstance(resource_level, dict):
+        trait_names.append(list(iterkeys(resource_level)))
+    elif isinstance(resource_level, list):
+        for t in resource_level:
+            trait_names.append(t)
+
+    return trait_names or None
 
 
+@validate
 def __set_resource_type_is(resource, root):
-    resource_traits = resource.data.get('is', [])
-    method_traits = resource.data.get(resource.orig_method, {}).get('is', [])
+    resource_level = resource.data.get('is', [])
+    resource_method = resource.data.get(resource.orig_method)
+    if resource_method is not None:
+        method_level = resource_method.get('is', [])
+    else:
+        method_level = []
+    trait_names = []
 
-    traits = resource_traits + method_traits
-    if traits:
-        defined_traits = root.traits
-        available_traits = [t for t in defined_traits if t.name in traits]
+    if isinstance(method_level, str):
+        trait_names.append(method_level)
+    elif isinstance(method_level, dict):
+        trait_names.append(list(iterkeys(method_level)))
+    elif isinstance(method_level, list):
+        for t in method_level:
+            trait_names.append(t)
 
-        if available_traits:
-            return traits
-    return None
+    if isinstance(resource_level, str):
+        trait_names.append(resource_level)
+    elif isinstance(resource_level, dict):
+        trait_names.append(list(iterkeys(resource_level)))
+    elif isinstance(resource_level, list):
+        for t in resource_level:
+            trait_names.append(t)
+
+    return trait_names or None
 
 
 @validate

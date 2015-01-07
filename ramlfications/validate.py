@@ -76,7 +76,9 @@ def __map_to_validate_func(func_name):
         '__get_secured_by': __secured_by,
         '__add_properties_to_resources': __has_resources,
         '__set_type': __set_type,
-        '__set_traits': __set_traits
+        '__set_traits': __set_traits,
+        '__set_resource_is': __set_resource_is,
+        '__set_resource_type_is': __set_resource_type_is
     }[func_name]
 
 
@@ -165,7 +167,7 @@ def __documentation(raml):
     docs = raml.get('documentation')
     if docs:
         for d in docs:
-            if not d.get('title'):
+            if 'title' not in d:
                 msg = "API Documentation requires a title."
                 raise InvalidRamlFileError(msg)
             if not d.get('content'):
@@ -452,12 +454,80 @@ def __set_traits(resource, *args, **kw):
     method_level = resource.data.get(resource.method).get('is', [])
     resource_level = resource.data.get('is', [])
 
-    if not isinstance(method_level, list) or not isinstance(method_level, str) or not isinstance(method_level, dict):
-        if not isinstance(resource_level, list) or not isinstance(resource_level, str) or not isinstance(resource_level, dict):
-            msg = ("'{0}' needs to be a string or a list of strings referring to "
-                   "trait(s) or a dictionary mapping parameter values to a "
-                   "trait".format(trait))
-            raise RAMLParserError(msg)
+    if method_level is not None:
+        if not isinstance(method_level, list):
+            if not isinstance(method_level, str):
+                if not isinstance(method_level, dict):
+                    msg = ("'{0}' needs to be a string or a list of strings referring to "
+                           "trait(s) or a dictionary mapping parameter values to a "
+                           "trait".format(method_level))
+                    raise InvalidRamlFileError(msg)
+
+    if resource_level is not None:
+        if not isinstance(resource_level, list):
+            if not isinstance(resource_level, str):
+                if not isinstance(resource_level, dict):
+                    msg = ("'{0}' needs to be a string or a list of strings referring to "
+                           "trait(s) or a dictionary mapping parameter values to a "
+                           "trait".format(resource_level))
+                    raise InvalidRamlFileError(msg)
+
+
+def __set_resource_is(resource, *args, **kw):
+    resource_level = resource.data.get('is')
+    resource_method = resource.data.get(resource.method, {})
+
+    if resource_method is not None:
+        method_level = resource_method.get('is')
+    else:
+        method_level = None
+
+    if resource_level is not None:
+        if not isinstance(resource_level, str):
+            if not isinstance(resource_level, list):
+                if not isinstance(resource_level, dict):
+                    msg = ("'{0}' needs to be a string referring to a trait, "
+                           "or a dictionary mapping parameter values to a "
+                           "trait".format(resource_level))
+                    raise InvalidRamlFileError(msg)
+
+    if method_level is not None:
+        if not isinstance(method_level, str):
+            if not isinstance(method_level, list):
+                if not isinstance(method_level, dict):
+                    msg = ("'{0}' needs to be a string referring to a trait, "
+                           "or a dictionary mapping parameter values to a "
+                           "trait".format(method_level))
+                    raise InvalidRamlFileError(msg)
+
+
+def __set_resource_type_is(resource, *args, **kw):
+    resource_level = resource.data.get('is')
+    resource_method = resource.data.get(resource.orig_method, {})
+
+    if resource_method is not None:
+        method_level = resource_method.get('is')
+    else:
+        method_level = None
+
+    if resource_level is not None:
+        if not isinstance(resource_level, str):
+            if not isinstance(resource_level, list):
+                if not isinstance(resource_level, dict):
+                    msg = ("'{0}' needs to be a string referring to a trait, "
+                           "or a dictionary mapping parameter values to a "
+                           "trait".format(resource_level))
+                    raise InvalidRamlFileError(msg)
+
+    if method_level is not None:
+        if not isinstance(method_level, str):
+            if not isinstance(method_level, list):
+                if not isinstance(method_level, dict):
+                    msg = ("'{0}' needs to be a string referring to a trait, "
+                           "or a dictionary mapping parameter values to a "
+                           "trait".format(method_level))
+                    raise InvalidRamlFileError(msg)
+
 
 #####
 # Security Scheme validation
