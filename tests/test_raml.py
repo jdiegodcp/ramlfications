@@ -515,6 +515,7 @@ class TestTrait(BaseTestCase):
 
         for t in traits:
             self.assertIsInstance(t, raml.Trait)
+            self.assertEqual(repr(t), "<Trait(name='{0}')>".format(t.name))
 
     def test_trait_usage(self):
         raml_file = os.path.join(EXAMPLES, "trait-usage.raml")
@@ -524,6 +525,20 @@ class TestTrait(BaseTestCase):
         exp_usage = "Apply this trait to any method that supports pagination"
 
         self.assertEqual(trait.usage, exp_usage)
+
+    def test_trait_header(self):
+        raml_file = os.path.join(EXAMPLES, 'trait-header.raml')
+        api = self.parse(raml_file)
+        trait = api.traits[0]
+
+        self.assertEqual(repr(trait.headers[0]), "<HeaderParameter(name='X-Foo-Bar')>")
+
+    def test_trait_header_no_method(self):
+        raml_file = os.path.join(EXAMPLES, "trait-header.raml")
+        api = self.parse(raml_file)
+        trait = api.traits[0]
+
+        self.assertIsNone(trait.headers[0].method)
 
 
 class TestResource(BaseTestCase):
@@ -538,6 +553,13 @@ class TestResource(BaseTestCase):
         raml_file = os.path.join(EXAMPLES, "spotify-web-api.raml")
         self.api = parse(raml_file)
         self.resources = self.api.resources
+
+    def test_is_instance(self):
+        for resource in self.resources:
+            self.assertIsInstance(resource, raml.Resource)
+            self.assertEqual(repr(resource),
+                             "<Resource(method='{0}', path='{1}')>".format(
+                                 resource.method.upper(), resource.path))
 
     def test_has_path(self):
         for resource in self.resources:
@@ -735,6 +757,7 @@ class TestResource(BaseTestCase):
             self.assertItemInList(item.name, list(expected_data.keys()))
             self.assertIsInstance(item, parameters.Header)
             self.assertDictEqual(item.data, expected_data[item.name])
+            self.assertEqual(item.method.upper(), 'POST')
 
     def test_data(self):
         raml_file = os.path.join(EXAMPLES + "simple.raml")
@@ -818,6 +841,15 @@ class TestResource(BaseTestCase):
         api = self.parse(raml_file)
         resource = api.resources[0]
         self.assertIsNone(resource.secured_by)
+
+    def test_security_scheme(self):
+        raml_file = os.path.join(EXAMPLES, "simple-secured-by-method.raml")
+        api = self.parse(raml_file)
+        resource = api.resources[0]
+
+        self.assertIsInstance(resource.security_schemes, list)
+        for s in resource.security_schemes:
+            self.assertIsInstance(s, parameters.SecurityScheme)
 
     def test_base_uri_params(self):
         raml_file = os.path.join(EXAMPLES + 'base-uri-parameters.raml')
@@ -1022,6 +1054,7 @@ class TestResource(BaseTestCase):
 
         self.assertEqual(repr(param.type), "<Date(name='dateParam')>")
         self.assertDictEqual(param.data, expected_data)
+        self.assertFalse(param.type.repeat)
 
     def test_primative_type_file(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")

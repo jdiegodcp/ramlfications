@@ -182,7 +182,8 @@
     "displayName": "Some Date Parameter",
     "default": "Sun, 06 Nov 1994 08:49:37 GMT",
     "required": true,
-    "type": "date"
+    "type": "date",
+    "repeat": false
   },
   "test_primative_type_file": {
     "description": "Some file parameter for the sake of testing.",

@@ -3,9 +3,11 @@
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
 
+import os
 
-from ramlfications.utils import find_params
-from .base import BaseTestCase
+from ramlfications import parse
+from ramlfications.utils import find_params, fill_reserved_params
+from .base import BaseTestCase, EXAMPLES
 
 
 class TestUtils(BaseTestCase):
@@ -29,3 +31,16 @@ class TestUtils(BaseTestCase):
         params = find_params(string)
         assert len(params) == len(exp_params)
         assert sorted(params) == sorted(exp_params)
+
+    def test_fill_params_resourcepath(self):
+        string = "Get all <<resourcePathName>> for <<resourcePath>>"
+
+        raml_file = os.path.join(EXAMPLES, 'mapped-traits-types.raml')
+        api = parse(raml_file)
+
+        resource = api.resources[-1]
+
+        ret = fill_reserved_params(resource, string)
+
+        expected_str = "Get all magazines for /magazines"
+        self.assertEqual(ret, expected_str)

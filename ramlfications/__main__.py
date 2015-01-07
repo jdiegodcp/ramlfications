@@ -48,8 +48,6 @@ def tree(ramlfile, color, output, verbose, validate):
     """Pretty-print a tree of the RAML-defined API."""
     try:
         load_obj = RAMLLoader().load(ramlfile)
-        if validate:
-            vvalidate(ramlfile, production=True)
         ttree(load_obj, color, output, verbose, validate)
     except InvalidRamlFileError as e:
         msg = '"{0}" is not a valid RAML file: {1}'.format(

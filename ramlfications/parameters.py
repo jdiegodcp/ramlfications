@@ -37,10 +37,9 @@ class Content(object):
         """
         Returns text parsed from Markdown into HTML.
         """
-        try:
-            return markdown.markdown(self.data)
-        except TypeError:
-            return None
+        # Returns a TypeError if self.data = None, but Content obj should never
+        # be created if there is no data.
+        return markdown.markdown(self.data)
 
     def __repr__(self):
         return self.raw
@@ -404,7 +403,7 @@ class Header(BaseParameter):
     @property
     def method(self):
         if self.resource:
-            return self.resource.method
+            return getattr(self.resource, 'method', None)
         return None
 
 

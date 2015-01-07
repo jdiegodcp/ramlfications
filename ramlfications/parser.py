@@ -663,23 +663,80 @@ def __add_properties_to_security_schemes(schemes):
 # Logic for mapping of securitySchemes to its Resource/Resource Type
 @validate
 def __get_secured_by(resource, root):
-    if not resource.data.get('securedBy'):
+    if isinstance(resource, ResourceType):
+        method_level = resource.data.get(resource.orig_method, {}).get(
+            'securedBy')
+    else:
+        method_level = resource.data.get(resource.method, {}).get('securedBy')
+    resource_level = resource.data.get('securedBy', {})
+    if not resource_level and not method_level:
         return
 
+    if method_level:
+        secured_by = method_level
+    else:
+        secured_by = resource_level
+
     _secured_by = []
-    for secured in resource.data.get('securedBy'):
-        if secured is None:
-            _secured_by.append(None)
-        elif isinstance(secured, list) or \
-            isinstance(secured, dict) or \
-                isinstance(secured, str):
-                _secured_by.append(secured)
-        else:
-            msg = "Error applying security scheme '{0}' to '{1}'.".format(
-                secured, resource.name)
-            raise RAMLParserError(msg)
+
+    if secured_by is None:
+        _secured_by.append(None)
+    elif isinstance(secured_by, dict):
+        sec_obj = __map_secured_by_dict(secured_by, root)
+        _secured_by.append(sec_obj)
+    elif isinstance(secured_by, list):
+        sec_obj = __map_secured_by_list(secured_by, root)
+        _secured_by.extend(sec_obj)
+    elif isinstance(secured_by, str):
+        sec_obj = __map_secured_by_str(secured_by, root)
+        _secured_by.append(sec_obj)
+    else:
+        msg = "Error applying security scheme '{0}' to '{1}'.".format(
+            secured_by, resource.name)
+        raise RAMLParserError(msg)
 
     return _secured_by
+
+
+def __map_secured_by_dict(secured, root):
+    schemes = root.security_schemes or []
+
+    scheme_names = [s.name for s in schemes]
+    secured_name = list(iterkeys(secured))[0]
+    if secured_name not in scheme_names:
+        msg = "'{0}' is not defined in API Root's resourceTypes.".format(secured_name)
+        raise RAMLParserError(msg)
+
+    for s in schemes:
+        if s.name == secured_name:
+            return s
+
+
+def __map_secured_by_list(secured, root):
+    sec_objs = []
+    for s in secured:
+        if isinstance(s, str):
+            sec_objs.append(__map_secured_by_str(s, root))
+        elif isinstance(s, dict):
+            sec_objs.append(__map_secured_by_dict(s, root))
+        else:
+            msg = "Error applying security scheme '{0}'.".format(secured)
+            raise RAMLParserError(msg)
+
+        return sec_objs
+
+
+def __map_secured_by_str(secured, root):
+    schemes = root.security_schemes or []
+    scheme_names = [s.name for s in schemes]
+
+    if secured not in scheme_names:
+        msg = "'{0}' is not defined in API Root's resourceTypes.".format(secured)
+        raise RAMLParserError(msg)
+
+    for s in schemes:
+        if s.name == secured:
+            return s
 
 
 def __convert_items(items, obj, **kw):
