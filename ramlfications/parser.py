@@ -719,6 +719,8 @@ def __map_secured_by_list(secured, root):
             sec_objs.append(__map_secured_by_str(s, root))
         elif isinstance(s, dict):
             sec_objs.append(__map_secured_by_dict(s, root))
+        elif s is None:
+            sec_objs.append(None)
         else:
             msg = "Error applying security scheme '{0}'.".format(secured)
             raise RAMLParserError(msg)
