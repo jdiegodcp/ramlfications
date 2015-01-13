@@ -26,7 +26,7 @@ from .parameters import (
 )
 from .raml import RAMLRoot, Trait, ResourceType, Resource, RAMLParserError
 from .utils import fill_reserved_params
-from .validate import validate, validate_property
+from .validate import validate
 from .parse_traits import _parse_traits
 from .parse_resource_types import _parse_resource_types
 
@@ -107,81 +107,6 @@ def __pythonic_property_name(property):
     return ret
 
 
-@validate_property
-def __set_body(r, property, inherit=False):
-    body_objs = []
-    if r.data.get(r.method) is not None:
-        method = r.data.get(r.method, {}).get('body', {})
-    else:
-        method = {}
-    resource = r.data.get('body', {})
-    if r.resource_type:
-        if hasattr(r.resource_type, 'body'):
-            if getattr(r.resource_type, 'body') is not None:
-                body_objs.extend(getattr(r.resource_type, 'body'))
-
-    items = dict(list(method.items()) + list(resource.items()))
-
-    for k, v in iteritems(items):
-        body_objs.append(Body(k, v, r))
-
-    for p in body_objs:
-        if p.mime_type in ["application/x-www-form-urlencoded",
-                           "multipart/form-data"]:
-            form_params = p.data.get('formParameters')
-            if form_params:
-                params = []
-                for i, j in iteritems(form_params):
-                    params.append(FormParameter(i, j, r))
-                if r.form_params:
-                    r.form_params += params
-                else:
-                    r.form_params = params
-
-    return body_objs
-
-
-# TODO: this only checks resource-level defined "is", not method-level
-# TODO: the "else" should actually be caught in __set_resource_is
-@validate
-def __set_traits(resource, root):
-    method_level = resource.data.get(resource.method).get('is', [])
-    resource_level = resource.data.get('is', [])
-    if not method_level and not resource_level:
-        return
-    if not root.traits:
-        msg = ("No traits are defined in RAML file but '{0}' trait is "
-               "assigned to '{1}'.".format(resource.is_, resource.name))
-        raise RAMLParserError(msg)
-
-    trait_objects = []
-    assigned_traits = method_level + resource_level
-    trait_names = [t.name for t in root.traits]
-
-    for trait in assigned_traits:
-        if isinstance(trait, str) or isinstance(trait, list):
-            if trait not in trait_names:
-                msg = "'{0}' not defined under traits in RAML.".format(
-                    trait)
-                raise RAMLParserError(msg)
-            str_trait = __get_traits_str(trait, root)
-            trait_objects.append(str_trait)
-        elif isinstance(trait, dict):
-            if list(iterkeys(trait))[0] not in trait_names:
-                msg = "'{0}' not defined under traits in RAML.".format(
-                    trait)
-                raise RAMLParserError(msg)
-            dict_trait = __get_traits_dict(trait, root, resource)
-            trait_objects.append(dict_trait)
-        else:
-            msg = ("'{0}' needs to be a string referring to a trait, "
-                   "or a dictionary mapping parameter values to a "
-                   "trait".format(trait))
-            raise RAMLParserError(msg)
-
-    return trait_objects or None
-
-
 # Add'l logic for mapping of Trait properties to its Resource/ResourceType
 def __get_traits_str(trait, root):
     api_traits = root.traits
@@ -215,43 +140,6 @@ def __get_traits_dict(trait, root, resource):
             data = json.loads(data)
             return Trait(t.name, data, root)
     return None
-
-
-@validate_property
-def __set_resource_properties(r, property, inherit=False):
-    properties = []
-    resource_method = r.data.get(r.method, {})
-    if resource_method is not None:
-        method = resource_method.get(property, {})
-    else:
-        method = {}
-    if r.resource_type:
-        if hasattr(r.resource_type, property):
-            if getattr(r.resource_type, property) is not None:
-                properties.extend(getattr(r.resource_type, property))
-
-    resource = r.data.get(property, {})
-
-    items = dict(list(method.items()) + list(resource.items()))
-
-    for k, v in iteritems(items):
-        obj = __map_obj(property)
-        properties.append(obj(k, v, r))
-
-    if r.traits:
-        for t in r.traits:
-            item = __map_item_type(property)
-            if hasattr(t, item):
-                if getattr(t, item) is not None:
-                    properties.extend(getattr(t, item))
-
-    if inherit:
-        item = __map_item_type(property)
-        if hasattr(r.parent, item):
-            if getattr(r.parent, item) is not None:
-                properties.extend(getattr(r.parent, item))
-
-    return properties or None
 
 
 def __set_simple_property(r, property):
@@ -291,6 +179,11 @@ def __fill_params(string, key, value, resource):
 #####
 # API Metadata
 #####
+def __parse_metadata(raml):
+    # TODO: add meta data functions here
+    pass
+
+
 @validate
 def __raml_header(raml_file):
     pass
@@ -373,71 +266,6 @@ def _parse_resources(raml, root):
     return resources
 
 
-@validate
-def __add_properties_to_resources(sorted_resources, root):
-
-    def set_resource_is(resource):  # TODO: pass thru validation
-        resource_level = resource.data.get('is', [])
-        resource_method = resource.data.get(resource.method, [])
-        if resource_method is not None:
-            method_level = resource_method.get('is', [])
-        else:
-            method_level = []
-
-        trait_names = []
-
-        if isinstance(method_level, str):
-            trait_names.append(method_level)
-        elif isinstance(method_level, dict):
-            trait_names.append(list(iterkeys(method_level)))
-        elif isinstance(method_level, list):
-            for t in method_level:
-                trait_names.append(t)
-
-        if isinstance(resource_level, str):
-            trait_names.append(resource_level)
-        elif isinstance(resource_level, dict):
-            trait_names.append(list(iterkeys(resource_level)))
-        elif isinstance(resource_level, list):
-            for t in resource_level:
-                trait_names.append(t)
-
-        return trait_names or None
-
-    for r in sorted_resources:
-        r.is_ = set_resource_is(r)
-        r.traits = __set_traits(r, root)
-        r.type = __set_type(r, root)
-        r.resource_type = __get_resource_type(r, root)
-        r.security_schemes = __get_secured_by(r, root)
-        r.secured_by = __set_secured_by_resource(r, root)
-        r.display_name = __set_display_name(r)
-        r.base_uri_params = __set_resource_properties(r, 'baseUriParameters',
-                                                      inherit=True)
-        r.query_params = __set_resource_properties(r, 'queryParameters')
-        r.uri_params = __set_resource_properties(r, 'uriParameters',
-                                                 inherit=True)
-        r.form_params = __set_resource_properties(r, 'formParameters')
-        r.headers = __set_resource_properties(r, 'headers')
-        r.body = __set_body(r, 'body')
-        r.responses = __set_resource_properties(r, 'responses')
-        r.protocols = __set_simple_property(r, 'protocols') or root.protocols
-        r.media_types = __set_simple_property(r, 'body').keys() \
-            or [root.media_type]
-
-        desc = __set_simple_property(r, 'description')
-        if desc:
-            if isinstance(desc, Content):
-                assigned_desc = __fill_params(desc.raw, None, None, r)
-            else:
-                assigned_desc = __fill_params(desc, None, None, r)
-            r.description = Content(assigned_desc)
-        else:
-            r.description = None
-
-    return sorted_resources
-
-
 def __order_resources(resource_stack):
     _resources = OrderedDict()
     for res in resource_stack:
@@ -495,144 +323,322 @@ def __yield_resources(raml, root):
                             resource_stack.append(child)
 
 
-# Setting properties to Resource object
-def __set_display_name(resource):
-    return resource.data.get('displayName', resource.name)
-
-
 @validate
-def __set_type(resource, root):
-    resource_type = resource.data.get('type')
-    if resource_type:
-        if isinstance(resource_type, dict):
-            type_name = list(iterkeys(resource_type))[0]
-        elif isinstance(resource_type, list):
-            type_name = resource_type[0]
+def __add_properties_to_resources(sorted_resources, root):
+
+    def _is():  # TODO: pass thru validation
+        resource_level = r.data.get('is', [])
+        resource_method = r.data.get(r.method, [])
+        if resource_method is not None:
+            method_level = resource_method.get('is', [])
         else:
-            type_name = resource_type
+            method_level = []
 
-        defined_res_types = root.resource_types
-        available_types = [t for t in defined_res_types if t.name == type_name]
-        set_type = [t for t in available_types if t.method == resource.method]
-        if set_type:
-            return resource_type
-    return None
+        trait_names = []
 
+        if isinstance(method_level, str):
+            trait_names.append(method_level)
+        elif isinstance(method_level, dict):
+            trait_names.append(list(iterkeys(method_level)))
+        elif isinstance(method_level, list):
+            for t in method_level:
+                trait_names.append(t)
 
-def __set_secured_by_resource(resource, root):
-    resource_method = resource.data.get(resource.method)
-    if resource_method is not None:
-        method_sec = resource.data.get(resource.method, {}).get('securedBy')
-        if method_sec:
-            return method_sec
-    resource_sec = resource.data.get('securedBy')
-    if resource_sec:
-        return resource_sec
-    if hasattr(resource, 'parent'):
-        if hasattr(resource.parent, 'secured_by'):
-            return resource.parent.secured_by
-    return None
+        if isinstance(resource_level, str):
+            trait_names.append(resource_level)
+        elif isinstance(resource_level, dict):
+            trait_names.append(list(iterkeys(resource_level)))
+        elif isinstance(resource_level, list):
+            for t in resource_level:
+                trait_names.append(t)
 
+        return trait_names or None
 
-@validate
-def __set_resource_type_is(resource, root):
-    resource_level = resource.data.get('is', [])
-    resource_method = resource.data.get(resource.orig_method)
-    if resource_method is not None:
-        method_level = resource_method.get('is', [])
-    else:
-        method_level = []
-    trait_names = []
+    # TODO: this only checks resource-level defined "is", not method-level
+    # TODO: the "else" should actually be caught in _is()
+    # TODO: pass thru validation
+    def traits():
+        method_level = r.data.get(r.method).get('is', [])
+        resource_level = r.data.get('is', [])
+        if not method_level and not resource_level:
+            return
+        if not root.traits:
+            msg = ("No traits are defined in RAML file but '{0}' trait is "
+                   "assigned to '{1}'.".format(r.is_, r.name))
+            raise RAMLParserError(msg)
 
-    if isinstance(method_level, str):
-        trait_names.append(method_level)
-    elif isinstance(method_level, dict):
-        trait_names.append(list(iterkeys(method_level)))
-    elif isinstance(method_level, list):
-        for t in method_level:
-            trait_names.append(t)
+        trait_objects = []
+        assigned_traits = method_level + resource_level
+        trait_names = [t.name for t in root.traits]
 
-    if isinstance(resource_level, str):
-        trait_names.append(resource_level)
-    elif isinstance(resource_level, dict):
-        trait_names.append(list(iterkeys(resource_level)))
-    elif isinstance(resource_level, list):
-        for t in resource_level:
-            trait_names.append(t)
+        for trait in assigned_traits:
+            if isinstance(trait, str) or isinstance(trait, list):
+                if trait not in trait_names:
+                    msg = "'{0}' not defined under traits in RAML.".format(
+                        trait)
+                    raise RAMLParserError(msg)
+                str_trait = __get_traits_str(trait, root)
+                trait_objects.append(str_trait)
+            elif isinstance(trait, dict):
+                if list(iterkeys(trait))[0] not in trait_names:
+                    msg = "'{0}' not defined under traits in RAML.".format(
+                        trait)
+                    raise RAMLParserError(msg)
+                dict_trait = __get_traits_dict(trait, root, r)
+                trait_objects.append(dict_trait)
+            else:
+                msg = ("'{0}' needs to be a string referring to a trait, "
+                       "or a dictionary mapping parameter values to a "
+                       "trait".format(trait))
+                raise RAMLParserError(msg)
 
-    return trait_names or None
+        return trait_objects or None
 
+    # TODO: pass thru validation
+    def _type():
+        resource_type = r.data.get('type')
+        if resource_type:
+            if isinstance(resource_type, dict):
+                type_name = list(iterkeys(resource_type))[0]
+            elif isinstance(resource_type, list):
+                type_name = resource_type[0]
+            else:
+                type_name = resource_type
 
-@validate
-def __get_resource_type(resource, root):
-    mapped_res_type = None
-    if not resource.type:
-        return
-    if not root.resource_types:
-        msg = ("No Resource Types are defined in RAML file but '{0}' "
-               "type is assigned to '{1}'.".format(resource.type,
-                                                   resource.name))
-        raise RAMLParserError(msg)
+            defined = root.resource_types
+            available_types = [t for t in defined if t.name == type_name]
+            set_type = [t for t in available_types if t.method == r.method]
+            if set_type:
+                return resource_type
+        return None
 
-    if isinstance(resource.type, str):
-        mapped_res_type = __map_resource_string(resource, root)
+    def __map_resource_string():
+        """
+        Add'l logic for mapping of ResourceType objects to its Resource
+        """
+        api_resources = root.resource_types
 
-    elif isinstance(resource.type, dict):
-        mapped_res_type = __map_resource_dict(resource, root)
+        api_resources_names = [a.name for a in api_resources]
+        if r.type not in api_resources_names:
+            msg = "'{0}' is not defined in RAML's resourceTypes.".format(
+                r.type)
+            raise RAMLParserError(msg)
 
-    else:
-        msg = "Error applying resource type '{0}'' to '{1}'.".format(
-            resource.type, resource.name)
-        raise RAMLParserError(msg)
-    return mapped_res_type
+        for r_ in api_resources:
+            if r_.name == r.type and r_.method == r.method:
+                return r_
+        return None
 
+    def __map_resource_dict():
+        """
+        Add'l logic for mapping of ResourceType objects to its Resource
+        """
+        api_resources = root.resource_types or []
 
-# Add'l logic for mapping of ResourceType objects to its Resource
-def __map_resource_string(resource, root):
-    api_resources = root.resource_types
+        _type = list(r.type.keys())[0]
+        api_resources_names = [a.name for a in api_resources]
+        if _type not in api_resources_names:
+            msg = "'{0}' is not defined in API Root's resourceTypes.".format(
+                _type)
+            raise RAMLParserError(msg)
 
-    api_resources_names = [a.name for a in api_resources]
-    if resource.type not in api_resources_names:
-        msg = "'{0}' is not defined in RAML's resourceTypes.".format(
-            resource.type)
-        raise RAMLParserError(msg)
+        for r_ in api_resources:
+            if r_.name == _type and r_.method == r.method:
+                _values = list(r.type.values())[0]
+                data = json.dumps(r_.data)
+                for k, v in iteritems(_values):
+                    data = __fill_params(data, k, v, r)
+                data = json.loads(data)
+                return ResourceType(r_.name, data, r.method, root, r.type)
+        return None
 
-    for r in api_resources:
-        if r.name == resource.type and r.method == resource.method:
-            return r
-    return None
+    # TODO: pass thru validation
+    # TODO: move the RAMLParserError to validate (??)
+    def resource_type():
+        mapped_res_type = None
+        if not r.type:
+            return
+        if not root.resource_types:
+            msg = ("No Resource Types are defined in RAML file but '{0}' "
+                   "type is assigned to '{1}'.".format(r.type, r.name))
+            raise RAMLParserError(msg)
 
+        if isinstance(r.type, str):
+            mapped_res_type = __map_resource_string()
 
-def __map_resource_dict(resource, root):
-    api_resources = root.resource_types or []
+        elif isinstance(r.type, dict):
+            mapped_res_type = __map_resource_dict()
 
-    _type = list(resource.type.keys())[0]
-    api_resources_names = [a.name for a in api_resources]
-    if _type not in api_resources_names:
-        msg = "'{0}' is not defined in API Root's resourceTypes.".format(_type)
-        raise RAMLParserError(msg)
+        else:
+            msg = "Error applying resource type '{0}'' to '{1}'.".format(
+                r.type, r.name)
+            raise RAMLParserError(msg)
+        return mapped_res_type
 
-    for r in api_resources:
-        if r.name == _type and r.method == resource.method:
-            _values = list(resource.type.values())[0]
-            data = json.dumps(r.data)
-            for k, v in iteritems(_values):
-                data = __fill_params(data, k, v, resource)
-            data = json.loads(data)
-            return ResourceType(r.name, data, resource.method,
-                                root, resource.type)
-    return None
+    # TODO pass thru validation
+    def security_schemes():
+        """
+        Mapping of securitySchemes to its Resource/Resource Type
+        """
+        if isinstance(r, ResourceType):
+            method_level = r.data.get(r.orig_method, {}).get('securedBy')
+        else:
+            method_level = r.data.get(r.method, {}).get('securedBy')
+        resource_level = r.data.get('securedBy', {})
+        if not resource_level and not method_level:
+            return
+
+        if method_level:
+            secured_by = method_level
+        else:
+            secured_by = resource_level
+
+        _secured_by = []
+
+        if secured_by is None:
+            _secured_by.append(None)
+        elif isinstance(secured_by, dict):
+            sec_obj = __map_secured_by_dict(secured_by, root)
+            _secured_by.append(sec_obj)
+        elif isinstance(secured_by, list):
+            sec_obj = __map_secured_by_list(secured_by, root)
+            _secured_by.extend(sec_obj)
+        elif isinstance(secured_by, str):
+            sec_obj = __map_secured_by_str(secured_by, root)
+            _secured_by.append(sec_obj)
+        else:
+            msg = "Error applying security scheme '{0}' to '{1}'.".format(
+                secured_by, r.name)
+            raise RAMLParserError(msg)
+
+        return _secured_by
+
+    # TODO pass thru validation
+    def secured_by():
+        resource_method = r.data.get(r.method)
+        if resource_method is not None:
+            method_sec = r.data.get(r.method, {}).get('securedBy')
+            if method_sec:
+                return method_sec
+        resource_sec = r.data.get('securedBy')
+        if resource_sec:
+            return resource_sec
+        if hasattr(r, 'parent'):
+            if hasattr(r.parent, 'secured_by'):
+                return r.parent.secured_by
+        return None
+
+    # TODO: pass thru validate property
+    def set_properties(property, inherit=False):
+        properties = []
+        resource_method = r.data.get(r.method, {})
+        if resource_method is not None:
+            method = resource_method.get(property, {})
+        else:
+            method = {}
+        if r.resource_type:
+            if hasattr(r.resource_type, property):
+                if getattr(r.resource_type, property) is not None:
+                    properties.extend(getattr(r.resource_type, property))
+
+        resource = r.data.get(property, {})
+
+        items = dict(list(method.items()) + list(resource.items()))
+
+        for k, v in iteritems(items):
+            obj = __map_obj(property)
+            properties.append(obj(k, v, r))
+
+        if r.traits:
+            for t in r.traits:
+                item = __map_item_type(property)
+                if hasattr(t, item):
+                    if getattr(t, item) is not None:
+                        properties.extend(getattr(t, item))
+
+        if inherit:
+            item = __map_item_type(property)
+            if hasattr(r.parent, item):
+                if getattr(r.parent, item) is not None:
+                    properties.extend(getattr(r.parent, item))
+
+        return properties or None
+
+    # TODO: pass thru validate property
+    def body():
+        body_objs = []
+        if r.data.get(r.method) is not None:
+            method = r.data.get(r.method, {}).get('body', {})
+        else:
+            method = {}
+        resource = r.data.get('body', {})
+        if r.resource_type:
+            if hasattr(r.resource_type, 'body'):
+                if getattr(r.resource_type, 'body') is not None:
+                    body_objs.extend(getattr(r.resource_type, 'body'))
+
+        items = dict(list(method.items()) + list(resource.items()))
+
+        for k, v in iteritems(items):
+            body_objs.append(Body(k, v, r))
+
+        for p in body_objs:
+            if p.mime_type in ["application/x-www-form-urlencoded",
+                               "multipart/form-data"]:
+                form_params = p.data.get('formParameters')
+                if form_params:
+                    params = []
+                    for i, j in iteritems(form_params):
+                        params.append(FormParameter(i, j, r))
+                    if r.form_params:
+                        r.form_params += params
+                    else:
+                        r.form_params = params
+
+        return body_objs
+
+    # TODO: pass thru validation
+    def description():
+        ret = None
+        desc = __set_simple_property(r, 'description')
+        if desc:
+            if isinstance(desc, Content):
+                assigned_desc = __fill_params(desc.raw, None, None, r)
+            else:
+                assigned_desc = __fill_params(desc, None, None, r)
+            ret = Content(assigned_desc)
+        return ret
+
+    for r in sorted_resources:
+        r.is_ = _is()
+        r.traits = traits()
+        r.type = _type()
+        r.resource_type = resource_type()
+        r.security_schemes = security_schemes()
+        r.secured_by = secured_by()
+        r.display_name = r.data.get('displayName', r.name)
+        r.base_uri_params = set_properties('baseUriParameters', inherit=True)
+        r.query_params = set_properties('queryParameters')
+        r.uri_params = set_properties('uriParameters', inherit=True)
+        r.form_params = set_properties('formParameters')
+        r.headers = set_properties('headers')
+        r.body = body()
+        r.responses = set_properties('responses')
+        r.protocols = __set_simple_property(r, 'protocols') or root.protocols
+        r.media_types = __set_simple_property(r, 'body').keys() \
+            or [root.media_type]
+        r.description = description()
+
+    return sorted_resources
 
 
 #####
 # RESOURCE TYPES
 #####
 
-
 #####
 # SECURITY SCHEMES
 #####
-
 
 @validate
 def _parse_security_schemes(raml, root):
@@ -694,51 +700,14 @@ def _parse_security_schemes(raml, root):
     return ret or None
 
 
-# Logic for mapping of securitySchemes to its Resource/Resource Type
-@validate
-def __get_secured_by(resource, root):
-    if isinstance(resource, ResourceType):
-        method_level = resource.data.get(resource.orig_method, {}).get(
-            'securedBy')
-    else:
-        method_level = resource.data.get(resource.method, {}).get('securedBy')
-    resource_level = resource.data.get('securedBy', {})
-    if not resource_level and not method_level:
-        return
-
-    if method_level:
-        secured_by = method_level
-    else:
-        secured_by = resource_level
-
-    _secured_by = []
-
-    if secured_by is None:
-        _secured_by.append(None)
-    elif isinstance(secured_by, dict):
-        sec_obj = __map_secured_by_dict(secured_by, root)
-        _secured_by.append(sec_obj)
-    elif isinstance(secured_by, list):
-        sec_obj = __map_secured_by_list(secured_by, root)
-        _secured_by.extend(sec_obj)
-    elif isinstance(secured_by, str):
-        sec_obj = __map_secured_by_str(secured_by, root)
-        _secured_by.append(sec_obj)
-    else:
-        msg = "Error applying security scheme '{0}' to '{1}'.".format(
-            secured_by, resource.name)
-        raise RAMLParserError(msg)
-
-    return _secured_by
-
-
 def __map_secured_by_dict(secured, root):
     schemes = root.security_schemes or []
 
     scheme_names = [s.name for s in schemes]
     secured_name = list(iterkeys(secured))[0]
     if secured_name not in scheme_names:
-        msg = "'{0}' is not defined in API Root's resourceTypes.".format(secured_name)
+        msg = "'{0}' is not defined in API Root's resourceTypes.".format(
+            secured_name)
         raise RAMLParserError(msg)
 
     for s in schemes:
@@ -767,7 +736,8 @@ def __map_secured_by_str(secured, root):
     scheme_names = [s.name for s in schemes]
 
     if secured not in scheme_names:
-        msg = "'{0}' is not defined in API Root's resourceTypes.".format(secured)
+        msg = "'{0}' is not defined in API Root's resourceTypes.".format(
+            secured)
         raise RAMLParserError(msg)
 
     for s in schemes:
