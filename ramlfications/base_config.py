@@ -27,7 +27,8 @@ RAML_VERSIONS = ["0.8"]
 HTTP_PROTOCOLS = ["HTTP", "HTTPS"]
 MEDIA_TYPES = [
     "text/yaml", "text-x-yaml", "application/yaml", "application/x-yaml",
-    "multipart/form-data", "text/html", "application/x-www-form-urlencoded"
+    "multipart/form-data", "text/html", "application/x-www-form-urlencoded",
+    "text/plain"
 ]
 AUTH_SCHEMES = [
     'oauth_1_0', 'oauth_2_0',
