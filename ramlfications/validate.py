@@ -174,7 +174,6 @@ def __documentation(raml):
                 msg = "API Documentation requires content defined."
                 raise InvalidRamlFileError(msg)
 
-
 def __base_uri_params(raml, *args, **kw):
     """
     Require that Base URI Parameters have a ``default`` parameter set.
@@ -444,7 +443,7 @@ def __secured_by(resource, *args, **kw):
         else:
             scheme = s
         scheme_names = [r.name for r in root.security_schemes]
-        if scheme not in scheme_names:
+        if scheme not in scheme_names and scheme is not None:
             msg = ("'{0}' is applied to '{1}' but is not defined in "
                    "the securitySchemes".format(scheme, resource.name))
             raise InvalidRamlFileError(msg)
