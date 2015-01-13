@@ -94,6 +94,19 @@ def __map_item_type(item):
     }[item]
 
 
+def __pythonic_property_name(property):
+    ret = ''
+
+    for char in property:
+        if char.islower():
+            ret += char
+        else:
+            ret += '_'
+            ret += char.lower()
+
+    return ret
+
+
 @validate_property
 def __set_body(r, property, inherit=False):
     body_objs = []
@@ -275,19 +288,6 @@ def __fill_params(string, key, value, resource):
     return string
 
 
-def __pythonic_property_name(property):
-    ret = ''
-
-    for char in property:
-        if char.islower():
-            ret += char
-        else:
-            ret += '_'
-            ret += char.lower()
-
-    return ret
-
-
 #####
 # API Metadata
 #####
@@ -375,8 +375,37 @@ def _parse_resources(raml, root):
 
 @validate
 def __add_properties_to_resources(sorted_resources, root):
+
+    def set_resource_is(resource):  # TODO: pass thru validation
+        resource_level = resource.data.get('is', [])
+        resource_method = resource.data.get(resource.method, [])
+        if resource_method is not None:
+            method_level = resource_method.get('is', [])
+        else:
+            method_level = []
+
+        trait_names = []
+
+        if isinstance(method_level, str):
+            trait_names.append(method_level)
+        elif isinstance(method_level, dict):
+            trait_names.append(list(iterkeys(method_level)))
+        elif isinstance(method_level, list):
+            for t in method_level:
+                trait_names.append(t)
+
+        if isinstance(resource_level, str):
+            trait_names.append(resource_level)
+        elif isinstance(resource_level, dict):
+            trait_names.append(list(iterkeys(resource_level)))
+        elif isinstance(resource_level, list):
+            for t in resource_level:
+                trait_names.append(t)
+
+        return trait_names or None
+
     for r in sorted_resources:
-        r.is_ = __set_resource_is(r, root)
+        r.is_ = set_resource_is(r)
         r.traits = __set_traits(r, root)
         r.type = __set_type(r, root)
         r.resource_type = __get_resource_type(r, root)
@@ -506,36 +535,6 @@ def __set_secured_by_resource(resource, root):
 
 
 @validate
-def __set_resource_is(resource, root):
-    resource_level = resource.data.get('is', [])
-    resource_method = resource.data.get(resource.method, [])
-    if resource_method is not None:
-        method_level = resource_method.get('is', [])
-    else:
-        method_level = []
-
-    trait_names = []
-
-    if isinstance(method_level, str):
-        trait_names.append(method_level)
-    elif isinstance(method_level, dict):
-        trait_names.append(list(iterkeys(method_level)))
-    elif isinstance(method_level, list):
-        for t in method_level:
-            trait_names.append(t)
-
-    if isinstance(resource_level, str):
-        trait_names.append(resource_level)
-    elif isinstance(resource_level, dict):
-        trait_names.append(list(iterkeys(resource_level)))
-    elif isinstance(resource_level, list):
-        for t in resource_level:
-            trait_names.append(t)
-
-    return trait_names or None
-
-
-@validate
 def __set_resource_type_is(resource, root):
     resource_level = resource.data.get('is', [])
     resource_method = resource.data.get(resource.orig_method)
@@ -634,30 +633,65 @@ def __map_resource_dict(resource, root):
 # SECURITY SCHEMES
 #####
 
-# Logic for parsing of security schemes into SecurityScheme objects
+
 @validate
 def _parse_security_schemes(raml, root):
-    schemes = raml.get('securitySchemes')
-    if schemes:
-        s = [SecurityScheme(list(s.keys())[0],
-                            list(s.values())[0]) for s in schemes]
-        return __add_properties_to_security_schemes(s)
-    return None
+    """
+    Parsing of security schemes into SecurityScheme objects
+    """
+    def set_described_by():
+        """Set describedBy attributes"""
+        data = _s.data.get('describedBy', {})
 
+        # TODO: move to validation
+        if _s.type.startswith('x-') and not data:
+            msg = ("Custom Authentication '{0}' requires 'describedBy' "
+                   "attributes to be defined".format(_s.type))
+            raise RAMLParserError(msg)
 
-def __add_properties_to_security_schemes(schemes):
-    for s in schemes:
-        desc = __set_simple_property(s, 'description')
+        properties = []
+
+        for k in data.keys():
+            props = __set_sec_property(_s, k)
+            if props is not None:
+                properties.extend(props)
+
+        return properties or None
+
+    def set_settings_attrs():
+        """
+        Set properties to SecurityScheme object depending on settings defined
+        """
+        if not _s.settings:
+            return _s
+
+        for k, v in iteritems(_s.settings):
+            k = __pythonic_property_name(k)
+            setattr(_s, k, v)
+
+        return _s
+
+    def add_properties_to_security_scheme(_s):
+        """Add desc, type, settings, and described by attrs"""
+        desc = __set_simple_property(_s, 'description')
         if desc:
-            s.description = Content(desc)
+            _s.description = Content(desc)
         else:
-            s.description = None
-        s.type = __set_security_type(s)
-        s.settings = __set_settings_dict(s)
-        s.described_by = __set_described_by(s) or None
-        s = __set_settings_attrs(s)
+            _s.description = None
+        _s.type = _s.data.get('type')
+        _s.settings = _s.data.get('settings')  # TODO: add/pass thru validation
+        _s.described_by = set_described_by()
+        _s = set_settings_attrs()
 
-    return schemes
+        return _s
+
+    schemes = raml.get('securitySchemes', [])
+    ret = []
+    for s in schemes:
+        _s = SecurityScheme(list(s.keys())[0], list(s.values())[0])
+        ret.append(add_properties_to_security_scheme(_s))
+
+    return ret or None
 
 
 # Logic for mapping of securitySchemes to its Resource/Resource Type
@@ -745,23 +779,6 @@ def __convert_items(items, obj, **kw):
     return [obj(k, v, **kw) for k, v in iteritems(items)]
 
 
-# Set properties to SecurityScheme object depending on settings defined
-def __set_settings_attrs(scheme):
-    if not scheme.settings:
-        return scheme
-
-    for k, v in iteritems(scheme.settings):
-        k = __pythonic_property_name(k)
-        setattr(scheme, k, v)
-
-    return scheme
-
-
-@validate
-def __set_settings_dict(scheme):
-    return scheme.data.get('settings')
-
-
 def __set_sec_property(scheme, k):
     prop = scheme.data.get('describedBy', {}).get(k, {})
     properties = []
@@ -771,25 +788,3 @@ def __set_sec_property(scheme, k):
         properties.append(obj(i, j, scheme))
 
     return properties
-
-
-def __set_described_by(scheme):
-    data = scheme.data.get('describedBy', {})
-
-    if scheme.type.startswith('x-') and not data:
-        msg = ("Custom Authentication '{0}' requires 'describedBy' "
-               "attributes to be defined".format(scheme.type))
-        raise RAMLParserError(msg)
-
-    properties = []
-
-    for k in data.keys():
-        props = __set_sec_property(scheme, k)
-        if props is not None:
-            properties.extend(props)
-
-    return properties
-
-
-def __set_security_type(scheme):
-    return scheme.data.get('type')
