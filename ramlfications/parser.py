@@ -27,8 +27,6 @@ from .parameters import (
 from .raml import RAMLRoot, Trait, ResourceType, Resource, RAMLParserError
 from .utils import fill_reserved_params
 from .validate import validate
-from .parse_traits import _parse_traits
-from .parse_resource_types import _parse_resource_types
 
 
 #####
@@ -47,15 +45,7 @@ def parse_raml(loaded_raml, production, parse):
     raml = loaded_raml.data
     __raml_header(loaded_raml.raml_file)
     root = RAMLRoot(loaded_raml)
-    root.base_uri = _set_base_uri(raml)
-    root.base_uri_params = _set_base_uri_params(raml, root)
-    root.protocols = _set_protocols(raml, root)
-    root.version = _set_version(raml, production)
-    root.title = _set_title(raml)
-    root.documentation = _set_docs(raml)
-    root.media_type = _set_media_type(raml)
-    root.schemas = _set_schemas(raml)
-    root.uri_params = _set_uri_params(raml, root)
+    root = __parse_metadata(raml, root, production)
     root.security_schemes = _parse_security_schemes(raml, root)
     root.traits = _parse_traits(raml, root)
     root.resource_types = _parse_resource_types(raml, root)
@@ -179,79 +169,60 @@ def __fill_params(string, key, value, resource):
 #####
 # API Metadata
 #####
-def __parse_metadata(raml):
-    # TODO: add meta data functions here
-    pass
+# TODO: logic for production variable re: version
+def __parse_metadata(raml, root, production=False):
+    """Set Metadata for API"""
+    def base_uri():
+        base_uri = raml.get('baseUri')
+        if "{version}" in base_uri:
+            base_uri = base_uri.replace('{version}', str(raml.get('version')))
+        return base_uri
+
+    def protocols():
+        explicit_protos = raml.get('protocols')
+
+        implicit_protos = re.findall(r"(https|http)", root.base_uri)
+
+        return explicit_protos or implicit_protos or None
+
+    def docs():
+        d = raml.get('documentation', [])
+        if not isinstance(d, list):
+            msg = "Error parsing documentation"
+            raise RAMLParserError(msg)
+        docs = [Documentation(i.get('title'), i.get('content')) for i in d]
+        return docs or None
+
+    def base_uri_params():
+        base_uri_params = raml.get('baseUriParameters', {})
+        uri_params = []
+        for k, v in list(base_uri_params.items()):
+            uri_params.append((URIParameter(k, v, root)))
+        return uri_params or None
+
+    def uri_params():
+        uri_params = raml.get('uriParameters', {})
+        params = []
+        for k, v in list(uri_params.items()):
+            params.append((URIParameter(k, v, root)))
+        return params or None
+
+    root.title = raml.get('title')
+    root.version = raml.get('version')
+    root.base_uri = base_uri()
+    root.base_uri_params = base_uri_params()
+    root.protocols = protocols()
+    root.documentation = docs()
+    root.schemas = raml.get('schemas')
+    root.media_type = raml.get('mediaType')
+    root.uri_params = uri_params()
+
+    return root
 
 
 @validate
 def __raml_header(raml_file):
     pass
-
-
-@validate
-def _set_version(raml, production=False):
-    return raml.get('version')
-
-
-@validate
-def _set_base_uri(raml):
-    base_uri = raml.get('baseUri')
-    if "{version}" in base_uri:
-        base_uri = base_uri.replace('{version}', str(raml.get('version')))
-    return base_uri
-
-
-@validate
-def _set_protocols(raml, root):
-    explicit_protos = raml.get('protocols')
-
-    implicit_protos = re.findall(r"(https|http)", root.base_uri)
-
-    return explicit_protos or implicit_protos or None
-
-
-@validate
-def _set_title(raml):
-    return raml.get('title')
-
-
-@validate
-def _set_docs(raml):
-    d = raml.get('documentation', [])
-    if not isinstance(d, list):
-        msg = "Error parsing documentation"
-        raise RAMLParserError(msg)
-    docs = [Documentation(i.get('title'), i.get('content')) for i in d]
-    return docs or None
-
-
-@validate
-def _set_base_uri_params(raml, root):
-    base_uri_params = raml.get('baseUriParameters', {})
-    uri_params = []
-    for k, v in list(base_uri_params.items()):
-        uri_params.append((URIParameter(k, v, root)))
-    return uri_params or None
-
-
-@validate
-def _set_schemas(raml):
-    return raml.get('schemas')
-
-
-@validate
-def _set_media_type(raml):
-    return raml.get('mediaType')
-
-
-@validate
-def _set_uri_params(raml, root):
-    uri_params = raml.get('uriParameters', {})
-    params = []
-    for k, v in list(uri_params.items()):
-        params.append((URIParameter(k, v, root)))
-    return params or None
 
 
 #####
@@ -635,11 +606,245 @@ def __add_properties_to_resources(sorted_resources, root):
 #####
 # RESOURCE TYPES
 #####
+def _parse_resource_types(raml, root):
+    """
+    Parsing of resourceTypes into ResourceType objects
+    """
+    def is_():
+        resource_traits = r.data.get('is', [])
+        method_traits = r.data.get(r.orig_method, {}).get('is', [])
+
+        traits = resource_traits + method_traits
+        if traits:
+            defined_traits = root.traits
+            available_traits = [t for t in defined_traits if t.name in traits]
+
+            if available_traits:
+                return traits
+        return None
+
+    def traits():
+        resource_level = r.data.get('is')
+        method_level = r.data.get(r.orig_method, {}).get('is')
+        if not resource_level and not method_level:
+            return
+
+        if not root.traits:
+            msg = ("No traits are defined in RAML file but '{0}' trait is "
+                   "assigned to '{1}'.".format((resource_level, method_level),
+                                               r.name))
+            raise RAMLParserError(msg)
+
+        assigned_traits = resource_level + method_level
+        trait_objects = []
+        trait_names = [t.name for t in root.traits]
+
+        for trait in assigned_traits:
+            if isinstance(trait, str) or isinstance(trait, list):
+                if trait not in trait_names:
+                    msg = "'{0}' not defined under traits in RAML.".format(
+                        trait)
+                    raise RAMLParserError(msg)
+                str_trait = __get_traits_str(trait, root)
+                trait_objects.append(str_trait)
+            elif isinstance(trait, dict):
+                if list(iterkeys(trait))[0] not in trait_names:
+                    msg = "'{0}' not defined under traits in RAML.".format(
+                        trait)
+                    raise RAMLParserError(msg)
+                dict_trait = __get_traits_dict(trait, root, r)
+                trait_objects.append(dict_trait)
+            else:
+                msg = ("'{0}' needs to be a string referring to a trait, "
+                       "or a dictionary mapping parameter values to a "
+                       "trait".format(trait))
+                raise RAMLParserError(msg)
+
+        return trait_objects or None
+
+    def set_property(property, inherit=False):
+        properties = []
+
+        method = r.data.get(r.orig_method, {}).get(property, {})
+        resource = r.data.get(property, {})
+        items = dict(list(method.items()) + list(resource.items()))
+
+        for k, v in iteritems(items):
+            obj = __map_obj(property)
+            properties.append(obj(k, v, r))
+
+        if r.traits:
+            for t in r.traits:
+                item = __map_item_type(property)
+                if hasattr(t, item):
+                    if getattr(t, item) is not None:
+                        properties.extend(getattr(t, item))
+
+        if inherit:
+            item = __map_item_type(property)
+            if hasattr(r.parent, item):
+                if getattr(r.parent, item) is not None:
+                    properties.extend(getattr(r.parent, item))
+
+        return properties or None
+
+    def type_secured_by():
+        method_sec = r.data.get(r.orig_method, {}).get('securedBy')
+        if method_sec:
+            return method_sec
+        resource_sec = r.data.get('securedBy')
+        if resource_sec:
+            return resource_sec
+        if hasattr(r, 'parent'):
+            if hasattr(r.parent, 'secured_by'):
+                return r.parent.secured_by
+        return None
+
+    def security_schemes():
+        if not r.data.get('securedBy'):
+            return
+
+        _secured_by = []
+        for secured in r.data.get('securedBy'):
+            if secured is None:
+                _secured_by.append(None)
+            elif isinstance(secured, list) or \
+                isinstance(secured, dict) or \
+                    isinstance(secured, str):
+                    _secured_by.append(secured)
+            else:
+                msg = "Error applying security scheme '{0}' to '{1}'.".format(
+                    secured, r.name)
+                raise RAMLParserError(msg)
+
+        return _secured_by
+
+    # Allow resource(types) to add/replace resource type properties if
+    # explicitly defined
+    def __get_union(resource, inherited_resource):
+        if inherited_resource is {}:
+            return resource
+        union = {}
+        if not resource:
+            return inherited_resource
+        for k, v in iteritems(inherited_resource):
+            if k not in resource.keys():
+                union[k] = v
+            else:
+                resource_values = resource.get(k)
+                inherited_values = inherited_resource.get(k, {})
+                union[k] = dict(iteritems(inherited_values) +
+                                iteritems(resource_values))
+        for k, v in iteritems(resource):
+            if k not in inherited_resource.keys():
+                union[k] = v
+        return union
+
+    # Returns data dict of particular resourceType
+    def __get_inherited_resource(res_name, raml):
+        res_types = raml.get('resourceTypes')
+        for t in res_types:
+            if list(iterkeys(t))[0] == res_name:
+                return t
+        return None
+
+    # If resource type inherits another resource type, grab elements
+    def __map_inherited_resource_types(root, resource, inherited, raml):
+        resources = []
+        inherited_res = __get_inherited_resource(inherited, raml)
+        for k, v in iteritems(resource):
+            for i in v.keys():
+                if i in config.get('defaults', 'http_methods'):
+                    data = __get_union(resource,
+                                       inherited_res.get(i, {}))
+                    resources.append(ResourceType(k, data, i, root,
+                                                  type=inherited))
+        return resources
+
+    resource_types = raml.get('resourceTypes', [])
+    resources = []
+    for resource in resource_types:
+        for k, v in iteritems(resource):
+            # first parse out if it inherits another resourceType
+            if 'type' in list(iterkeys(v)):
+                r = __map_inherited_resource_types(root, resource,
+                                                   v.get('type'),
+                                                   raml)
+                resources.extend(r)
+            # else just create a ResourceType
+            else:
+                for i in list(iterkeys(v)):
+                    if i in config.get('defaults', 'http_methods'):
+                        resources.append(ResourceType(k, v, i, root))
+
+    for r in resources:
+        r.is_ = is_()
+        r.traits = traits()
+        r.security_schemes = security_schemes()
+        r.secured_by = type_secured_by()
+        r.usage = r.data.get('usage')
+        r.query_params = set_property('queryParameters')
+        r.uri_params = set_property('uriParameters')
+        r.base_uri_params = set_property('baseUriParameters')
+        r.form_params = set_property('formParameters')
+        r.headers = set_property('headers')
+        r.body = set_property('body')
+        r.responses = set_property('responses')
+        r.protocols = __set_simple_property(r, 'protocols') or root.protocols
+        r.media_types = __set_simple_property(r, 'body').keys() or None
+
+        desc = __set_simple_property(r, 'description')
+        if desc:
+            r.description = Content(desc)
+        else:
+            r.description = None
+    return resources
+
+
+#####
+# Traits
+#####
+
+def _parse_traits(raml, root):
+    def set_property(property, inherit=False):
+        properties = []
+
+        resource = t.data.get(property, {})
+        for k, v in iteritems(resource):
+            obj = __map_obj(property)
+            properties.append(obj(k, v, t))
+
+        if inherit:
+            item = __map_item_type(property)
+            if hasattr(t.parent, item):
+                if getattr(t.parent, item) is not None:
+                    properties.extend(getattr(t.parent, item))
+
+        return properties or None
+
+    raw_traits = raml.get('traits')
+    if raw_traits:
+        traits = [Trait(list(t.keys())[0],
+                        list(t.values())[0], root) for t in raw_traits]
+
+        for t in traits:
+            t.usage = t.data.get('usage')
+            t.query_params = set_property('queryParameters')
+            t.uri_params = set_property('uriParameters')
+            t.form_params = set_property('formParameters')
+            t.headers = set_property('headers')
+            t.body = set_property('body')
+            t.responses = set_property('responses')
+            t.description = t.data.get('description')
+            t.media_types = t.data.get('body')
+
+        return traits
+    return None
+
 
 #####
 # SECURITY SCHEMES
 #####
-
 @validate
 def _parse_security_schemes(raml, root):
     """
