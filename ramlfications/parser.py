@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-__all__ = ["RAMLParserError", "parse_raml"]
 
 from collections import defaultdict
 
@@ -28,6 +27,8 @@ from .raml import RAMLRoot, Trait, ResourceType, Resource, RAMLParserError
 from .utils import fill_reserved_params
 from .validate import validate
 
+__all__ = ["RAMLParserError", "parse_raml"]
+
 
 #####
 # Main parser function from which __init__:parse calls
@@ -42,6 +43,9 @@ def parse_raml(loaded_raml, production, parse):
     :raises RAMLParserError: If error occurred during parsing of the
         RAML file.
     """
+    if not parse:
+        return
+
     raml = loaded_raml.data
     __raml_header(loaded_raml.raml_file)
     root = RAMLRoot(loaded_raml)
@@ -51,119 +55,7 @@ def parse_raml(loaded_raml, production, parse):
     root.resource_types = _parse_resource_types(raml, root)
     root.resources = _parse_resources(raml, root)
 
-    if not parse:
-        return
     return root
-
-
-#####
-# Util functions
-#####
-
-def __map_obj(property):
-    return {
-        'headers': Header,
-        'body': Body,
-        'responses': Response,
-        'queryParameters': QueryParameter,
-        'uriParameters': URIParameter,
-        'formParameters': FormParameter,
-        'baseUriParameters': URIParameter,
-    }[property]
-
-
-def __map_item_type(item):
-    return {
-        'headers': 'headers',
-        'body': 'body',
-        'responses': 'responses',
-        'queryParameters': 'query_params',
-        'uriParameters': 'uri_params',
-        'formParameters': 'form_params',
-        'baseUriParameters': 'base_uri_params',
-    }[item]
-
-
-def __pythonic_property_name(property):
-    ret = ''
-
-    for char in property:
-        if char.islower():
-            ret += char
-        else:
-            ret += '_'
-            ret += char.lower()
-
-    return ret
-
-
-# Add'l logic for mapping of Trait properties to its Resource/ResourceType
-def __get_traits_str(trait, root):
-    api_traits = root.traits
-
-    api_traits_names = [a.name for a in api_traits]
-    if trait not in api_traits_names:
-        msg = "'{0}' is not defined in API Root's resourceTypes."
-        raise RAMLParserError(msg)
-
-    for t in api_traits:
-        if t.name == trait:
-            return t
-    return None
-
-
-def __get_traits_dict(trait, root, resource):
-    api_traits = root.traits or []
-
-    _trait = list(trait.keys())[0]
-    api_trait_names = [a.name for a in api_traits]
-    if _trait not in api_trait_names:
-        msg = "'{0}' is not defined in API Root's traits.".format(_trait)
-        raise RAMLParserError(msg)
-
-    for t in api_traits:
-        if t.name == _trait:
-            _values = list(trait.values())[0]
-            data = json.dumps(t.data)
-            for k, v in iteritems(_values):
-                data = __fill_params(data, k, v, resource)
-            data = json.loads(data)
-            return Trait(t.name, data, root)
-    return None
-
-
-def __set_simple_property(r, property):
-    if isinstance(r, ResourceType):
-        method = r.data.get(r.orig_method, {}).get(property, None)
-    elif isinstance(r, Resource):
-        if r.data.get(r.method) is not None:
-            method = r.data.get(r.method, {}).get(property, None)
-        else:
-            method = None
-    else:
-        method = None
-
-    if method:
-        return method
-
-    resource_property = r.data.get(property)
-
-    if resource_property:
-        return resource_property
-
-    if isinstance(r, Resource):
-        if r.resource_type:
-            if hasattr(r.resource_type, property):
-                if getattr(r.resource_type, property) is not None:
-                    return getattr(r.resource_type, property)
-    return {}
-
-
-def __fill_params(string, key, value, resource):
-    if key:
-        string = string.replace("<<" + key + ">>", str(value))
-    string = fill_reserved_params(resource, string)
-    return string
 
 
 #####
@@ -295,7 +187,7 @@ def __yield_resources(raml, root):
 
 
 @validate
-def __add_properties_to_resources(sorted_resources, root):
+def __add_properties_to_resources(resources, root):
 
     def _is():  # TODO: pass thru validation
         resource_level = r.data.get('is', [])
@@ -333,7 +225,7 @@ def __add_properties_to_resources(sorted_resources, root):
         resource_level = r.data.get('is', [])
         if not method_level and not resource_level:
             return
-        if not root.traits:
+        if root.traits is None:
             msg = ("No traits are defined in RAML file but '{0}' trait is "
                    "assigned to '{1}'.".format(r.is_, r.name))
             raise RAMLParserError(msg)
@@ -348,7 +240,7 @@ def __add_properties_to_resources(sorted_resources, root):
                     msg = "'{0}' not defined under traits in RAML.".format(
                         trait)
                     raise RAMLParserError(msg)
-                str_trait = __get_traits_str(trait, root)
+                str_trait = __map_item_str(root.traits, trait)
                 trait_objects.append(str_trait)
             elif isinstance(trait, dict):
                 if list(iterkeys(trait))[0] not in trait_names:
@@ -446,6 +338,35 @@ def __add_properties_to_resources(sorted_resources, root):
             raise RAMLParserError(msg)
         return mapped_res_type
 
+    def __map_secured_by_dict(secured):
+        schemes = root.security_schemes or []
+
+        scheme_names = [s.name for s in schemes]
+        secured_name = list(iterkeys(secured))[0]
+        if secured_name not in scheme_names:
+            msg = "'{0}' is not defined in API Root's resourceTypes.".format(
+                secured_name)
+            raise RAMLParserError(msg)
+
+        for s in schemes:
+            if s.name == secured_name:
+                return s
+
+    def __map_secured_by_list(secured):
+        sec_objs = []
+        for s in secured:
+            if isinstance(s, str):
+                sec_objs.append(__map_item_str(root.security_schemes, s))
+            elif isinstance(s, dict):
+                sec_objs.append(__map_secured_by_dict(s))
+            elif s is None:
+                sec_objs.append(None)
+            else:
+                msg = "Error applying security scheme '{0}'.".format(secured)
+                raise RAMLParserError(msg)
+
+            return sec_objs
+
     # TODO pass thru validation
     def security_schemes():
         """
@@ -460,29 +381,29 @@ def __add_properties_to_resources(sorted_resources, root):
             return
 
         if method_level:
-            secured_by = method_level
+            secured = method_level
         else:
-            secured_by = resource_level
+            secured = resource_level
 
-        _secured_by = []
+        _secured = []
 
-        if secured_by is None:
-            _secured_by.append(None)
-        elif isinstance(secured_by, dict):
-            sec_obj = __map_secured_by_dict(secured_by, root)
-            _secured_by.append(sec_obj)
-        elif isinstance(secured_by, list):
-            sec_obj = __map_secured_by_list(secured_by, root)
-            _secured_by.extend(sec_obj)
-        elif isinstance(secured_by, str):
-            sec_obj = __map_secured_by_str(secured_by, root)
-            _secured_by.append(sec_obj)
+        if secured is None:
+            _secured.append(None)
+        elif isinstance(secured, dict):
+            sec_obj = __map_secured_by_dict(secured)
+            _secured.append(sec_obj)
+        elif isinstance(secured, list):
+            sec_obj = __map_secured_by_list(secured)
+            _secured.extend(sec_obj)
+        elif isinstance(secured, str):
+            sec_obj = __map_item_str(root.security_schemes, secured)
+            _secured.append(sec_obj)
         else:
             msg = "Error applying security scheme '{0}' to '{1}'.".format(
-                secured_by, r.name)
+                secured, r.name)
             raise RAMLParserError(msg)
 
-        return _secured_by
+        return _secured
 
     # TODO pass thru validation
     def secured_by():
@@ -580,7 +501,7 @@ def __add_properties_to_resources(sorted_resources, root):
             ret = Content(assigned_desc)
         return ret
 
-    for r in sorted_resources:
+    def wrap(r):
         r.is_ = _is()
         r.traits = traits()
         r.type = _type()
@@ -600,7 +521,9 @@ def __add_properties_to_resources(sorted_resources, root):
             or [root.media_type]
         r.description = description()
 
-    return sorted_resources
+        return r
+
+    return [wrap(r) for r in resources]
 
 
 #####
@@ -611,6 +534,9 @@ def _parse_resource_types(raml, root):
     Parsing of resourceTypes into ResourceType objects
     """
     def is_():
+        """
+        Return trait names associated with :py:class:`ResourceType` object
+        """
         resource_traits = r.data.get('is', [])
         method_traits = r.data.get(r.orig_method, {}).get('is', [])
 
@@ -624,6 +550,11 @@ def _parse_resource_types(raml, root):
         return None
 
     def traits():
+        """
+        Return :py:class:`raml.Trait` objects associated with
+        :py:class:`raml.ResourceType` object
+        """
+
         resource_level = r.data.get('is')
         method_level = r.data.get(r.orig_method, {}).get('is')
         if not resource_level and not method_level:
@@ -645,7 +576,7 @@ def _parse_resource_types(raml, root):
                     msg = "'{0}' not defined under traits in RAML.".format(
                         trait)
                     raise RAMLParserError(msg)
-                str_trait = __get_traits_str(trait, root)
+                str_trait = __map_item_str(root.traits, trait)
                 trait_objects.append(str_trait)
             elif isinstance(trait, dict):
                 if list(iterkeys(trait))[0] not in trait_names:
@@ -663,6 +594,9 @@ def _parse_resource_types(raml, root):
         return trait_objects or None
 
     def set_property(property, inherit=False):
+        """
+        Set property to :py:class:`raml.ResourceType`
+        """
         properties = []
 
         method = r.data.get(r.orig_method, {}).get(property, {})
@@ -689,6 +623,9 @@ def _parse_resource_types(raml, root):
         return properties or None
 
     def type_secured_by():
+        """
+        Return string name of security scheme
+        """
         method_sec = r.data.get(r.orig_method, {}).get('securedBy')
         if method_sec:
             return method_sec
@@ -701,6 +638,9 @@ def _parse_resource_types(raml, root):
         return None
 
     def security_schemes():
+        """
+        Return :py:class:`parameters.SecurityScheme` objects
+        """
         if not r.data.get('securedBy'):
             return
 
@@ -719,9 +659,11 @@ def _parse_resource_types(raml, root):
 
         return _secured_by
 
-    # Allow resource(types) to add/replace resource type properties if
-    # explicitly defined
     def __get_union(resource, inherited_resource):
+        """
+        Return the union of a particular :py:class:`raml.ResourceType`
+        and its inherited :py:class:`raml.ResourceType`.
+        """
         if inherited_resource is {}:
             return resource
         union = {}
@@ -740,16 +682,21 @@ def _parse_resource_types(raml, root):
                 union[k] = v
         return union
 
-    # Returns data dict of particular resourceType
     def __get_inherited_resource(res_name, raml):
+        """
+        Helper function to return data dict of particular resourceType
+        """
         res_types = raml.get('resourceTypes')
         for t in res_types:
             if list(iterkeys(t))[0] == res_name:
                 return t
         return None
 
-    # If resource type inherits another resource type, grab elements
     def __map_inherited_resource_types(root, resource, inherited, raml):
+        """
+        Grab elements if :py:class:`raml.ResourceType` inherits from
+        another resource type.
+        """
         resources = []
         inherited_res = __get_inherited_resource(inherited, raml)
         for k, v in iteritems(resource):
@@ -761,23 +708,10 @@ def _parse_resource_types(raml, root):
                                                   type=inherited))
         return resources
 
-    resource_types = raml.get('resourceTypes', [])
-    resources = []
-    for resource in resource_types:
-        for k, v in iteritems(resource):
-            # first parse out if it inherits another resourceType
-            if 'type' in list(iterkeys(v)):
-                r = __map_inherited_resource_types(root, resource,
-                                                   v.get('type'),
-                                                   raml)
-                resources.extend(r)
-            # else just create a ResourceType
-            else:
-                for i in list(iterkeys(v)):
-                    if i in config.get('defaults', 'http_methods'):
-                        resources.append(ResourceType(k, v, i, root))
-
-    for r in resources:
+    def wrap(r):
+        """
+        Set attrs to :py:class:`ResourceType`
+        """
         r.is_ = is_()
         r.traits = traits()
         r.security_schemes = security_schemes()
@@ -798,7 +732,26 @@ def _parse_resource_types(raml, root):
             r.description = Content(desc)
         else:
             r.description = None
-    return resources
+
+        return r
+
+    resource_types = raml.get('resourceTypes', [])
+    resources = []
+    for resource in resource_types:
+        for k, v in iteritems(resource):
+            # first parse out if it inherits another resourceType
+            if 'type' in list(iterkeys(v)):
+                r = __map_inherited_resource_types(root, resource,
+                                                   v.get('type'),
+                                                   raml)
+                resources.extend(r)
+            # else just create a ResourceType
+            else:
+                for i in list(iterkeys(v)):
+                    if i in config.get('defaults', 'http_methods'):
+                        resources.append(ResourceType(k, v, i, root))
+
+    return [wrap(r) for r in resources]
 
 
 #####
@@ -806,7 +759,10 @@ def _parse_resource_types(raml, root):
 #####
 
 def _parse_traits(raml, root):
-    def set_property(property, inherit=False):
+    def set_property(t, property, inherit=False):
+        """
+        Set property to :py:class:`raml.Trait`
+        """
         properties = []
 
         resource = t.data.get(property, {})
@@ -822,23 +778,30 @@ def _parse_traits(raml, root):
 
         return properties or None
 
+    def wrap(t):
+        """
+        Set attrs to :py:class:`raml.Trait`
+        """
+        t.usage = t.data.get('usage')
+        t.query_params = set_property(t, 'queryParameters')
+        t.uri_params = set_property(t, 'uriParameters')
+        t.form_params = set_property(t, 'formParameters')
+        t.headers = set_property(t, 'headers')
+        t.body = set_property(t, 'body')
+        t.responses = set_property(t, 'responses')
+        t.description = t.data.get('description')
+        t.media_types = t.data.get('body')
+
+        return t
+
     raw_traits = raml.get('traits')
+
     if raw_traits:
         traits = [Trait(list(t.keys())[0],
                         list(t.values())[0], root) for t in raw_traits]
 
-        for t in traits:
-            t.usage = t.data.get('usage')
-            t.query_params = set_property('queryParameters')
-            t.uri_params = set_property('uriParameters')
-            t.form_params = set_property('formParameters')
-            t.headers = set_property('headers')
-            t.body = set_property('body')
-            t.responses = set_property('responses')
-            t.description = t.data.get('description')
-            t.media_types = t.data.get('body')
+        return [wrap(t) for t in traits]
 
-        return traits
     return None
 
 
@@ -850,20 +813,36 @@ def _parse_security_schemes(raml, root):
     """
     Parsing of security schemes into SecurityScheme objects
     """
+    def set_sec_property(k):
+        """
+        Return a list of RAML file-defined properties for a
+        :py:class:`.parameters.SecurityScheme`
+        """
+        prop = scheme.data.get('describedBy', {}).get(k, {})
+        properties = []
+
+        for i, j in iteritems(prop):
+            obj = __map_obj(k)
+            properties.append(obj(i, j, scheme))
+
+        return properties
+
     def set_described_by():
-        """Set describedBy attributes"""
-        data = _s.data.get('describedBy', {})
+        """
+        Set describedBy attributes
+        """
+        data = scheme.data.get('describedBy', {})
 
         # TODO: move to validation
-        if _s.type.startswith('x-') and not data:
+        if scheme.type.startswith('x-') and not data:
             msg = ("Custom Authentication '{0}' requires 'describedBy' "
-                   "attributes to be defined".format(_s.type))
+                   "attributes to be defined".format(scheme.type))
             raise RAMLParserError(msg)
 
         properties = []
 
         for k in data.keys():
-            props = __set_sec_property(_s, k)
+            props = set_sec_property(k)
             if props is not None:
                 properties.extend(props)
 
@@ -873,93 +852,198 @@ def _parse_security_schemes(raml, root):
         """
         Set properties to SecurityScheme object depending on settings defined
         """
-        if not _s.settings:
-            return _s
+        if not scheme.settings:
+            return scheme
 
-        for k, v in iteritems(_s.settings):
+        for k, v in iteritems(scheme.settings):
             k = __pythonic_property_name(k)
-            setattr(_s, k, v)
+            setattr(scheme, k, v)
 
-        return _s
+        return scheme
 
-    def add_properties_to_security_scheme(_s):
+    def wrap(scheme):
         """Add desc, type, settings, and described by attrs"""
-        desc = __set_simple_property(_s, 'description')
+        desc = __set_simple_property(scheme, 'description')
         if desc:
-            _s.description = Content(desc)
+            scheme.description = Content(desc)
         else:
-            _s.description = None
-        _s.type = _s.data.get('type')
-        _s.settings = _s.data.get('settings')  # TODO: add/pass thru validation
-        _s.described_by = set_described_by()
-        _s = set_settings_attrs()
+            scheme.description = None
+        scheme.type = scheme.data.get('type')
+        # TODO: add/pass thru validation
+        scheme.settings = scheme.data.get('settings')
+        scheme.described_by = set_described_by()
+        scheme = set_settings_attrs()
 
-        return _s
+        return scheme
 
     schemes = raml.get('securitySchemes', [])
     ret = []
     for s in schemes:
-        _s = SecurityScheme(list(s.keys())[0], list(s.values())[0])
-        ret.append(add_properties_to_security_scheme(_s))
+        scheme = SecurityScheme(list(s.keys())[0], list(s.values())[0])
+        ret.append(wrap(scheme))
 
     return ret or None
 
 
-def __map_secured_by_dict(secured, root):
-    schemes = root.security_schemes or []
+#####
+# Util functions
+#####
 
-    scheme_names = [s.name for s in schemes]
-    secured_name = list(iterkeys(secured))[0]
-    if secured_name not in scheme_names:
-        msg = "'{0}' is not defined in API Root's resourceTypes.".format(
-            secured_name)
-        raise RAMLParserError(msg)
+def __map_obj(property):
+    """
+    Map property name to appropriate RAML object.
 
-    for s in schemes:
-        if s.name == secured_name:
-            return s
+    :param str property: property name
+    :returns: property object
+    """
+    return {
+        'headers': Header,
+        'body': Body,
+        'responses': Response,
+        'queryParameters': QueryParameter,
+        'uriParameters': URIParameter,
+        'formParameters': FormParameter,
+        'baseUriParameters': URIParameter,
+    }[property]
 
 
-def __map_secured_by_list(secured, root):
-    sec_objs = []
-    for s in secured:
-        if isinstance(s, str):
-            sec_objs.append(__map_secured_by_str(s, root))
-        elif isinstance(s, dict):
-            sec_objs.append(__map_secured_by_dict(s, root))
-        elif s is None:
-            sec_objs.append(None)
+def __map_item_type(item):
+    """
+    Map RAML property item name to Python object property.
+
+    :param str item: item name as set in RAML file
+    :returns: item name as defined in appropriate Python object
+    """
+    return {
+        'headers': 'headers',
+        'body': 'body',
+        'responses': 'responses',
+        'queryParameters': 'query_params',
+        'uriParameters': 'uri_params',
+        'formParameters': 'form_params',
+        'baseUriParameters': 'base_uri_params',
+    }[item]
+
+
+def __pythonic_property_name(property):
+    """
+    Return snake-case of a not-yet-known property name defined in RAML file.
+
+    e.g. `fooBarBaz` will return `foo_bar_baz`
+
+    :param str property: property name as set in RAML file
+    :returns: snake-case of property name.
+    """
+    ret = ''
+
+    for char in property:
+        if char.islower():
+            ret += char
         else:
-            msg = "Error applying security scheme '{0}'.".format(secured)
-            raise RAMLParserError(msg)
+            ret += '_'
+            ret += char.lower()
 
-        return sec_objs
+    return ret
 
 
-def __map_secured_by_str(secured, root):
-    schemes = root.security_schemes or []
-    scheme_names = [s.name for s in schemes]
+def __get_traits_dict(trait, root, resource):
+    """
+    Giving the string name of a trait, returns :py:class:`raml.Trait`
+    object with parameters filled in.
 
-    if secured not in scheme_names:
-        msg = "'{0}' is not defined in API Root's resourceTypes.".format(
-            secured)
+    :param str trait: trait name
+    :param RAMLRoot root: :py:class:`raml.RAMLRoot` object
+    :param Resource resource: :py:class:`raml.Resource` object
+    :returns: :py:class:`Trait` object or `None`
+    """
+    api_traits = root.traits or []
+
+    _trait = list(trait.keys())[0]
+    api_trait_names = [a.name for a in api_traits]
+    if _trait not in api_trait_names:
+        msg = "'{0}' is not defined in API Root's traits.".format(_trait)
         raise RAMLParserError(msg)
 
-    for s in schemes:
-        if s.name == secured:
-            return s
+    for t in api_traits:
+        if t.name == _trait:
+            _values = list(trait.values())[0]
+            data = json.dumps(t.data)
+            for k, v in iteritems(_values):
+                data = __fill_params(data, k, v, resource)
+            data = json.loads(data)
+            return Trait(t.name, data, root)
+    return None
 
 
-def __convert_items(items, obj, **kw):
-    return [obj(k, v, **kw) for k, v in iteritems(items)]
+def __set_simple_property(r, property):
+    """
+    Returns the value of a property.  Used when values are known to be
+    strings
+
+    :param r: Either :py:class:`raml.Resource`, \
+        :py:class:`raml.ResourceType`, or :py:class:`raml.Trait`
+    :returns: value of requested property
+    :rtype: str
+    """
+    if isinstance(r, ResourceType):
+        method = r.data.get(r.orig_method, {}).get(property, None)
+    elif isinstance(r, Resource):
+        if r.data.get(r.method) is not None:
+            method = r.data.get(r.method, {}).get(property, None)
+        else:
+            method = None
+    else:
+        method = None
+
+    if method:
+        return method
+
+    resource_property = r.data.get(property)
+
+    if resource_property:
+        return resource_property
+
+    if isinstance(r, Resource):
+        if r.resource_type:
+            if hasattr(r.resource_type, property):
+                if getattr(r.resource_type, property) is not None:
+                    return getattr(r.resource_type, property)
+    return {}
 
 
-def __set_sec_property(scheme, k):
-    prop = scheme.data.get('describedBy', {}).get(k, {})
-    properties = []
+def __fill_params(string, key, value, resource):
+    """
+    Fill in parameters defined in RAML file
+    :param str string: string to edit/replace with parameter
+    :param str key: name of the parameter to replace
+    :param str value: value to replace the key with
+    :param Resource resource: :py:class:`Resource` object with which the
+        `string` is associated
 
-    for i, j in iteritems(prop):
-        obj = __map_obj(k)
-        properties.append(obj(i, j, scheme))
+    :returns: edited string with filled-in params
+    """
+    if key:
+        string = string.replace("<<" + key + ">>", str(value))
+    string = fill_reserved_params(resource, string)
+    return string
 
-    return properties
+
+def __map_item_str(items, item):
+    """
+    Maps an item name to its associated Python object
+
+    :param list items: list of Python objects
+    :param str item: item name
+    :returns: Python object of item
+    """
+    item_names = [i.name for i in items]
+
+    if item not in item_names:
+        msg = "'{0}' is not defined in its respective API Root."
+        raise RAMLParserError(msg)
+
+    for i in items:
+        if i.name == item:
+            return i
+
+    return None
