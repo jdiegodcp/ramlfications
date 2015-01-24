@@ -703,7 +703,7 @@ def _parse_resource_types(raml, root):
             for i in v.keys():
                 if i in config.get('defaults', 'http_methods'):
                     data = __get_union(resource,
-                                       inherited_res.get(i, {}))
+                                       inherited_res.values()[0].get(i, {}))
                     resources.append(ResourceType(k, data, i, root,
                                                   type=inherited))
         return resources
