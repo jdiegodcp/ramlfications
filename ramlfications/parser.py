@@ -123,67 +123,23 @@ def __raml_header(raml_file):
 
 # Logic for parsing of Resources/endpoints into Resource objects
 def _parse_resources(raml, root):
-    resource_stack = __yield_resources(raml, root)
-    sorted_resources = __order_resources(resource_stack)
-    resources = __add_properties_to_resources(sorted_resources, root)
+    resources = __traverse(raml, [], root, parent=None)
+    resources = __add_properties_to_resources(resources, root)
     return resources
 
 
-def __order_resources(resource_stack):
-    _resources = OrderedDict()
-    for res in resource_stack:
-        key_name = res.method + "-" + res.path
-        _resources[key_name] = res
-
-    resources = defaultdict(list)
-    for k, v in iteritems(_resources):
-        resources[v.path].append((v.method.upper(), v))
-    sorted_dict = OrderedDict(sorted(iteritems(resources),
-                                     key=lambda t: t[0]))
-    sorted_list = []
-    for item in sorted_dict.values():
-        for i in item:
-            sorted_list.append(i[1])
-    return sorted_list
-
-
-def __create_resource_stack(items, resource_stack, root):
-    for k, v in iteritems(items):
+def __traverse(node, resources, root, parent):
+    for k, v in node.iteritems():
         if k.startswith("/"):
-            keys = items[k].keys()
-            methods = [m for m in config.get('defaults',
-                                             'available_methods') if m in keys]
+            avail = config.get('defaults', 'available_methods')
+            methods = [m for m in avail if m in v.keys()]
             if methods:
-                for m in config.get('defaults', 'available_methods'):
-                    if m in items[k].keys():
-                        node = Resource(name=k, data=v,
-                                        method=m, api=root)
-                        resource_stack.append(node)
-            else:
-                for item in keys:
-                    if item.startswith("/"):
-                        _item = {}
-                        _item[k + item] = items.get(k).get(item)
-                        resource_stack = __create_resource_stack(
-                            _item, resource_stack, root)
-
-    return resource_stack
-
-
-def __yield_resources(raml, root):
-    resource_stack = __create_resource_stack(raml, [], root)
-    while resource_stack:
-        current = resource_stack.pop(0)
-        yield current
-        if current.data:
-            for child_k, child_v in iteritems(current.data):
-                if child_k.startswith("/"):
-                    for method in config.get('defaults', 'available_methods'):
-                        if method in current.data[child_k].keys():
-                            child = Resource(name=child_k, data=child_v,
-                                             method=method, parent=current,
-                                             api=root)
-                            resource_stack.append(child)
+                for m in methods:
+                    child = Resource(name=k, data=v, method=m,
+                                     parent=parent, api=root)
+                    resources.append(child)
+            resources = __traverse(child.data, resources, root, child)
+    return resources
 
 
 @validate
