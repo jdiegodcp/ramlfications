@@ -5,13 +5,6 @@
 from __future__ import absolute_import, division, print_function
 
 
-from collections import defaultdict
-
-try:
-    from collections import OrderedDict
-except ImportError:  # pragma: no cover
-    from ordereddict import OrderedDict
-
 import json
 import re
 
@@ -25,7 +18,8 @@ from .parameters import (
 )
 from .raml import RAMLRoot, Trait, ResourceType, Resource, RAMLParserError
 from .utils import fill_reserved_params
-from .validate import validate
+from .validate import validate, validate_property, test_validate
+
 
 __all__ = ["RAMLParserError", "parse_raml"]
 
@@ -47,9 +41,8 @@ def parse_raml(loaded_raml, production, parse):
         return
 
     raml = loaded_raml.data
-    __raml_header(loaded_raml.raml_file)
     root = RAMLRoot(loaded_raml)
-    root = __parse_metadata(raml, root, production)
+    root = _parse_metadata(raml, root, production)
     root.security_schemes = _parse_security_schemes(raml, root)
     root.traits = _parse_traits(raml, root)
     root.resource_types = _parse_resource_types(raml, root)
@@ -62,14 +55,16 @@ def parse_raml(loaded_raml, production, parse):
 # API Metadata
 #####
 # TODO: logic for production variable re: version
-def __parse_metadata(raml, root, production=False):
+def _parse_metadata(raml, root, production=False):
     """Set Metadata for API"""
+    @validate(raml)
     def base_uri():
         base_uri = raml.get('baseUri')
         if "{version}" in base_uri:
             base_uri = base_uri.replace('{version}', str(raml.get('version')))
         return base_uri
 
+    @validate(raml)
     def protocols():
         explicit_protos = raml.get('protocols')
 
@@ -77,6 +72,7 @@ def __parse_metadata(raml, root, production=False):
 
         return explicit_protos or implicit_protos or None
 
+    @validate(raml)
     def docs():
         d = raml.get('documentation', [])
         if not isinstance(d, list):
@@ -85,6 +81,7 @@ def __parse_metadata(raml, root, production=False):
         docs = [Documentation(i.get('title'), i.get('content')) for i in d]
         return docs or None
 
+    @validate(raml)
     def base_uri_params():
         base_uri_params = raml.get('baseUriParameters', {})
         uri_params = []
@@ -92,6 +89,7 @@ def __parse_metadata(raml, root, production=False):
             uri_params.append((URIParameter(k, v, root)))
         return uri_params or None
 
+    @validate(raml)
     def uri_params():
         uri_params = raml.get('uriParameters', {})
         params = []
@@ -99,22 +97,38 @@ def __parse_metadata(raml, root, production=False):
             params.append((URIParameter(k, v, root)))
         return params or None
 
-    root.title = raml.get('title')
-    root.version = raml.get('version')
+    @validate(raml)
+    def title():
+        return raml.get('title')
+
+    @validate(raml)
+    def version():
+        return raml.get('version')
+
+    @validate(raml)
+    def schemas():
+        return raml.get('schemas')
+
+    @validate(raml)
+    def media_type():
+        return raml.get('mediaType')
+
+    @validate(root.raml_file)
+    def __raml_header():
+        pass
+
+    __raml_header()
+    root.title = title()
+    root.version = version()
     root.base_uri = base_uri()
     root.base_uri_params = base_uri_params()
     root.protocols = protocols()
     root.documentation = docs()
-    root.schemas = raml.get('schemas')
-    root.media_type = raml.get('mediaType')
+    root.schemas = schemas()
+    root.media_type = media_type()
     root.uri_params = uri_params()
 
     return root
-
-
-@validate
-def __raml_header(raml_file):
-    pass
 
 
 #####
@@ -142,10 +156,12 @@ def __traverse(node, resources, root, parent):
     return resources
 
 
-@validate
 def __add_properties_to_resources(resources, root):
 
-    def _is():  # TODO: pass thru validation
+    validation = "resource"
+
+    @test_validate(validation)
+    def _is():
         resource_level = r.data.get('is', [])
         resource_method = r.data.get(r.method, [])
         if resource_method is not None:
@@ -175,7 +191,7 @@ def __add_properties_to_resources(resources, root):
 
     # TODO: this only checks resource-level defined "is", not method-level
     # TODO: the "else" should actually be caught in _is()
-    # TODO: pass thru validation
+    @test_validate(validation)
     def traits():
         method_level = r.data.get(r.method).get('is', [])
         resource_level = r.data.get('is', [])
@@ -213,7 +229,7 @@ def __add_properties_to_resources(resources, root):
 
         return trait_objects or None
 
-    # TODO: pass thru validation
+    @test_validate(validation)
     def _type():
         resource_type = r.data.get('type')
         if resource_type:
@@ -271,8 +287,8 @@ def __add_properties_to_resources(resources, root):
                 return ResourceType(r_.name, data, r.method, root, r.type)
         return None
 
-    # TODO: pass thru validation
     # TODO: move the RAMLParserError to validate (??)
+    @test_validate(validation)
     def resource_type():
         mapped_res_type = None
         if not r.type:
@@ -323,7 +339,7 @@ def __add_properties_to_resources(resources, root):
 
             return sec_objs
 
-    # TODO pass thru validation
+    @test_validate(validation)
     def security_schemes():
         """
         Mapping of securitySchemes to its Resource/Resource Type
@@ -361,7 +377,7 @@ def __add_properties_to_resources(resources, root):
 
         return _secured
 
-    # TODO pass thru validation
+    @test_validate(validation)
     def secured_by():
         resource_method = r.data.get(r.method)
         if resource_method is not None:
@@ -376,8 +392,8 @@ def __add_properties_to_resources(resources, root):
                 return r.parent.secured_by
         return None
 
-    # TODO: pass thru validate property
-    def set_properties(property, inherit=False):
+    @validate_property
+    def set_properties(r, property, inherit=False):
         properties = []
         resource_method = r.data.get(r.method, {})
         if resource_method is not None:
@@ -412,8 +428,10 @@ def __add_properties_to_resources(resources, root):
 
         return properties or None
 
-    # TODO: pass thru validate property
-    def body():
+    # TODO: improve @validate_property since i'm pasing in r & property
+    # and I think it's unnecessary
+    @validate_property
+    def body(r, property):
         body_objs = []
         if r.data.get(r.method) is not None:
             method = r.data.get(r.method, {}).get('body', {})
@@ -448,6 +466,7 @@ def __add_properties_to_resources(resources, root):
     # TODO: pass thru validation
     def description():
         ret = None
+        print(r)
         desc = __set_simple_property(r, 'description')
         if desc:
             if isinstance(desc, Content):
@@ -462,16 +481,18 @@ def __add_properties_to_resources(resources, root):
         r.traits = traits()
         r.type = _type()
         r.resource_type = resource_type()
-        r.security_schemes = security_schemes()
         r.secured_by = secured_by()
+        r.security_schemes = security_schemes()
         r.display_name = r.data.get('displayName', r.name)
-        r.base_uri_params = set_properties('baseUriParameters', inherit=True)
-        r.query_params = set_properties('queryParameters')
-        r.uri_params = set_properties('uriParameters', inherit=True)
-        r.form_params = set_properties('formParameters')
-        r.headers = set_properties('headers')
-        r.body = body()
-        r.responses = set_properties('responses')
+        r.base_uri_params = set_properties(r,
+                                           'baseUriParameters',
+                                           inherit=True)
+        r.query_params = set_properties(r, 'queryParameters')
+        r.uri_params = set_properties(r, 'uriParameters', inherit=True)
+        r.form_params = set_properties(r, 'formParameters')
+        r.headers = set_properties(r, 'headers')
+        r.body = body(r, 'body')
+        r.responses = set_properties(r, 'responses')
         r.protocols = __set_simple_property(r, 'protocols') or root.protocols
         r.media_types = __set_simple_property(r, 'body').keys() \
             or [root.media_type]
@@ -489,7 +510,10 @@ def _parse_resource_types(raml, root):
     """
     Parsing of resourceTypes into ResourceType objects
     """
-    def is_():
+    validation = "resource_types"
+
+    @test_validate(validation)
+    def _is():
         """
         Return trait names associated with :py:class:`ResourceType` object
         """
@@ -505,14 +529,16 @@ def _parse_resource_types(raml, root):
                 return traits
         return None
 
+    # TODO: I don't think this works properly...
+    @test_validate(validation)
     def traits():
         """
         Return :py:class:`raml.Trait` objects associated with
         :py:class:`raml.ResourceType` object
         """
 
-        resource_level = r.data.get('is')
-        method_level = r.data.get(r.orig_method, {}).get('is')
+        resource_level = r.data.get('is', [])
+        method_level = r.data.get(r.orig_method, {}).get('is', [])
         if not resource_level and not method_level:
             return
 
@@ -549,7 +575,8 @@ def _parse_resource_types(raml, root):
 
         return trait_objects or None
 
-    def set_property(property, inherit=False):
+    @validate_property
+    def set_property(r, property, inherit=False):
         """
         Set property to :py:class:`raml.ResourceType`
         """
@@ -578,6 +605,7 @@ def _parse_resource_types(raml, root):
 
         return properties or None
 
+    @test_validate(validation)
     def type_secured_by():
         """
         Return string name of security scheme
@@ -593,6 +621,7 @@ def _parse_resource_types(raml, root):
                 return r.parent.secured_by
         return None
 
+    @test_validate(validation)
     def security_schemes():
         """
         Return :py:class:`parameters.SecurityScheme` objects
@@ -668,18 +697,18 @@ def _parse_resource_types(raml, root):
         """
         Set attrs to :py:class:`ResourceType`
         """
-        r.is_ = is_()
+        r.is_ = _is()
         r.traits = traits()
         r.security_schemes = security_schemes()
         r.secured_by = type_secured_by()
         r.usage = r.data.get('usage')
-        r.query_params = set_property('queryParameters')
-        r.uri_params = set_property('uriParameters')
-        r.base_uri_params = set_property('baseUriParameters')
-        r.form_params = set_property('formParameters')
-        r.headers = set_property('headers')
-        r.body = set_property('body')
-        r.responses = set_property('responses')
+        r.query_params = set_property(r, 'queryParameters')
+        r.uri_params = set_property(r, 'uriParameters')
+        r.base_uri_params = set_property(r, 'baseUriParameters')
+        r.form_params = set_property(r, 'formParameters')
+        r.headers = set_property(r, 'headers')
+        r.body = set_property(r, 'body')
+        r.responses = set_property(r, 'responses')
         r.protocols = __set_simple_property(r, 'protocols') or root.protocols
         r.media_types = __set_simple_property(r, 'body').keys() or None
 
@@ -715,6 +744,7 @@ def _parse_resource_types(raml, root):
 #####
 
 def _parse_traits(raml, root):
+    @validate_property
     def set_property(t, property, inherit=False):
         """
         Set property to :py:class:`raml.Trait`
@@ -764,11 +794,13 @@ def _parse_traits(raml, root):
 #####
 # SECURITY SCHEMES
 #####
-@validate
 def _parse_security_schemes(raml, root):
     """
     Parsing of security schemes into SecurityScheme objects
     """
+    validation = 'security_schemes'
+
+    # TODO: validate
     def set_sec_property(k):
         """
         Return a list of RAML file-defined properties for a
@@ -783,6 +815,7 @@ def _parse_security_schemes(raml, root):
 
         return properties
 
+    # TODO: validate
     def set_described_by():
         """
         Set describedBy attributes
@@ -804,7 +837,8 @@ def _parse_security_schemes(raml, root):
 
         return properties or None
 
-    def set_settings_attrs():
+    @test_validate(validation)
+    def set_settings_attrs(scheme):
         """
         Set properties to SecurityScheme object depending on settings defined
         """
@@ -828,7 +862,7 @@ def _parse_security_schemes(raml, root):
         # TODO: add/pass thru validation
         scheme.settings = scheme.data.get('settings')
         scheme.described_by = set_described_by()
-        scheme = set_settings_attrs()
+        scheme = set_settings_attrs(scheme)
 
         return scheme
 

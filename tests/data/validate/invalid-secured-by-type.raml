@@ -1,0 +1,73 @@
+#%RAML 0.8
+title: Foo Web API - Invalid Security By
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.foo.com/{version}
+mediaType: application/json
+documentation:
+  - title: Foo Web API Docs
+    content: |
+      Welcome to the _Foo Web API_ specification.
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Spotify supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        queryParameters:
+          foo:
+            description: Foo Query Parameter
+            type: string
+            example: fooooo
+        uriParameters:
+          bar:
+            description: Bar URI Parameter
+            type: string
+            example: baaaar
+          baz:
+            description: Baz URI Parameter
+            type: string
+            example: baaaaaz
+        formParameters:
+          blarg:
+            description: Blarg Form Parameter
+            type: string
+            example: bllaaaarrgg
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.spotify.com/authorize
+        accessTokenUri: https://accounts.spotify.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "playlist-read-private"
+          - "playlist-modify-public"
+          - "playlist-modify-private"
+          - "user-library-read"
+          - "user-library-modify"
+          - "user-read-private"
+          - "user-read-email"
+resourceTypes:
+  - foo:
+      securedBy: [ not_a_scheme ]
+      get:
+        description: "Get some foo"
+      post:
+        description: "Post some foo"
+
+/foo:
+  description: FooBar
+  get:
+    description: Get some FooBar

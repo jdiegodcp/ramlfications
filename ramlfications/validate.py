@@ -4,55 +4,110 @@
 
 from __future__ import absolute_import, division, print_function
 
-__all__ = ["InvalidRamlFileError"]
-
 import re
 import os
 
-from functools import wraps
-
 from six import itervalues, iteritems, iterkeys
+import wrapt
 
 from .base_config import config
+from .raml import _BaseResource
+
+__all__ = ["InvalidRamlFileError"]
 
 
 class InvalidRamlFileError(Exception):
     pass
 
 
+env_val = os.environ.get('RAML_VALIDATE') == '1'
+conf_val = config.get('main', 'validate') == 'True'
+VALIDATE = env_val or conf_val
+
+
 #####
 # Decorator functions
 #####
 
-def validate(func):
+def validate(raml):
     """
-    Validate item according to RAML spec.
+    Validate raml according to RAML spec.
     """
-    @wraps(func)
-    def func_wrapper(raml, *args, **kw):
-        validate = os.environ.get('RAML_VALIDATE') == '1'
-        if not validate:
-            validate = config.get('main', 'validate') == 'True'
-        if validate:
-            __map_to_validate_func(func.__name__)(raml, *args, **kw)
-        return func(raml, *args, **kw)
+    @wrapt.decorator(enabled=VALIDATE)
+    def func_wrapper(wrapped, instance, args, kw):
+        __map_to_validate_func(wrapped.__name__)(raml, *args, **kw)
+        return wrapped(*args, **kw)
     return func_wrapper
 
 
-def validate_property(func):
+@wrapt.decorator(enabled=VALIDATE)
+def validate_property(wrapped, instance, args, kw):
     """
     Validate property for Trait, ResourceType, or Resource according to
     RAML spec
     """
-    @wraps(func)
-    def func_wrapper(resource, property, *args, **kw):
-        validate = os.environ.get('RAML_VALIDATE') == '1'
-        if not validate:
-            validate = config.get('main', 'validate') == 'True'
-        if validate:
-            __map_to_validate_prop(property)(resource, *args, **kw)
-        return func(resource, property, *args, **kw)
+    item, prop = args
+    __map_to_validate_prop(prop)(item, *args, **kw)
+    return wrapped(*args, **kw)
+
+
+def test_validate(item):
+    @wrapt.decorator(enabled=VALIDATE)
+    def func_wrapper(wrapped, instance, args, kw):
+        resources = [r.cell_contents for r in wrapped.func_closure]
+        resource = [r for r in resources if isinstance(r, _BaseResource)]
+        root = resource.api
+        newargs = args + (resource, root)
+        __map_item_to_validate(item, wrapped.__name__)(*newargs, **kw)
+        return wrapped(*args, **kw)
     return func_wrapper
+
+
+def __map_item_to_validate(item, func_name):
+    return {
+        "security_schemes": validate_security,
+        "resource_types": validate_resource_types,
+        "resource": validate_resource,
+    }[item](func_name)
+
+
+def validate_security(func_name):
+    return {
+        "set_settings_attrs": __security_settings
+    }[func_name]
+
+
+def validate_resource_types(func_name):
+    return {
+        "_is": __set_resource_type_is,
+        "traits": __set_traits,
+        "type_secured_by": __secured_by,
+        "security_schemes": __security_schemes
+    }[func_name]
+
+
+def validate_resource(func_name):
+    return {
+        '__raml_header': __raml_header,
+        'base_uri': __base_uri,
+        'version': __version,
+        'title': __api_title,
+        'docs': __documentation,
+        'base_uri_params': __base_uri_params,
+        'schemas': __schemas,
+        'protocols': __protocols,
+        'media_type': __media_type,
+        'security_schemes': __security_schemes,
+        'uri_params': __uri_params,
+        'resource_type': __resource_type,
+        'secured_by': __secured_by,
+        '_type': __set_type,
+        'traits': __set_traits,
+        '_is': __set_resource_is,
+        '__set_settings_dict': __security_settings,
+        '__add_properties_to_resources': __has_resources,
+        '__set_resource_type_is': __set_resource_type_is
+    }[func_name]
 
 
 #####
@@ -60,25 +115,43 @@ def validate_property(func):
 ####
 def __map_to_validate_func(func_name):
     return {
-        '_set_base_uri': __base_uri,
-        '_set_version': __version,
         '__raml_header': __raml_header,
-        '_set_title': __api_title,
-        '_set_docs': __documentation,
-        '_set_base_uri_params': __base_uri_params,
-        '_set_schemas': __schemas,
-        '_set_protocols': __protocols,
-        '_set_media_type': __media_type,
-        '_parse_security_schemes': __security_schemes,
-        '_set_uri_params': __uri_params,
-        '__get_resource_type': __resource_type,
+        'base_uri': __base_uri,
+        'version': __version,
+        'title': __api_title,
+        'docs': __documentation,
+        'base_uri_params': __base_uri_params,
+        'schemas': __schemas,
+        'protocols': __protocols,
+        'media_type': __media_type,
+        'security_schemes': __security_schemes,
+        'uri_params': __uri_params,
+        'resource_type': __resource_type,
+        'secured_by': __secured_by,
+        '_type': __set_type,
+        'traits': __set_traits,
+        '_is': __set_resource_is,
         '__set_settings_dict': __security_settings,
-        '__get_secured_by': __secured_by,
         '__add_properties_to_resources': __has_resources,
-        '__set_type': __set_type,
-        '__set_traits': __set_traits,
-        '__set_resource_is': __set_resource_is,
         '__set_resource_type_is': __set_resource_type_is
+    }[func_name]
+
+
+def __map_resource_type(func_name):
+    return {
+        "_is": __set_resource_type_is,
+        "traits": __set_traits,
+        "type_secured_by": __secured_by,
+        "security_schemes": __security_schemes
+    }[func_name]
+
+
+def __map_trait(func_name):
+    return {
+        "_is": __set_resource_type_is,
+        "traits": __set_traits,
+        "type_secured_by": __secured_by,
+        "security_schemes": __security_schemes
     }[func_name]
 
 
@@ -140,11 +213,10 @@ def __base_uri(raml):
         raise InvalidRamlFileError(msg)
 
 
-def __version(raml, *args, **kw):
-    prod = args[0]
+def __version(raml):
     """Require an API Version (e.g. api.foo.com/v1)."""
     v = raml.get('version')
-    if prod and not v:
+    if not v:
         msg = 'RAML File does not define an API version.'
         raise InvalidRamlFileError(msg)
     elif '{version}' in raml.get('baseUri') and not v:
@@ -167,12 +239,13 @@ def __documentation(raml):
     docs = raml.get('documentation')
     if docs:
         for d in docs:
-            if 'title' not in d:
+            if d.get('title') is None:
                 msg = "API Documentation requires a title."
                 raise InvalidRamlFileError(msg)
-            if not d.get('content'):
+            if d.get('content') is None:
                 msg = "API Documentation requires content defined."
                 raise InvalidRamlFileError(msg)
+
 
 def __base_uri_params(raml, *args, **kw):
     """
@@ -215,12 +288,12 @@ def __media_type(raml):
             raise InvalidRamlFileError(msg)
 
 
-def __security_schemes(raml, *args, **kw):
+def __security_schemes(resource, root, *args, **kw):
     """
     Assert only valid Security Schemes are used.
     """
 
-    schemes = raml.get('securitySchemes', {})
+    schemes = root.raml.get('securitySchemes', {})
     schemes = [list(iterkeys(s))[0] for s in schemes]
     if schemes:
         for s in schemes:
@@ -404,7 +477,7 @@ def __set_type(resource, *args, **kw):
         raise InvalidRamlFileError(msg)
 
 
-def __resource_type(resource, *args, **kw):
+def __resource_type(resource, root, *args, **kw):
     if not resource.type:
         return
     if isinstance(resource.type, dict) or isinstance(resource.type, list):
@@ -419,25 +492,27 @@ def __resource_type(resource, *args, **kw):
     else:
         assigned = resource.type
 
-    root = args[0]
     valid_resource_types = [r.name for r in root.resource_types]
     if assigned not in valid_resource_types:
         msg = "'{0}' is not defined in resourceTypes".format(assigned)
         raise InvalidRamlFileError(msg)
 
 
-def __secured_by(resource, *args, **kw):
-    if not resource.data.get('securedBy'):
+def __secured_by(resource, root, *args, **kw):
+    res = resource.data.get('securedBy', [])
+    method = resource.data.get(resource.method, {}).get('securedBy', [])
+    if not res and not method:
         return
 
-    root = args[0]
     if not root.security_schemes:
         msg = ("No Security Schemes are defined in RAML file but {0} "
                "scheme is assigned to "
                "'{1}'.".format(resource.data.get('securedBy'), resource.name))
         raise InvalidRamlFileError(msg)
 
-    for s in resource.data.get('securedBy'):
+    secured_by = res + method
+
+    for s in secured_by:
         if isinstance(s, dict):
             scheme = list(iterkeys(s))[0]
         else:
@@ -450,7 +525,7 @@ def __secured_by(resource, *args, **kw):
 
 
 def __set_traits(resource, *args, **kw):
-    method_level = resource.data.get(resource.method).get('is', [])
+    method_level = resource.data.get(resource.method, {}).get('is', [])
     resource_level = resource.data.get('is', [])
 
     if method_level is not None:
