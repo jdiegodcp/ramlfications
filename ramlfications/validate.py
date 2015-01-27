@@ -41,7 +41,7 @@ def validate(raml):
 
 
 @wrapt.decorator(enabled=VALIDATE)
-def validate_property(wrapped, instance, args, kw):
+def validate_item(wrapped, instance, args, kw):
     """
     Validate property for Trait, ResourceType, or Resource according to
     RAML spec
@@ -51,14 +51,16 @@ def validate_property(wrapped, instance, args, kw):
     return wrapped(*args, **kw)
 
 
-def test_validate(item):
+def validate_property(item):
     @wrapt.decorator(enabled=VALIDATE)
     def func_wrapper(wrapped, instance, args, kw):
-        resources = [r.cell_contents for r in wrapped.func_closure]
-        resource = [r for r in resources if isinstance(r, _BaseResource)]
-        root = resource.api
-        newargs = args + (resource, root)
-        __map_item_to_validate(item, wrapped.__name__)(*newargs, **kw)
+        if wrapped.func_closure:
+            resources = [r.cell_contents for r in wrapped.func_closure]
+            resource = [r for r in resources if isinstance(r,
+                                                           _BaseResource)][0]
+            root = resource.api
+            newargs = args + (resource, root)
+            __map_item_to_validate(item, wrapped.__name__)(*newargs, **kw)
         return wrapped(*args, **kw)
     return func_wrapper
 
@@ -67,7 +69,7 @@ def __map_item_to_validate(item, func_name):
     return {
         "security_schemes": validate_security,
         "resource_types": validate_resource_types,
-        "resource": validate_resource,
+        "resource": validate_resource
     }[item](func_name)
 
 
@@ -576,8 +578,8 @@ def __set_resource_is(resource, *args, **kw):
 
 
 def __set_resource_type_is(resource, *args, **kw):
-    resource_level = resource.data.get('is')
-    resource_method = resource.data.get(resource.orig_method, {})
+    resource_level = resource.data.get('is', {})
+    resource_method = resource.data.get(resource.orig_method, {}).get('is', {})
 
     if resource_method is not None:
         method_level = resource_method.get('is')

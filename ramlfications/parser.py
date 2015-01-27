@@ -18,7 +18,7 @@ from .parameters import (
 )
 from .raml import RAMLRoot, Trait, ResourceType, Resource, RAMLParserError
 from .utils import fill_reserved_params
-from .validate import validate, validate_property, test_validate
+from .validate import validate, validate_item, validate_property
 
 
 __all__ = ["RAMLParserError", "parse_raml"]
@@ -160,7 +160,7 @@ def __add_properties_to_resources(resources, root):
 
     validation = "resource"
 
-    @test_validate(validation)
+    @validate_property(validation)
     def _is():
         resource_level = r.data.get('is', [])
         resource_method = r.data.get(r.method, [])
@@ -191,7 +191,7 @@ def __add_properties_to_resources(resources, root):
 
     # TODO: this only checks resource-level defined "is", not method-level
     # TODO: the "else" should actually be caught in _is()
-    @test_validate(validation)
+    @validate_property(validation)
     def traits():
         method_level = r.data.get(r.method).get('is', [])
         resource_level = r.data.get('is', [])
@@ -229,7 +229,7 @@ def __add_properties_to_resources(resources, root):
 
         return trait_objects or None
 
-    @test_validate(validation)
+    @validate_property(validation)
     def _type():
         resource_type = r.data.get('type')
         if resource_type:
@@ -288,7 +288,7 @@ def __add_properties_to_resources(resources, root):
         return None
 
     # TODO: move the RAMLParserError to validate (??)
-    @test_validate(validation)
+    @validate_property(validation)
     def resource_type():
         mapped_res_type = None
         if not r.type:
@@ -339,7 +339,7 @@ def __add_properties_to_resources(resources, root):
 
             return sec_objs
 
-    @test_validate(validation)
+    @validate_property(validation)
     def security_schemes():
         """
         Mapping of securitySchemes to its Resource/Resource Type
@@ -377,7 +377,7 @@ def __add_properties_to_resources(resources, root):
 
         return _secured
 
-    @test_validate(validation)
+    @validate_property(validation)
     def secured_by():
         resource_method = r.data.get(r.method)
         if resource_method is not None:
@@ -392,7 +392,7 @@ def __add_properties_to_resources(resources, root):
                 return r.parent.secured_by
         return None
 
-    @validate_property
+    @validate_item
     def set_properties(r, property, inherit=False):
         properties = []
         resource_method = r.data.get(r.method, {})
@@ -428,9 +428,9 @@ def __add_properties_to_resources(resources, root):
 
         return properties or None
 
-    # TODO: improve @validate_property since i'm pasing in r & property
+    # TODO: improve @validate_item since i'm pasing in r & property
     # and I think it's unnecessary
-    @validate_property
+    @validate_item
     def body(r, property):
         body_objs = []
         if r.data.get(r.method) is not None:
@@ -464,9 +464,9 @@ def __add_properties_to_resources(resources, root):
         return body_objs
 
     # TODO: pass thru validation
-    def description():
+    @validate_item
+    def description(r, property):
         ret = None
-        print(r)
         desc = __set_simple_property(r, 'description')
         if desc:
             if isinstance(desc, Content):
@@ -496,7 +496,7 @@ def __add_properties_to_resources(resources, root):
         r.protocols = __set_simple_property(r, 'protocols') or root.protocols
         r.media_types = __set_simple_property(r, 'body').keys() \
             or [root.media_type]
-        r.description = description()
+        r.description = description(r, 'description')
 
         return r
 
@@ -512,7 +512,7 @@ def _parse_resource_types(raml, root):
     """
     validation = "resource_types"
 
-    @test_validate(validation)
+    @validate_property(validation)
     def _is():
         """
         Return trait names associated with :py:class:`ResourceType` object
@@ -530,7 +530,7 @@ def _parse_resource_types(raml, root):
         return None
 
     # TODO: I don't think this works properly...
-    @test_validate(validation)
+    @validate_property(validation)
     def traits():
         """
         Return :py:class:`raml.Trait` objects associated with
@@ -575,7 +575,7 @@ def _parse_resource_types(raml, root):
 
         return trait_objects or None
 
-    @validate_property
+    @validate_item
     def set_property(r, property, inherit=False):
         """
         Set property to :py:class:`raml.ResourceType`
@@ -605,7 +605,7 @@ def _parse_resource_types(raml, root):
 
         return properties or None
 
-    @test_validate(validation)
+    @validate_property(validation)
     def type_secured_by():
         """
         Return string name of security scheme
@@ -621,7 +621,7 @@ def _parse_resource_types(raml, root):
                 return r.parent.secured_by
         return None
 
-    @test_validate(validation)
+    @validate_property(validation)
     def security_schemes():
         """
         Return :py:class:`parameters.SecurityScheme` objects
@@ -744,7 +744,7 @@ def _parse_resource_types(raml, root):
 #####
 
 def _parse_traits(raml, root):
-    @validate_property
+    @validate_item
     def set_property(t, property, inherit=False):
         """
         Set property to :py:class:`raml.Trait`
@@ -837,7 +837,7 @@ def _parse_security_schemes(raml, root):
 
         return properties or None
 
-    @test_validate(validation)
+    @validate_property(validation)
     def set_settings_attrs(scheme):
         """
         Set properties to SecurityScheme object depending on settings defined
