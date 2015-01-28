@@ -27,7 +27,7 @@ __all__ = ["RAMLParserError", "parse_raml"]
 #####
 # Main parser function from which __init__:parse calls
 #####
-def parse_raml(loaded_raml, production, parse):
+def parse_raml(loaded_raml, production):
     """
     Parses the given RAML file and creates a :py:class:`.raml.RAMLRoot` object.
 
@@ -37,9 +37,6 @@ def parse_raml(loaded_raml, production, parse):
     :raises RAMLParserError: If error occurred during parsing of the
         RAML file.
     """
-    if not parse:
-        return
-
     raml = loaded_raml.data
     root = RAMLRoot(loaded_raml)
     root = _parse_metadata(raml, root, production)
@@ -117,10 +114,15 @@ def _parse_metadata(raml, root, production=False):
     def __raml_header():
         pass
 
+    @validate(raml)
+    def __has_resources():
+        pass
+
     __raml_header()
+    __has_resources()
     root.title = title()
-    root.version = version()
     root.base_uri = base_uri()
+    root.version = version()
     root.base_uri_params = base_uri_params()
     root.protocols = protocols()
     root.documentation = docs()

@@ -118,6 +118,7 @@ def validate_resource(func_name):
 def __map_to_validate_func(func_name):
     return {
         '__raml_header': __raml_header,
+        '__has_resources': __has_resources,
         'base_uri': __base_uri,
         'version': __version,
         'title': __api_title,
@@ -218,12 +219,13 @@ def __base_uri(raml):
 def __version(raml):
     """Require an API Version (e.g. api.foo.com/v1)."""
     v = raml.get('version')
-    if not v:
-        msg = 'RAML File does not define an API version.'
-        raise InvalidRamlFileError(msg)
-    elif '{version}' in raml.get('baseUri') and not v:
+    base_uri = raml.get('baseUri')
+    if not v and '{version}' in base_uri:
         msg = ("RAML File's baseUri includes {version} parameter but no "
                "version is defined.")
+        raise InvalidRamlFileError(msg)
+    elif not v:
+        msg = 'RAML File does not define an API version.'
         raise InvalidRamlFileError(msg)
 
 
@@ -313,13 +315,16 @@ def __uri_params(raml, *args, **kw):
             raise InvalidRamlFileError(msg)
 
 
-def __has_resources(resources, *args, **kw):
+def __has_resources(raml, *args, **kw):
     """
     Require that RAML actually *defines* at least one Resource.
     """
-    if not resources or len(resources) < 1:
-        msg = "No resources are defined."
-        raise InvalidRamlFileError(msg)
+    for k in raml.keys():
+        if k.startswith("/"):
+            return
+
+    msg = "No resources are defined."
+    raise InvalidRamlFileError(msg)
 
 
 #####

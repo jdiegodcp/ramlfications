@@ -219,23 +219,6 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    def test_validate_oauth_1_settings(self):
-        oauth_1_settings = "invalid-security-settings-oauth1.raml"
-        raml_file = (VALIDATE, oauth_1_settings)
-        expected_msg = ("Need to defined 'tokenCredentialsUri' in "
-                        "securitySchemas settings for a valid OAuth 1.0 "
-                        "scheme")
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_validate_oauth_2_settings(self):
-        oauth_1_settings = "invalid-security-settings-oauth2.raml"
-        raml_file = (VALIDATE, oauth_1_settings)
-        expected_msg = ("Need to defined 'accessTokenUri' in securitySchemas "
-                        "settings for a valid OAuth 2.0 scheme")
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
     def test_validate_data_exists(self):
         only_raml_header = "only-raml-header.raml"
         raml_file = (VALIDATE, only_raml_header)
@@ -254,12 +237,6 @@ class TestValidateRAML(BaseTestCase):
         raml_file = (EXAMPLES, "invalid-trait-obj.raml")
         expected_msg = ("'1' needs to be a string referring to a trait, or a "
                         "dictionary mapping parameter values to a trait")
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_base_uri_throws_exception(self):
-        raml_file = (EXAMPLES, "no-version.raml")
-        expected_msg = "RAML File does not define an API version."
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
