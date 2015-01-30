@@ -744,7 +744,7 @@ def _parse_resource_types(raml, root):
                     if i in config.get('defaults', 'http_methods'):
                         resources.append(ResourceType(k, v, i, root))
 
-    return [wrap(r) for r in resources]
+    return [wrap(r) for r in resources] or None
 
 
 #####
