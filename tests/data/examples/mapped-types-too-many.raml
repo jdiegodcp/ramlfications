@@ -31,7 +31,6 @@ traits:
   get:
     is: [ secured: { tokenName: access_token }, paged: { maxPages: 10 } ]
 /magazines:
-  type: [collection, seachableCollection]
+  type: [collection, searchableCollection]
   get:
     is: [ secured: { tokenName: access_token}, paged: { maxPages: 20} ]
-
