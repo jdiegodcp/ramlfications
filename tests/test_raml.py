@@ -295,6 +295,12 @@ class TestResourceType(BaseTestCase):
                                  markdown.markdown(expected_data.get(r.name)
                                                    .get(method)
                                                    .get('description')))
+            if r.headers:
+                for h in r.headers:
+                    print(h.resource)
+            if r.responses:
+                for rsp in r.responses:
+                    print(h.resource)
 
 
 class TestSecurityScheme(BaseTestCase):
@@ -408,6 +414,11 @@ class TestSecurityScheme(BaseTestCase):
         self.assertObjInList(parameters.QueryParameter, described_by)
         self.assertObjInList(parameters.URIParameter, described_by)
         self.assertObjInList(parameters.FormParameter, described_by)
+        for item in described_by:
+            if isinstance(item, parameters.Header):
+                self.assertIsNone(item.method)
+            if isinstance(item, parameters.Response):
+                self.assertIsNone(item.method)
 
         for scheme in api.security_schemes:
             self.assertIsInstance(scheme, parameters.SecurityScheme)
@@ -484,6 +495,7 @@ class TestDocumentation(BaseTestCase):
         for i, docs in enumerate(self.api.documentation):
             self.assertEqual(docs.title, titles[i])
             self.assertEqual(docs.content.raw, contents[i])
+            self.assertEqual(repr(docs.content), contents[i])
 
     def test_docs_markdown(self):
         raml_file = os.path.join(EXAMPLES + "markdown-desc-docs.raml")
@@ -532,7 +544,8 @@ class TestTrait(BaseTestCase):
         api = self.parse(raml_file)
         trait = api.traits[0]
 
-        self.assertEqual(repr(trait.headers[0]), "<HeaderParameter(name='X-Foo-Bar')>")
+        self.assertEqual(repr(trait.headers[0]),
+                         "<HeaderParameter(name='X-Foo-Bar')>")
 
     def test_trait_header_no_method(self):
         raml_file = os.path.join(EXAMPLES, "trait-header.raml")
@@ -1009,6 +1022,8 @@ class TestResource(BaseTestCase):
         expected_data = self.f('test_primative_type_integer')
 
         self.assertEqual(repr(param.type), "<IntegerNumber(name='limit')>")
+        self.assertEqual(param.type.name, 'limit')
+        self.assertEqual(param.name, 'limit')
         self.assertDictEqual(param.data, expected_data)
         self.assertEqual(param.type.minimum, expected_data.get('minimum'))
         self.assertEqual(param.type.maximum, expected_data.get('maximum'))
@@ -1172,6 +1187,8 @@ class TestResource(BaseTestCase):
 
         for s in applied_schemes:
             self.assertIsInstance(s, parameters.SecurityScheme)
+            self.assertEqual(repr(s),
+                             "<SecurityScheme(name='{0}')>".format(s.name))
             self.assertEqual(s.name, 'oauth_2_0')
             self.assertEqual(s.type, 'OAuth 2.0')
             self.assertIsInstance(s.described_by, list)

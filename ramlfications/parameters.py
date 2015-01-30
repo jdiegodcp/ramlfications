@@ -402,9 +402,7 @@ class Header(BaseParameter):
 
     @property
     def method(self):
-        if self.resource:
-            return getattr(self.resource, 'method', None)
-        return None
+        return getattr(self.resource, 'method', None)
 
 
 class Body(object):
@@ -463,9 +461,7 @@ class Response(object):
 
     @property
     def method(self):
-        if self.resource:
-            return self.resource.method
-        return None
+        return getattr(self.resource, 'method', None)
 
     @property
     def description(self):
