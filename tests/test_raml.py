@@ -295,12 +295,6 @@ class TestResourceType(BaseTestCase):
                                  markdown.markdown(expected_data.get(r.name)
                                                    .get(method)
                                                    .get('description')))
-            if r.headers:
-                for h in r.headers:
-                    print(h.resource)
-            if r.responses:
-                for rsp in r.responses:
-                    print(h.resource)
 
 
 class TestSecurityScheme(BaseTestCase):
