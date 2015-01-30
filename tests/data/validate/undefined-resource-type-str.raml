@@ -1,0 +1,32 @@
+#%RAML 0.8
+title: Example API - Too Many Resource Types Assigned
+version: v1
+baseUri: https://api.example.com
+resourceTypes:
+  - searchableCollection:
+      get:
+        queryParameters:
+          <<queryParamName>>:
+            description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+          <<fallbackParamName>>:
+            description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+  - collection:
+      usage: This resourceType should be used for any collection of items
+      description: The collection of <<resourcePathName>>
+      get:
+        description: Get all <<resourcePathName>>, optionally filtered
+      post:
+        description: Create a new <<resourcePathName | !singularize>>
+traits:
+  - secured:
+      queryParameters:
+        <<tokenName>>:
+          description: A valid <<tokenName>> is required
+  - paged:
+      queryParameters:
+        numPages:
+          description: The number of pages to return, not to exceed <<maxPages>>
+/foo:
+  type: undefined
+  get:
+    description: Get some Foo

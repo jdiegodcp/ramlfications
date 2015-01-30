@@ -245,3 +245,18 @@ class TestValidateRAML(BaseTestCase):
         expected_msg = "'version' can only be defined in baseUriParameters."
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    # NOTE: tests resource types when are lists = 1 or str
+    def test_undefined_res_type_str(self):
+        raml_path = "undefined-resource-type-str.raml"
+        raml_file = (VALIDATE, raml_path)
+
+        expected_msg = "'undefined' is not defined in resourceTypes"
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_undefined_res_type_list(self):
+        raml_path = "undefined-resource-type-list.raml"
+        raml_file = (VALIDATE, raml_path)
+
+        expected_msg = "'alsoUndefined' is not defined in resourceTypes"
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)

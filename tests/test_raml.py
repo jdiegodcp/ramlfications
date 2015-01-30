@@ -3,6 +3,7 @@
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
 
+import json
 import os
 import unittest
 
@@ -612,7 +613,6 @@ class TestResource(BaseTestCase):
 
         self.assertEqual(html_result, expected_result)
 
-    @unittest.skip("FIXME")
     def test_no_description(self):
         raml_file = os.path.join(EXAMPLES + "resource-no-desc.raml")
         api = self.parse(raml_file)
@@ -782,7 +782,6 @@ class TestResource(BaseTestCase):
             else:
                 self.assertEqual(resource.parent, None)
 
-    @unittest.skip("FIXME")
     def test_traits_resources(self):
         raml_file = os.path.join(EXAMPLES + "simple-traits.raml")
         api = self.parse(raml_file)
@@ -802,7 +801,7 @@ class TestResource(BaseTestCase):
         first_expected_name = 'searchableCollection'
         second_expected_name = 'collection'
 
-        second_res = api.resources[3]
+        second_res = api.resources[2]
 
         second_expected_data = self.f('test_mapped_traits').get('second')
 
@@ -812,11 +811,10 @@ class TestResource(BaseTestCase):
         self.assertEqual(second_res.description.raw,
                          second_expected_data.get('description'))
 
-    @unittest.skip("FIXME: I don't think method traits are getting parsed")
     def test_mapped_form_traits(self):
         raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
         api = self.parse(raml_file)
-        resource = api.resources[2]
+        resource = api.resources[3]
         form_param = resource.form_params[0]
         self.assertEqual(form_param.name, "aFormTrait")
 
@@ -905,9 +903,9 @@ class TestResource(BaseTestCase):
         api = self.parse(raml_file)
         resources = api.resources
 
-        search = resources[0]
-        tracks = resources[1]
-        track = resources[2]
+        search = resources[2]
+        tracks = resources[0]
+        track = resources[1]
 
         search_q_params = search.query_params
         tracks_q_params = tracks.query_params
@@ -970,9 +968,9 @@ class TestResource(BaseTestCase):
         api = self.parse(raml_file)
         resources = api.resources
 
-        search = resources[0]
-        tracks = resources[1]
-        track = resources[2]
+        search = resources[2]
+        tracks = resources[0]
+        track = resources[1]
 
         search_u_params = search.uri_params
         tracks_u_params = tracks.uri_params
@@ -1005,7 +1003,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_integer(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.parse(raml_file)
-        resource = api.resources[0]
+        resource = api.resources[1]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_integer')
@@ -1019,7 +1017,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_number(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.parse(raml_file)
-        resource = api.resources[5]
+        resource = api.resources[3]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_number')
@@ -1034,7 +1032,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_boolean(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.parse(raml_file)
-        resource = api.resources[3]
+        resource = api.resources[2]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_boolean')
@@ -1047,7 +1045,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_date(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.parse(raml_file)
-        resource = api.resources[1]
+        resource = api.resources[4]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_date')
@@ -1059,7 +1057,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_file(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.parse(raml_file)
-        resource = api.resources[6]
+        resource = api.resources[5]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_file')
@@ -1071,7 +1069,7 @@ class TestResource(BaseTestCase):
     def test_primative_type_string(self):
         raml_file = os.path.join(EXAMPLES + "primative-param-types.raml")
         api = self.parse(raml_file)
-        resource = api.resources[4]
+        resource = api.resources[0]
         param = resource.query_params.pop()
 
         expected_data = self.f('test_primative_type_string')
@@ -1164,11 +1162,9 @@ class TestResource(BaseTestCase):
                 self.assertDictEqual(c_type.example,
                                      expected_post_playlist_example)
 
-    @unittest.skip("FIXME: __get_secured_by doesn't parse this file")
     def test_security_schemes(self):
         raml_file = os.path.join(EXAMPLES, "applied-security-scheme.raml")
         api = self.parse(raml_file)
-        print(api.resources[0].method)
         applied_schemes = api.resources[0].security_schemes
         exp_data = self.f('test_applied_security_scheme')
         exp_desc = exp_data.get("description")
@@ -1177,12 +1173,13 @@ class TestResource(BaseTestCase):
         for s in applied_schemes:
             self.assertIsInstance(s, parameters.SecurityScheme)
             self.assertEqual(s.name, 'oauth_2_0')
-            self.assertDictEqual(s.data, exp_data)
             self.assertEqual(s.type, 'OAuth 2.0')
-            self.assertIsInstance(s.described_by, dict)
+            self.assertIsInstance(s.described_by, list)
+            for i in s.described_by:
+                self.assertIsInstance(i, parameters.BaseParameter)
             self.assertEqual(s.description.raw, exp_desc)
             self.assertIsNotNone(s.settings)
             self.assertHasAttr(s, 'authorizationUri')
             self.assertHasAttr(s, 'accessTokenUri')
             self.assertHasAttr(s, 'authorizationGrants')
-            self.asserthasAttr(s, 'scopes')
+            self.assertHasAttr(s, 'scopes')

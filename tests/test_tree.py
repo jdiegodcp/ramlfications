@@ -18,7 +18,7 @@ class TestPrintTree(BaseTestCase):
     def setUp(self):
         raml_str = os.path.join(EXAMPLES, "simple-tree.raml")
         loaded_raml = loader.RAMLLoader().load(raml_str)
-        self.api = parser.parse_raml(loaded_raml, production=True, parse=True)
+        self.api = parser.parse_raml(loaded_raml, production=True)
         self.held, sys.stdout = sys.stdout, StringIO()
 
     def test_get_tree(self):

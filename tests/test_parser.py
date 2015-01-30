@@ -63,10 +63,3 @@ class TestParserError(BaseTestCase):
 
         self.assertRaises(RAMLParserError,
                           lambda: self.setup_parsed_raml(raml_file))
-
-    @unittest.skip("FIX: see parser:__set_traits")
-    def test_set_traits_unsupported_obj(self):
-        raml_file = os.path.join(VALIDATE, "trait-unsupported-obj.raml")
-
-        self.assertRaises(RAMLParserError,
-                          lambda: self.setup_parsed_raml(raml_file))

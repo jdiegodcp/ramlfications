@@ -38,7 +38,7 @@ class TestUtils(BaseTestCase):
         raml_file = os.path.join(EXAMPLES, 'mapped-traits-types.raml')
         api = parse(raml_file)
 
-        resource = api.resources[-1]
+        resource = api.resources[2]
 
         ret = fill_reserved_params(resource, string)
 
