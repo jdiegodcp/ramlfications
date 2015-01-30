@@ -507,7 +507,10 @@ def __resource_type(resource, root, *args, **kw):
 
 def __secured_by(resource, root, *args, **kw):
     res = resource.data.get('securedBy', [])
-    method = resource.data.get(resource.method, {}).get('securedBy', [])
+    try:
+        method = resource.data.get(resource.method, {}).get('securedBy', [])
+    except AttributeError:
+        method = None
     if not res and not method:
         return
 
@@ -532,7 +535,10 @@ def __secured_by(resource, root, *args, **kw):
 
 
 def __set_traits(resource, *args, **kw):
-    method_level = resource.data.get(resource.method, {}).get('is', [])
+    try:
+        method_level = resource.data.get(resource.method, {}).get('is', [])
+    except AttributeError:
+        method_level = None
     resource_level = resource.data.get('is', [])
 
     if method_level is not None:

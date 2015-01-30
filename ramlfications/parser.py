@@ -195,7 +195,10 @@ def __add_properties_to_resources(resources, root):
     # TODO: the "else" should actually be caught in _is()
     @validate_property(validation)
     def traits():
-        method_level = r.data.get(r.method).get('is', [])
+        try:
+            method_level = r.data.get(r.method).get('is', [])
+        except AttributeError:
+            method_level = None
         resource_level = r.data.get('is', [])
         if not method_level and not resource_level:
             return
@@ -349,7 +352,10 @@ def __add_properties_to_resources(resources, root):
         if isinstance(r, ResourceType):
             method_level = r.data.get(r.orig_method, {}).get('securedBy')
         else:
-            method_level = r.data.get(r.method, {}).get('securedBy')
+            try:
+                method_level = r.data.get(r.method, {}).get('securedBy')
+            except AttributeError:
+                method_level = None
         resource_level = r.data.get('securedBy', {})
         if not resource_level and not method_level:
             return
