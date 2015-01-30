@@ -132,7 +132,7 @@ def ttree(load_obj, color, output, verbosity, validate):  # pragma: no cover
     :raises InvalidRamlFileError: If error occured trying to validate the RAML
         file (see ``validate.py``)
     """
-    api = parse_raml(load_obj, production=validate, parse=True)
+    api = parse_raml(load_obj, production=validate)
     resources = _get_tree(api)
     ordered_resources = _order_resources(resources)
 
