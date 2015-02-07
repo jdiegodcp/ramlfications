@@ -818,6 +818,17 @@ class TestResource(BaseTestCase):
         self.assertEqual(second_res.description.raw,
                          second_expected_data.get('description'))
 
+    def test_method_level_traits_str(self):
+        raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
+        api = self.parse(raml_file)
+
+        foobar = api.resources[3]
+
+        traits = foobar.is_
+        print(traits)
+
+        self.assertEqual(traits, ['secured', 'formTrait'])
+
     def test_mapped_form_traits(self):
         raml_file = os.path.join(EXAMPLES + "mapped-traits-types.raml")
         api = self.parse(raml_file)
@@ -1194,3 +1205,32 @@ class TestResource(BaseTestCase):
             self.assertHasAttr(s, 'accessTokenUri')
             self.assertHasAttr(s, 'authorizationGrants')
             self.assertHasAttr(s, 'scopes')
+
+    def test_secured_by_method_level(self):
+        raml_file = os.path.join(EXAMPLES, "method-level-security-scheme.raml")
+        api = self.parse(raml_file)
+
+        foo = api.resources[0]
+
+        self.assertEqual(repr(foo.security_schemes[0]),
+                         "<SecurityScheme(name='oauth_2_0')>")
+
+    @unittest.skip("might have to add in later")
+    def test_resource_method_level_secured_by(self):
+        raml_file = os.path.join(EXAMPLES,
+                                 "resource-method-level-secured-by.raml")
+        api = self.parse(raml_file)
+
+        foo = api.resource_types[0]
+
+        self.assertEqual(repr(foo.security_schemes[0]),
+                         "<SecurityScheme(name='oauth_2_0')>")
+
+    @unittest.skip("Perhaps move to validate to make sure it's not a list")
+    def test_resource_type_list(self):
+        raml_file = os.path.join(EXAMPLES, "resource-types-list.raml")
+        api = self.parse(raml_file)
+
+        foobar = api.resources[3]
+
+        self.assertEqual(foobar.type, 'collection')

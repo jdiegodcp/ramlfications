@@ -98,6 +98,12 @@ class TestValidateRAML(BaseTestCase):
 
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
+    def test_documentation_not_list(self):
+        raml_file = (VALIDATE, "docs-not-list.raml")
+
+        expected_msg = "Error parsing documentation"
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
     # __base_uri_params
     def test_validate_no_default_base_param(self):
         no_default_param = "no-default-base-uri-params.raml"
@@ -259,4 +265,13 @@ class TestValidateRAML(BaseTestCase):
         raml_file = (VALIDATE, raml_path)
 
         expected_msg = "'alsoUndefined' is not defined in resourceTypes"
+        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+
+    def test_no_resource_types_defined(self):
+        raml_path = "no-resource-types-defined.raml"
+        raml_file = (VALIDATE, raml_path)
+
+        expected_msg = ("No Resource Types are defined in RAML file but "
+                        "'anUndefinedResourceType' type is assigned to "
+                        "'/foo'.")
         self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
