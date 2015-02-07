@@ -72,9 +72,6 @@ def _parse_metadata(raml, root, production=False):
     @validate(raml)
     def docs():
         d = raml.get('documentation', [])
-        if not isinstance(d, list):
-            msg = "Error parsing documentation"
-            raise RAMLParserError(msg)
         docs = [Documentation(i.get('title'), i.get('content')) for i in d]
         return docs or None
 
@@ -258,12 +255,6 @@ def __add_properties_to_resources(resources, root):
         """
         api_resources = root.resource_types
 
-        api_resources_names = [a.name for a in api_resources]
-        if r.type not in api_resources_names:
-            msg = "'{0}' is not defined in RAML's resourceTypes.".format(
-                r.type)
-            raise RAMLParserError(msg)
-
         for r_ in api_resources:
             if r_.name == r.type and r_.method == r.method:
                 return r_
@@ -276,11 +267,6 @@ def __add_properties_to_resources(resources, root):
         api_resources = root.resource_types or []
 
         _type = list(r.type.keys())[0]
-        api_resources_names = [a.name for a in api_resources]
-        if _type not in api_resources_names:
-            msg = "'{0}' is not defined in API Root's resourceTypes.".format(
-                _type)
-            raise RAMLParserError(msg)
 
         for r_ in api_resources:
             if r_.name == _type and r_.method == r.method:
@@ -298,10 +284,6 @@ def __add_properties_to_resources(resources, root):
         mapped_res_type = None
         if not r.type:
             return
-        if not root.resource_types:
-            msg = ("No Resource Types are defined in RAML file but '{0}' "
-                   "type is assigned to '{1}'.".format(r.type, r.name))
-            raise RAMLParserError(msg)
 
         if isinstance(r.type, str):
             mapped_res_type = __map_resource_string()
@@ -314,6 +296,53 @@ def __add_properties_to_resources(resources, root):
                 r.type, r.name)
             raise RAMLParserError(msg)
         return mapped_res_type
+
+    def __get_union(resource, inherited_resource):
+        """
+        Return the union of a particular :py:class:`raml.ResourceType`
+        and its inherited :py:class:`raml.ResourceType`.
+        """
+        if inherited_resource is {}:
+            return resource
+        union = {}
+        if not resource:
+            return inherited_resource
+        for k, v in iteritems(inherited_resource):
+            if k not in resource.data.keys():
+                union[k] = v
+            else:
+                resource_values = resource.data.get(k)
+                inherited_values = inherited_resource.get(k, {})
+                union[k] = dict(iteritems(inherited_values) +
+                                iteritems(resource_values))
+        for k, v in iteritems(resource.data):
+            if k not in inherited_resource.keys():
+                union[k] = v
+        return union
+
+    def __get_inherited_resource(res_name, raml):
+        """
+        Helper function to return data dict of particular resourceType
+        """
+        res_types = raml.get('resourceTypes')
+        for t in res_types:
+            if list(iterkeys(t))[0] == res_name:
+                return t
+        return None
+
+    def __map_inherited_resource_types(root, resource, inherited, raml):
+        """
+        Grab elements if :py:class:`raml.ResourceType` inherits from
+        another resource type.
+        """
+        resources = []
+        inherited_res = __get_inherited_resource(inherited, raml)
+        for k, v in iteritems(resource.data):
+            if k in config.get('defaults', 'http_methods'):
+                data = __get_union(resource,
+                                   inherited_res.values()[0].get(k, {}))
+                resources.append(Resource(resource.name, data, k, root))
+        return resources
 
     def __map_secured_by_dict(secured):
         schemes = root.security_schemes or []

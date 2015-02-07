@@ -242,6 +242,9 @@ def __documentation(raml):
     """
     docs = raml.get('documentation')
     if docs:
+        if not isinstance(docs, list):
+            msg = "Error parsing documentation"
+            raise InvalidRamlFileError(msg)
         for d in docs:
             if d.get('title') is None:
                 msg = "API Documentation requires a title."
@@ -478,6 +481,11 @@ def __set_type(resource, *args, **kw):
         assigned = assigned
 
     root = args[0]
+    if not root.resource_types:
+        msg = ("No Resource Types are defined in RAML file but '{0}' "
+               "type is assigned to '{1}'.".format(assigned,
+                                                   resource.name))
+        raise InvalidRamlFileError(msg)
     valid_resource_types = [r.name for r in root.resource_types]
     if assigned not in valid_resource_types:
         msg = "'{0}' is not defined in resourceTypes".format(assigned)
