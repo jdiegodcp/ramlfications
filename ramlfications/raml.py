@@ -678,5 +678,7 @@ class Resource(_BaseResource):
         self._type = type
 
     def __repr__(self):
-        return "<Resource(method='{0}', path='{1}')>".format(
-            self.method.upper(), self.path)
+        if self.method:
+            return "<Resource(method='{0}', path='{1}')>".format(
+                self.method.upper(), self.path)
+        return "<Resource(method=None, path='{0}')>".format(self.path)
