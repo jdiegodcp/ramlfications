@@ -151,6 +151,10 @@ def __traverse(node, resources, root, parent):
                     child = Resource(name=k, data=v, method=m,
                                      parent=parent, api=root)
                     resources.append(child)
+            else:
+                child = Resource(name=k, data=v, method=None,
+                                 parent=parent, api=root)
+                resources.append(child)
             resources = __traverse(child.data, resources, root, child)
     return resources
 
