@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import json
+
 import markdown2 as markdown
 from six import iterkeys, itervalues
 
@@ -493,7 +495,7 @@ class Response(object):
         :rtype: ``list`` of :py:class:`.Body` objects, or ``None``
         """
         name = list(iterkeys(self.data.get('body')))[0]
-        data = list(itervalues(self.data.get('body')))[0]
+        data = self.data.get('body')
         return Body(name, data, self) or None
 
     def __repr__(self):
