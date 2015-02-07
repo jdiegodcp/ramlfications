@@ -531,7 +531,49 @@ def __add_properties_to_resources(resources, root):
 
         return r
 
-    return [wrap(r) for r in resources]
+    def __union_is(r):
+        if r.resource_type.is_:
+            return list(set(r.is_ + r.resource_type.is_))
+
+    def __union_base_uri_params(r):
+        if r.resource_type.base_uri_params:
+            return list(set(r.base_uri_params +
+                        r.resource_type.base_uri_params))
+
+    def __union(r, attr):
+        if getattr(r.resource_type, attr):
+            if not getattr(r, attr):
+                return getattr(r.resource_type, attr)
+            r_attr = getattr(r, attr)
+            r_type_attr = getattr(r.resource_type, attr)
+            return list(set(r_attr + r_type_attr))
+
+    def wrap_res_types(r):
+        if r.resource_type:
+            # r.is_ = __union_is(r)
+            # r.base_uri_params = __union_base_uri_params(r)
+            # r.body += r.resource_type.body
+            # r.data = __get_union(r, r.resource_type)
+            # r.description += r.resource_type.description
+            # r.form_params += r.resource_type.form_params
+            # r.headers += r.resource_type.headers
+            # r.media_types += r.resource_type.media_types
+            # r.protocols = set(r.protocols + r.resource_type.protocols)
+            # r.query_params += r.resource_type.query_params
+            # r.responses += r.resource_type.responses
+            # r.secured_by += r.resource_type.secured_by
+            # r.security_schemes += r.resource_type.security_schemes
+            # r.traits += r.resource_type.traits
+            # r.headers = __union(r, 'headers')
+            r.uri_params = __union(r, 'uri_params')
+            # r.responses = __union(r, 'responses')
+
+        return r
+
+    res = [wrap(r) for r in resources]
+    updated_res = [wrap_res_types(r) for r in res]
+
+    return updated_res
 
 
 #####
@@ -675,7 +717,7 @@ def _parse_resource_types(raml, root):
 
         return _secured_by
 
-    def __get_union(resource, inherited_resource):
+    def __get_union(resource, method, inherited_resource):
         """
         Return the union of a particular :py:class:`raml.ResourceType`
         and its inherited :py:class:`raml.ResourceType`.
@@ -685,17 +727,18 @@ def _parse_resource_types(raml, root):
         union = {}
         if not resource:
             return inherited_resource
-        for k, v in iteritems(inherited_resource):
-            if k not in resource.keys():
-                union[k] = v
+        for key, value in iteritems(inherited_resource):
+            keys = resource.get(i, [])
+            if keys is not None and key not in keys:
+                union[key] = value
             else:
-                resource_values = resource.get(k)
-                inherited_values = inherited_resource.get(k, {})
-                union[k] = dict(iteritems(inherited_values) +
-                                iteritems(resource_values))
-        for k, v in iteritems(resource):
-            if k not in inherited_resource.keys():
-                union[k] = v
+                resource_values = resource.get(i, {}).get(key, {})
+                inherited_values = inherited_resource.get(key, {})
+                union[key] = dict(inherited_values.items() +
+                                  resource_values.items())
+        for key, val in iteritems(resource):
+            if key not in inherited_resource.keys():
+                union[key] = value
         return union
 
     def __get_inherited_resource(res_name, raml):
@@ -718,7 +761,7 @@ def _parse_resource_types(raml, root):
         for k, v in iteritems(resource):
             for i in v.keys():
                 if i in config.get('defaults', 'http_methods'):
-                    data = __get_union(resource,
+                    data = __get_union(v, i,
                                        inherited_res.values()[0].get(i, {}))
                     resources.append(ResourceType(k, data, i, root,
                                                   type=inherited))
