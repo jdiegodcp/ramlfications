@@ -167,28 +167,23 @@ def __add_properties_to_resources(resources, root):
     def _is():
         resource_level = r.data.get('is', [])
         resource_method = r.data.get(r.method, [])
-        if resource_method is not None:
+        if resource_method:
             method_level = resource_method.get('is', [])
         else:
             method_level = []
 
         trait_names = []
 
-        if isinstance(method_level, str):
-            trait_names.append(method_level)
-        elif isinstance(method_level, dict):
-            trait_names.append(list(iterkeys(method_level)))
-        elif isinstance(method_level, list):
-            for t in method_level:
-                trait_names.append(t)
+        all_is = resource_level + method_level
 
-        if isinstance(resource_level, str):
-            trait_names.append(resource_level)
-        elif isinstance(resource_level, dict):
-            trait_names.append(list(iterkeys(resource_level)))
-        elif isinstance(resource_level, list):
-            for t in resource_level:
-                trait_names.append(t)
+        for item in all_is:
+            if isinstance(item, str):
+                trait_names.append(item)
+            elif isinstance(item, dict):
+                trait_names.append(list(iterkeys(item))[0])
+            elif isinstance(item, list):
+                for t in item:
+                    trait_names.append(t)
 
         return trait_names or None
 
@@ -241,8 +236,6 @@ def __add_properties_to_resources(resources, root):
         if resource_type:
             if isinstance(resource_type, dict):
                 type_name = list(iterkeys(resource_type))[0]
-            elif isinstance(resource_type, list):
-                type_name = resource_type[0]
             else:
                 type_name = resource_type
 
@@ -382,13 +375,10 @@ def __add_properties_to_resources(resources, root):
         """
         Mapping of securitySchemes to its Resource/Resource Type
         """
-        if isinstance(r, ResourceType):
-            method_level = r.data.get(r.orig_method, {}).get('securedBy')
-        else:
-            try:
-                method_level = r.data.get(r.method, {}).get('securedBy')
-            except AttributeError:
-                method_level = None
+        try:
+            method_level = r.data.get(r.method, {}).get('securedBy', {})
+        except AttributeError:
+            method_level = None
         resource_level = r.data.get('securedBy', {})
         if not resource_level and not method_level:
             return
