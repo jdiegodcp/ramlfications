@@ -504,7 +504,7 @@ def __add_properties_to_resources(resources, root):
                 assigned_desc = __fill_params(desc.raw, None, None, r)
             else:
                 assigned_desc = __fill_params(desc, None, None, r)
-            ret = Content(assigned_desc)
+            ret = Content(data=assigned_desc, name=r.path)
         return ret
 
     def wrap(r):
@@ -788,7 +788,7 @@ def _parse_resource_types(raml, root):
 
         desc = __set_simple_property(r, 'description')
         if desc:
-            r.description = Content(desc)
+            r.description = Content(name=r.path, data=desc)
         else:
             r.description = None
 
@@ -929,7 +929,7 @@ def _parse_security_schemes(raml, root):
         """Add desc, type, settings, and described by attrs"""
         desc = __set_simple_property(scheme, 'description')
         if desc:
-            scheme.description = Content(desc)
+            scheme.description = Content(data=desc, name=scheme.name)
         else:
             scheme.description = None
         scheme.type = scheme.data.get('type')

@@ -6,8 +6,9 @@ from __future__ import absolute_import, division, print_function
 
 import json
 
+from characteristic import Attribute, attributes
 import markdown2 as markdown
-from six import iterkeys, itervalues
+from six import iterkeys
 
 HTTP_METHODS = [
     "get", "post", "put", "delete", "patch", "options",
@@ -16,17 +17,14 @@ HTTP_METHODS = [
 
 
 # NOTE: this is a class for extensibility, e.g. adding RTF support or whatevs
+@attributes([Attribute("data", default_factory=dict, exclude_from_repr=True),
+             Attribute("name")],
+            apply_immutable=True)
 class Content(object):
     """
     Returns documentable content from the RAML file (e.g. Documentation
     content, description) in either raw or parsed form.
     """
-    def __init__(self, data):
-        """
-        :param str data: The raw/marked up content
-        """
-        self.data = data
-
     @property
     def raw(self):
         """
@@ -43,22 +41,14 @@ class Content(object):
         # be created if there is no data.
         return markdown.markdown(self.data)
 
-    def __repr__(self):
-        return self.raw
 
-
+@attributes([Attribute("name"),
+             Attribute("data", default_factory=dict, exclude_from_repr=True)],
+            apply_immutable=True)
 class String(object):
     """
     Primative String type
     """
-    def __init__(self, name, data):
-        """
-        :param str name: Name of parameter
-        :param dict data: Data associated with parameter
-        """
-        self.name = name
-        self.data = data
-
     @property
     def enum(self):
         """
@@ -103,22 +93,14 @@ class String(object):
         """
         return self.data.get('maxLength')
 
-    def __repr__(self):
-        return "<String(name='{0}')>".format(self.name)
 
-
+@attributes([Attribute("name"),
+             Attribute("data", default_factory=dict, exclude_from_repr=True)],
+            apply_immutable=True)
 class IntegerNumber(object):
     """
     Primative Integer or Number Parameter Type
     """
-    def __init__(self, name, data):
-        """
-        :param str name: Name of parameter
-        :param dict data: Data associated with parameter
-        """
-        self.name = name
-        self.data = data
-
     @property
     def minimum(self):
         """
@@ -141,22 +123,16 @@ class IntegerNumber(object):
         """
         return self.data.get('maximum')
 
-    def __repr__(self):
-        return "<IntegerNumber(name='{0}')>".format(self.name)
 
-
+@attributes([Attribute("name"),
+             Attribute("data",
+                       default_factory=dict,
+                       exclude_from_repr=True)],
+            apply_immutable=True,)
 class Boolean(object):
     """
     Primative Boolean Parameter Type
     """
-    def __init__(self, name, data):
-        """
-        :param str name: Name of parameter
-        :param dict data: Data associated with parameter
-        """
-        self.name = name
-        self.data = data
-
     @property
     def repeat(self):
         """
@@ -166,22 +142,14 @@ class Boolean(object):
         """
         return self.data.get('repeat', False)
 
-    def __repr__(self):
-        return "<Boolean(name='{0}')>".format(self.name)
 
-
+@attributes([Attribute("name"),
+             Attribute("data", default_factory=dict, exclude_from_repr=True)],
+            apply_immutable=True)
 class Date(object):
     """
     Primative Date Parameter Type
     """
-    def __init__(self, name, data):
-        """
-        :param str name: Name of parameter
-        :param dict data: Data associated with parameter
-        """
-        self.name = name
-        self.data = data
-
     @property
     def repeat(self):
         """
@@ -191,19 +159,19 @@ class Date(object):
         """
         return self.data.get('repeat', False)
 
-    def __repr__(self):
-        return "<Date(name='{0}')>".format(self.name)
 
-
+@attributes([Attribute("name"),
+             Attribute("data", default_factory=dict, exclude_from_repr=True)],
+            apply_immutable=True)
 class File(object):
     """File Parameter Type"""
-    def __init__(self, name, data):
-        """
-        :param str name: Name of parameter
-        :param dict data: Data associated with parameter
-        """
-        self.name = name
-        self.data = data
+    # def __init__(self, name, data):
+    #     """
+    #     :param str name: Name of parameter
+    #     :param dict data: Data associated with parameter
+    #     """
+    #     self.name = name
+    #     self.data = data
 
     @property
     def repeat(self):
@@ -214,8 +182,8 @@ class File(object):
         """
         return self.data.get('repeat', False)
 
-    def __repr__(self):
-        return "<File(name='{0}')>".format(self.name)
+    # def __repr__(self):
+    #     return "<File(name='{0}')>".format(self.name)
 
 
 class BaseParameter(object):
