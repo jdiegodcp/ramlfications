@@ -1,0 +1,28 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Simple
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.spotify.com/{version}
+mediaType: application/json
+documentation:
+  title: Spotify Web API Docs
+  content: |
+    Welcome to the _Spotify Web API_ demo specification. This is *not* the complete API
+    specification, and is meant for testing purposes within this RAML specification.
+    For more information about how to use the API, check out [developer
+     site](https://developer.spotify.com/web-api/).
+/tracks:
+  displayName: several-tracks
+  get:
+    description: |
+      [Get Several Tracks](https://developer.spotify.com/web-api/get-several-tracks/)
+    queryParameters:
+      ids:
+        displayName: Spotify Track IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+
+
+

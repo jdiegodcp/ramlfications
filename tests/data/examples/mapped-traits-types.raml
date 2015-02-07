@@ -43,5 +43,6 @@ traits:
     is: [ secured: { tokenName: access_token}, paged: { maxPages: 20} ]
 /foobar:
   displayName: foobar
+  is: [ secured: { tokenName: access_token }]
   get:
     is: [ formTrait ]
