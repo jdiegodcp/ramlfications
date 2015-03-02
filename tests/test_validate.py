@@ -5,273 +5,172 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
-from ramlfications import validate, parse
-from ramlfications.validate import InvalidRamlFileError
+import pytest
 
-from .base import BaseTestCase, EXAMPLES, VALIDATE
+from ramlfications import loader
+from ramlfications.parser import parse_raml as parse
+from ramlfications import errors
+from .base import VALIDATE
 
 
-class TestValidateRAML(BaseTestCase):
-    def setUp(self):
-        self.here = os.path.abspath(os.path.dirname(__file__))
+raises = pytest.raises(errors.InvalidRootNodeError)
 
-    # TODO: get rid of
-    def setup_parsed_raml(self, raml_file):
-        raml_file = os.path.join(raml_file[0], raml_file[1])
-        return parse(raml_file)
 
-    def fail_validate(self, error_class, raml_file, expected_msg, prod=True):
-        raml_file = os.path.join(raml_file[0], raml_file[1])
-        e = self.assert_raises(error_class, validate, raml_file=raml_file,
-                               production=prod)
+def load_raml(filename):
+    raml_file = os.path.join(VALIDATE + filename)
+    return loader.RAMLLoader().load(raml_file)
 
-        self.assertEqual(expected_msg, str(e))
 
-    #####
-    # API Metadata Validation
-    #####
-    # __raml_header
-    def test_validate_raml_header(self):
-        raml_file = (EXAMPLES, "incorrect-raml-header.raml")
-        expected_msg = 'Not a valid RAML header: #%FOO.'
+def test_invalid_root_protocols():
+    raml = load_raml("invalid-protocols.raml")
+    with raises as e:
+        parse(raml)
+    msg = "'FTP' not a valid protocol for a RAML-defined API."
+    assert e.value.message == msg
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    def test_no_raml_header(self):
-        raml_file = (VALIDATE, "no-raml-header.raml")
-        expected_msg = ("RAML header empty. Please make sure the first line "
-                        "of the file contains a valid RAML file definition.")
+def test_invalid_version_not_defined():
+    raml = load_raml("no-version.raml")
+    with raises as e:
+        parse(raml)
+    msg = 'RAML File does not define an API version.'
+    assert e.value.message == msg
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    def test_invalid_raml_header(self):
-        raml_file = (EXAMPLES, "invalid-raml-header.raml")
-        expected_msg = ("Not a valid RAML header: #%RAML.")
+def test_invalid_version_base_uri():
+    raml = load_raml("no-version-base-uri.raml")
+    with raises as e:
+        parse(raml)
+    msg = ("RAML File's baseUri includes {version} parameter but no "
+           "version is defined.")
+    assert e.value.message == msg
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    def test_validate_raml_version(self):
-        raml_file = (EXAMPLES, "invalid-version-raml-header.raml")
-        expected_msg = 'Not a valid version of RAML: 0.9.'
+def test_invalid_base_uri_not_defined():
+    raml = load_raml("no-base-uri.raml")
+    with raises as e:
+        parse(raml)
+    msg = "RAML File does not define the baseUri."
+    assert e.value.message == msg
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    # __base_uri
-    def test_validate_no_base_uri(self):
-        raml_file = (VALIDATE, "no-base-uri.raml")
-        expected_msg = 'RAML File does not define the baseUri.'
+def test_invalid_base_uri_default_not_defined():
+    raml = load_raml("no-default-base-uri-params.raml")
+    with raises as e:
+        parse(raml)
+    msg = ("The 'default' parameter is not set for base URI "
+           "parameter 'domainName'")
+    assert e.value.message == msg
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    # __version
-    def test_validate_version_base_uri(self):
-        raml_file = (VALIDATE, "no-version.raml")
-        expected_msg = 'RAML File does not define an API version.'
+def test_invalid_uri_params_version():
+    raml = load_raml("version-in-uri-params.raml")
+    with raises as e:
+        parse(raml)
+    msg = "'version' can only be defined in baseUriParameters."
+    assert e.value.message == msg
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    def test_validate_no_version_base_uri(self):
-        raml_file = (VALIDATE, "no-version-base-uri.raml")
-        expected_msg = ("RAML File's baseUri includes {version} parameter but "
-                        "no version is defined.")
+def test_invalid_no_title():
+    raml = load_raml("no-title.raml")
+    with raises as e:
+        parse(raml)
+    assert 'RAML File does not define an API title.' == e.value.message
 
-        self.fail_validate(InvalidRamlFileError, raml_file,
-                           expected_msg, prod=False)
 
-    # __api_title
-    def test_validate_title(self):
-        raml_file = (VALIDATE, "no-title.raml")
-        expected_msg = 'RAML File does not define an API title.'
+def test_invalid_docs_not_list():
+    raml = load_raml("docs-not-list.raml")
+    with pytest.raises(AssertionError) as e:
+        parse(raml)
+    assert "Error parsing documentation" == e.value.message
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    # __documentation
-    def test_documentation_no_title(self):
-        raml_file = (EXAMPLES, "docs-no-title-parameter.raml")
-        expected_msg = "API Documentation requires a title."
+def test_invalid_docs_no_title():
+    raml = load_raml("docs-no-title.raml")
+    with raises as e:
+        parse(raml)
+    assert "API Documentation requires a title." == e.value.message
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    def test_validate_docs_content(self):
-        raml_file = (VALIDATE, "docs-no-content.raml")
-        expected_msg = "API Documentation requires content defined."
+def test_invalid_docs_no_content():
+    raml = load_raml("docs-no-content.raml")
+    with raises as e:
+        parse(raml)
+    assert "API Documentation requires content defined." == e.value.message
 
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
 
-    def test_documentation_not_list(self):
-        raml_file = (VALIDATE, "docs-not-list.raml")
-
-        expected_msg = "Error parsing documentation"
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    # __base_uri_params
-    def test_validate_no_default_base_param(self):
-        no_default_param = "no-default-base-uri-params.raml"
-        raml_file = (VALIDATE, no_default_param)
-        expected_msg = ("The 'default' parameter is not set for base URI "
-                        "parameter 'domainName'")
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    # __schemas
-    def test_validate_schemas(self):
-        pass
-
-    # __protocols
-    def test_validate_protocols(self):
-        invalid_protocols = "invalid-protocols.raml"
-        raml_file = (VALIDATE, invalid_protocols)
-        expected_msg = "'FTP' not a valid protocol for a RAML-defined API."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    # __mediatype
-    def test_media_type(self):
-        invalid_media_type = "invalid-media-type.raml"
-        raml_file = (VALIDATE, invalid_media_type)
-        expected_msg = "Unsupported MIME Media Type: 'awesome/sauce'."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    # __security_schemes
-    def test_validate_security_scheme(self):
-        invalid_sec_scheme = "invalid-security-scheme.raml"
-        raml_file = (VALIDATE, invalid_sec_scheme)
-        expected_msg = "'invalid-scheme' is not a valid Security Scheme."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    # __uri_params
-    def test_validate_version_uri_params(self):
-        raml_file = (VALIDATE, "version-in-uri-params.raml")
-        expected_msg = "'version' can only be defined in baseUriParameters."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    # __has_resources
-    def test_has_resources(self):
-        raml_file = (VALIDATE, "no-resources.raml")
-        expected_msg = "No resources are defined."
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    # Trait Validation
-
-    # ResourceType Validation
-
-    # Resource Validation
-
-    # Parameter Validation
-
-    def test_validate_resource_responses(self):
-        raml_file = (VALIDATE, "invalid-response-body.raml")
-        expected_msg = "Unsupported MIME Media Type: \'invalid/mediatype\'."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_validate_trait_responses(self):
-        raml_file = (VALIDATE, "invalid-trait-response.raml")
-        expected_msg = "'678' not a valid response code."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_validate_resource_type_responses(self):
-        raml_file = (VALIDATE, "invalid-resource-type-response.raml")
-        expected_msg = "'678' not a valid response code."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_raises_incorrect_response_code(self):
-        raml_file = (EXAMPLES, "invalid-resp-code.raml")
-        expected_msg = "'299' not a valid response code."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_resource_types_too_many(self):
-        raml_file = (EXAMPLES, "mapped-types-too-many.raml")
-        expected_msg = "Too many resource types applied to '/magazines'."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_resource_types_invalid_mapped_type(self):
-        raml_path = "mapped-types-incorrect-resource-type.raml"
-        raml_file = (EXAMPLES, raml_path)
-
-        expected_msg = "'invalidResourceType' is not defined in resourceTypes"
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_invalid_body_keys(self):
-        invalid_body = "invalid-body.raml"
-        raml_file = (VALIDATE, invalid_body)
-        expected_msg = ("'schema' may not be specified when the body's media "
-                        "type is application/x-www-form-urlencoded or "
-                        "multipart/form-data.")
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_invalid_secured_by(self):
-        invalid_secured_by = "invalid-secured-by.raml"
-        raml_file = (VALIDATE, invalid_secured_by)
-        expected_msg = ("'not_a_scheme' is applied to '/foo' but is not "
-                        "defined in the securitySchemes")
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_no_security_schemes(self):
-        no_security_scheme = "no-security-scheme.raml"
-        raml_file = (VALIDATE, no_security_scheme)
-        expected_msg = ("No Security Schemes are defined in RAML file but "
-                        "['oauth_2_0'] scheme is assigned to '/foo'.")
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_validate_data_exists(self):
-        only_raml_header = "only-raml-header.raml"
-        raml_file = (VALIDATE, only_raml_header)
-        expected_msg = "No RAML data to parse."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_validate_empty_file(self):
-        empty_file = "empty-file.raml"
-        raml_file = (VALIDATE, empty_file)
-        expected_msg = "RAML File is empty"
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_traits_invalid_type(self):
-        raml_file = (EXAMPLES, "invalid-trait-obj.raml")
-        expected_msg = ("'1' needs to be a string referring to a trait, or a "
-                        "dictionary mapping parameter values to a trait")
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_uri_parameters_throws_exception(self):
-        raml_file = (EXAMPLES, "uri-parameters-error.raml")
-        expected_msg = "'version' can only be defined in baseUriParameters."
-
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    # NOTE: tests resource types when are lists = 1 or str
-    def test_undefined_res_type_str(self):
-        raml_path = "undefined-resource-type-str.raml"
-        raml_file = (VALIDATE, raml_path)
-
-        expected_msg = "'undefined' is not defined in resourceTypes"
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_undefined_res_type_list(self):
-        raml_path = "undefined-resource-type-list.raml"
-        raml_file = (VALIDATE, raml_path)
-
-        expected_msg = "'alsoUndefined' is not defined in resourceTypes"
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
-
-    def test_no_resource_types_defined(self):
-        raml_path = "no-resource-types-defined.raml"
-        raml_file = (VALIDATE, raml_path)
-
-        expected_msg = ("No Resource Types are defined in RAML file but "
-                        "'anUndefinedResourceType' type is assigned to "
-                        "'/foo'.")
-        self.fail_validate(InvalidRamlFileError, raml_file, expected_msg)
+def test_assigned_undefined_resource_type():
+    raml = load_raml("undefined-resource-type-str.raml")
+    with pytest.raises(errors.InvalidResourceNodeError) as e:
+        parse(raml)
+    msg = ("Resource Type 'undefined' is assigned to '/foo' but is not "
+           "defined in the root of the API.")
+    assert msg == e.value.message
+
+
+def test_no_resources_defined():
+    raml = load_raml("no-resources.raml")
+    with pytest.raises(errors.InvalidRootNodeError) as e:
+        parse(raml)
+    assert "API does not define any resources." == e.value.message
+
+
+def test_invalid_media_type():
+    raml = load_raml("invalid-media-type.raml")
+    with pytest.raises(errors.InvalidRootNodeError) as e:
+        parse(raml)
+    assert "Unsupported MIME Media Type: 'awesome/sauce'." == e.value.message
+
+
+# TODO: move assert from parser_wip to validate_wip
+def test_invalid_trait_obj():
+    raml = load_raml("trait-unsupported-obj.raml")
+    with pytest.raises(AssertionError) as e:
+        parse(raml)
+    msg = "Error parsing trait"
+    assert msg == e.value.message
+
+
+def test_traits_undefined():
+    raml = load_raml("trait-undefined.raml")
+    with pytest.raises(errors.InvalidResourceNodeError) as e:
+        parse(raml)
+    msg = ("Trait 'undefined' is assigned to '/users/{user_id}/playlists' "
+           "but is not defined in the root of the API.")
+    assert msg == e.value.message
+
+
+def test_no_traits_defined():
+    raml = load_raml("no-traits-defined.raml")
+    with pytest.raises(errors.InvalidResourceNodeError) as e:
+        parse(raml)
+    msg = ("Trying to assign traits that are not defined"
+           "in the root of the API.")
+    assert msg == e.value.message
+
+
+# TODO: move assert from parser_wip to validate_wip
+def test_unsupported_trait_type_str():
+    raml = load_raml("trait-unsupported-type-str.raml")
+    with pytest.raises(AssertionError) as e:
+        parse(raml)
+    msg = "Error parsing trait"
+    assert msg == e.value.message
+
+
+# TODO: move assert from parser_wip to validate_wip
+def test_unsupported_trait_type_array_ints():
+    raml = load_raml("trait-unsupported-type-array-ints.raml")
+    with pytest.raises(errors.InvalidResourceNodeError) as e:
+        parse(raml)
+    msg = ("'12' needs to be a string referring to a trait, or a dictionary "
+           "mapping parameter values to a trait")
+    assert msg == e.value.message
+
+
+def test_too_many_assigned_resource_types():
+    raml = load_raml("too-many-assigned-res-types.raml")
+    with pytest.raises(errors.InvalidResourceNodeError) as e:
+        parse(raml)
+    msg = ("Too many resource types applied to '/foobar'.")
+    assert msg == e.value.message

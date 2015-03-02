@@ -7,18 +7,9 @@ from __future__ import absolute_import, division, print_function
 import re
 import os
 
-from six import itervalues, iteritems, iterkeys
-import wrapt
 
 from .base_config import config
-from .raml import _BaseResource
-
-__all__ = ["InvalidRamlFileError"]
-
-
-class InvalidRamlFileError(Exception):
-    pass
-
+from .errors import *  # NOQA
 
 env_val = os.environ.get('RAML_VALIDATE') == '1'
 conf_val = config.get('main', 'validate') == 'True'
@@ -26,642 +17,251 @@ VALIDATE = env_val or conf_val
 
 
 #####
-# Decorator functions
+# RAMLRoot validators
 #####
 
-def validate(raml):
-    """
-    Validate raml according to RAML spec.
-    """
-    @wrapt.decorator(enabled=VALIDATE)
-    def func_wrapper(wrapped, instance, args, kw):
-        __map_to_validate_func(wrapped.__name__)(raml, *args, **kw)
-        return wrapped(*args, **kw)
-    return func_wrapper
-
-
-@wrapt.decorator(enabled=VALIDATE)
-def validate_item(wrapped, instance, args, kw):
-    """
-    Validate property for Trait, ResourceType, or Resource according to
-    RAML spec
-    """
-    item, prop = args
-    __map_to_validate_prop(prop)(item, *args, **kw)
-    return wrapped(*args, **kw)
-
-
-def validate_property(item):
-    @wrapt.decorator(enabled=VALIDATE)
-    def func_wrapper(wrapped, instance, args, kw):
-        if wrapped.func_closure:
-            resources = [r.cell_contents for r in wrapped.func_closure]
-            resource = [r for r in resources if isinstance(r,
-                                                           _BaseResource)][0]
-            root = resource.api
-            newargs = args + (resource, root)
-            __map_item_to_validate(item, wrapped.__name__)(*newargs, **kw)
-        return wrapped(*args, **kw)
-    return func_wrapper
-
-
-def __map_item_to_validate(item, func_name):
-    return {
-        "security_schemes": validate_security,
-        "resource_types": validate_resource_types,
-        "resource": validate_resource
-    }[item](func_name)
-
-
-def validate_security(func_name):
-    return {
-        "set_settings_attrs": __security_settings
-    }[func_name]
-
-
-def validate_resource_types(func_name):
-    return {
-        "_is": __set_resource_type_is,
-        "traits": __set_traits,
-        "type_secured_by": __secured_by,
-        "security_schemes": __security_schemes
-    }[func_name]
-
-
-def validate_resource(func_name):
-    return {
-        '__raml_header': __raml_header,
-        'base_uri': __base_uri,
-        'version': __version,
-        'title': __api_title,
-        'docs': __documentation,
-        'base_uri_params': __base_uri_params,
-        'schemas': __schemas,
-        'protocols': __protocols,
-        'media_type': __media_type,
-        'security_schemes': __security_schemes,
-        'uri_params': __uri_params,
-        'resource_type': __resource_type,
-        'secured_by': __secured_by,
-        '_type': __set_type,
-        'traits': __set_traits,
-        '_is': __set_resource_is,
-        '__set_settings_dict': __security_settings,
-        '__add_properties_to_resources': __has_resources,
-        '__set_resource_type_is': __set_resource_type_is
-    }[func_name]
-
-
-#####
-# Helper/mapping functions
-####
-def __map_to_validate_func(func_name):
-    return {
-        '__raml_header': __raml_header,
-        '__has_resources': __has_resources,
-        'base_uri': __base_uri,
-        'version': __version,
-        'title': __api_title,
-        'docs': __documentation,
-        'base_uri_params': __base_uri_params,
-        'schemas': __schemas,
-        'protocols': __protocols,
-        'media_type': __media_type,
-        'security_schemes': __security_schemes,
-        'uri_params': __uri_params,
-        'resource_type': __resource_type,
-        'secured_by': __secured_by,
-        '_type': __set_type,
-        'traits': __set_traits,
-        '_is': __set_resource_is,
-        '__set_settings_dict': __security_settings,
-        '__add_properties_to_resources': __has_resources,
-        '__set_resource_type_is': __set_resource_type_is
-    }[func_name]
-
-
-def __map_resource_type(func_name):
-    return {
-        "_is": __set_resource_type_is,
-        "traits": __set_traits,
-        "type_secured_by": __secured_by,
-        "security_schemes": __security_schemes
-    }[func_name]
-
-
-def __map_trait(func_name):
-    return {
-        "_is": __set_resource_type_is,
-        "traits": __set_traits,
-        "type_secured_by": __secured_by,
-        "security_schemes": __security_schemes
-    }[func_name]
-
-
-def __map_to_validate_prop(property):
-    return {
-        'responses': __responses,
-        'queryParameters': __query_params,
-        'uriParameters': __uri_params_resource,
-        'formParameters': __form_params,
-        'headers': __headers,
-        'body': __body,
-        'description': __description,
-        'mediaType': __media_type,
-        'baseUriParameters': __base_uri_params_resource
-    }[property]
-
-
-#####
-# API Metadata Validation
-#####
-def __raml_header(raml_file):
-    """Validate Header of RAML File"""
-    # loader.load catches if RAML file doesn't exist
-    if os.path.getsize(raml_file) == 0:
-        msg = "RAML File is empty"
-        raise InvalidRamlFileError(msg)
-
-    with open(raml_file, 'r') as r:
-        raml_header = r.readline().split('\n')[0]
-        if not raml_header:
-            msg = ("RAML header empty. Please make sure the first line "
-                   "of the file contains a valid RAML file definition.")
-            raise InvalidRamlFileError(msg)
-
-        try:
-            raml_def, version = raml_header.split()
-        except ValueError:
-            msg = ("Not a valid RAML header: {0}.".format(raml_header))
-            raise InvalidRamlFileError(msg)
-
-        if raml_def != "#%RAML":
-            msg = "Not a valid RAML header: {0}.".format(raml_def)
-            raise InvalidRamlFileError(msg)
-
-        if version not in config.get('defaults', 'raml_versions'):
-            msg = "Not a valid version of RAML: {0}.".format(version)
-            raise InvalidRamlFileError(msg)
-
-        # If only header and nothing else
-        if not r.readlines():
-            msg = "No RAML data to parse."
-            raise InvalidRamlFileError(msg)
-
-
-def __base_uri(raml):
-    """Require a Base URI."""
-    if not raml.get('baseUri'):
-        msg = 'RAML File does not define the baseUri.'
-        raise InvalidRamlFileError(msg)
-
-
-def __version(raml):
+def root_version(inst, attr, value):
     """Require an API Version (e.g. api.foo.com/v1)."""
-    v = raml.get('version')
-    base_uri = raml.get('baseUri')
-    if not v and '{version}' in base_uri:
+    base_uri = inst.raml_obj.data.get('baseUri')
+    if not value and '{version}' in base_uri:
         msg = ("RAML File's baseUri includes {version} parameter but no "
                "version is defined.")
-        raise InvalidRamlFileError(msg)
-    elif not v:
+        raise InvalidRootNodeError(msg)
+    elif not value:
         msg = 'RAML File does not define an API version.'
-        raise InvalidRamlFileError(msg)
+        raise InvalidRootNodeError(msg)
 
 
-def __api_title(raml):
-    if not raml.get('title'):
+def root_base_uri(inst, attr, value):
+    """Require a Base URI."""
+    if not value:
+        msg = 'RAML File does not define the baseUri.'
+        raise InvalidRootNodeError(msg)
+
+
+def root_raml_file(inst, attr, value):
+    pass
+
+
+def root_base_uri_params(inst, attr, value):
+    """
+    Require that Base URI parameters have a ``default`` parameter set.
+    """
+    if value:
+        for v in value:
+            if not v.default:
+                msg = ("The 'default' parameter is not set for base URI "
+                       "parameter '{0}'".format(v.name))
+                raise InvalidRootNodeError(msg)
+
+
+def root_uri_params(inst, attr, value):
+    """
+    Assert that where is no 'version' parameter in the regular URI parameters
+    """
+    if value:
+        for v in value:
+            if v.name == 'version':
+                msg = "'version' can only be defined in baseUriParameters."
+                raise InvalidRootNodeError(msg)
+
+
+def root_protocols(inst, attr, value):
+    """
+    Only support HTTP/S plus what is defined in user-config
+    """
+    if value:
+        for p in value:
+            if p.upper() not in config.get('defaults', 'protocols'):
+                msg = ("'{0}' not a valid protocol for a RAML-defined "
+                       "API.".format(p))
+                raise InvalidRootNodeError(msg)
+
+
+def root_title(inst, attr, value):
+    """
+    Require a title for the defined API.
+    """
+    if not value:
         msg = 'RAML File does not define an API title.'
-        raise InvalidRamlFileError(msg)
+        raise InvalidRootNodeError(msg)
 
 
-def __documentation(raml):
+def root_docs(inst, attr, value):
     """
     Assert that if there is ``documentation`` defined in the root of the
     RAML file, that it contains a ``title`` and ``content``.
     """
-    docs = raml.get('documentation')
-    if docs:
-        if not isinstance(docs, list):
-            msg = "Error parsing documentation"
-            raise InvalidRamlFileError(msg)
-        for d in docs:
-            if d.get('title') is None:
+    if value:
+        for d in value:
+            if d.title is None:
                 msg = "API Documentation requires a title."
-                raise InvalidRamlFileError(msg)
-            if d.get('content') is None:
+                raise InvalidRootNodeError(msg)
+            if d.content is None:
                 msg = "API Documentation requires content defined."
-                raise InvalidRamlFileError(msg)
+                raise InvalidRootNodeError(msg)
 
 
-def __base_uri_params(raml, *args, **kw):
-    """
-    Require that Base URI Parameters have a ``default`` parameter set.
-    """
-    base_uri_params = raml.get('baseUriParameters', {})
-    for k, v in iteritems(base_uri_params):
-        values = list(iterkeys(v))
-        if 'default' not in values:
-            msg = ("The 'default' parameter is not set for base URI "
-                   "parameter '{0}'".format(k))
-            raise InvalidRamlFileError(msg)
-
-
-def __schemas(raml):
+# TODO: finish
+def root_schemas(inst, attr, value):
     pass
 
 
-def __protocols(raml, *args, **kw):
-    protocols = raml.get('protocols')
-    if protocols:
-        for p in protocols:
-            if p not in config.get('defaults', 'protocols'):
-                msg = ("'{0}' not a valid protocol for a RAML-defined "
-                       "API.".format(p))
-                raise InvalidRamlFileError(msg)
-
-
-def __media_type(raml):
-    media_type = raml.get('mediaType')
-    if media_type:
-        if media_type in config.get('defaults', 'media_types'):
-            return
-        regex_str = re.compile(r"application\/[A-Za-z.-0-1]*?(json|xml)")
-        match = re.search(regex_str, media_type)
-        if match:
-            return
-        else:
-            msg = "Unsupported MIME Media Type: '{0}'.".format(media_type)
-            raise InvalidRamlFileError(msg)
-
-
-def __security_schemes(resource, root, *args, **kw):
+def root_media_type(inst, attr, value):
     """
-    Assert only valid Security Schemes are used.
+    Only support media types based on config and regex
     """
-
-    schemes = root.raml.get('securitySchemes', {})
-    schemes = [list(iterkeys(s))[0] for s in schemes]
-    if schemes:
-        for s in schemes:
-            if s not in config.get('custom',
-                                   'auth_schemes') and not s.startswith("x-"):
-                msg = "'{0}' is not a valid Security Scheme.".format(s)
-                raise InvalidRamlFileError(msg)
+    if value:
+        match = validate_mime_type(value)
+        if value not in config.get('defaults', 'media_types') and not match:
+            msg = "Unsupported MIME Media Type: '{0}'.".format(value)
+            raise InvalidRootNodeError(msg)
 
 
-def __uri_params(raml, *args, **kw):
-    uri_params = raml.get('uriParameters', {})
-    for k in list(iterkeys(uri_params)):
-        if k.lower() == 'version':
-            msg = "'version' can only be defined in baseUriParameters."
-            raise InvalidRamlFileError(msg)
-
-
-def __has_resources(raml, *args, **kw):
-    """
-    Require that RAML actually *defines* at least one Resource.
-    """
-    for k in raml.keys():
-        if k.startswith("/"):
-            return
-
-    msg = "No resources are defined."
-    raise InvalidRamlFileError(msg)
+def root_resources(inst, attr, value):
+    if not value:
+        msg = "API does not define any resources."
+        raise InvalidRootNodeError(msg)
 
 
 #####
-# Trait, ResourceType, and Resource validation
+# Resource Node Validators
 #####
-def __responses(resource, *args, **kw):
-    if hasattr(resource, 'method') and resource.data.get(resource.method) is not None:
-        resp = resource.data.get(resource.method, {}).get('responses', {})
-
-    elif hasattr(resource, 'orig_method'):
-        resp = resource.data.get(resource.orig_method, {}).get('responses', {})
-    else:
-        resp = resource.data.get('responses', {})
-
-    codes = list(iterkeys(resp))
-    for code in codes:
-        if code not in config.get('custom', 'resp_codes'):
-            msg = "'{0}' not a valid response code.".format(code)
-            raise InvalidRamlFileError(msg)
-    for item in list(itervalues(resp)):
-        body = item.get('body', {})
-        __body_media_type(body)
 
 
-def __query_params(resource, *args, **kw):
-    resource_params = resource.data.get('queryParameters', {})
-    if hasattr(resource, 'orig_method'):
-        method_params = resource.data.get(resource.orig_method, {}).get(
-            'queryParameters', {})
-    elif hasattr(resource, 'method'):
-        if resource.data.get(resource.method) is not None:
-            method_params = resource.data.get(resource.method, {}).get(
-                'queryParameters', {})
-        else:
-            method_params = {}
-    else:
-        method_params = {}
-
-    params = dict(list(method_params.items()) + list(resource_params.items()))
-
-    if params:
-        __primative_parameter(params)
+#####
+# Resource Type Node Validators
+#####
 
 
-def __uri_params_resource(resource, *args, **kw):
-    resource_params = resource.data.get('uriParameters', {})
-    if hasattr(resource, 'orig_method'):
-        method_params = resource.data.get(resource.orig_method, {}).get(
-            'uriParameters', {})
-    elif hasattr(resource, 'method'):
-        if resource.data.get(resource.method) is not None:
-            method_params = resource.data.get(resource.method, {}).get(
-                'uriParameters', {})
-        else:
-            method_params = {}
-    else:
-        method_params = {}
-
-    params = dict(list(method_params.items()) + list(resource_params.items()))
-
-    if params:
-        __primative_parameter(params)
-
-
-def __form_params(resource, *args, **kw):
-    resource_params = resource.data.get('formParameters', {})
-    if hasattr(resource, 'orig_method'):
-        method_params = resource.data.get(resource.orig_method, {}).get(
-            'formParameters', {})
-    elif hasattr(resource, 'method'):
-        if resource.data.get(resource.method) is not None:
-            method_params = resource.data.get(resource.method, {}).get(
-                'formParameters', {})
-        else:
-            method_params = {}
-    else:
-        method_params = {}
-
-    params = dict(list(method_params.items()) + list(resource_params.items()))
-
-    if params:
-        __primative_parameter(params)
+#####
+# Shared Validators for Resource & Resource Type Node
+#####
+def assigned_traits(inst, attr, value):
+    if value:
+        traits = inst.root.raw.get('traits', {})
+        if not traits:
+            msg = ("Trying to assign traits that are not defined"
+                   "in the root of the API.")
+            raise InvalidResourceNodeError(msg)
+        trait_names = [i.keys()[0] for i in traits]
+        if isinstance(value, tuple([list, dict])):
+            for v in value:
+                if v not in trait_names:
+                    msg = ("Trait '{0}' is assigned to '{1}' but is not "
+                           "defined in the root of the API.".format(v,
+                                                                    inst.path))
+                    raise InvalidResourceNodeError(msg)
+                if not isinstance(v, str):
+                    msg = ("'{0}' needs to be a string referring to a trait, "
+                           "or a dictionary mapping parameter values to a "
+                           "trait".format(v))
+                    raise InvalidResourceNodeError(msg)
+        elif isinstance(value, str):
+            msg = ("Trait '{0}' is an unsupported type: '{1}'".format(value,
+                   type(value)))
+            raise InvalidResourceNodeError(msg)
 
 
-def __headers(resource, *args, **kw):
-    pass
+def assigned_res_type(inst, attr, value):
+    if value:
+        if isinstance(value, tuple([dict, list])) and len(value) > 0:
+            msg = "Too many resource types applied to '{0}'.".format(inst.path)
+            raise InvalidResourceNodeError(msg)
+
+        res_types = inst.root.raw.get('resourceTypes', {})
+        res_type_names = [i.keys()[0] for i in res_types]
+        if value not in res_type_names:
+            msg = ("Resource Type '{0}' is assigned to '{1}' but is not "
+                   "defined in the root of the API.".format(value, inst.path))
+            raise InvalidResourceNodeError(msg)
 
 
-def __body(resource, *args, **kw):
-    if hasattr(resource, 'orig_method'):  # resource type
-        body = resource.data.get(resource.orig_method, {}).get('body', {})
-    if hasattr(resource, 'method'):
-        if resource.data.get(resource.method) is not None:
-            body = resource.data.get(resource.method, {}).get('body', {})
-        else:
-            body = resource.data.get('body', {})
-
-    else:  # trait
-        body = resource.data.get('body', {})
-    __body_media_type(body)
+#####
+# Trait Node Validators
+#####
 
 
-def __description(resource, *args, **kw):
-    pass
+#####
+# Parameter Validators
+#####
+def header_type(inst, attr, value):
+    if value and value not in config.get('defaults', 'prim_types'):
+        msg = "'{0}' is not a valid primative parameter type".format(value)
+        raise InvalidParameterError(msg, 'header')
 
 
-def __base_uri_params_resource(resource, *args, **kw):
-    pass
+def body_mime_type(inst, attr, value):
+    if value:
+        match = validate_mime_type(value)
+        if value not in config.get('defaults', 'media_types') and not match:
+            msg = "Unsupported MIME Media Type: '{0}'.".format(value)
+            raise InvalidParameterError(msg, 'body')
 
 
-def __check_media_type(media_type):
-    if media_type in config.get('defaults', 'media_types'):
-        return
-    if media_type in ['schema', 'example']:
-        return
+def body_schema(inst, attr, value):
+    form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
+    if inst.mime_type in form_types and value:
+        msg = "Body must define formParameters, not schema/example."
+        raise InvalidParameterError(msg, 'body')
+
+
+def body_example(inst, attr, value):
+    form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
+    if inst.mime_type in form_types and value:
+        msg = "Body must define formParameters, not schema/example."
+        raise InvalidParameterError(msg, 'body')
+
+
+def body_form(inst, attr, value):
+    form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
+    if inst.mime_type in form_types and not value:
+        msg = "Body with mime_type '{0}' requires formParameters.".format(
+            inst.mime_type)
+        raise InvalidParameterError(msg, 'body')
+
+
+def response_code(inst, attr, value):
+    if not value:
+        msg = "Response must define an HTTP code."
+        raise InvalidParameterError(msg, 'response')
+    if not isinstance(value, int):
+        msg = ("Response code '{0}' must be an integer representing an "
+               "HTTP code.".format(value))
+        raise InvalidParameterError(msg, 'response')
+    if value not in config.get('custom', 'resp_codes'):
+        msg = "'{0}' not a valid HTTP response code.".format(value)
+        raise InvalidParameterError(msg, 'response')
+
+
+#####
+# Primative Validators
+#####
+def integer_number_type_parameter(inst, attr, value):
+    if value:
+        param_types = ["integer", "number"]
+        if inst.param_type not in param_types:
+            msg = ("{0} must be either a number or integer to have {1}"
+                   "attribute set, not {2}.".format(inst.name, attr,
+                                                    inst.param_type))
+            raise InvalidParameterError(msg, "BaseParameter")
+
+
+def string_type_parameter(inst, attr, value):
+    if value:
+        if inst.param_type != "string":
+            msg = ("{0} must be a string type to have {1}"
+                   "attribute set, not '{2}'.".format(inst.name, attr,
+                                                      inst.param_type))
+            raise InvalidParameterError(msg, "BaseParameter")
+
+
+#####
+# Util/common functions
+#####
+
+
+def validate_mime_type(value):
     regex_str = re.compile(r"application\/[A-Za-z.-0-1]*?(json|xml)")
-    match = re.search(regex_str, media_type)
-    if match:
-        return
-    else:
-        msg = "Unsupported MIME Media Type: '{0}'.".format(media_type)
-        raise InvalidRamlFileError(msg)
-
-
-def __body_media_type(body):
-    for k, v in iteritems(body):
-        __check_media_type(k)
-        if k in ['application/x-www-form-urlencoded', 'multipart/form-data']:
-            props = list(iterkeys(v))
-            if 'schema' in props:
-                msg = ("'schema' may not be specified when the body's media "
-                       "type is application/x-www-form-urlencoded or "
-                       "multipart/form-data.")
-                raise InvalidRamlFileError(msg)
-
-
-def __set_type(resource, *args, **kw):
-    assigned = resource.data.get('type')
-    if not assigned:
-        return
-    if isinstance(assigned, dict) or isinstance(assigned, list):
-        if len(assigned) > 1:
-            msg = "Too many resource types applied to '{0}'.".format(
-                resource.name)
-            raise InvalidRamlFileError(msg)
-    if isinstance(assigned, dict):
-        assigned = list(iterkeys(assigned))[0]
-    elif isinstance(assigned, list):
-        assigned = assigned[0]
-    else:
-        assigned = assigned
-
-    root = args[0]
-    if not root.resource_types:
-        msg = ("No Resource Types are defined in RAML file but '{0}' "
-               "type is assigned to '{1}'.".format(assigned,
-                                                   resource.name))
-        raise InvalidRamlFileError(msg)
-    valid_resource_types = [r.name for r in root.resource_types]
-    if assigned not in valid_resource_types:
-        msg = "'{0}' is not defined in resourceTypes".format(assigned)
-        raise InvalidRamlFileError(msg)
-
-
-def __resource_type(resource, root, *args, **kw):
-    if not resource.type:
-        return
-    if isinstance(resource.type, dict) or isinstance(resource.type, list):
-        if len(resource.type) > 1:
-            msg = "Too many resource types applied to '{0}'.".format(
-                resource.name)
-            raise InvalidRamlFileError(msg)
-    if isinstance(resource.type, dict):
-        assigned = list(iterkeys(resource.type))[0]
-    elif isinstance(resource.type, list):
-        assigned = resource.type[0]
-    else:
-        assigned = resource.type
-
-    valid_resource_types = [r.name for r in root.resource_types]
-    if assigned not in valid_resource_types:
-        msg = "'{0}' is not defined in resourceTypes".format(assigned)
-        raise InvalidRamlFileError(msg)
-
-
-def __secured_by(resource, root, *args, **kw):
-    res = resource.data.get('securedBy', [])
-    try:
-        method = resource.data.get(resource.method, {}).get('securedBy', [])
-    except AttributeError:
-        method = None
-    if not res and not method:
-        return
-
-    if not root.security_schemes:
-        msg = ("No Security Schemes are defined in RAML file but {0} "
-               "scheme is assigned to "
-               "'{1}'.".format(resource.data.get('securedBy'), resource.name))
-        raise InvalidRamlFileError(msg)
-
-    secured_by = res + method
-
-    for s in secured_by:
-        if isinstance(s, dict):
-            scheme = list(iterkeys(s))[0]
-        else:
-            scheme = s
-        scheme_names = [r.name for r in root.security_schemes]
-        if scheme not in scheme_names and scheme is not None:
-            msg = ("'{0}' is applied to '{1}' but is not defined in "
-                   "the securitySchemes".format(scheme, resource.name))
-            raise InvalidRamlFileError(msg)
-
-
-def __set_traits(resource, *args, **kw):
-    try:
-        method_level = resource.data.get(resource.method, {}).get('is', [])
-    except AttributeError:
-        method_level = None
-    resource_level = resource.data.get('is', [])
-
-    if method_level is not None:
-        if not isinstance(method_level, list):
-            if not isinstance(method_level, str):
-                if not isinstance(method_level, dict):
-                    msg = ("'{0}' needs to be a string or a list of strings referring to "
-                           "trait(s) or a dictionary mapping parameter values to a "
-                           "trait".format(method_level))
-                    raise InvalidRamlFileError(msg)
-
-    if resource_level is not None:
-        if not isinstance(resource_level, list):
-            if not isinstance(resource_level, str):
-                if not isinstance(resource_level, dict):
-                    msg = ("'{0}' needs to be a string or a list of strings referring to "
-                           "trait(s) or a dictionary mapping parameter values to a "
-                           "trait".format(resource_level))
-                    raise InvalidRamlFileError(msg)
-
-
-def __set_resource_is(resource, *args, **kw):
-    resource_level = resource.data.get('is')
-    resource_method = resource.data.get(resource.method, {})
-
-    if resource_method is not None:
-        method_level = resource_method.get('is')
-    else:
-        method_level = None
-
-    if resource_level is not None:
-        if not isinstance(resource_level, str):
-            if not isinstance(resource_level, list):
-                if not isinstance(resource_level, dict):
-                    msg = ("'{0}' needs to be a string referring to a trait, "
-                           "or a dictionary mapping parameter values to a "
-                           "trait".format(resource_level))
-                    raise InvalidRamlFileError(msg)
-
-    if method_level is not None:
-        if not isinstance(method_level, str):
-            if not isinstance(method_level, list):
-                if not isinstance(method_level, dict):
-                    msg = ("'{0}' needs to be a string referring to a trait, "
-                           "or a dictionary mapping parameter values to a "
-                           "trait".format(method_level))
-                    raise InvalidRamlFileError(msg)
-
-
-def __set_resource_type_is(resource, *args, **kw):
-    resource_level = resource.data.get('is', {})
-    resource_method = resource.data.get(resource.orig_method, {}).get('is', {})
-
-    if resource_method is not None:
-        method_level = resource_method.get('is')
-    else:
-        method_level = None
-
-    if resource_level is not None:
-        if not isinstance(resource_level, str):
-            if not isinstance(resource_level, list):
-                if not isinstance(resource_level, dict):
-                    msg = ("'{0}' needs to be a string referring to a trait, "
-                           "or a dictionary mapping parameter values to a "
-                           "trait".format(resource_level))
-                    raise InvalidRamlFileError(msg)
-
-    if method_level is not None:
-        if not isinstance(method_level, str):
-            if not isinstance(method_level, list):
-                if not isinstance(method_level, dict):
-                    msg = ("'{0}' needs to be a string referring to a trait, "
-                           "or a dictionary mapping parameter values to a "
-                           "trait".format(method_level))
-                    raise InvalidRamlFileError(msg)
-
-
-#####
-# Security Scheme validation
-#####
-def __security_settings(scheme, *args, **kw):
-    settings = scheme.data.get('settings')
-    if not settings:
-        return
-
-    attrs = list(iterkeys(settings))
-
-    if scheme.type == 'OAuth 2.0':
-        oauth2_attrs = [
-            'authorizationUri', 'accessTokenUri', 'authorizationGrants',
-            'scopes'
-        ]
-        for attr in oauth2_attrs:
-            if attr not in attrs:
-                msg = ("Need to defined '{0}' in securitySchemas settings "
-                       "for a valid OAuth 2.0 scheme".format(attr))
-                raise InvalidRamlFileError(msg)
-
-    if scheme.type == 'OAuth 1.0':
-        oauth1_attrs = [
-            'requestTokenUri', 'authorizationUri', 'tokenCredentialsUri'
-        ]
-        for attr in oauth1_attrs:
-            if attr not in attrs:
-                msg = ("Need to defined '{0}' in securitySchemas settings "
-                       "for a valid OAuth 1.0 scheme".format(attr))
-                raise InvalidRamlFileError(msg)
-
-
-#####
-# Parameter validation (Query, URI, Form)
-#####
-def __primative_parameter(parameter, *args, **kw):
-    prim_type = list(itervalues(parameter))[0].get('type')
-    if prim_type not in config.get('defaults',
-                                   'prim_types') and prim_type is not None:
-        msg = "'{0}' is not a valid primative parameter type".format(prim_type)
-        raise InvalidRamlFileError(msg)
+    match = re.search(regex_str, value)
+    return match
