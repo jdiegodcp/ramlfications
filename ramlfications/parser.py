@@ -30,12 +30,50 @@ def parse_raml(loaded_raml_file):
     return root
 
 
+def _create_base_param_obj(property_data, param_obj):
+    objects = []
+
+    for key, value in iteritems(property_data):
+        if param_obj is URIParameter:
+            required = value.get("required", True)
+        else:
+            required = value.get("required", False)
+        item = param_obj(
+            name=key,
+            raw=value,
+            description=value.get("description"),
+            display_name=value.get("displayName", key),
+            min_length=value.get("minLength"),
+            max_length=value.get("maxLength"),
+            minimum=value.get("minimum"),
+            maximum=value.get("maximum"),
+            default=value.get("default"),
+            enum=value.get("enum"),
+            example=value.get("example"),
+            # TODO URI params are req, others are not
+            required=required,
+            repeat=value.get("repeat", False),
+            pattern=value.get("pattern"),
+            param_type=value.get("type", "string")
+        )
+        objects.append(item)
+
+    return objects or None
+
+
 def create_root(loaded_raml_file):
-    def base_uri():
-        base_uri = raml.get('baseUri', "")
-        if "{version}" in base_uri:
-            base_uri = base_uri.replace('{version}', str(raml.get('version')))
-        return base_uri
+    """
+    Creates a Root Node based off of the RAML's root section.
+
+    :param RAMLDict loaded_raml_file: loaded RAML file
+    :ret root: RootNode object with API root properties set
+    :rtype: RootNode
+    """
+    def title():
+        return raml.get("title")
+
+    def version():
+        return raml.get("version")
 
     def protocols():
         explicit_protos = raml.get('protocols')
@@ -43,81 +81,45 @@ def create_root(loaded_raml_file):
 
         return explicit_protos or implicit_protos or None
 
+    def base_uri():
+        base_uri = raml.get('baseUri', "")
+        if "{version}" in base_uri:
+            base_uri = base_uri.replace('{version}', str(raml.get('version')))
+        return base_uri
+
+    def base_uri_params():
+        data = raml.get("baseUriParameters", {})
+        return _create_base_param_obj(data, URIParameter)
+
+    def uri_params():
+        data = raml.get("uriParameters", {})
+        return _create_base_param_obj(data, URIParameter)
+
+    def media_type():
+        return raml.get("mediaType")
+
     def docs():
         d = raml.get('documentation', [])
         assert isinstance(d, list), "Error parsing documentation"
         docs = [Documentation(i.get('title'), i.get('content')) for i in d]
         return docs or None
 
-    def base_uri_params():
-        base_uri_params = raml.get('baseUriParameters', {})
-        uri_params = []
-        for k, v in list(base_uri_params.items()):
-            uri_params.append(
-                URIParameter(
-                    name=k,
-                    raw=v,
-                    description=v.get('description'),
-                    default=v.get('default'),
-                    display_name=v.get('displayName', k),
-                    min_length=v.get("minLength"),
-                    max_length=v.get("maxLength"),
-                    minimum=v.get("minimum"),
-                    maximum=v.get("maximum"),
-                    example=v.get("example"),
-                    repeat=v.get("repeat", False),
-                    pattern=v.get("pattern"),
-                    param_type=v.get("type", "string")
-                )
-            )
-        return uri_params or None
-
-    def uri_params():
-        uri_params = raml.get('uriParameters', {})
-        params = []
-        for k, v in list(uri_params.items()):
-            params.append(
-                URIParameter(
-                    name=k,
-                    raw=v,
-                    description=v.get('description'),
-                    default=v.get('default'),
-                    display_name=v.get('displayName', k),
-                    min_length=v.get('minLength'),
-                    max_length=v.get("maxLength"),
-                    minimum=v.get("minimum"),
-                    maximum=v.get("maximum"),
-                    example=v.get("example"),
-                    param_type=v.get("type", "string")
-                )
-            )
-        return params or None
-
-    def title():
-        return raml.get('title')
-
-    def version():
-        return raml.get('version')
-
     def schemas():
-        return raml.get('schemas')
-
-    def media_type():
-        return raml.get('mediaType')
+        return raml.get("schemas")
 
     raml = loaded_raml_file.data
     root = RootNode(
         raml_obj=loaded_raml_file,
         raw=raml,
+        title=title(),
         version=version(),
+        protocols=protocols(),
         base_uri=base_uri(),
         base_uri_params=base_uri_params(),
         uri_params=uri_params(),
-        protocols=protocols(),
-        title=title(),
+        media_type=media_type(),
         docs=docs(),
         schemas=schemas(),
-        media_type=media_type(),
         raml_file=loaded_raml_file.raml_file
     )
     return root
@@ -132,148 +134,6 @@ def create_traits(raml_data, root):
     :ret: list of ``Trait`` objects
     :rtype: list
     """
-    def query_params():
-        query_params = data.get("queryParameters", {})
-        param_objs = []
-        for key, value in iteritems(query_params):
-            param = QueryParameter(
-                name=key,
-                raw=value,
-                description=value.get("description"),
-                display_name=value.get("displayName", name),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                required=value.get("required", False),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern"),
-                param_type=value.get("type", "string")
-            )
-            param_objs.append(param)
-        return param_objs or None
-
-    def uri_params():
-        uri_params = data.get('uriParameters', {})
-        param_objs = []
-        for key, value in iteritems(uri_params):
-            param = URIParameter(
-                name=key,
-                raw=value,
-                description=value.get('description'),
-                display_name=value.get('displayName', name),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                param_type=value.get('type', 'string'),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern")
-            )
-            param_objs.append(param)
-        return param_objs or None
-
-    def form_params():
-        form_params = data.get("formParameters", {})
-        param_objs = []
-        for key, value in iteritems(form_params):
-            param = FormParameter(
-                name=key,
-                raw=value,
-                description=value.get("description"),
-                display_name=value.get("displayName", name),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                default=value.get('default'),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                required=value.get("required", False),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern"),
-                param_type=value.get("type", "string")
-            )
-            param_objs.append(param)
-        return param_objs or None
-
-    def base_uri_params():
-        params = data.get('baseUriParameters', {})
-        param_objs = []
-        for key, value in iteritems(params):
-            param = URIParameter(
-                name=key,
-                raw=value,
-                description=value.get("description"),
-                display_name=value.get("displayName", name),
-                min_length=value.get("minLength"),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                param_type=value.get("type", "string"),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern")
-            )
-            param_objs.append(param)
-        return param_objs
-
-    def headers(headers):
-        header_objs = []
-        for key, value in iteritems(headers):
-            header = Header(
-                name=key,
-                display_name=value.get('displayName', key),
-                raw=value,
-                param_type=value.get('type', 'string'),
-                description=value.get('description'),
-                example=value.get('example'),
-                default=value.get('default'),
-                required=value.get('required', False),
-                min_length=value.get("minLength"),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern")
-            )
-            header_objs.append(header)
-        return header_objs or None
-
-    def body(body):
-        body_objs = []
-        for key, value in iteritems(body):
-            body = Body(
-                mime_type=key,
-                raw=value,
-                schema=value.get("schema"),
-                example=value.get("example"),
-                form_params=value.get("formParameters")
-            )
-            body_objs.append(body)
-        return body_objs or None
-
-    def responses():
-        resp_objs = []
-        for key, value in iteritems(data.get('responses', {})):
-            response = Response(
-                code=key,
-                raw=value,
-                description=value.get("description"),
-                headers=headers(value.get('headers', {})),
-                body=body(value.get('body', {}))
-            )
-            resp_objs.append(response)
-        return resp_objs or None
-
     def description():
         return data.get("description")
 
@@ -286,30 +146,78 @@ def create_traits(raml_data, root):
     def protocols():
         return data.get("protocols")
 
-    def wrap(key, raw_data):
+    def query_params():
+        params = data.get("queryParameters", {})
+        return _create_base_param_obj(params, QueryParameter)
+
+    def uri_params():
+        params = data.get("uriParameters", {})
+        return _create_base_param_obj(params, URIParameter)
+
+    def form_params():
+        params = data.get("formParameters", {})
+        return _create_base_param_obj(params, FormParameter)
+
+    def base_uri_params():
+        params = data.get("baseUriParameters", {})
+        return _create_base_param_obj(params, URIParameter)
+
+    def headers(data):
+        headers_ = data.get("headers", {})
+        return _create_base_param_obj(headers_, Header)
+
+    def body(data):
+        body = data.get("body", {})
+        body_objects = []
+        for key, value in iteritems(body):
+            body = Body(
+                mime_type=key,
+                raw=value,
+                schema=value.get("schema"),
+                example=value.get("example"),
+                form_params=value.get("formParameters")
+            )
+            body_objects.append(body)
+        return body_objects or None
+
+    def responses():
+        response_objects = []
+        for key, value in iteritems(data.get("responses", {})):
+            response = Response(
+                code=key,
+                raw=value,
+                description=value.get("description"),
+                headers=headers(value),
+                body=body(value)
+            )
+            response_objects.append(response)
+        return response_objects or None
+
+    def wrap(key, data):
         return TraitNode(
             name=key,
-            raw=raw_data,
+            raw=data,
             root=root,
             query_params=query_params(),
             uri_params=uri_params(),
             form_params=form_params(),
             base_uri_params=base_uri_params(),
-            headers=headers(data.get("headers", {})),
-            body=body(data.get("body", {})),
+            headers=headers(data),
+            body=body(data),
             responses=responses(),
             description=description(),
             media_type=media_type(),
             usage=usage(),
-            protocols=protocols())
+            protocols=protocols()
+        )
 
-    traits = raml_data.get('traits', [])
-    trait_objs = []
+    traits = raml_data.get("traits", [])
+    trait_objects = []
     for trait in traits:
         name = trait.keys()[0]
         data = trait.values()[0]
-        trait_objs.append(wrap(name, data))
-    return trait_objs or None
+        trait_objects.append(wrap(name, data))
+    return trait_objects or None
 
 
 def create_resource_types(raml_data, root):
@@ -352,7 +260,7 @@ def create_resource_types(raml_data, root):
         return union
 
     def get_inherited_resource(res_name):
-        for resource in res_types:
+        for resource in resource_types:
             if res_name == resource.keys()[0]:
                 return resource
 
@@ -372,7 +280,7 @@ def create_resource_types(raml_data, root):
                         headers=headers(data_union.get('headers', {})),
                         body=body(data_union.get('body', {})),
                         responses=responses(data_union),
-                        uri_params=uri_params(),
+                        uri_params=uri_params(data_union),
                         base_uri_params=base_uri_params(data_union),
                         query_params=query_params(data_union),
                         form_params=form_params(data_union),
@@ -395,32 +303,35 @@ def create_resource_types(raml_data, root):
     def display_name(data, name):
         return data.get('displayName', name)
 
-    def headers(items):
-        header_objs = []
-        for key, value in iteritems(items):
-            header = Header(
-                name=key,
-                display_name=value.get('displayName', key),
-                method=method(i),
-                raw=value,
-                param_type=value.get('type', 'string'),
-                description=value.get('description'),
-                example=value.get('example'),
-                default=value.get('default'),
-                required=value.get('required', False),
-                min_length=value.get("minLength"),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern")
-            )
-            header_objs.append(header)
-        return header_objs or None
+    def headers(data):
+        _headers = data.get("headers", {})
+        if v.get("type"):
+            inherited = get_inherited_resource(v.get("type")).get(v.get("type"))
+            inherited_res_level_params = inherited.get("headers", {})
+            inherited_meth_level_params = inherited.get(meth, {}).get("headers", {})
+            _headers = dict(_headers.items() +
+                            inherited_res_level_params.items() +
+                            inherited_meth_level_params.items())
 
-    def body(items):
-        body_objs = []
-        for key, value in iteritems(items):
+        header_objs = _create_base_param_obj(_headers, Header)
+        if header_objs:
+            for h in header_objs:
+                h.method = method(meth)
+
+        return header_objs
+
+    def body(data):
+        _body = data.get("body", {})
+        # if v.get("type"):
+        #     inherited = get_inherited_resource(v.get("type")).get(v.get("type"))
+        #     inherited_res_level_params = inherited.get("body", {})
+        #     inherited_meth_level_params = inherited.get(meth, {}).get("body", {})
+        #     _body = dict(_body.items() +
+        #                  inherited_res_level_params.items() +
+        #                  inherited_meth_level_params.items())
+        # updated_data = {"body": _body}
+        body_objects = []
+        for key, value in iteritems(_body):
             body = Body(
                 mime_type=key,
                 raw=value,
@@ -428,132 +339,65 @@ def create_resource_types(raml_data, root):
                 example=value.get("example"),
                 form_params=value.get("formParameters")
             )
-            body_objs.append(body)
-        return body_objs or None
+            body_objects.append(body)
+        return body_objects or None
 
-    def responses(resp_data):
-        responses = resp_data.get('responses', {})
-        resp_objs = []
-        for key, value in iteritems(responses):
+    def responses(data):
+        response_objects = []
+        for key, value in iteritems(data.get("responses", {})):
             response = Response(
                 code=key,
                 raw=value,
-                method=method(i),
                 description=value.get("description"),
-                headers=headers(value.get('headers', {})),
-                body=body(value.get('body', {}))
+                headers=headers(value),
+                body=body(value)
             )
-            resp_objs.append(response)
-        return resp_objs or None
+            response_objects.append(response)
+        if response_objects:
+            for r in response_objects:
+                r.method = method(meth)
 
-    def uri_params():
-        uri_params = v.get('uriParameters', {})
+        return response_objects or None
+
+    def uri_params(data):
+        uri_params = dict(data.get("uriParameters", {}).items() +
+                          v.get("uriParameters", {}).items())
+
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
-            inherited_params = inherited.values()[0].get("uriParameters", {})
-            uri_params = dict(uri_params.items() + inherited_params.items())
-        param_objs = []
-        for key, value in iteritems(uri_params):
-            param = URIParameter(
-                name=key,
-                raw=value,
-                description=value.get('description'),
-                display_name=value.get('displayName', k),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                param_type=value.get('type', 'string'),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern")
-            )
-            param_objs.append(param)
-        return param_objs or None
+            inherited_params = inherited.get(v.get("type")).get("uriParameters", {})
+            uri_params = dict(uri_params.items() +
+                              inherited_params.items())
+        return _create_base_param_obj(uri_params, URIParameter)
 
     def base_uri_params(data):
-        res_level = v.get('baseUriParameters', {})
+        resource_level = data.get("baseUriParameters", {})
         method_level = data.get("baseUriParameters", {})
-        uri_params = dict(res_level.items() + method_level.items())
-        param_objs = []
-        for key, value in iteritems(uri_params):
-            param = URIParameter(
-                name=key,
-                raw=value,
-                description=value.get("description"),
-                display_name=value.get("displayName", k),
-                min_length=value.get("minLength"),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                param_type=value.get("type", "string"),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern")
-            )
-            param_objs.append(param)
-        return param_objs or None
+        uri_params = dict(resource_level.items() + method_level.items())
 
-    def query_params(item):
-        query_params = item.get("queryParameters", {})
+        return _create_base_param_obj(uri_params, URIParameter)
+
+    def query_params(data):
+        query_params = data.get("queryParameters", {})
+
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
             inherited_params = inherited.values()[0].get("queryParameters", {})
             query_params = dict(query_params.items() +
                                 inherited_params.items())
-        param_objs = []
-        for key, value in iteritems(query_params):
-            param = QueryParameter(
-                name=key,
-                raw=value,
-                description=value.get("description"),
-                display_name=value.get("displayName", k),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                required=value.get("required", False),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern"),
-                param_type=value.get("type", "string")
 
-            )
-            param_objs.append(param)
-        return param_objs or None
+        return _create_base_param_obj(query_params, QueryParameter)
 
     def form_params(data):
         form_params = data.get("formParameters", {})
+
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
             inherited_params = inherited.values()[0].get("formParameters", {})
-            form_params = dict(form_params.items() + inherited_params.items())
-        param_objs = []
-        for key, value in iteritems(form_params):
-            param = FormParameter(
-                name=key,
-                raw=value,
-                description=value.get("description"),
-                display_name=value.get("displayName", k),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                default=value.get('default'),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                required=value.get("required", False),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern")
-            )
-            param_objs.append(param)
-        return param_objs or None
+            form_params = dict(form_params.items() +
+                               inherited_params.items())
+
+        return _create_base_param_obj(form_params, FormParameter)
 
     def media_type():
         return v.get('mediaType')
@@ -573,13 +417,12 @@ def create_resource_types(raml_data, root):
         return v.get('usage')
 
     def optional():
-        return "?" in i
+        return "?" in meth
 
     def protocols(data):
-        method_level = data.get(method(i), {})
-        if method_level:
-            return method_level.get("protocols")
-        return data.get("protocols")
+        if data.get("protocols"):
+            return data.get("protocols")
+        return v.get("protocols")
 
     def is_(data):
         resource_level = v.get("is", [])
@@ -603,10 +446,10 @@ def create_resource_types(raml_data, root):
                     name=assigned_trait.keys()[0],
                     raw=raw_data,
                     root=root,
-                    headers=headers(raw_data.get('headers', {})),
-                    body=body(raw_data.get('body', {})),
+                    headers=headers(raw_data),
+                    body=body(raw_data),
                     responses=responses(raw_data),
-                    uri_params=uri_params(),
+                    uri_params=uri_params(raw_data),
                     base_uri_params=base_uri_params(raw_data),
                     query_params=query_params(raw_data),
                     form_params=form_params(raw_data),
@@ -649,50 +492,48 @@ def create_resource_types(raml_data, root):
             return secured_objs
         return None
 
-    def wrap(key, raw_data, i):
-        r = ResourceTypeNode(
+    def wrap(key, data, meth, v):
+        resource_type = ResourceTypeNode(
             name=key,
-            raw=raw_data,
+            raw=data,
             root=root,
-            headers=headers(raw_data.get('headers', {})),
-            body=body(raw_data.get('body', {})),
-            responses=responses(raw_data),
-            uri_params=uri_params(),
-            base_uri_params=base_uri_params(raw_data),
-            query_params=query_params(raw_data),
-            form_params=form_params(raw_data),
+            headers=headers(data),
+            body=body(data),
+            responses=responses(data),
+            uri_params=uri_params(data),
+            base_uri_params=base_uri_params(data),
+            query_params=query_params(data),
+            form_params=form_params(data),
             media_type=media_type(),
             description=description(),
             type=type_(),
-            method=method(i),
+            method=method(meth),
             usage=usage(),
             optional=optional(),
-            is_=is_(raw_data),
-            traits=traits(raw_data),
-            secured_by=secured_by(raw_data),
-            security_schemes=security_schemes(raw_data),
-            display_name=display_name(raw_data, key),
-            protocols=protocols(v)
+            is_=is_(data),
+            traits=traits(data),
+            secured_by=secured_by(data),
+            security_schemes=security_schemes(data),
+            display_name=display_name(data, key),
+            protocols=protocols(data)
         )
-        return r
+        return resource_type
 
-    res_types = raml_data.get('resourceTypes', [])
-    res_type_objs = []
+    resource_types = raml_data.get("resourceTypes", [])
+    resource_type_objects = []
 
-    for res in res_types:
+    for res in resource_types:
         for k, v in iteritems(res):
-            if 'type' in iterkeys(v):
-                r = get_inherited_type(root, res,
-                                       v.get('type'),
-                                       raml_data)
-                res_type_objs.extend(r)
+            if "type" in iterkeys(v):
+                r = get_inherited_type(root, res, v.get("type"), raml_data)
+                resource_type_objects.extend(r)
             else:
-                for i in iterkeys(v):
-                    if i in accepted_methods:
-                        data = v.get(i, {})
-                        r = wrap(k, data, i)
-                        res_type_objs.append(r)
-    return res_type_objs or None
+                for meth in iterkeys(v):
+                    if meth in accepted_methods:
+                        method_data = v.get(meth, {})
+                        resource = wrap(k, method_data, meth, v)
+                        resource_type_objects.append(resource)
+    return resource_type_objects or None
 
 
 def create_resources(node, resources, root, parent):
@@ -784,6 +625,16 @@ def create_node(name, raw_data, method, parent, api):
                 return trait_objs
         return []
 
+    def get_property_levels(property):
+        method_level = get_method(property)
+        resource_level = get_resource(property)
+        return dict(method_level.items() + resource_level.items())
+
+    def get_inherited_properties(property):
+        type_objects = get_resource_type(property)
+        trait_objects = get_trait(property)
+        return type_objects + trait_objects
+
     #####
     # Node attribute functions
     #####
@@ -820,47 +671,19 @@ def create_node(name, raw_data, method, parent, api):
 
     def headers():
         """Set resource's supported headers."""
-        m_headers = get_method('headers')
-        r_headers = get_resource('headers')
-        type_headers = get_resource_type('headers')
-        trait_headers = get_trait('headers')
+        headers = get_property_levels("headers")
+        header_objs = get_inherited_properties("headers")
 
-        headers = dict(m_headers.items() +
-                       r_headers.items())
-
-        header_objs = type_headers + trait_headers
-
-        for k, v in iteritems(headers):
-            header = Header(
-                name=k,
-                display_name=v.get('displayName', k),
-                method=method,
-                raw={k: v},
-                param_type=v.get('type', 'string'),
-                description=v.get('description'),
-                example=v.get('example'),
-                default=v.get('default'),
-                min_length=v.get("minLength"),
-                max_length=v.get("maxLength"),
-                minimum=v.get("minimum"),
-                maximum=v.get("maximum"),
-                enum=v.get("enum"),
-                repeat=v.get("repeat", False),
-                pattern=v.get("pattern")
-            )
-            header_objs.append(header)
+        _headers = _create_base_param_obj(headers, Header)
+        if _headers:
+            header_objs.extend(_headers)
 
         return header_objs or None
 
     def body():
         """Set resource's supported request/response body."""
-        m_body = get_method('body')
-        r_body = get_resource('body')
-        type_body = get_resource_type('body')
-        trait_body = get_trait('body')
-
-        bodies = dict(m_body.items() + r_body.items())
-        body_objs = type_body + trait_body
+        bodies = get_property_levels("body")
+        body_objects = get_inherited_properties("body")
         for k, v in iteritems(bodies):
             if v is None:
                 continue
@@ -871,9 +694,9 @@ def create_node(name, raw_data, method, parent, api):
                 example=v.get('example'),
                 form_params=v.get('formParameters')
             )
-            body_objs.append(body)
+            body_objects.append(body)
 
-        return body_objs or None
+        return body_objects or None
 
     def responses():
         """Set resource's expected responses."""
@@ -916,12 +739,9 @@ def create_node(name, raw_data, method, parent, api):
                 body_objs.append(body)
             return body_objs or None
 
-        m_resp = get_method('responses')
-        r_resp = get_resource('responses')
+        resps = get_property_levels("responses")
         type_resp = get_resource_type('responses')
         trait_resp = get_trait('responses')
-
-        resps = dict(m_resp.items() + r_resp.items())
 
         resp_objs = type_resp + trait_resp
         for k, v in iteritems(resps):
@@ -939,116 +759,42 @@ def create_node(name, raw_data, method, parent, api):
 
     def uri_params():
         """Set resource's URI parameters."""
-        m_params = get_method("uriParameters")
-        r_params = get_resource("uriParameters")
-        type_params = get_resource_type("uri_params")
-        trait_params = get_trait("uri_params")
+        uri_params = get_property_levels("uriParameters")
+        param_objs = get_inherited_properties("uri_params")
 
-        uri_params = dict(m_params.items() +
-                          r_params.items())
-        param_objs = trait_params + type_params
-        for key, value in iteritems(uri_params):
-            param = URIParameter(
-                name=key,
-                raw=value,
-                description=value.get('description'),
-                display_name=value.get('displayName', key),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                param_type=value.get('type', 'string'),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example")
-            )
-            param_objs.append(param)
+        params = _create_base_param_obj(uri_params, URIParameter)
+        if params:
+            param_objs.extend(params)
         return param_objs or None
 
     def base_uri_params():
         """Set resource's base URI parameters."""
-        m_params = get_method("baseUriParameters")
-        r_params = get_resource("baseUriParameters")
-        type_params = get_resource_type("base_uri_params")
-        trait_params = get_trait("base_uri_params")
+        uri_params = get_property_levels("baseUriParameters")
+        param_objs = get_inherited_properties("base_uri_params")
 
-        uri_params = dict(m_params.items() +
-                          r_params.items())
-        param_objs = trait_params + type_params
-        for key, value in iteritems(uri_params):
-            param = URIParameter(
-                name=key,
-                raw=value,
-                description=value.get('description'),
-                display_name=value.get('displayName', key),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                param_type=value.get('type', 'string'),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern"),
-            )
-            param_objs.append(param)
+        params = _create_base_param_obj(uri_params, URIParameter)
+        if params:
+            param_objs.extend(params)
         return param_objs or None
 
     def query_params():
         """Set resource's query parameters."""
-        m_params = get_method("queryParameters")
-        r_params = get_resource("queryParameters")
-        type_params = get_resource_type("query_params")
-        trait_params = get_trait("query_params")
+        query_params = get_property_levels("queryParameters")
+        param_objs = get_inherited_properties("query_params")
 
-        query_params = dict(m_params.items() + r_params.items())
-        param_objs = type_params + trait_params
-        for key, value in iteritems(query_params):
-            param = QueryParameter(
-                name=key,
-                raw=value,
-                description=value.get("description"),
-                display_name=value.get("displayName", key),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                default=value.get("default"),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                required=value.get("required", False)
-            )
-            param_objs.append(param)
+        params = _create_base_param_obj(query_params, QueryParameter)
+        if params:
+            param_objs.extend(params)
         return param_objs or None
 
     def form_params():
         """Set resource's form parameters."""
-        m_params = get_method("formParameters")
-        r_params = get_resource("formParameters")
-        type_params = get_resource_type("form_params")
-        trait_params = get_trait("form_params")
+        form_params = get_property_levels("formParameters")
+        param_objs = get_inherited_properties("form_params")
 
-        form_params = dict(m_params.items() + r_params.items())
-        param_objs = type_params + trait_params
-        for key, value in iteritems(form_params):
-            param = FormParameter(
-                name=key,
-                raw=value,
-                description=value.get("description"),
-                display_name=value.get("displayName", key),
-                min_length=value.get('minLength'),
-                max_length=value.get("maxLength"),
-                minimum=value.get("minimum"),
-                maximum=value.get("maximum"),
-                default=value.get('default'),
-                enum=value.get("enum"),
-                example=value.get("example"),
-                required=value.get("required", False),
-                repeat=value.get("repeat", False),
-                pattern=value.get("pattern"),
-            )
-            param_objs.append(param)
+        params = _create_base_param_obj(form_params, FormParameter)
+        if params:
+            param_objs.extend(params)
         return param_objs or None
 
     def media_type():
@@ -1103,6 +849,12 @@ def create_node(name, raw_data, method, parent, api):
             if type_obj:
                 return type_obj[0]
 
+    def get_scheme(item):
+        schemes = api.raw.get('securitySchemes', [])
+        for s in schemes:
+            if item == s.keys()[0]:
+                return s
+
     def secured_by():
         """
         Set resource's assigned security scheme names and related paramters.
@@ -1111,7 +863,24 @@ def create_node(name, raw_data, method, parent, api):
 
     def security_schemes():
         """Set resource's assigned security scheme objects."""
-        pass
+        secured = secured_by()
+        if secured:
+            secured_objs = []
+            for item in secured:
+                assigned_scheme = get_scheme(item)
+                if assigned_scheme:
+                    raw_data = assigned_scheme.values()[0]
+                    scheme = SecurityScheme(
+                        name=assigned_scheme.keys()[0],
+                        raw=raw_data,
+                        type=raw_data.get('type'),
+                        described_by=raw_data.get("describedBy"),
+                        description=raw_data.get("description"),
+                        settings=raw_data.get("settings")
+                    )
+                    secured_objs.append(scheme)
+            return secured_objs
+        return None
 
     node = ResourceNode(
         name=name,
