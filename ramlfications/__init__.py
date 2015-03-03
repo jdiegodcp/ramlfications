@@ -35,7 +35,7 @@ def parse(raml_file, production=True):
         `specification <http://raml.org/spec.html>`_.
     """
     loader = RAMLLoader().load(raml_file)
-    return parse_raml(loader, production)
+    return parse_raml(loader)
 
 
 def load(raml_file):
@@ -71,6 +71,6 @@ def validate(raml_file, production=True):
     os.environ['RAML_VALIDATE'] = '1'
     loader = RAMLLoader().load(raml_file)
     try:
-        parse_raml(loader, production)
+        parse_raml(loader)
     finally:
         os.environ.pop('RAML_VALIDATE')

@@ -8,7 +8,7 @@ import click
 
 from .loader import RAMLLoader
 from .tree import ttree
-from .validate import InvalidRamlFileError
+from .errors import InvalidRAMLError
 from ramlfications import validate as vvalidate
 
 
@@ -27,7 +27,7 @@ def validate(ramlfile):
         click.secho("Success! Valid RAML file: {0}".format(ramlfile),
                     fg="green")
 
-    except InvalidRamlFileError as e:
+    except InvalidRAMLError as e:
         msg = "Error validating file {0}: {1}".format(ramlfile, e)
         click.secho(msg, fg="red", err=True)
         raise SystemExit(1)
@@ -49,7 +49,7 @@ def tree(ramlfile, color, output, verbose, validate):
     try:
         load_obj = RAMLLoader().load(ramlfile)
         ttree(load_obj, color, output, verbose, validate)
-    except InvalidRamlFileError as e:
+    except InvalidRAMLError as e:
         msg = '"{0}" is not a valid RAML file: {1}'.format(
             click.format_filename(load_obj.raml_file), e)
         click.secho(msg, fg="red", err=True)

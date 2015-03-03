@@ -41,12 +41,12 @@ def _get_node_level(node, count):
 def _get_tree(api):
     resources = OrderedDict()
     for r in api.resources:
-        resources[r] = (r.method.upper(), r)
+        if r.method is not None:
+            key = r.method.upper() + " " + r.path
+        else:
+            key = r.path
+        resources[key] = r
 
-    return resources
-
-
-def _order_resources(resources):
     return resources
 
 
@@ -91,15 +91,18 @@ def _params(space, node, color, desc):
                 desc = ": " + p.display_name
             else:
                 desc = ''
-            _print_line(space + '      ⌙ ',  p.name + desc, color, 4)  # NOQA
+            _print_line(space + '      ⌙ ', p.name + desc, color, 4)
 
 
-def _print_verbosity(ordered_resources, color, verbosity):
-    for r in ordered_resources:
+def _print_verbosity(resources, color, verbosity):
+    for r in resources.values():
         space = _create_space(r)
         _print_line(space, "- " + r.path, color, 2)
         if verbosity > 0:
-            _print_line(space, "  ⌙ " + r.method.upper(), color, 3)
+            if r.method:
+                _print_line(space, "  ⌙ " + r.method.upper(), color, 3)
+            else:
+                continue
             if verbosity > 1:
                 desc = verbosity == 3
                 _params(space, r, color, desc)
@@ -132,13 +135,12 @@ def ttree(load_obj, color, output, verbosity, validate):  # pragma: no cover
     :raises InvalidRamlFileError: If error occured trying to validate the RAML
         file (see ``validate.py``)
     """
-    api = parse_raml(load_obj, production=validate)
+    api = parse_raml(load_obj)
     resources = _get_tree(api)
-    ordered_resources = _order_resources(resources)
 
     if output:
         sys.stdout = output  # file is opened via @click from __main__.py
-        _print_tree(api, ordered_resources, color, verbosity)
+        _print_tree(api, resources, color, verbosity)
         output.close()
     else:
-        _print_tree(api, ordered_resources, color, verbosity)
+        _print_tree(api, resources, color, verbosity)
