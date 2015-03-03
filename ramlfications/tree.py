@@ -4,13 +4,13 @@
 
 from __future__ import absolute_import, division, print_function
 
-
 try:
     from collections import OrderedDict
 except ImportError:  # pragma: no cover
     from ordereddict import OrderedDict  # pragma: no cover
 
 import sys
+from six import iteritems, itervalues
 
 from termcolor import colored
 
@@ -84,7 +84,7 @@ def _return_param_type(node):
 
 def _params(space, node, color, desc):
     params = _return_param_type(node)
-    for k, v in list(params.items()):
+    for k, v in list(iteritems(params)):
         _print_line(space + '     ', k, color, 4)
         for p in v:
             if desc:
@@ -95,7 +95,7 @@ def _params(space, node, color, desc):
 
 
 def _print_verbosity(resources, color, verbosity):
-    for r in resources.values():
+    for r in list(itervalues(resources)):
         space = _create_space(r)
         _print_line(space, "- " + r.path, color, 2)
         if verbosity > 0:

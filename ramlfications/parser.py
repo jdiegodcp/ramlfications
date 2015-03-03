@@ -3,11 +3,11 @@
 # Copyright (c) 2014 Spotify AB
 
 from __future__ import absolute_import, division, print_function
-
 import re
 
+from six import iteritems, iterkeys, itervalues
+
 import attr
-from six import iteritems, iterkeys
 
 
 from .base_config import config
@@ -33,7 +33,7 @@ def parse_raml(loaded_raml_file):
 def _create_base_param_obj(property_data, param_obj):
     objects = []
 
-    for key, value in iteritems(property_data):
+    for key, value in list(iteritems(property_data)):
         if param_obj is URIParameter:
             required = value.get("required", True)
         else:
@@ -169,7 +169,7 @@ def create_traits(raml_data, root):
     def body(data):
         body = data.get("body", {})
         body_objects = []
-        for key, value in iteritems(body):
+        for key, value in list(iteritems(body)):
             body = Body(
                 mime_type=key,
                 raw=value,
@@ -182,7 +182,7 @@ def create_traits(raml_data, root):
 
     def responses():
         response_objects = []
-        for key, value in iteritems(data.get("responses", {})):
+        for key, value in list(iteritems(data.get("responses", {}))):
             response = Response(
                 code=key,
                 raw=value,
@@ -214,8 +214,8 @@ def create_traits(raml_data, root):
     traits = raml_data.get("traits", [])
     trait_objects = []
     for trait in traits:
-        name = trait.keys()[0]
-        data = trait.values()[0]
+        name = list(iterkeys(trait))[0]
+        data = list(itervalues(trait))[0]
         trait_objects.append(wrap(name, data))
     return trait_objects or None
 
@@ -244,34 +244,34 @@ def create_resource_types(raml_data, root):
 
     def get_union(resource, method, inherited):
         union = {}
-        for key, value in iteritems(inherited):
+        for key, value in list(iteritems(inherited)):
             if resource.get(method) is not None:
-                if key not in resource.get(method, {}).keys():
+                if key not in list(iterkeys(resource.get(method, {}))):
                     union[key] = value
                 else:
                     resource_values = resource.get(method, {}).get(key)
                     inherited_values = inherited.get(key, {})
-                    union[key] = dict(resource_values.items() +
-                                      inherited_values.items())
+                    union[key] = dict(list(iteritems(resource_values)) +
+                                      list(iteritems(inherited_values)))
         if resource.get(method) is not None:
-            for key, value in iteritems(resource.get(method, {})):
-                if key not in inherited.keys():
+            for key, value in list(iteritems(resource.get(method, {}))):
+                if key not in list(iterkeys(inherited)):
                     union[key] = value
         return union
 
     def get_inherited_resource(res_name):
         for resource in resource_types:
-            if res_name == resource.keys()[0]:
+            if res_name == list(iterkeys(resource))[0]:
                 return resource
 
     def get_inherited_type(root, resource, type, raml):
         inherited = get_inherited_resource(type)
         res_type_objs = []
-        for key, value in iteritems(resource):
-            for i in iterkeys(value):
+        for key, value in list(iteritems(resource)):
+            for i in list(iterkeys(value)):
                 if i in accepted_methods:
                     data_union = get_union(value, i,
-                                           inherited.values()[0].get(i, {}))
+                                           list(itervalues(inherited))[0].get(i, {}))
                     # res = wrap(key, data_union, i)
                     res = ResourceTypeNode(
                         name=key,
@@ -309,9 +309,9 @@ def create_resource_types(raml_data, root):
             inherited = get_inherited_resource(v.get("type")).get(v.get("type"))
             inherited_res_level_params = inherited.get("headers", {})
             inherited_meth_level_params = inherited.get(meth, {}).get("headers", {})
-            _headers = dict(_headers.items() +
-                            inherited_res_level_params.items() +
-                            inherited_meth_level_params.items())
+            _headers = dict(list(iteritems(_headers)) +
+                            list(iteritems(inherited_res_level_params)) +
+                            list(iteritems(inherited_meth_level_params)))
 
         header_objs = _create_base_param_obj(_headers, Header)
         if header_objs:
@@ -326,12 +326,12 @@ def create_resource_types(raml_data, root):
         #     inherited = get_inherited_resource(v.get("type")).get(v.get("type"))
         #     inherited_res_level_params = inherited.get("body", {})
         #     inherited_meth_level_params = inherited.get(meth, {}).get("body", {})
-        #     _body = dict(_body.items() +
-        #                  inherited_res_level_params.items() +
-        #                  inherited_meth_level_params.items())
+        #     _body = dict(list(iteritems(_body)) +
+        #                  list(iteritems(inherited_res_level_params)) +
+        #                  list(iteritems(inherited_meth_level_params)))
         # updated_data = {"body": _body}
         body_objects = []
-        for key, value in iteritems(_body):
+        for key, value in list(iteritems(_body)):
             body = Body(
                 mime_type=key,
                 raw=value,
@@ -344,7 +344,7 @@ def create_resource_types(raml_data, root):
 
     def responses(data):
         response_objects = []
-        for key, value in iteritems(data.get("responses", {})):
+        for key, value in list(iteritems(data.get("responses", {}))):
             _headers = data.get("responses", {}).get(key, {}).get("headers", {})
             header_objs = _create_base_param_obj(_headers, Header)
             if header_objs:
@@ -365,20 +365,20 @@ def create_resource_types(raml_data, root):
         return response_objects or None
 
     def uri_params(data):
-        uri_params = dict(data.get("uriParameters", {}).items() +
-                          v.get("uriParameters", {}).items())
+        uri_params = dict(list(iteritems(data.get("uriParameters", {}))) +
+                          list(iteritems(v.get("uriParameters", {}))))
 
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
             inherited_params = inherited.get(v.get("type")).get("uriParameters", {})
-            uri_params = dict(uri_params.items() +
-                              inherited_params.items())
+            uri_params = dict(list(iteritems(uri_params)) +
+                              list(iteritems(inherited_params)))
         return _create_base_param_obj(uri_params, URIParameter)
 
     def base_uri_params(data):
         resource_level = data.get("baseUriParameters", {})
         method_level = data.get("baseUriParameters", {})
-        uri_params = dict(resource_level.items() + method_level.items())
+        uri_params = dict(list(iteritems(resource_level)) + list(iteritems(method_level)))
 
         return _create_base_param_obj(uri_params, URIParameter)
 
@@ -387,9 +387,9 @@ def create_resource_types(raml_data, root):
 
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
-            inherited_params = inherited.values()[0].get("queryParameters", {})
-            query_params = dict(query_params.items() +
-                                inherited_params.items())
+            inherited_params = list(itervalues(inherited))[0].get("queryParameters", {})
+            query_params = dict(list(iteritems(query_params)) +
+                                list(iteritems(inherited_params)))
 
         return _create_base_param_obj(query_params, QueryParameter)
 
@@ -398,9 +398,9 @@ def create_resource_types(raml_data, root):
 
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
-            inherited_params = inherited.values()[0].get("formParameters", {})
-            form_params = dict(form_params.items() +
-                               inherited_params.items())
+            inherited_params = list(itervalues(inherited))[0].get("formParameters", {})
+            form_params = dict(list(iteritems(form_params)) +
+                               list(iteritems(inherited_params)))
 
         return _create_base_param_obj(form_params, FormParameter)
 
@@ -437,7 +437,7 @@ def create_resource_types(raml_data, root):
     def get_trait(item):
         traits = raml_data.get('traits', [])
         for t in traits:
-            if item == t.keys()[0]:
+            if item == list(iterkeys(t))[0]:
                 return t
 
     def traits(data):
@@ -446,9 +446,9 @@ def create_resource_types(raml_data, root):
             trait_objs = []
             for item in assigned:
                 assigned_trait = get_trait(item)
-                raw_data = assigned_trait.values()[0]
+                raw_data = list(itervalues(assigned_trait))[0]
                 trait = TraitNode(
-                    name=assigned_trait.keys()[0],
+                    name=list(iterkeys(assigned_trait))[0],
                     raw=raw_data,
                     root=root,
                     headers=headers(raw_data),
@@ -475,7 +475,7 @@ def create_resource_types(raml_data, root):
     def get_scheme(item):
         schemes = raml_data.get('securitySchemes', [])
         for s in schemes:
-            if item == s.keys()[0]:
+            if item == list(iterkeys(s))[0]:
                 return s
 
     def security_schemes(data):
@@ -484,9 +484,9 @@ def create_resource_types(raml_data, root):
             secured_objs = []
             for item in secured:
                 assigned_scheme = get_scheme(item)
-                raw_data = assigned_scheme.values()[0]
+                raw_data = list(itervalues(assigned_scheme))[0]
                 scheme = SecurityScheme(
-                    name=assigned_scheme.keys()[0],
+                    name=list(iterkeys(assigned_scheme))[0],
                     raw=raw_data,
                     type=raw_data.get('type'),
                     described_by=raw_data.get("describedBy"),
@@ -528,12 +528,12 @@ def create_resource_types(raml_data, root):
     resource_type_objects = []
 
     for res in resource_types:
-        for k, v in iteritems(res):
-            if "type" in iterkeys(v):
+        for k, v in list(iteritems(res)):
+            if "type" in list(iterkeys(v)):
                 r = get_inherited_type(root, res, v.get("type"), raml_data)
                 resource_type_objects.extend(r)
             else:
-                for meth in iterkeys(v):
+                for meth in list(iterkeys(v)):
                     if meth in accepted_methods:
                         method_data = v.get(meth, {})
                         resource = wrap(k, method_data, meth, v)
@@ -553,10 +553,10 @@ def create_resources(node, resources, root, parent):
     :ret: List of ``ResourceNode`` objects.
     :rtype: list
     """
-    for k, v in node.iteritems():
+    for k, v in list(iteritems(node)):
         if k.startswith("/"):
             avail = config.get('defaults', 'available_methods')
-            methods = [m for m in avail if m in v.keys()]
+            methods = [m for m in avail if m in list(iterkeys(v))]
             if methods:
                 for m in methods:
                     child = create_node(name=k,
@@ -633,7 +633,7 @@ def create_node(name, raw_data, method, parent, api):
     def get_property_levels(property):
         method_level = get_method(property)
         resource_level = get_resource(property)
-        return dict(method_level.items() + resource_level.items())
+        return dict(list(iteritems(method_level)) + list(iteritems(resource_level)))
 
     def get_inherited_properties(property):
         type_objects = get_resource_type(property)
@@ -689,7 +689,7 @@ def create_node(name, raw_data, method, parent, api):
         """Set resource's supported request/response body."""
         bodies = get_property_levels("body")
         body_objects = get_inherited_properties("body")
-        for k, v in iteritems(bodies):
+        for k, v in list(iteritems(bodies)):
             if v is None:
                 continue
             body = Body(
@@ -708,7 +708,7 @@ def create_node(name, raw_data, method, parent, api):
         def resp_headers(headers):
             """Set response headers."""
             header_objs = []
-            for k, v in iteritems(headers):
+            for k, v in list(iteritems(headers)):
                 header = Header(
                     name=k,
                     display_name=v.get('displayName', k),
@@ -733,7 +733,7 @@ def create_node(name, raw_data, method, parent, api):
             """Set response body."""
             body_objs = []
 
-            for k, v in iteritems(body):
+            for k, v in list(iteritems(body)):
                 body = Body(
                     mime_type=k,
                     raw={k: v},
@@ -749,7 +749,7 @@ def create_node(name, raw_data, method, parent, api):
         trait_resp = get_trait('responses')
 
         resp_objs = type_resp + trait_resp
-        for k, v in iteritems(resps):
+        for k, v in list(iteritems(resps)):
             resp = Response(
                 code=k,
                 raw={k: v},
@@ -857,7 +857,7 @@ def create_node(name, raw_data, method, parent, api):
     def get_scheme(item):
         schemes = api.raw.get('securitySchemes', [])
         for s in schemes:
-            if item == s.keys()[0]:
+            if item == list(iterkeys(s))[0]:
                 return s
 
     def secured_by():
@@ -874,9 +874,9 @@ def create_node(name, raw_data, method, parent, api):
             for item in secured:
                 assigned_scheme = get_scheme(item)
                 if assigned_scheme:
-                    raw_data = assigned_scheme.values()[0]
+                    raw_data = list(itervalues(assigned_scheme))[0]
                     scheme = SecurityScheme(
-                        name=assigned_scheme.keys()[0],
+                        name=list(iterkeys(assigned_scheme))[0],
                         raw=raw_data,
                         type=raw_data.get('type'),
                         described_by=raw_data.get("describedBy"),

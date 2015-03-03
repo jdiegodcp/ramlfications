@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import re
 import os
 
+from six import iterkeys
 
 from .base_config import config
 from .errors import *  # NOQA
@@ -144,7 +145,7 @@ def assigned_traits(inst, attr, value):
             msg = ("Trying to assign traits that are not defined"
                    "in the root of the API.")
             raise InvalidResourceNodeError(msg)
-        trait_names = [i.keys()[0] for i in traits]
+        trait_names = [list(iterkeys(i))[0] for i in traits]
         if isinstance(value, tuple([list, dict])):
             for v in value:
                 if v not in trait_names:
@@ -166,14 +167,15 @@ def assigned_traits(inst, attr, value):
 def assigned_res_type(inst, attr, value):
     if value:
         if isinstance(value, tuple([dict, list])) and len(value) > 0:
-            msg = "Too many resource types applied to '{0}'.".format(inst.path)
+            msg = "Too many resource types applied to '{0}'.".format(inst.display_name)
             raise InvalidResourceNodeError(msg)
 
         res_types = inst.root.raw.get('resourceTypes', {})
-        res_type_names = [i.keys()[0] for i in res_types]
+        res_type_names = [list(iterkeys(i))[0] for i in res_types]
+        print(res_type_names)
         if value not in res_type_names:
             msg = ("Resource Type '{0}' is assigned to '{1}' but is not "
-                   "defined in the root of the API.".format(value, inst.path))
+                   "defined in the root of the API.".format(value, inst.display_name))
             raise InvalidResourceNodeError(msg)
 
 
