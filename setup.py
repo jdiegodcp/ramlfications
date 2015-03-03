@@ -4,10 +4,11 @@
 import io
 import sys
 from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand  # NOQA
 
 
 def install_requires():
-    install_requires = ["pyyaml", "click", "markdown2", "six", "termcolor"]
+    install_requires = ["pyyaml", "click", "markdown2", "six", "termcolor", "attrs"]
     if sys.version_info[:2] == (2, 6):
         install_requires.append("ordereddict")
     return install_requires
@@ -24,6 +25,24 @@ def read(*filenames, **kwargs):
 
 long_description = read('README.rst', 'docs/changelog.rst')
 
+
+class PyTest(TestCommand):
+    user_options = [("pytest-args=", "a", "Arguments to pass to py.test")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = None
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.pytest_args or [] + ["tests"])
+        sys.exit(errno)
+
 setup(
     name="ramlfications",
     version="0.1.0",
@@ -33,7 +52,7 @@ setup(
     license="Apache License 2.0",
     author="Lynn Root",
     author_email="lynn@spotify.com",
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests"]),
     entry_points={
         'console_scripts': [
             'ramlfications = ramlfications.__main__:main'
@@ -61,7 +80,9 @@ setup(
     ],
     install_requires=install_requires(),
     tests_require=[
-        "nose",
+        "pytest",
     ],
-    test_suite="nose.collector",
+    cmdclass={
+        "test": PyTest,
+    }
 )
