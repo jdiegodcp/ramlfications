@@ -345,11 +345,16 @@ def create_resource_types(raml_data, root):
     def responses(data):
         response_objects = []
         for key, value in iteritems(data.get("responses", {})):
+            _headers = data.get("responses", {}).get(key, {}).get("headers", {})
+            header_objs = _create_base_param_obj(_headers, Header)
+            if header_objs:
+                for h in header_objs:
+                    h.method = method(meth)
             response = Response(
                 code=key,
                 raw=value,
                 description=value.get("description"),
-                headers=headers(value),
+                headers=header_objs,
                 body=body(value)
             )
             response_objects.append(response)

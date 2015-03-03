@@ -535,6 +535,8 @@ def test_resource_responses(resources):
     assert res.path == "/users/{user_id}/playlists/{playlist_id}"
     assert res.type == "item"
     assert res.responses[0] == res.resource_type.responses[0]
+    assert len(res.responses[0].headers) == 1
+    assert len(res.headers) == 2
     assert res.responses[0].headers[0].name == "X-waiting-period"
     assert res.responses[0].headers[0].type == "integer"
     assert res.responses[0].headers[0].minimum == 1
