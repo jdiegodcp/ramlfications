@@ -5,9 +5,13 @@
 from __future__ import absolute_import, division, print_function
 import re
 
-from six import iteritems, iterkeys, itervalues
+try:
+    from collections import OrderedDict
+except ImportError:  # pragma: no cover
+    from ordereddict import OrderedDict
 
 import attr
+from six import iteritems, iterkeys, itervalues
 
 
 from .base_config import config
@@ -633,7 +637,8 @@ def create_node(name, raw_data, method, parent, api):
     def get_property_levels(property):
         method_level = get_method(property)
         resource_level = get_resource(property)
-        return dict(list(iteritems(method_level)) + list(iteritems(resource_level)))
+        return OrderedDict(list(iteritems(method_level)) +
+                           list(iteritems(resource_level)))
 
     def get_inherited_properties(property):
         type_objects = get_resource_type(property)
@@ -745,15 +750,15 @@ def create_node(name, raw_data, method, parent, api):
             return body_objs or None
 
         resps = get_property_levels("responses")
-        type_resp = get_resource_type('responses')
-        trait_resp = get_trait('responses')
-
+        type_resp = get_resource_type("responses")
+        trait_resp = get_trait("responses")
         resp_objs = type_resp + trait_resp
         for k, v in list(iteritems(resps)):
+            assert k in config.get('custom', 'resp_codes'), "Response code not defined."
             resp = Response(
                 code=k,
                 raw={k: v},
-                method=v.get('method'),
+                method=method,
                 description=v.get('description'),
                 headers=resp_headers(v.get('headers', {})),
                 body=resp_body(v.get('body', {}))
@@ -857,13 +862,23 @@ def create_node(name, raw_data, method, parent, api):
     def get_scheme(item):
         schemes = api.raw.get('securitySchemes', [])
         for s in schemes:
-            if item == list(iterkeys(s))[0]:
-                return s
+            if isinstance(item, str):
+                if item == list(iterkeys(s))[0]:
+                    return s
+            elif isinstance(item, dict):
+                if list(iterkeys(item))[0] == list(iterkeys(s))[0]:
+                    return s
 
     def secured_by():
         """
         Set resource's assigned security scheme names and related paramters.
         """
+        if method is not None:
+            method_level = raw_data.get(method, {})
+            if method_level:
+                secured_by = method_level.get("securedBy")
+                if secured_by:
+                    return secured_by
         return raw_data.get("securedBy")
 
     def security_schemes():
