@@ -42,7 +42,8 @@ PRIM_TYPES = ['string', 'integer', 'number', 'boolean', 'date', 'file']
 custom_resp_codes = config.get('custom_add', 'resp_codes').strip().split(',')
 HTTP_RESP_CODES.extend([int(c) for c in custom_resp_codes])
 
-custom_auth_schemes = config.get('custom_add', 'auth_schemes').strip().split(',')
+custom_auth_schemes = config.get('custom_add',
+                                 'auth_schemes').strip().split(',')
 AUTH_SCHEMES.extend(custom_auth_schemes)
 
 custom_media_types = config.get('custom_add', 'media_types').strip().split(',')
