@@ -274,8 +274,9 @@ def create_resource_types(raml_data, root):
         for key, value in list(iteritems(resource)):
             for i in list(iterkeys(value)):
                 if i in accepted_methods:
-                    data_union = get_union(value, i,
-                                           list(itervalues(inherited))[0].get(i, {}))
+                    data_union = get_union(
+                        value, i, list(itervalues(inherited))[0].get(i, {})
+                    )
                     # res = wrap(key, data_union, i)
                     res = ResourceTypeNode(
                         name=key,
@@ -310,9 +311,11 @@ def create_resource_types(raml_data, root):
     def headers(data):
         _headers = data.get("headers", {})
         if v.get("type"):
-            inherited = get_inherited_resource(v.get("type")).get(v.get("type"))
+            inherited = get_inherited_resource(v.get("type"))
+            inherited = inherited.get(v.get("type"))
             inherited_res_level_params = inherited.get("headers", {})
-            inherited_meth_level_params = inherited.get(meth, {}).get("headers", {})
+            _inherited = inherited_res_level_params.get(meth, {})
+            inherited_meth_level_params = _inherited.get("headers", {})
             _headers = dict(list(iteritems(_headers)) +
                             list(iteritems(inherited_res_level_params)) +
                             list(iteritems(inherited_meth_level_params)))
@@ -327,9 +330,11 @@ def create_resource_types(raml_data, root):
     def body(data):
         _body = data.get("body", {})
         # if v.get("type"):
-        #     inherited = get_inherited_resource(v.get("type")).get(v.get("type"))
+        #     inherited = get_inherited_resource(v.get("type"))
+        #     inherited = inherited.get(v.get("type"))
         #     inherited_res_level_params = inherited.get("body", {})
-        #     inherited_meth_level_params = inherited.get(meth, {}).get("body", {})
+        #     _inherited = inherited_res_level_params.get("meth", {})
+        #     inherited_meth_level_params = _inherited.get("body", {})
         #     _body = dict(list(iteritems(_body)) +
         #                  list(iteritems(inherited_res_level_params)) +
         #                  list(iteritems(inherited_meth_level_params)))
@@ -349,7 +354,8 @@ def create_resource_types(raml_data, root):
     def responses(data):
         response_objects = []
         for key, value in list(iteritems(data.get("responses", {}))):
-            _headers = data.get("responses", {}).get(key, {}).get("headers", {})
+            _headers = data.get("responses", {}).get(key, {})
+            _headers = _headers.get("headers", {})
             header_objs = _create_base_param_obj(_headers, Header)
             if header_objs:
                 for h in header_objs:
@@ -374,7 +380,8 @@ def create_resource_types(raml_data, root):
 
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
-            inherited_params = inherited.get(v.get("type")).get("uriParameters", {})
+            inherited_params = inherited.get(v.get("type"))
+            inherited_params = inherited_params.get("uriParameters", {})
             uri_params = dict(list(iteritems(uri_params)) +
                               list(iteritems(inherited_params)))
         return _create_base_param_obj(uri_params, URIParameter)
@@ -382,7 +389,8 @@ def create_resource_types(raml_data, root):
     def base_uri_params(data):
         resource_level = data.get("baseUriParameters", {})
         method_level = data.get("baseUriParameters", {})
-        uri_params = dict(list(iteritems(resource_level)) + list(iteritems(method_level)))
+        uri_params = dict(list(iteritems(resource_level)) +
+                          list(iteritems(method_level)))
 
         return _create_base_param_obj(uri_params, URIParameter)
 
@@ -391,7 +399,8 @@ def create_resource_types(raml_data, root):
 
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
-            inherited_params = list(itervalues(inherited))[0].get("queryParameters", {})
+            inherited_params = list(itervalues(inherited))[0]
+            inherited_params = inherited_params.get("queryParameters", {})
             query_params = dict(list(iteritems(query_params)) +
                                 list(iteritems(inherited_params)))
 
@@ -402,7 +411,8 @@ def create_resource_types(raml_data, root):
 
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
-            inherited_params = list(itervalues(inherited))[0].get("formParameters", {})
+            inherited_params = list(itervalues(inherited))[0]
+            inherited_params = inherited_params.get("formParameters", {})
             form_params = dict(list(iteritems(form_params)) +
                                list(iteritems(inherited_params)))
 
@@ -754,7 +764,8 @@ def create_node(name, raw_data, method, parent, api):
         trait_resp = get_trait("responses")
         resp_objs = type_resp + trait_resp
         for k, v in list(iteritems(resps)):
-            assert k in config.get('custom', 'resp_codes'), "Response code not defined."
+            msg = "Response code not defined."
+            assert k in config.get('custom', 'resp_codes'), msg
             resp = Response(
                 code=k,
                 raw={k: v},
