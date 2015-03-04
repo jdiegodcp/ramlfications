@@ -54,7 +54,8 @@ tree_dark = (
     colored("|", "grey", attrs=["bold"]) +
     colored("- /users/{user_id}/playlists", "grey", attrs=["bold"]) + "\n" +
     colored("|", "grey", attrs=["bold"]) +
-    colored("  - /users/{user_id}/playlists/{playlist_id}", "grey", attrs=["bold"]) + "\n"
+    colored("  - /users/{user_id}/playlists/{playlist_id}", "grey",
+            attrs=["bold"]) + "\n"
 )
 
 tree_light_v = (
