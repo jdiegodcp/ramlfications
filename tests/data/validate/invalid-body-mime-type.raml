@@ -1,0 +1,13 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Invalid Responses
+version: v1
+baseUri: https://api.spotify.com/{version}
+/media/popular:
+  displayName: popular-media
+  get:
+    description: |
+      Get a list of what media is most popular at the moment.
+    body:
+      invalid/mediatype:
+        schema: bar
+        example: baz

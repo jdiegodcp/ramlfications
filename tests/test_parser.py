@@ -260,6 +260,12 @@ def test_resource_type(resource_types):
     assert resp_body.form_params is None
 
 
+def test_resource_type_method_protocol(resource_types):
+    resource = resource_types[3]
+    assert resource.name == "item"
+    assert resource.protocols == ["HTTP"]
+
+
 def test_resource_type_uri_params(resource_types):
     uri_param = resource_types[0].uri_params[0]
     assert uri_param.name == "mediaTypeExtension"
@@ -598,3 +604,13 @@ def test_resource_form_params(resources):
     assert res.form_params[1].min_length == 15
     assert res.form_params[1].max_length == 150
     assert res.form_params[1].default == "aPostedBarExample"
+
+
+def test_resource_security_scheme(resources):
+    res = resources[17]
+    assert res.method == "get"
+    assert res.name == "/users/{user_id}/playlists"
+    assert res.secured_by == [
+        {"oauth_2_0": {"scopes": ["playlist-read-private"]}}
+    ]
+    assert res.security_schemes[0].name == "oauth_2_0"

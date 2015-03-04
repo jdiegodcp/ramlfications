@@ -66,6 +66,7 @@ resourceTypes:
   - item:
       type: base
       get?:
+        protocols: ["HTTP"]
         headers:
           X-another-header:
             description: Another header
@@ -355,7 +356,7 @@ traits:
         required: true
 /me:
   displayName: current-user
-  securedBy: [ oauth_2_0: {scopes: []} ]
+  securedBy: [ oauth_2_0 ]
   type: queryParamType
   get:
     is: [ protocolTrait ]

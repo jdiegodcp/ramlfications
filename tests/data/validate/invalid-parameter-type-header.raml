@@ -1,0 +1,13 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Invalid Header
+version: v1
+baseUri: https://api.spotify.com/{version}
+/media/popular:
+  displayName: popular-media
+  get:
+    description: |
+      Get a list of what media is most popular at the moment.
+    headers:
+        X-bad-header-param:
+            description: An invalid parameter for header
+            type: invalidType

@@ -1,0 +1,22 @@
+#%RAML 0.8
+title: API Demo - Invalid Primative Param Types - Integer Number
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+
+/barfoo:
+  displayName: barfoo
+  get:
+    description: Totally uncreative get-barfoo description
+    queryParameters:
+      invalidParamType:
+        displayName: FooBarType
+        description: Min assigned to string type
+        type: integer
+        minLength: 5
+        required: false
+        repeat: false
+
+
+

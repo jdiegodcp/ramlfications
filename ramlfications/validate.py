@@ -158,24 +158,22 @@ def assigned_traits(inst, attr, value):
                            "or a dictionary mapping parameter values to a "
                            "trait".format(v))
                     raise InvalidResourceNodeError(msg)
-        elif isinstance(value, str):
-            msg = ("Trait '{0}' is an unsupported type: '{1}'".format(value,
-                   type(value)))
-            raise InvalidResourceNodeError(msg)
 
 
 def assigned_res_type(inst, attr, value):
     if value:
         if isinstance(value, tuple([dict, list])) and len(value) > 0:
-            msg = "Too many resource types applied to '{0}'.".format(inst.display_name)
+            msg = "Too many resource types applied to '{0}'.".format(
+                inst.display_name
+            )
             raise InvalidResourceNodeError(msg)
 
         res_types = inst.root.raw.get('resourceTypes', {})
         res_type_names = [list(iterkeys(i))[0] for i in res_types]
-        print(res_type_names)
         if value not in res_type_names:
             msg = ("Resource Type '{0}' is assigned to '{1}' but is not "
-                   "defined in the root of the API.".format(value, inst.display_name))
+                   "defined in the root of the API.".format(value,
+                                                            inst.display_name))
             raise InvalidResourceNodeError(msg)
 
 
@@ -227,33 +225,33 @@ def response_code(inst, attr, value):
     if not value:
         msg = "Response must define an HTTP code."
         raise InvalidParameterError(msg, 'response')
-    if not isinstance(value, int):
-        msg = ("Response code '{0}' must be an integer representing an "
-               "HTTP code.".format(value))
-        raise InvalidParameterError(msg, 'response')
-    if value not in config.get('custom', 'resp_codes'):
-        msg = "'{0}' not a valid HTTP response code.".format(value)
-        raise InvalidParameterError(msg, 'response')
+    # if not isinstance(value, int):
+    #     msg = ("Response code '{0}' must be an integer representing an "
+    #            "HTTP code.".format(value))
+    #     raise InvalidParameterError(msg, 'response')
+    # if value not in config.get('custom', 'resp_codes'):
+    #     msg = "'{0}' not a valid HTTP response code.".format(value)
+    #     raise InvalidParameterError(msg, 'response')
 
 
 #####
 # Primative Validators
 #####
 def integer_number_type_parameter(inst, attr, value):
-    if value:
+    if value is not None:
         param_types = ["integer", "number"]
         if inst.param_type not in param_types:
-            msg = ("{0} must be either a number or integer to have {1}"
-                   "attribute set, not {2}.".format(inst.name, attr,
-                                                    inst.param_type))
+            msg = ("{0} must be either a number or integer to have {1} "
+                   "attribute set, not '{2}'.".format(inst.name, attr.name,
+                                                      inst.param_type))
             raise InvalidParameterError(msg, "BaseParameter")
 
 
 def string_type_parameter(inst, attr, value):
     if value:
         if inst.param_type != "string":
-            msg = ("{0} must be a string type to have {1}"
-                   "attribute set, not '{2}'.".format(inst.name, attr,
+            msg = ("{0} must be a string type to have {1} "
+                   "attribute set, not '{2}'.".format(inst.name, attr.name,
                                                       inst.param_type))
             raise InvalidParameterError(msg, "BaseParameter")
 

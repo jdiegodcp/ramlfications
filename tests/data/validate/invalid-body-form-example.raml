@@ -1,0 +1,19 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Invalid Body
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.spotify.com/{version}
+/users/{user_id}/playlists:
+  uriParameters:
+    user_id:
+      displayName: User ID
+      type: string
+      description: The user's Spotify user ID.
+      example: smedjan
+  displayName: playlists
+  post:
+    description: |
+      [Create a Playlist](https://developer.spotify.com/web-api/create-playlist/)
+    body:
+      application/x-www-form-urlencoded:
+        example: {'foo': 'foobar'}

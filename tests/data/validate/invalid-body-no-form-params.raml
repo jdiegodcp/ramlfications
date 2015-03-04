@@ -1,0 +1,13 @@
+#%RAML 0.8
+title: Spotify Web API Demo - Form Params
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.spotify.com/{version}
+mediaType: application/json
+/tracks:
+  displayName: several-tracks
+  post:
+    body:
+      application/x-www-form-urlencoded:
+        description: foobar
+
