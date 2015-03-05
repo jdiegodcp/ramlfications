@@ -124,6 +124,13 @@ resourceTypes:
       description: A resource type with a protocol definition
       get?:
         description: dummy method
+  - parameterType:
+      get:
+        queryParameters:
+          <<queryParamName>>:
+            description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+          <<fallbackParamName>>:
+            description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
 securitySchemes:
   - oauth_2_0:
       description: |
@@ -215,7 +222,10 @@ traits:
   - protocolTrait:
       description: A trait to assign a protocol
       protocols: ["HTTP"]
-
+  - parameterTrait:
+      queryParameters:
+        <<tokenName>>:
+          description: A valid <<tokenName>> is required
 /albums:
   displayName: several-albums
   get:
@@ -519,6 +529,12 @@ traits:
         securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
         body:
           application/json:
+/fill_param_example:
+  description: An example that fills in parameter names in types and traits
+  displayName: fillParamExample
+  type: { parameterType: { queryParamName: foo, fallbackParamName: bar } }
+  get:
+    is: [ parameterTrait: { tokenName: access_token} ]
 /form_parameters:
   description: A example resource with form parameters
   displayName: formParamResource

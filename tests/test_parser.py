@@ -451,10 +451,7 @@ def test_resource_inherited_properties(resources):
     assert res.base_uri_params[0] == res.resource_type.base_uri_params[0]
 
     res = resources[-7]
-    # assert res.headers[0] == res.resource_type.headers[0]
-    # assert res.headers[1] == res.resource_type.headers[1]
-    # assert res.body[0] == res.resource_type.body[0]
-    # assert res.responses[0] == res.resource_type.responses[0]
+    assert res.form_params[0] == res.resource_type.form_params[0]
 
     res = resources[11]
     assert res.is_ == ["protocolTrait"]
@@ -471,9 +468,11 @@ def test_resource_assigned_type(resources):
 
     assert res.uri_params[0] == res.resource_type.uri_params[0]
     assert res.headers[0] == res.resource_type.headers[0]
-    # TODO: FIXME
-    # assert res.body[0] == res.resource_type.body[0]
+    assert res.body[0] == res.resource_type.body[0]
     assert res.responses[0] == res.resource_type.responses[0]
+    assert len(res.headers) == 2
+    assert res.headers[0].name == "Accept"
+    assert res.headers[1].name == "X-example-header"
 
     res = resources[18]
     assert res.type == "collection"
@@ -542,7 +541,6 @@ def test_resource_responses(resources):
     assert res.type == "item"
     assert res.responses[0] == res.resource_type.responses[0]
     assert len(res.responses[0].headers) == 1
-    assert len(res.headers) == 2
     assert res.responses[0].headers[0].name == "X-waiting-period"
     assert res.responses[0].headers[0].type == "integer"
     assert res.responses[0].headers[0].minimum == 1
@@ -552,10 +550,12 @@ def test_resource_responses(resources):
     desc = ("The number of seconds to wait before you can attempt to make "
             "a request again.\n")
     assert res.responses[0].headers[0].description == desc
-    assert res.headers[0] == res.resource_type.headers[0]
-    # assert res.body[0] == res.resource_type.body[0]
 
-    res = resources[-10]
+    res_response = res.responses[0].headers[0]
+    res_type_resp = res.resource_type.responses[0].headers[0]
+    assert res_response == res_type_resp
+
+    res = resources[-11]
 
     assert res.display_name == "playlists"
     assert res.responses[0].code == 201
@@ -575,7 +575,7 @@ def test_resource_base_uri_params(resources):
     assert res.base_uri_params[0].description == desc
     assert res.base_uri_params[0].default == "fooBar"
 
-    res = resources[-12]
+    res = resources[-13]
 
     assert res.display_name == "users-profile"
     assert res.base_uri_params[0].name == "subdomain"
@@ -614,3 +614,20 @@ def test_resource_security_scheme(resources):
         {"oauth_2_0": {"scopes": ["playlist-read-private"]}}
     ]
     assert res.security_schemes[0].name == "oauth_2_0"
+
+
+def test_fill_params_resource_type(resources):
+    res = resources[-4]
+    assert res.name == "/fill_param_example"
+    assert res.type == "parameterType"
+    assert res.query_params[0].name == "foo"
+
+    desc = ("Return /fill_param_example that have their foo "
+            "matching the given value")
+    assert res.query_params[0].description == desc
+
+    assert res.query_params[1].name == "bar"
+
+    desc = ("If no values match the value given for foo, "
+            "use bar instead")
+    assert res.query_params[1].name == desc

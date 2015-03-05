@@ -146,23 +146,38 @@ def assigned_traits(inst, attr, value):
                    "in the root of the API.")
             raise InvalidResourceNodeError(msg)
         trait_names = [list(iterkeys(i))[0] for i in traits]
-        if isinstance(value, tuple([list, dict])):
+        if isinstance(value, list):
             for v in value:
-                if v not in trait_names:
-                    msg = ("Trait '{0}' is assigned to '{1}' but is not "
-                           "defined in the root of the API.".format(v,
-                                                                    inst.path))
-                    raise InvalidResourceNodeError(msg)
-                if not isinstance(v, str):
-                    msg = ("'{0}' needs to be a string referring to a trait, "
-                           "or a dictionary mapping parameter values to a "
-                           "trait".format(v))
-                    raise InvalidResourceNodeError(msg)
+                if isinstance(v, dict):
+                    if list(iterkeys(v))[0] not in trait_names:
+                        msg = (
+                            "Trait '{0}' is assigned to '{1}' but is not def"
+                            "ined in the root of the API.".format(v, inst.path)
+                        )
+                        raise InvalidResourceNodeError(msg)
+                    if not isinstance(v.keys()[0], str):
+                        msg = ("'{0}' needs to be a string referring to a "
+                               "trait, or a dictionary mapping parameter "
+                               "values to a trait".format(v))
+                        raise InvalidResourceNodeError(msg)
+                if isinstance(v, str):
+                    if v not in trait_names:
+                        msg = (
+                            "Trait '{0}' is assigned to '{1}' but is not "
+                            "defined in the root of the API.".format(v,
+                                                                     inst.path)
+                        )
+                        raise InvalidResourceNodeError(msg)
+                    if not isinstance(v, str):
+                        msg = ("'{0}' needs to be a string referring to a "
+                               "trait, or a dictionary mapping parameter "
+                               "values to a trait".format(v))
+                        raise InvalidResourceNodeError(msg)
 
 
 def assigned_res_type(inst, attr, value):
     if value:
-        if isinstance(value, tuple([dict, list])) and len(value) > 0:
+        if isinstance(value, tuple([dict, list])) and len(value) > 1:
             msg = "Too many resource types applied to '{0}'.".format(
                 inst.display_name
             )
@@ -170,7 +185,13 @@ def assigned_res_type(inst, attr, value):
 
         res_types = inst.root.raw.get('resourceTypes', {})
         res_type_names = [list(iterkeys(i))[0] for i in res_types]
-        if value not in res_type_names:
+        if isinstance(value, list):
+            item = value[0]
+        elif isinstance(value, dict):
+            item = list(iterkeys(value))[0]
+        else:
+            item = value
+        if item not in res_type_names:
             msg = ("Resource Type '{0}' is assigned to '{1}' but is not "
                    "defined in the root of the API.".format(value,
                                                             inst.display_name))

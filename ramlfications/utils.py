@@ -11,16 +11,16 @@ def find_params(string):
     Parses out the parameter name from ``<<parameterName>>`` that is
     used in Resource Types and Traits.
     """
-    # TODO: ignoring humanizers for now
     match = re.findall(r"<<(.*?)>>", string)
-    ret = set()
+    ret = list
     for m in match:
+        # TODO: ignoring humanizers for now
         param = "<<{0}>>".format(m.split("|")[0].strip())
-        ret.add(param)
-    return list(ret)
+        ret.append(param)
+    return ret
 
 
-def fill_reserved_params(resource, string):
+def fill_reserved_params(name, path, string):
     """
     Replaces parameters that are reserved according to the RAML spec.
 
@@ -29,8 +29,8 @@ def fill_reserved_params(resource, string):
     :returns: Modified string with the relevant replaced information.
     """
     if "<<resourcePathName>>" in string:
-        string = string.replace("<<resourcePathName>>", resource.name[1:])
+        string = string.replace("<<resourcePathName>>", name[1:])
     if "<<resourcePath>>" in string:
-        string = string.replace("<<resourcePath>>", resource.path)
+        string = string.replace("<<resourcePath>>", path)
 
     return string

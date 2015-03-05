@@ -3,6 +3,8 @@
 # Copyright (c) 2014 Spotify AB
 
 from __future__ import absolute_import, division, print_function
+
+import json
 import re
 
 try:
@@ -20,6 +22,7 @@ from .parameters import (
     FormParameter, SecurityScheme
 )
 from .raml import RootNode, ResourceNode, ResourceTypeNode, TraitNode
+from .utils import fill_reserved_params, find_params
 
 __all__ = ["parse_raml"]
 
@@ -313,11 +316,11 @@ def create_resource_types(raml_data, root):
         if v.get("type"):
             inherited = get_inherited_resource(v.get("type"))
             inherited = inherited.get(v.get("type"))
-            inherited_res_level_params = inherited.get("headers", {})
-            _inherited = inherited_res_level_params.get(meth, {})
+            inherited_res_level = inherited.get(meth, {}).get("headers", {})
+            _inherited = inherited.get(meth, {})
             inherited_meth_level_params = _inherited.get("headers", {})
             _headers = dict(list(iteritems(_headers)) +
-                            list(iteritems(inherited_res_level_params)) +
+                            list(iteritems(inherited_res_level)) +
                             list(iteritems(inherited_meth_level_params)))
 
         header_objs = _create_base_param_obj(_headers, Header)
@@ -329,16 +332,15 @@ def create_resource_types(raml_data, root):
 
     def body(data):
         _body = data.get("body", {})
-        # if v.get("type"):
-        #     inherited = get_inherited_resource(v.get("type"))
-        #     inherited = inherited.get(v.get("type"))
-        #     inherited_res_level_params = inherited.get("body", {})
-        #     _inherited = inherited_res_level_params.get("meth", {})
-        #     inherited_meth_level_params = _inherited.get("body", {})
-        #     _body = dict(list(iteritems(_body)) +
-        #                  list(iteritems(inherited_res_level_params)) +
-        #                  list(iteritems(inherited_meth_level_params)))
-        # updated_data = {"body": _body}
+        if v.get("type"):
+            inherited = get_inherited_resource(v.get("type"))
+            inherited = inherited.get(v.get("type"))
+            inherited_res_level_params = inherited.get(meth, {})
+            _inherited = inherited_res_level_params.get("body", {})
+            inherited_meth_level_params = _inherited.get("body", {})
+            _body = dict(list(iteritems(_body)) +
+                         list(iteritems(_inherited)) +
+                         list(iteritems(inherited_meth_level_params)))
         body_objects = []
         for key, value in list(iteritems(_body)):
             body = Body(
@@ -826,6 +828,14 @@ def create_node(name, raw_data, method, parent, api):
         """Set resource's description."""
         return raw_data.get("description")
 
+    def fill_params(string, key, value, name, path):
+        match = find_params(string)
+        if match:
+            for m in match:
+                string = string.replace(m, str(value))
+        string = fill_reserved_params(name, path, string)
+        return string
+
     def is_():
         """Set resource's assigned trait names."""
         is_list = []
@@ -853,20 +863,66 @@ def create_node(name, raw_data, method, parent, api):
                         trait_objs.append(obj[0])
                 return trait_objs or None
 
+    # TODO: wow this function sucks.
     def type_():
-        """Set resource's assigned resource type names."""
-        get_method = raw_data.get(method, {})
-        if get_method:
-            method_level = get_method.get("type")
-            if method_level:
-                return method_level
+        """Set resource's assigned resource type name."""
+        if method is not None:
+            get_method = raw_data.get(method, {})
+            if get_method:
+                assigned_type = get_method.get("type")
+                if assigned_type:
+                    if isinstance(assigned_type, dict):
+                        return list(iterkeys(assigned_type))[0]
+
+        assigned_type = raw_data.get("type")
+        if isinstance(assigned_type, dict):
+            return list(iterkeys(assigned_type))[0]
+        return assigned_type
+
+    def _type_info():
+        """Helper function to return complete data in resource's type"""
+        if method is not None:
+            get_method = raw_data.get(method, {})
+            if get_method:
+                assigned_type = get_method.get("type")
+                if assigned_type:
+                    if isinstance(assigned_type, dict):
+                        return assigned_type
         return raw_data.get("type")
+
+    def _as_dict(res):
+        """Returns attribute of an object recursively."""
+        root_copy = res.root
+        res.root = None
+        # if res.parent:
+        #     parent_copy = res.parent
+        #     res.parent = None
+        # if res.resource_type:
+        #     type_root_copy = res.resource_type.root
+        #     res.resource_type.root = None
+        if res.traits:
+            traits_copy = []
+            for t in res.traits:
+                traits_copy.append(t.root)
+                t.root = None
+        res_dict = attr.asdict(res)
+        res.root = root_copy
+        # if parent_copy:
+        #     res.parent = parent_copy
+        # if type_root_copy:
+        #     res.resource_type.root = type_root_copy
+        if res.traits:
+            for root, i in enumerate(traits_copy):
+                res.traits[i].root = root
+        return res_dict
 
     def resource_type():
         """Set resource's assigned resource type objects."""
-        assigned = type_()
+        assigned = _type_info()
         if assigned:
-            type_obj = [r for r in api.resource_types if r.name == assigned]
+            assigned_name = type_()
+            res_types = api.resource_types
+            type_obj = [r for r in res_types if r.name == assigned_name]
             if type_obj:
                 return type_obj[0]
 
@@ -912,6 +968,27 @@ def create_node(name, raw_data, method, parent, api):
                     secured_objs.append(scheme)
             return secured_objs
         return None
+
+    def update_raw_data():
+        if method:
+            method_traits = raw_data.get(method, {}).get("is")
+            assigned_type = raw_data.get(method, {}).get("type")
+        res_traits = raw_data.get("is")
+        assigned_traits = OrderedDict(list(iteritems(method_traits)) +
+                                      list(iteritems(res_traits)))
+        if assigned_traits:
+            for item in assigned_traits:
+                if isinstance(item, dict):
+                    # fill params
+                    # update raw data
+                    pass
+        if not assigned_type:
+            assigned_type = raw_data.get("type")
+        if assigned_type:
+            if isinstance(assigned_type, dict):
+                # fill params
+                # update raw data
+                pass
 
     node = ResourceNode(
         name=name,
