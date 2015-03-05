@@ -555,7 +555,7 @@ def test_resource_responses(resources):
     res_type_resp = res.resource_type.responses[0].headers[0]
     assert res_response == res_type_resp
 
-    res = resources[-11]
+    res = resources[-10]
 
     assert res.display_name == "playlists"
     assert res.responses[0].code == 201
@@ -575,7 +575,7 @@ def test_resource_base_uri_params(resources):
     assert res.base_uri_params[0].description == desc
     assert res.base_uri_params[0].default == "fooBar"
 
-    res = resources[-13]
+    res = resources[-12]
 
     assert res.display_name == "users-profile"
     assert res.base_uri_params[0].name == "subdomain"
@@ -614,20 +614,3 @@ def test_resource_security_scheme(resources):
         {"oauth_2_0": {"scopes": ["playlist-read-private"]}}
     ]
     assert res.security_schemes[0].name == "oauth_2_0"
-
-
-def test_fill_params_resource_type(resources):
-    res = resources[-4]
-    assert res.name == "/fill_param_example"
-    assert res.type == "parameterType"
-    assert res.query_params[0].name == "foo"
-
-    desc = ("Return /fill_param_example that have their foo "
-            "matching the given value")
-    assert res.query_params[0].description == desc
-
-    assert res.query_params[1].name == "bar"
-
-    desc = ("If no values match the value given for foo, "
-            "use bar instead")
-    assert res.query_params[1].name == desc
