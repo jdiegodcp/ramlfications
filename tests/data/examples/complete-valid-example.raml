@@ -529,12 +529,6 @@ traits:
         securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
         body:
           application/json:
-/fill_param_example:
-  description: An example that fills in parameter names in types and traits
-  displayName: fillParamExample
-  type: { parameterType: { queryParamName: foo, fallbackParamName: bar } }
-  get:
-    is: [ parameterTrait: { tokenName: access_token} ]
 /form_parameters:
   description: A example resource with form parameters
   displayName: formParamResource
