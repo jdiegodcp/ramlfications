@@ -18,8 +18,6 @@ import six
 class LoadRamlFileError(Exception):
     pass
 
-
-# Better name for a RAML object?
 class RAMLDict(object):
     """
     Object representing the loaded RAML file.

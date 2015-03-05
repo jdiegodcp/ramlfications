@@ -54,7 +54,6 @@ def _create_base_param_obj(property_data, param_obj):
             default=value.get("default"),
             enum=value.get("enum"),
             example=value.get("example"),
-            # TODO URI params are req, others are not
             required=required,
             repeat=value.get("repeat", False),
             pattern=value.get("pattern"),

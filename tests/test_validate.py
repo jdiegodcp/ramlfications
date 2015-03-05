@@ -122,7 +122,7 @@ def test_invalid_media_type():
     assert ("Unsupported MIME Media Type: 'awesome/sauce'.",) == e.value.args
 
 
-# TODO: move assert from parser_wip to validate_wip
+# TODO: move assert from parser to validate
 def test_invalid_trait_obj():
     raml = load_raml("trait-unsupported-obj.raml")
     with pytest.raises(AssertionError) as e:
@@ -158,7 +158,6 @@ def test_unsupported_trait_type_str():
     assert msg == e.value.args
 
 
-# TODO: move assert from parser to validate
 def test_unsupported_trait_type_array_ints():
     raml = load_raml("trait-unsupported-type-array-ints.raml")
     with pytest.raises(errors.InvalidResourceNodeError) as e:
@@ -221,7 +220,6 @@ def test_invalid_body_no_form_params():
     assert msg == e.value.args
 
 
-#  TODO: move assert from parser to validate
 def test_invalid_response_code_str():
     raml = load_raml("invalid-response-code-str.raml")
     with pytest.raises(errors.InvalidParameterError) as e:
