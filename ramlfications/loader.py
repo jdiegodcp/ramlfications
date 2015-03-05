@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 
-__all__ = ["RAMLLoader", "LoadRamlFileError"]
+__all__ = ["RAMLLoader"]
 
 try:
     from collections import OrderedDict
@@ -14,9 +14,8 @@ import os
 import yaml
 import six
 
+from .errors import LoadRAMLFileError
 
-class LoadRamlFileError(Exception):
-    pass
 
 class RAMLDict(object):
     """
@@ -39,7 +38,7 @@ class RAMLLoader(object):
     def _get_raml_object(self, raml_file):
         if raml_file is None:
             msg = "RAML file can not be 'None'."
-            raise LoadRamlFileError(msg)
+            raise LoadRAMLFileError(msg)
 
         if isinstance(raml_file, six.text_type) or isinstance(
                 raml_file, str):
@@ -49,7 +48,7 @@ class RAMLLoader(object):
         else:
             msg = ("Can not load object '{0}': Not a basestring type or "
                    "file object".format(raml_file))
-            raise LoadRamlFileError(msg)
+            raise LoadRAMLFileError(msg)
 
     def _yaml_include(self, loader, node):
         """
@@ -98,4 +97,4 @@ class RAMLLoader(object):
                 loaded_raml = self._ordered_load(raml, yaml.SafeLoader)
                 return RAMLDict(raml.name, raml_file, loaded_raml)
         except IOError as e:
-            raise LoadRamlFileError(e)
+            raise LoadRAMLFileError(e)

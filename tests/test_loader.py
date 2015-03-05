@@ -9,6 +9,8 @@ import pytest
 from six import iteritems
 
 from ramlfications import loader
+from ramlfications.errors import LoadRAMLFileError
+
 from .base import EXAMPLES
 
 
@@ -36,13 +38,13 @@ def test_raml_fileobj():
 
 def test_no_raml_file():
     raml_file = os.path.join(EXAMPLES + "this-file-doesnt-exist.raml")
-    with pytest.raises(loader.LoadRamlFileError):
+    with pytest.raises(LoadRAMLFileError):
         loader.RAMLLoader().load(raml_file)
 
 
 def test_none_raml_file():
     raml_file = None
-    with pytest.raises(loader.LoadRamlFileError):
+    with pytest.raises(LoadRAMLFileError):
         loader.RAMLLoader().load(raml_file)
 
 
@@ -68,5 +70,5 @@ def test_root_includes():
 
 def test_incorrect_raml_obj():
     raml_file = dict(nota="raml_file")
-    with pytest.raises(loader.LoadRamlFileError):
+    with pytest.raises(LoadRAMLFileError):
         loader.RAMLLoader().load(raml_file)

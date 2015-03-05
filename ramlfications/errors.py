@@ -26,3 +26,11 @@ class InvalidParameterError(InvalidRAMLError):
     def __init__(self, message, parameter):
         super(InvalidParameterError, self).__init__(message)
         self.parameter = parameter
+
+
+#####
+# Loader Exceptions
+#####
+
+class LoadRAMLFileError(Exception):
+    pass
