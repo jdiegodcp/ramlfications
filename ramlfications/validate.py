@@ -40,10 +40,6 @@ def root_base_uri(inst, attr, value):
         raise InvalidRootNodeError(msg)
 
 
-def root_raml_file(inst, attr, value):
-    pass
-
-
 def root_base_uri_params(inst, attr, value):
     """
     Require that Base URI parameters have a ``default`` parameter set.
@@ -126,16 +122,6 @@ def root_resources(inst, attr, value):
 
 
 #####
-# Resource Node Validators
-#####
-
-
-#####
-# Resource Type Node Validators
-#####
-
-
-#####
 # Shared Validators for Resource & Resource Type Node
 #####
 def assigned_traits(inst, attr, value):
@@ -196,11 +182,6 @@ def assigned_res_type(inst, attr, value):
                    "defined in the root of the API.".format(value,
                                                             inst.display_name))
             raise InvalidResourceNodeError(msg)
-
-
-#####
-# Trait Node Validators
-#####
 
 
 #####
@@ -267,7 +248,7 @@ def integer_number_type_parameter(inst, attr, value):
 
 def string_type_parameter(inst, attr, value):
     if value:
-        if inst.param_type != "string":
+        if inst.type != "string":
             msg = ("{0} must be a string type to have {1} "
                    "attribute set, not '{2}'.".format(inst.name, attr.name,
                                                       inst.type))

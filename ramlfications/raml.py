@@ -25,7 +25,7 @@ class RootNode(object):
     """
     API Root Node
     """
-    raml_file        = attr.ib(validator=root_raml_file)
+    raml_file        = attr.ib()
     raw              = attr.ib(repr=False)
     version          = attr.ib(repr=False, validator=root_version)
     base_uri         = attr.ib(repr=False, validator=root_base_uri)
@@ -63,7 +63,7 @@ class BaseNode(object):
 
 @attr.s
 class TraitNode(BaseNode):
-    name = attr.ib()
+    name  = attr.ib()
     usage = attr.ib(repr=False)
 
 
