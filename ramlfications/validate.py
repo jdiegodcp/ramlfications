@@ -258,10 +258,10 @@ def response_code(inst, attr, value):
 def integer_number_type_parameter(inst, attr, value):
     if value is not None:
         param_types = ["integer", "number"]
-        if inst.param_type not in param_types:
+        if inst.type not in param_types:
             msg = ("{0} must be either a number or integer to have {1} "
                    "attribute set, not '{2}'.".format(inst.name, attr.name,
-                                                      inst.param_type))
+                                                      inst.type))
             raise InvalidParameterError(msg, "BaseParameter")
 
 
@@ -270,7 +270,7 @@ def string_type_parameter(inst, attr, value):
         if inst.param_type != "string":
             msg = ("{0} must be a string type to have {1} "
                    "attribute set, not '{2}'.".format(inst.name, attr.name,
-                                                      inst.param_type))
+                                                      inst.type))
             raise InvalidParameterError(msg, "BaseParameter")
 
 

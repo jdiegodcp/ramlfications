@@ -274,7 +274,7 @@ def test_resource_type_uri_params(resource_types):
     assert uri_param.description == desc
     assert uri_param.enum == [".json"]
     assert uri_param.min_length is None
-    assert uri_param.param_type == "string"
+    assert uri_param.type == "string"
     assert uri_param.required
     assert uri_param.default is None
 

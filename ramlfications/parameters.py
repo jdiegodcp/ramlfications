@@ -14,117 +14,100 @@ HTTP_METHODS = [
 ]
 
 
-@attr.s(repr=False)
+@attr.s
 class BaseParameter(object):
-    name = attr.ib(repr=True)
-    raw = attr.ib(validator=attr.validators.instance_of(dict))
-    description = attr.ib()
-    display_name = attr.ib()
-    min_length = attr.ib(validator=string_type_parameter)
-    max_length = attr.ib(validator=string_type_parameter)
-    minimum = attr.ib(validator=integer_number_type_parameter)
-    maximum = attr.ib(validator=integer_number_type_parameter)
-    example = attr.ib()
-    default = attr.ib()
-    repeat = attr.ib(default=False)
-    pattern = attr.ib(default=None, validator=string_type_parameter)
-    enum = attr.ib(default=None, validator=string_type_parameter)
-    param_type = attr.ib(default="string")
-
-    def _map_type(self, param_type, name, raw):
-        return {
-            'string': "string",
-            'integer': "integer",
-            'number': "number",
-            'boolean': "bool",
-            'date': "date",
-            'file': "file"
-        }[param_type]
-
-    @property
-    def type(self):
-        return self._map_type(self.param_type, self.name, raw=self.raw)
+    name         = attr.ib()
+    raw          = attr.ib(repr=False,
+                           validator=attr.validators.instance_of(dict))
+    description  = attr.ib(repr=False)
+    display_name = attr.ib(repr=False)
+    min_length   = attr.ib(repr=False, validator=string_type_parameter)
+    max_length   = attr.ib(repr=False, validator=string_type_parameter)
+    minimum      = attr.ib(repr=False, validator=integer_number_type_parameter)
+    maximum      = attr.ib(repr=False, validator=integer_number_type_parameter)
+    example      = attr.ib(repr=False)
+    default      = attr.ib(repr=False)
+    repeat       = attr.ib(repr=False, default=False)
+    pattern      = attr.ib(repr=False, default=None,
+                           validator=string_type_parameter)
+    enum         = attr.ib(repr=False, default=None,
+                           validator=string_type_parameter)
+    type         = attr.ib(repr=False, default="string")
 
 
-@attr.s(repr=False)
+@attr.s
 class URIParameter(BaseParameter):
-    required = attr.ib(default=True)
+    required = attr.ib(repr=False, default=True)
 
 
-@attr.s(repr=False)
+@attr.s
 class QueryParameter(BaseParameter):
-    required = attr.ib(default=False)
+    required = attr.ib(repr=False, default=False)
 
 
 @attr.s(repr=False)
 class FormParameter(BaseParameter):
-    required = attr.ib(default=False)
+    required = attr.ib(repr=False, default=False)
 
 
-@attr.s()
+@attr.s
 class Documentation(object):
     title = attr.ib()
     content = attr.ib(repr=False)
 
 
-@attr.s(repr=False)
+@attr.s
 class Header(object):
-    name = attr.ib()
-    display_name = attr.ib(repr=True)
-    raw = attr.ib(validator=attr.validators.instance_of(dict))
-    param_type = attr.ib(validator=header_type)
-    description = attr.ib()
-    example = attr.ib()
-    default = attr.ib()
-    min_length = attr.ib(validator=string_type_parameter)
-    max_length = attr.ib(validator=string_type_parameter)
-    minimum = attr.ib(validator=integer_number_type_parameter)
-    maximum = attr.ib(validator=integer_number_type_parameter)
-    enum = attr.ib(default=None, validator=string_type_parameter)
-    repeat = attr.ib(default=False)
-    pattern = attr.ib(default=None, validator=string_type_parameter)
-    method = attr.ib(default=None)
-    required = attr.ib(default=False)
-
-    def _map_type(self, param_type, name, raw):
-        return {
-            'string': "string",
-            'integer': "integer",
-            'number': "number",
-            'boolean': "bool",
-            'date': "date",
-            'file': "file"
-        }[param_type]
-
-    @property
-    def type(self):
-        return self._map_type(self.param_type, self.name, raw=self.raw)
+    name         = attr.ib(repr=False)
+    display_name = attr.ib()
+    raw          = attr.ib(repr=False,
+                           validator=attr.validators.instance_of(dict))
+    description  = attr.ib(repr=False)
+    example      = attr.ib(repr=False)
+    default      = attr.ib(repr=False)
+    min_length   = attr.ib(repr=False, validator=string_type_parameter)
+    max_length   = attr.ib(repr=False, validator=string_type_parameter)
+    minimum      = attr.ib(repr=False, validator=integer_number_type_parameter)
+    maximum      = attr.ib(repr=False, validator=integer_number_type_parameter)
+    type         = attr.ib(repr=False, default="string", validator=header_type)
+    enum         = attr.ib(repr=False, default=None,
+                           validator=string_type_parameter)
+    repeat       = attr.ib(repr=False, default=False)
+    pattern      = attr.ib(repr=False, default=None,
+                           validator=string_type_parameter)
+    method       = attr.ib(repr=False, default=None)
+    required     = attr.ib(repr=False, default=False)
 
 
-@attr.s(repr=False)
+@attr.s
 class Body(object):
-    mime_type = attr.ib(repr=True, init=True, validator=body_mime_type)
-    raw = attr.ib(init=True, validator=attr.validators.instance_of(dict))
-    schema = attr.ib(validator=body_schema)
-    example = attr.ib(validator=body_example)
-    form_params = attr.ib(validator=body_form)
+    mime_type   = attr.ib(init=True, validator=body_mime_type)
+    raw         = attr.ib(repr=False, init=True,
+                          validator=attr.validators.instance_of(dict))
+    schema      = attr.ib(repr=False, validator=body_schema)
+    example     = attr.ib(repr=False, validator=body_example)
+    form_params = attr.ib(repr=False, validator=body_form)
 
 
-@attr.s(repr=False)
+@attr.s
 class Response(object):
-    code = attr.ib(repr=True, validator=response_code)
-    raw = attr.ib(validator=attr.validators.instance_of(dict))
-    description = attr.ib()
-    headers = attr.ib()
-    body = attr.ib()
-    method = attr.ib(default=None)
+    code        = attr.ib(validator=response_code)
+    raw         = attr.ib(repr=False, init=True,
+                          validator=attr.validators.instance_of(dict))
+    description = attr.ib(repr=False)
+    headers     = attr.ib(repr=False)
+    body        = attr.ib(repr=False)
+    method      = attr.ib(default=None)
 
 
-@attr.s(repr=False)
+@attr.s
 class SecurityScheme(object):
-    name = attr.ib(repr=True)
-    raw = attr.ib(validator=attr.validators.instance_of(dict))
-    type = attr.ib()
-    described_by = attr.ib(validator=attr.validators.instance_of(dict))
-    description = attr.ib()
-    settings = attr.ib(validator=attr.validators.instance_of(dict))
+    name         = attr.ib()
+    raw          = attr.ib(repr=False, init=True,
+                           validator=attr.validators.instance_of(dict))
+    type         = attr.ib(repr=False)
+    described_by = attr.ib(repr=False,
+                           validator=attr.validators.instance_of(dict))
+    description  = attr.ib(repr=False)
+    settings     = attr.ib(repr=False,
+                           validator=attr.validators.instance_of(dict))

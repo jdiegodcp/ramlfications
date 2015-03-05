@@ -57,7 +57,7 @@ def _create_base_param_obj(property_data, param_obj):
             required=required,
             repeat=value.get("repeat", False),
             pattern=value.get("pattern"),
-            param_type=value.get("type", "string")
+            type=value.get("type", "string")
         )
         objects.append(item)
 
@@ -727,7 +727,7 @@ def create_node(name, raw_data, method, parent, api):
                     display_name=v.get('displayName', k),
                     method=method,
                     raw=headers,
-                    param_type=v.get('type', 'string'),
+                    type=v.get('type', 'string'),
                     description=v.get('description'),
                     example=v.get('example'),
                     default=v.get('default'),
