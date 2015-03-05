@@ -160,7 +160,7 @@ def assigned_traits(inst, attr, value):
                                "trait, or a dictionary mapping parameter "
                                "values to a trait".format(v))
                         raise InvalidResourceNodeError(msg)
-                if isinstance(v, str):
+                elif isinstance(v, str):
                     if v not in trait_names:
                         msg = (
                             "Trait '{0}' is assigned to '{1}' but is not "
@@ -168,11 +168,11 @@ def assigned_traits(inst, attr, value):
                                                                      inst.path)
                         )
                         raise InvalidResourceNodeError(msg)
-                    if not isinstance(v, str):
-                        msg = ("'{0}' needs to be a string referring to a "
-                               "trait, or a dictionary mapping parameter "
-                               "values to a trait".format(v))
-                        raise InvalidResourceNodeError(msg)
+                else:
+                    msg = ("'{0}' needs to be a string referring to a "
+                           "trait, or a dictionary mapping parameter "
+                           "values to a trait".format(v))
+                    raise InvalidResourceNodeError(msg)
 
 
 def assigned_res_type(inst, attr, value):
