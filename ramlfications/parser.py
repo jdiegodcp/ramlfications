@@ -870,8 +870,6 @@ def create_node(name, raw_data, method, parent, api):
             return list(iterkeys(assigned_type))[0]
         return assigned_type
 
-        return raw_data.get("type")
-
     def resource_type():
         """Set resource's assigned resource type objects."""
         if type_():
