@@ -763,8 +763,6 @@ def create_node(name, raw_data, method, parent, api):
         trait_resp = get_trait("responses")
         resp_objs = type_resp + trait_resp
         for k, v in list(iteritems(resps)):
-            msg = "Response code not defined."
-            assert k in config.get('custom', 'resp_codes'), msg
             resp = Response(
                 code=k,
                 raw={k: v},

@@ -221,31 +221,23 @@ def test_invalid_body_no_form_params():
     assert msg == e.value.args
 
 
-def test_no_response_code():
-    raml = load_raml("no-response-code.raml")
-    with pytest.raises(AssertionError) as e:
+#  TODO: move assert from parser to validate
+def test_invalid_response_code_str():
+    raml = load_raml("invalid-response-code-str.raml")
+    with pytest.raises(errors.InvalidParameterError) as e:
         parse(raml)
-    msg = ("Response code not defined.",)
+    msg = (
+        "Response code 'foo' must be an integer representing an HTTP code.",
+    )
     assert msg == e.value.args
 
 
-# TODO: move assert from parser to validate
-# def test_invalid_response_code_str():
-#     raml = load_raml("invalid-response-code-str.raml")
-#     with pytest.raises(AssertionError) as e:
-#         parse(raml)
-#     msg = ("Response code 'foo' must be an integer representing an "
-#            "HTTP code.",)
-#     assert msg == e.value.args
-
-
-# TODO: move assert from parser to validate
-# def test_invalid_response_code():
-#     raml = load_raml("invalid-response-code.raml")
-#     with pytest.raises(errors.InvalidParameterError) as e:
-#         parse(raml)
-#     msg = ("'299' not a valid HTTP response code.",)
-#     assert msg == e.value.args
+def test_invalid_response_code():
+    raml = load_raml("invalid-response-code.raml")
+    with pytest.raises(errors.InvalidParameterError) as e:
+        parse(raml)
+    msg = ("'299' not a valid HTTP response code.",)
+    assert msg == e.value.args
 
 
 #####

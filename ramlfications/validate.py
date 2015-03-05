@@ -243,16 +243,13 @@ def body_form(inst, attr, value):
 
 
 def response_code(inst, attr, value):
-    if not value:
-        msg = "Response must define an HTTP code."
+    if not isinstance(value, int):
+        msg = ("Response code '{0}' must be an integer representing an "
+               "HTTP code.".format(value))
         raise InvalidParameterError(msg, 'response')
-    # if not isinstance(value, int):
-    #     msg = ("Response code '{0}' must be an integer representing an "
-    #            "HTTP code.".format(value))
-    #     raise InvalidParameterError(msg, 'response')
-    # if value not in config.get('custom', 'resp_codes'):
-    #     msg = "'{0}' not a valid HTTP response code.".format(value)
-    #     raise InvalidParameterError(msg, 'response')
+    if value not in config.get('custom', 'resp_codes'):
+        msg = "'{0}' not a valid HTTP response code.".format(value)
+        raise InvalidParameterError(msg, 'response')
 
 
 #####
