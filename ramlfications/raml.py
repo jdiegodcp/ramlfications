@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 import attr
-from six.moves import BaseHTTPServer as httpserver
+from six.moves import BaseHTTPServer as httpserver  # NOQA
 
 from .validate import *  # NOQA
 
