@@ -54,7 +54,7 @@ def root_base_uri_params(inst, attr, value):
 
 def root_uri_params(inst, attr, value):
     """
-    Assert that where is no 'version' parameter in the regular URI parameters
+    Assert that where is no ``version`` parameter in the regular URI parameters
     """
     if value:
         for v in value:
@@ -125,6 +125,10 @@ def root_resources(inst, attr, value):
 # Shared Validators for Resource & Resource Type Node
 #####
 def assigned_traits(inst, attr, value):
+    """
+    Assert assigned traits are defined in the RAML Root and correctly
+    represented in the RAML.
+    """
     if value:
         traits = inst.root.raw.get('traits', {})
         if not traits:
@@ -162,6 +166,10 @@ def assigned_traits(inst, attr, value):
 
 
 def assigned_res_type(inst, attr, value):
+    """
+    Assert only one (or none) assigned resource type is defined in the RAML
+    Root and correctly represented in the RAML.
+    """
     if value:
         if isinstance(value, tuple([dict, list])) and len(value) > 1:
             msg = "Too many resource types applied to '{0}'.".format(
@@ -188,12 +196,14 @@ def assigned_res_type(inst, attr, value):
 # Parameter Validators
 #####
 def header_type(inst, attr, value):
+    """Supported header type"""
     if value and value not in config.get('defaults', 'prim_types'):
         msg = "'{0}' is not a valid primative parameter type".format(value)
         raise InvalidParameterError(msg, 'header')
 
 
 def body_mime_type(inst, attr, value):
+    """Supported MIME media type for request/response"""
     if value:
         match = validate_mime_type(value)
         if value not in config.get('defaults', 'media_types') and not match:
@@ -202,6 +212,9 @@ def body_mime_type(inst, attr, value):
 
 
 def body_schema(inst, attr, value):
+    """
+    Assert no ``schema`` is defined if body as a form-related MIME media type
+    """
     form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
     if inst.mime_type in form_types and value:
         msg = "Body must define formParameters, not schema/example."
@@ -209,6 +222,9 @@ def body_schema(inst, attr, value):
 
 
 def body_example(inst, attr, value):
+    """
+    Assert no ``example`` is defined if body as a form-related MIME media type
+    """
     form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
     if inst.mime_type in form_types and value:
         msg = "Body must define formParameters, not schema/example."
@@ -216,6 +232,10 @@ def body_example(inst, attr, value):
 
 
 def body_form(inst, attr, value):
+    """
+    Assert ``formParameters`` are defined if body has a form-related
+    MIME type.
+    """
     form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
     if inst.mime_type in form_types and not value:
         msg = "Body with mime_type '{0}' requires formParameters.".format(
@@ -224,6 +244,9 @@ def body_form(inst, attr, value):
 
 
 def response_code(inst, attr, value):
+    """
+    Assert a valid response code.
+    """
     if not isinstance(value, int):
         msg = ("Response code '{0}' must be an integer representing an "
                "HTTP code.".format(value))
@@ -237,6 +260,10 @@ def response_code(inst, attr, value):
 # Primative Validators
 #####
 def integer_number_type_parameter(inst, attr, value):
+    """
+    Assert correct parameter attributes for ``integer`` or ``number``
+    primative parameter types.
+    """
     if value is not None:
         param_types = ["integer", "number"]
         if inst.type not in param_types:
@@ -247,6 +274,10 @@ def integer_number_type_parameter(inst, attr, value):
 
 
 def string_type_parameter(inst, attr, value):
+    """
+    Assert correct parameter attributes for ``string`` primative parameter
+    types.
+    """
     if value:
         if inst.type != "string":
             msg = ("{0} must be a string type to have {1} "
@@ -261,6 +292,9 @@ def string_type_parameter(inst, attr, value):
 
 
 def validate_mime_type(value):
+    """
+    Assert a valid MIME media type for request/response body.
+    """
     regex_str = re.compile(r"application\/[A-Za-z.-0-1]*?(json|xml)")
     match = re.search(regex_str, value)
     return match

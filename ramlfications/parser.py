@@ -25,6 +25,12 @@ __all__ = ["parse_raml"]
 
 
 def parse_raml(loaded_raml_file):
+    """
+    Parse loaded RAML file into RAML/Python objects.
+
+    :param RAMLDict loaded_raml_file: OrderedDict of loaded RAML file
+    :returns: :py:class:`.raml.RootNode` object.
+    """
     root = create_root(loaded_raml_file)
     root.traits = create_traits(root.raml_obj.data, root)
     root.resource_types = create_resource_types(root.raml_obj.data, root)
@@ -35,6 +41,7 @@ def parse_raml(loaded_raml_file):
 
 
 def _create_base_param_obj(property_data, param_obj):
+    """Helper function to create a BaseParameter object"""
     objects = []
 
     for key, value in list(iteritems(property_data)):
@@ -69,8 +76,7 @@ def create_root(loaded_raml_file):
     Creates a Root Node based off of the RAML's root section.
 
     :param RAMLDict loaded_raml_file: loaded RAML file
-    :ret root: RootNode object with API root properties set
-    :rtype: RootNode
+    :returns: :py:class:`.raml.RootNode` object with API root properties set
     """
     def title():
         return raml.get("title")
@@ -134,8 +140,7 @@ def create_traits(raml_data, root):
 
     :param dict raml_data: Raw RAML data
     :param RootNode root: Root Node
-    :ret: list of ``Trait`` objects
-    :rtype: list
+    :returns: list of :py:class:`.raml.TraitNode` objects
     """
     def description():
         return data.get("description")
@@ -225,12 +230,11 @@ def create_traits(raml_data, root):
 
 def create_resource_types(raml_data, root):
     """
-    Parse resourceTypes into ``ResourceType`` objects.
+    Parse resourceTypes into ``ResourceTypeNode`` objects.
 
     :param dict raml_data: Raw RAML data
     :param RootNode root: Root Node
-    :ret: list of ``ResourceType`` objects
-    :rtype: list
+    :returns: list of :py:class:`.raml.ResourceTypeNode` objects
     """
     # TODO: move this outside somewhere - config?
     accepted_methods = [
@@ -562,8 +566,7 @@ def create_resources(node, resources, root, parent):
     :param list resources: List of collected ``ResourceNode``s
     :param RootNode root: The ``RootNode`` of the API
     :param ResourceNode parent: Parent ``ResourceNode`` of current ``node``
-    :ret: List of ``ResourceNode`` objects.
-    :rtype: list
+    :returns: List of :py:class:`.raml.ResourceNode` objects.
     """
     for k, v in list(iteritems(node)):
         if k.startswith("/"):
@@ -597,8 +600,7 @@ def create_node(name, raw_data, method, parent, api):
     :param str method: HTTP method associated with resource node
     :param ResourceNode parent: Parent node object of resource node, if any
     :param RootNode api: API ``RootNode`` that the resource node is attached to
-    :ret: Resource Node object
-    :rtype: ``ResourceNode``
+    :returns: :py:class:`.raml.ResourceNode` object
     """
     #####
     # Helper functions

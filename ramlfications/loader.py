@@ -33,7 +33,7 @@ class RAMLDict(object):
 
 class RAMLLoader(object):
     """
-    Extends YAML to load RAML files with ``!include`` tags.
+    Extends YAML loader to load RAML files with ``!include`` tags.
     """
     def _get_raml_object(self, raml_file):
         if raml_file is None:
@@ -85,7 +85,7 @@ class RAMLLoader(object):
         Accepts either:
         :param str raml_file: string path to RAML file
         :param unicode raml_file: unicode string path to RAML file
-        :param file raml_file: file-like object of RAML file
+        :param file raml_file: file-like object of RAML file \
             (must have a ``read`` method)
 
         :return: An instance of ``RAMLDict``

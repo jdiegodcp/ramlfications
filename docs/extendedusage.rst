@@ -21,12 +21,12 @@ The Basics
 .. code-block:: python
 
    >>> api.title
-   'Spotify Web API'
+   'My Other Foo API'
    >>>
    >>> api.version
-   v1
+   v2
    >>> api.base_uri
-   'https://{domainName}.spotify.com/v1'
+   'https://{domainName}.foo.com/v2'
    >>> api.base_uri_parameters
    [<URIParameter(name='domainName')>]
    >>>
@@ -39,10 +39,10 @@ API Documentation
 .. code-block:: python
 
    >>> api.documentation
-   [<Documentation(title='Spotify Web API Docs')>]
+   [<Documentation(title='The Foo API Docs')>]
    >>> doc = api.documentation[0]
    >>> doc.title
-   'Spotify Web API Docs'
+   'The Foo API Docs'
 
 
 Docs written in the RAML file `should be written using Markdown <http://raml.org/spec.html#user-documentation>`_.
@@ -53,13 +53,13 @@ With ``ramlfications``, documentation content and descriptions can either be vie
 .. code-block:: python
 
    >>> doc.content
-   'Welcome to the _Spotify Web API_ specification. For more information about\nhow to use the API, check out [developer site](https://developer.spotify.com/web-api/).\n'
+   'Welcome to the _Foo API_ specification. For more information about\nhow to use the API, check out [developer site](https://developer.foo.com).\n'
    >>>
    >>> doc.content.html
-   u'<p>Welcome to the <em>Spotify Web API</em> specification. For more information about\nhow to use the API, check out <a href="https://developer.spotify.com/web-api/">developer site</a>.</p>\n'
+   u'<p>Welcome to the <em>Foo API</em> specification. For more information about\nhow to use the API, check out <a href="https://developer.foo.com">developer site</a>.</p>\n'
 
 
-Check out :doc:`api` for full definition of ``RAMLRoot`` and its associated attributes and objects.
+Check out :doc:`api` for full definition of ``RootNode`` and its associated attributes and objects.
 
 
 Security Schemes
@@ -79,16 +79,16 @@ To parse auth schemes:
    >>> oauth2.type
    'OAuth 2.0'
    >>> oauth2.description
-   'Spotify supports OAuth 2.0 for authenticating all API requests.\n'
+   'Foo supports OAuth 2.0 for authenticating all API requests.\n'
    >>> oauth2.description.html
-   u'<p>Spotify supports OAuth 2.0 for authenticating all API requests.</p>\n'
+   u'<p>Foo supports OAuth 2.0 for authenticating all API requests.</p>\n'
 
 And its related Headers and Responses:
 
 .. code-block:: python
 
    >>> oauth2.described_by
-   {'headers': [<HeaderParameter(name='Authorization')>], 'responses': [<Response(code='401')>, <Response(code='403')>]}
+   {'headers': [<Header(name='Authorization')>], 'responses': [<Response(code='401')>, <Response(code='403')>]}
    >>> first_header = oauth2.described_by['headers'][0]
    >>> first_header
    <HeaderParameter(name='Authorization')>
@@ -111,13 +111,13 @@ Authentication settings (available for OAuth1, OAuth2, and any x-header that inc
 .. code-block:: python
 
    >>> oauth2.settings.scopes
-   ['playlist-read-private', 'playlist-modify-public',..., 'user-read-email']
+   ['foo-read-private', 'foo-modify-public',..., 'user-read-email-address']
    >>> oauth2.settings.access_token_uri
-   'https://accounts.spotify.com/api/token'
+   'https://accounts.foo.com/api/token'
    >>> oauth2.settings.authorization_grants
    ['code', 'token']
    >>> oauth2.settings.authorization_uri
-   'https://accounts.spotify.com/authorize'
+   'https://accounts.foo.com/authorize'
 
 Check out :doc:`api` for full definition of ``SecuritySchemes``, ``Header``, ``Response`` and their associated attributes and objects.
 
@@ -134,7 +134,7 @@ Resource Types
 .. code-block:: python
 
     >>> api.resource_types
-    [<ResourceType(name='collection')>, <ResourceType(name='member')>]
+    [<ResourceTypeNode(name='collection')>, <ResourceTypeNode(name='member')>]
     >>> collection = api.resource_types[0]
     >>> collection.name
     'collection'
@@ -142,10 +142,7 @@ Resource Types
     'The collection of <<resourcePathName>>'
     >>> collection.usage
     'This resourceType should be used for any collection of items'
-    >>> collection.methods
-    [<ResourceTypeMethod(name='get')>, <ResourceTypeMethod(name='post')>]
-    >>> get = collection.methods[0]
-    >>> get.name
+    >>> collection.method
     'get'
     >>> get.optional
     False
@@ -156,7 +153,7 @@ Traits
 .. code-block:: python
 
     >>> api.traits
-    [<Trait(name='filtered')>, <Trait(name='paged')>]
+    [<TraitNode(name='filtered')>, <TraitNode(name='paged')>]
     >>> paged = api.traits[1]
     >>> paged.query_params
     [<QueryParameter(name='offset')>, <QueryParameter(name='limit')>]
@@ -217,16 +214,16 @@ When parsed, the Python notation would look like this:
 
 .. code-block:: python
 
-    >>> RAML_FILE = "/path/to/simplified-api.raml"
+    >>> RAML_FILE = "/path/to/foo-api.raml"
     >>> api = parse(RAML_FILE)
 
 .. code-block:: python
 
     # accessing API-supported resource types
     >>> api.resource_types
-    [<ResourceType(method='GET', name='searchableCollection')>,
-    <ResourceType(method='POST', name='collection')>,
-    <ResourceType(method='GET', name='collection')>]
+    [<ResourceTypeNode(method='GET', name='searchableCollection')>,
+    <ResourceTypeNode(method='POST', name='collection')>,
+    <ResourceTypeNode(method='GET', name='collection')>]
     >>> api.resource_types[0].query_params
     [<QueryParameter(name='<<queryParamName>>')>,
     <QueryParameter(name='<<fallbackParamName>>')>]
@@ -237,7 +234,7 @@ When parsed, the Python notation would look like this:
 
     # accessing API-supported traits
     >>> api.traits
-    [<Trait(name='secured')>, <Trait(name='paged')>]
+    [<TraitNode(name='secured')>, <TraitNode(name='paged')>]
     >>> api.traits[0].query_params
     [<QueryParameter(name='numPages')>]
     >>> api.traits[0].query_params[0].description
@@ -249,11 +246,11 @@ When parsed, the Python notation would look like this:
     # accessing a single resource
     >>> books = api.resources[0]
     >>> books
-    <Resource(method='GET', path='/books')>
+    <ResourceNode(method='GET', path='/books')>
     >>> books.type
     {'searchableCollection': {'fallbackParamName': 'digest_all_fields', 'queryParamName': 'title'}}
     >>> books.traits
-    [<Trait(name='secured')>, <Trait(name='paged')>]
+    [<TraitNode(name='secured')>, <TraitNode(name='paged')>]
     >>> books.query_params
     [<QueryParameter(name='title')>, <QueryParameter(name='digest_all_fields')>,
     <QueryParameter(name='access_token')>, <QueryParameter(name='numPages')>]
@@ -273,44 +270,44 @@ Resources
 relative URI (relative to the ``base_uri`` and, if nested, relative to
 its parent URI).
 
-For example, `Spotify's Web API`_ defines ``/tracks`` as a resource (a
-"top-level resource" to be exact).  It also defines ``/{id}`` under ``/tracks``,
-making ``/{id}`` a nested resource, relative to ``/tracks``.  The relative path
-would be ``/tracks/{id}``, and the absolute URI path would be
-``https://api.spotify.com/v1/tracks/{id}``.
+For example, `Foo API`_ defines ``/foo/bar`` as a resource (a
+"top-level resource" to be exact).  It also defines ``/{id}`` under ``/foo/bar``,
+making ``/{id}`` a nested resource, relative to ``/foo/bar``.  The relative path
+would be ``/foo/bar/{id}``, and the absolute URI path would be
+``https://api.foo.com/v2/foo/bar/{id}``.
 
 .. code-block:: python
 
    >>> api.resources
-   [<Resource(method='GET', path='/tracks')>,..., <Resource(method='DELETE', path='/users/{user_id}/playlists/{playlist_id/tracks')>]
+   [<Resource(method='GET', path='/foo')>,..., <Resource(method='DELETE', path='/foo/bar/{id}')>]
    >>>
-   >>> track = resources[5]
-   >>> track.name
+   >>> foo_bar = resources[-1]
+   >>> foo_bar.name
    '/{id}'
-   >>> track.description
-   '[Get a Track](https://developer.spotify.com/web-api/get-track/)\n'
-   >>> track.description.html
-   u'<p><a href="https://developer.spotify.com/web-api/get-track/">Get a Track</a></p>\n'
-   >>> track.display_name
-   'track'
-   >>> track.method
-   'get'
-   >>> track.path
-   '/tracks/{id}'
-   >>> track.absolute_uri
-   'https://api.spotify.com/v1/tracks/{id}'
-   >>> track.uri_params
+   >>> foo_bar.description
+   '[Delete a foo bar](https://developer.foo.com/api/delete-foo-bar/)\n'
+   >>> foo_bar.description.html
+   u'<p><a href="https://developer.foo.com/api/delete-foo-bar/">Delete a foo bar</a></p>\n'
+   >>> foo_bar.display_name
+   'foo bar'
+   >>> foo_bar.method
+   'delete'
+   >>> foo_bar.path
+   '/foo/bar/{id}'
+   >>> foo_bar.absolute_uri
+   'https://api.foo.com/v2/foo/bar/{id}'
+   >>> foo_bar.uri_params
    [<URIParameter(name='id')>]
    >>>
-   >>> id_param = track.uri_params[0]
-   >>> id_param.required
+   >>> uri_param = foo_bar.uri_params[0]
+   >>> uri_param.required
    True
-   >>> id_param.type
+   >>> uri_param.type
    'string'
-   >>> id_param.example
-   '1zHlj4dQ8ZAtrayhuDDmkY'
-   >>> track.parent
-   <Resource(method='GET', path='/tracks/')>
+   >>> uri_param.example
+   'f0ob@r1D'
+   >>> foo_bar.parent
+   <Resource(method='GET', path='/foo/bar/')>
 
 Check out :doc:`api` for full definition of what is available for a ``resource`` object, and its associated attributes and objects.
 

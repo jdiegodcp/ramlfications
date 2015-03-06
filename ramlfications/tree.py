@@ -10,8 +10,8 @@ except ImportError:  # pragma: no cover
     from ordereddict import OrderedDict  # pragma: no cover
 
 import sys
-from six import iteritems, itervalues
 
+from six import iteritems, itervalues
 from termcolor import colored
 
 from .parser import parse_raml
@@ -122,16 +122,17 @@ def _print_tree(api, ordered_resources, print_color, verbosity):
     _print_verbosity(ordered_resources, print_color, verbosity)
 
 
-def ttree(load_obj, color, output, verbosity, validate):  # pragma: no cover
+def tree(load_obj, color, output, verbosity, validate):  # pragma: no cover
     """
-    Main Tree functionality.
+    Create a tree visualization of given RAML file.
 
     :param ramlfications.loader.RAMLDict load_obj: Loaded RAML File
-    :param str color: ``light``, ``dark`` or ``None`` for the color output
+    :param str color: ``light``, ``dark`` or ``None`` (default) for the color
+        output
     :param str output: Path to output file, if given
     :param str verbosity: Level of verbosity to print out
     :return: ASCII Tree representation of API
-    :rtype: stdout to screen or file
+    :rtype: stdout to screen or given file name
     :raises InvalidRamlFileError: If error occured trying to validate the RAML
         file (see ``validate.py``)
     """

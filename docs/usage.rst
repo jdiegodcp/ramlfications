@@ -9,20 +9,22 @@ Parse
 
 To parse a RAML file, include ramlfications in your project and call the parse function:
 
-.. code-block:: python
+.. doctest::
 
    >>> import ramlfications
    >>> RAML_FILE = "/path/to/my-api.raml"
    >>> api = ramlfications.parse(RAML_FILE)
    >>> api
-   <RAMLRoot(raml_file="path/to/my/awesome-api.raml")>
+   <RootNode(raml_file="path/to/my-api.raml")>
    >>> api.title
-   'Spotify Web API'
+   'My Foo API'
+   >>> api.version
+   'v1'
 
 .. code-block:: python
 
    >>> api.security_schemes
-   [< Security Scheme: OAuth 2.0 >]
+   [<SecurityScheme(name="oauth_2_0")>]
    >>> oauth2 = api.security_schemes[0]
    >>> oauth2.name
    'oauth_2_0'
@@ -31,31 +33,31 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> oauth2.settings.scopes
    ['playlist-read-private', 'playlist-modify-public',..., 'user-read-email']
    >>> oauth2.settings.access_token_uri
-   'https://accounts.spotify.com/api/token'
+   'https://accounts.foo.com/api/token'
 
 .. code-block:: python
 
    >>> api.resources
-   [<Resource(method='GET', path='/tracks')>,..., <Resource(method='DELETE', path='/users/{user_id}/playlists/{playlist_id/tracks')>]
-   >>> track = api.resources[4]
-   >>> track.name
+   [<ResourceNode(method='GET', path='/foo')>, <ResourceNode(method='PUT', path='/foo')>, ..., <ResourceNode(method='GET', path='/foo/bar/{id}')>]
+   >>> foo_bar = api.resources[-1]
+   >>> foo_bar.name
    '/{id}'
-   >>> track.display_name
-   'track'
-   >>> track.absolute_path
-   'https://api.spotify.com/v1/tracks/{id}'
-   >>> track.uri_params
+   >>> foo_bar.display_name
+   'fooBarID'
+   >>> foo_bar.absolute_path
+   'https://api.foo.com/v1/foo/bar/{id}'
+   >>> foo_bar.uri_params
    [<URIParameter(name='id')>]
 
 .. code-block:: python
 
-   >>> id_param = track.uri_params[0]
-   >>> id_param.required
+   >>> uri_param = foo_bar.uri_params[0]
+   >>> uri_param.required
    True
-   >>> id_param.type
+   >>> uri_param.type
    'string'
    >>> id_param.example
-   '1zHlj4dQ8ZAtrayhuDDmkY'
+   'f00b@r1D'
 
 For more complete understanding of what's available when parsing a RAML file, check the :doc:`extendedusage` \
 or the :doc:`api`.
@@ -66,10 +68,6 @@ Validate
 
 Validation is according to the `RAML Specification`_.
 
-.. comment:
-   TODO: add a note saying what is not yet supported when validating,
-   and add to the wishlist/todo list.
-
 To validate a RAML file via the command line:
 
 .. code-block:: bash
@@ -79,8 +77,8 @@ To validate a RAML file via the command line:
 
 .. code-block:: bash
 
-    $ ramlfications validate /path/to/invalid-api.raml
-    Error validating file tests/data/examples/incorrect-raml-header.raml: Not a valid RAML header: #%FOO.
+    $ ramlfications validate /path/to/invalid/no-title.raml
+    Error validating file /path/to/invalid/no-title.raml: RAML File does not define an API title.
 
 
 To validate a RAML file with Python:
@@ -95,14 +93,13 @@ To validate a RAML file with Python:
 .. code-block:: python
 
    >>> from ramlfications import validate
-   >>> RAML_FILE = "/path/to/invalid-api.raml"
+   >>> RAML_FILE = "/path/to/invalid/no-title.raml"
    >>> validate(RAML_FILE)
-   InvalidRamlFileError: Not a valid RAML header: #%FOO.
+   InvalidRootNodeError: RAML File does not define an API title.
 
-.. note:: 
+.. note::
     When using ``validate`` within Python (versus the command line utility), if the RAML \
-    file is valid, then nothing is returned.  Only invalid files will return an \
-    ``InvalidRamlFileError``.
+    file is valid, then nothing is returned.  Only invalid files will return an exception.
 
 
 Tree
@@ -118,36 +115,38 @@ The least verbose option would show something like this:
 
 .. code-block:: bash
 
-   ===============
-   Spotify Web API
-   ===============
-   Base URI: https://api.spotify.com/v1
-   |– /search
-   |– /tracks
-   |  – /tracks/{id}
+   $ ramlfications tree /path/to/my-api.raml
+   ==========
+   My Foo API
+   ==========
+   Base URI: https://api.foo.com/v1
+   |– /foo
+   |  – /bar
+   |  – /bar/{id}
 
 And the most verbose:
 
 .. code-block:: bash
 
-   ===============
-   Spotify Web API
-   ===============
-   Base URI: https://api.spotify.com/v1
-   |– /search
+   $ ramlfications tree /path/to/my-api.raml -vvv
+   ==========
+   My Foo API
+   ==========
+   Base URI: https://api.foo.com/v1
+   |– /foo
    |  ⌙ GET
    |     Query Params
-   |      ⌙ q: Query
+   |      ⌙ q: Foo Query
    |      ⌙ type: Item Type
-   |– /tracks
-   |  ⌙ GET
-   |     Query Params
-   |      ⌙ ids: Spotify Track IDs
-   |  – /tracks/{id}
+   |  – /bar
+   |    ⌙ GET
+   |       Query Params
+   |        ⌙ q: Bar Query
+   |        ⌙ type: item type
+   |  – /bar/{id}
    |    ⌙ GET
    |       URI Params
-   |        ⌙ id: Spotify Track ID
-
+   |        ⌙ id: ID of foo
 
 Options and Arguments
 ---------------------
