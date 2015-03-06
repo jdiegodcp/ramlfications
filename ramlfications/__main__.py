@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import click
 
 from .loader import RAMLLoader
-from .tree import ttree
+from .tree import tree as ttree
 from .errors import InvalidRAMLError
 from ramlfications import validate as vvalidate
 

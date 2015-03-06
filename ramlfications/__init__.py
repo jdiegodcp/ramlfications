@@ -10,8 +10,8 @@ __license__ = 'Apache 2.0'
 
 import os
 
-from ramlfications.loader import *  # NOQA
-from ramlfications.parser import *  # NOQA
+from ramlfications.loader import RAMLLoader
+from ramlfications.parser import parse_raml
 
 
 def parse(raml_file, production=True):
