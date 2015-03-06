@@ -117,7 +117,7 @@ def create_root(loaded_raml_file):
         return raml.get("schemas")
 
     raml = loaded_raml_file.data
-    root = RootNode(
+    return RootNode(
         raml_obj=loaded_raml_file,
         raw=raml,
         title=title(),
@@ -131,7 +131,6 @@ def create_root(loaded_raml_file):
         schemas=schemas(),
         raml_file=loaded_raml_file.raml_file
     )
-    return root
 
 
 def create_traits(raml_data, root):
@@ -249,6 +248,10 @@ def create_resource_types(raml_data, root):
         "connect", "connect?"
     ]
 
+    #####
+    # Helper functions
+    #####
+
     def get_union(resource, method, inherited):
         union = {}
         for key, value in list(iteritems(inherited)):
@@ -308,9 +311,33 @@ def create_resource_types(raml_data, root):
                     res_type_objs.append(res)
         return res_type_objs
 
+    def get_scheme(item):
+        schemes = raml_data.get('securitySchemes', [])
+        for s in schemes:
+            if item == list(iterkeys(s))[0]:
+                return s
+
+    def get_inherited_type_params(data, property, params):
+        inherited = get_inherited_resource(data.get("type"))
+        inherited = inherited.get(data.get("type"))
+        inherited_params = inherited.get(property, {})
+
+        return dict(list(iteritems(params)) +
+                    list(iteritems(inherited_params)))
+
+    def get_property_by_level(res_data, method_data, property, default={}):
+        method_level = method_data.get(property, default)
+        resource_level = res_data.get(property, default)
+        return method_level, resource_level
+
+    #####
+    # Set ResourceTypeNode attributes
+    #####
+
     def display_name(data, name):
         return data.get('displayName', name)
 
+    # TODO: clean up
     def headers(data):
         _headers = data.get("headers", {})
         if v.get("type"):
@@ -330,6 +357,7 @@ def create_resource_types(raml_data, root):
 
         return header_objs
 
+    # TODO: clean up
     def body(data):
         _body = data.get("body", {})
         if v.get("type"):
@@ -353,6 +381,7 @@ def create_resource_types(raml_data, root):
             body_objects.append(body)
         return body_objects or None
 
+    # TODO: clean up
     def responses(data):
         response_objects = []
         for key, value in list(iteritems(data.get("responses", {}))):
@@ -381,11 +410,8 @@ def create_resource_types(raml_data, root):
                           list(iteritems(v.get("uriParameters", {}))))
 
         if v.get("type"):
-            inherited = get_inherited_resource(v.get("type"))
-            inherited_params = inherited.get(v.get("type"))
-            inherited_params = inherited_params.get("uriParameters", {})
-            uri_params = dict(list(iteritems(uri_params)) +
-                              list(iteritems(inherited_params)))
+            uri_params = get_inherited_type_params(v, "uriParameters",
+                                                   uri_params)
         return _create_base_param_obj(uri_params, URIParameter)
 
     def base_uri_params(data):
@@ -400,11 +426,8 @@ def create_resource_types(raml_data, root):
         query_params = data.get("queryParameters", {})
 
         if v.get("type"):
-            inherited = get_inherited_resource(v.get("type"))
-            inherited_params = list(itervalues(inherited))[0]
-            inherited_params = inherited_params.get("queryParameters", {})
-            query_params = dict(list(iteritems(query_params)) +
-                                list(iteritems(inherited_params)))
+            query_params = get_inherited_type_params(v, "queryParameters",
+                                                     query_params)
 
         return _create_base_param_obj(query_params, QueryParameter)
 
@@ -412,11 +435,8 @@ def create_resource_types(raml_data, root):
         form_params = data.get("formParameters", {})
 
         if v.get("type"):
-            inherited = get_inherited_resource(v.get("type"))
-            inherited_params = list(itervalues(inherited))[0]
-            inherited_params = inherited_params.get("formParameters", {})
-            form_params = dict(list(iteritems(form_params)) +
-                               list(iteritems(inherited_params)))
+            form_params = get_inherited_type_params(v, "formParameters",
+                                                    form_params)
 
         return _create_base_param_obj(form_params, FormParameter)
 
@@ -441,14 +461,14 @@ def create_resource_types(raml_data, root):
         return "?" in meth
 
     def protocols(data):
-        if data.get("protocols"):
-            return data.get("protocols")
-        return v.get("protocols")
+        m, r = get_property_by_level(v, data, "protocols", None)
+        if m:
+            return m
+        return r
 
     def is_(data):
-        resource_level = v.get("is", [])
-        method_level = data.get("is", [])
-        return resource_level + method_level or None
+        m, r = get_property_by_level(v, data, "is", default=[])
+        return m + r or None
 
     def get_trait(item):
         traits = raml_data.get('traits', [])
@@ -456,6 +476,7 @@ def create_resource_types(raml_data, root):
             if item == list(iterkeys(t))[0]:
                 return t
 
+    # TODO: clean up
     def traits(data):
         assigned = is_(data)
         if assigned:
@@ -484,15 +505,8 @@ def create_resource_types(raml_data, root):
         return None
 
     def secured_by(data):
-        resource_level = v.get('securedBy', [])
-        method_level = data.get("securedBy", [])
-        return resource_level + method_level or None
-
-    def get_scheme(item):
-        schemes = raml_data.get('securitySchemes', [])
-        for s in schemes:
-            if item == list(iterkeys(s))[0]:
-                return s
+        m, r = get_property_by_level(v, data, "securedBy", [])
+        return m + r or None
 
     def security_schemes(data):
         secured = secured_by(data)
@@ -514,7 +528,7 @@ def create_resource_types(raml_data, root):
         return None
 
     def wrap(key, data, meth, v):
-        resource_type = ResourceTypeNode(
+        return ResourceTypeNode(
             name=key,
             raw=data,
             root=root,
@@ -538,7 +552,6 @@ def create_resource_types(raml_data, root):
             display_name=display_name(data, key),
             protocols=protocols(data)
         )
-        return resource_type
 
     resource_types = raml_data.get("resourceTypes", [])
     resource_type_objects = []
@@ -643,6 +656,16 @@ def create_node(name, raw_data, method, parent, api):
                                 trait_objs.extend(getattr(trait[0], property))
                 return trait_objs
         return []
+
+    def get_scheme(item):
+        schemes = api.raw.get('securitySchemes', [])
+        for s in schemes:
+            if isinstance(item, str):
+                if item == list(iterkeys(s))[0]:
+                    return s
+            elif isinstance(item, dict):
+                if list(iterkeys(item))[0] == list(iterkeys(s))[0]:
+                    return s
 
     def get_property_levels(property):
         method_level = get_method(property)
@@ -878,16 +901,6 @@ def create_node(name, raw_data, method, parent, api):
             if type_obj:
                 return type_obj[0]
 
-    def get_scheme(item):
-        schemes = api.raw.get('securitySchemes', [])
-        for s in schemes:
-            if isinstance(item, str):
-                if item == list(iterkeys(s))[0]:
-                    return s
-            elif isinstance(item, dict):
-                if list(iterkeys(item))[0] == list(iterkeys(s))[0]:
-                    return s
-
     def secured_by():
         """
         Set resource's assigned security scheme names and related paramters.
@@ -921,7 +934,7 @@ def create_node(name, raw_data, method, parent, api):
             return secured_objs
         return None
 
-    node = ResourceNode(
+    return ResourceNode(
         name=name,
         raw=raw_data,
         method=method,
@@ -947,5 +960,3 @@ def create_node(name, raw_data, method, parent, api):
         secured_by=secured_by(),
         security_schemes=security_schemes()
     )
-
-    return node
