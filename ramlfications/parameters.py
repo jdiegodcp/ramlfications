@@ -5,6 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 import attr
+import markdown2 as md
 
 from .validate import *  # NOQA
 
@@ -12,6 +13,37 @@ HTTP_METHODS = [
     "get", "post", "put", "delete", "patch", "options",
     "head", "trace", "connect"
 ]
+
+
+class Content(object):
+    """
+    Returns documentable content from the RAML file (e.g. Documentation
+    content, description) in either raw or parsed form.
+
+    :param str data: The raw/marked up content data.
+    """
+    def __init__(self, data):
+        self.data = data
+
+    @property
+    def raw(self):
+        """
+        Return raw Markdown/plain text written in the RAML file
+        """
+        return self.data or None
+
+    @property
+    def html(self):
+        """
+        Returns parsed Markdown into HTML
+        """
+        try:
+            return md.markdown(self.data)
+        except TypeError:
+            return None
+
+    def __repr__(self):
+        return self.raw
 
 
 @attr.s
@@ -49,8 +81,8 @@ class BaseParameter(object):
     name         = attr.ib(repr=False)
     raw          = attr.ib(repr=False,
                            validator=attr.validators.instance_of(dict))
-    description  = attr.ib(repr=False)
-    display_name = attr.ib(repr=False)
+    desc         = attr.ib(repr=False)
+    display_name = attr.ib()
     min_length   = attr.ib(repr=False, validator=string_type_parameter)
     max_length   = attr.ib(repr=False, validator=string_type_parameter)
     minimum      = attr.ib(repr=False, validator=integer_number_type_parameter)
@@ -63,6 +95,10 @@ class BaseParameter(object):
     enum         = attr.ib(repr=False, default=None,
                            validator=string_type_parameter)
     type         = attr.ib(repr=False, default="string")
+
+    @property
+    def description(self):
+        return Content(self.desc)
 
 
 @attr.s
@@ -106,8 +142,16 @@ class Documentation(object):
     :param str title: Title of documentation.
     :param str content: Content of documentation.
     """
-    title = attr.ib()
-    content = attr.ib(repr=False)
+    title_ = attr.ib()
+    content_ = attr.ib(repr=False)
+
+    @property
+    def title(self):
+        return Content(self.title_)
+
+    @property
+    def content(self):
+        return Content(self.content_)
 
 
 @attr.s
@@ -153,7 +197,7 @@ class Header(object):
     display_name = attr.ib()
     raw          = attr.ib(repr=False,
                            validator=attr.validators.instance_of(dict))
-    description  = attr.ib(repr=False)
+    desc         = attr.ib(repr=False)
     example      = attr.ib(repr=False)
     default      = attr.ib(repr=False)
     min_length   = attr.ib(repr=False, validator=string_type_parameter)
@@ -168,6 +212,10 @@ class Header(object):
                            validator=string_type_parameter)
     method       = attr.ib(repr=False, default=None)
     required     = attr.ib(repr=False, default=False)
+
+    @property
+    def description(self):
+        return Content(self.desc)
 
 
 @attr.s
@@ -209,13 +257,17 @@ class Response(object):
     :param list body: List of :py:class:`.Body` objects, or ``None``.
     :param str method: HTTP request method associated with response.
     """
-    code        = attr.ib(validator=response_code)
-    raw         = attr.ib(repr=False, init=True,
-                          validator=attr.validators.instance_of(dict))
-    description = attr.ib(repr=False)
-    headers     = attr.ib(repr=False)
-    body        = attr.ib(repr=False)
-    method      = attr.ib(default=None)
+    code     = attr.ib(validator=response_code)
+    raw      = attr.ib(repr=False, init=True,
+                       validator=attr.validators.instance_of(dict))
+    desc     = attr.ib(repr=False)
+    headers  = attr.ib(repr=False)
+    body     = attr.ib(repr=False)
+    method   = attr.ib(default=None)
+
+    @property
+    def description(self):
+        return Content(self.desc)
 
 
 @attr.s
@@ -232,12 +284,16 @@ class SecurityScheme(object):
     :param str description: Description of security scheme
     :param dict settings: Security schema-specific information
     """
-    name         = attr.ib()
-    raw          = attr.ib(repr=False, init=True,
-                           validator=attr.validators.instance_of(dict))
-    type         = attr.ib(repr=False)
-    described_by = attr.ib(repr=False,
-                           validator=attr.validators.instance_of(dict))
-    description  = attr.ib(repr=False)
-    settings     = attr.ib(repr=False,
-                           validator=attr.validators.instance_of(dict))
+    name          = attr.ib()
+    raw           = attr.ib(repr=False, init=True,
+                            validator=attr.validators.instance_of(dict))
+    type          = attr.ib(repr=False)
+    described_by  = attr.ib(repr=False,
+                            validator=attr.validators.instance_of(dict))
+    desc          = attr.ib(repr=False)
+    settings      = attr.ib(repr=False,
+                            validator=attr.validators.instance_of(dict))
+
+    @property
+    def description(self):
+        return Content(self.desc)

@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import attr
 from six.moves import BaseHTTPServer as httpserver  # NOQA
 
+from .parameters import Content
 from .validate import *  # NOQA
 
 HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
@@ -102,8 +103,12 @@ class BaseNode(object):
     query_params    = attr.ib(repr=False)
     form_params     = attr.ib(repr=False)
     media_type      = attr.ib(repr=False)
-    description     = attr.ib(repr=False)
+    desc            = attr.ib(repr=False)
     protocols       = attr.ib(repr=False)
+
+    @property
+    def description(self):
+        return Content(self.desc)
 
 
 @attr.s

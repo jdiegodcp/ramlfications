@@ -91,10 +91,10 @@ def root_docs(inst, attr, value):
     """
     if value:
         for d in value:
-            if d.title is None:
+            if d.title.raw is None:
                 msg = "API Documentation requires a title."
                 raise InvalidRootNodeError(msg)
-            if d.content is None:
+            if d.content.raw is None:
                 msg = "API Documentation requires content defined."
                 raise InvalidRootNodeError(msg)
 

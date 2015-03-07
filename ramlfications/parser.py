@@ -52,7 +52,7 @@ def _create_base_param_obj(property_data, param_obj):
         item = param_obj(
             name=key,
             raw=value,
-            description=value.get("description"),
+            desc=value.get("description"),
             display_name=value.get("displayName", key),
             min_length=value.get("minLength"),
             max_length=value.get("maxLength"),
@@ -193,7 +193,7 @@ def create_traits(raml_data, root):
             response = Response(
                 code=key,
                 raw=value,
-                description=value.get("description"),
+                desc=value.get("description"),
                 headers=headers(value),
                 body=body(value)
             )
@@ -212,7 +212,7 @@ def create_traits(raml_data, root):
             headers=headers(data),
             body=body(data),
             responses=responses(),
-            description=description(),
+            desc=description(),
             media_type=media_type(),
             usage=usage(),
             protocols=protocols()
@@ -296,7 +296,7 @@ def create_resource_types(raml_data, root):
                         query_params=query_params(data_union),
                         form_params=form_params(data_union),
                         media_type=media_type(),
-                        description=description(),
+                        desc=description(),
                         type=type_(),
                         method=method(i),
                         usage=usage(),
@@ -394,7 +394,7 @@ def create_resource_types(raml_data, root):
             response = Response(
                 code=key,
                 raw=value,
-                description=value.get("description"),
+                desc=value.get("description"),
                 headers=header_objs,
                 body=body(value)
             )
@@ -496,7 +496,7 @@ def create_resource_types(raml_data, root):
                     query_params=query_params(raw_data),
                     form_params=form_params(raw_data),
                     media_type=media_type(),
-                    description=description(),
+                    desc=description(),
                     usage=usage(),
                     protocols=protocols(raw_data)
                 )
@@ -520,7 +520,7 @@ def create_resource_types(raml_data, root):
                     raw=raw_data,
                     type=raw_data.get('type'),
                     described_by=raw_data.get("describedBy"),
-                    description=raw_data.get("description"),
+                    desc=raw_data.get("description"),
                     settings=raw_data.get("settings")
                 )
                 secured_objs.append(scheme)
@@ -540,7 +540,7 @@ def create_resource_types(raml_data, root):
             query_params=query_params(data),
             form_params=form_params(data),
             media_type=media_type(),
-            description=description(),
+            desc=description(),
             type=type_(),
             method=method(meth),
             usage=usage(),
@@ -753,7 +753,7 @@ def create_node(name, raw_data, method, parent, api):
                     method=method,
                     raw=headers,
                     type=v.get('type', 'string'),
-                    description=v.get('description'),
+                    desc=v.get('description'),
                     example=v.get('example'),
                     default=v.get('default'),
                     minimum=v.get("minimum"),
@@ -791,7 +791,7 @@ def create_node(name, raw_data, method, parent, api):
                 code=k,
                 raw={k: v},
                 method=method,
-                description=v.get('description'),
+                desc=v.get('description'),
                 headers=resp_headers(v.get('headers', {})),
                 body=resp_body(v.get('body', {}))
             )
@@ -927,7 +927,7 @@ def create_node(name, raw_data, method, parent, api):
                         raw=raw_data,
                         type=raw_data.get('type'),
                         described_by=raw_data.get("describedBy"),
-                        description=raw_data.get("description"),
+                        desc=raw_data.get("description"),
                         settings=raw_data.get("settings")
                     )
                     secured_objs.append(scheme)
@@ -952,7 +952,7 @@ def create_node(name, raw_data, method, parent, api):
         query_params=query_params(),
         form_params=form_params(),
         media_type=media_type(),
-        description=description(),
+        desc=description(),
         is_=is_(),
         traits=traits(),
         type=type_(),

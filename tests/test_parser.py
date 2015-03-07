@@ -55,17 +55,31 @@ def test_docs(root):
                    "out [developer\n site]"
                    "(https://developer.spotify.com/web-api/).\n")
 
-    assert exp_title == root.docs[0].title
-    assert exp_content == root.docs[0].content
+    assert exp_title == root.docs[0].title.raw
+    assert exp_title == repr(root.docs[0].title)
+    assert exp_content == root.docs[0].content.raw
+    assert exp_content == repr(root.docs[0].content)
+
+    title_html = "<p>Spotify Web API Docs</p>\n"
+    content_html = ("<p>Welcome to the <em>Spotify Web API</em> demo "
+                    "specification. This is <em>not</em> the complete API\n"
+                    "specification, and is meant for testing purposes within "
+                    "this RAML specification.\nFor more information about how "
+                    "to use the API, check out <a href=\"https://developer."
+                    "spotify.com/web-api/\">developer\n site</a>.</p>\n")
+    assert title_html == root.docs[0].title.html
+    assert content_html == root.docs[0].content.html
 
 
 def test_base_uri_params(root):
     exp_name = "subdomain"
     exp_desc = "subdomain of API"
+    exp_desc_html = "<p>subdomain of API</p>\n"
     exp_default = "api"
 
     assert exp_name == root.base_uri_params[0].name
-    assert exp_desc == root.base_uri_params[0].description
+    assert exp_desc == root.base_uri_params[0].description.raw
+    assert exp_desc_html == root.base_uri_params[0].description.html
     assert exp_default == root.base_uri_params[0].default
 
 
@@ -74,7 +88,8 @@ def test_uri_params(root):
     assert root.uri_params[0].display_name == "Community Path"
     assert root.uri_params[0].type == "string"
     assert root.uri_params[0].min_length == 1
-    assert root.uri_params[0].description is None
+    assert root.uri_params[0].description.raw is None
+    assert root.uri_params[0].description.html is None
     assert root.uri_params[0].default is None
     assert root.uri_params[0].enum is None
     assert root.uri_params[0].example is None
@@ -138,7 +153,9 @@ def test_trait_query_params(traits):
 def test_trait_headers(traits):
     trait = traits[0]
     assert trait.headers[0].name == "X-example-header"
-    assert trait.headers[0].description == "An example of a trait header"
+    assert trait.headers[0].description.raw == "An example of a trait header"
+    html_desc = "<p>An example of a trait header</p>\n"
+    assert trait.headers[0].description.html == html_desc
 
 
 def test_trait_body(traits):
@@ -158,7 +175,11 @@ def test_trait_uri_params(traits):
     assert trait.uri_params[0].default == 20
 
     desc = "The maximum number of track objects to return"
-    assert trait.uri_params[0].description == desc
+    assert trait.uri_params[0].description.raw == desc
+    assert repr(trait.uri_params[0].description) == desc
+
+    desc_html = "<p>The maximum number of track objects to return</p>\n"
+    assert trait.uri_params[0].description.html == desc_html
 
 
 def test_trait_form_params(traits):
@@ -169,11 +190,10 @@ def test_trait_form_params(traits):
     assert trait.form_params[0].default == "bar"
     assert trait.form_params[0].min_length == 5
     assert trait.form_params[0].max_length == 50
-    assert trait.form_params[0].description == "The Foo Form Field"
+    assert trait.form_params[0].description.raw == "The Foo Form Field"
 
     trait_desc = "A description of a trait with form parameters"
-    assert trait.description == trait_desc
-
+    assert trait.description.raw == trait_desc
     media_type = "application/x-www-form-urlencoded"
     assert trait.media_type == media_type
 
@@ -186,10 +206,10 @@ def test_trait_base_uri_params(traits):
     assert trait.base_uri_params[0].example == "baz-community"
 
     param_desc = "The community path base URI trait"
-    assert trait.base_uri_params[0].description == param_desc
+    assert trait.base_uri_params[0].description.raw == param_desc
 
     trait_desc = "A description of a trait with base URI parameters"
-    assert trait.description == trait_desc
+    assert trait.description.raw == trait_desc
 
 
 #####
@@ -220,7 +240,7 @@ def test_resource_type(resource_types):
     assert header.name == "Accept"
     assert header.method == "get"
     assert header.type == "string"
-    assert header.description == "Is used to set specified media type."
+    assert header.description.raw == "Is used to set specified media type."
     assert header.example is None
     assert header.default is None
     assert header.required is False
@@ -236,7 +256,7 @@ def test_resource_type(resource_types):
 
     desc = ("API rate limit exceeded. See http://developer.spotify.com/"
             "web-api/#rate-limiting for details.\n")
-    assert response.description == desc
+    assert response.description.raw == desc
     assert response.method == "get"
 
     resp_header = response.headers[0]
@@ -244,7 +264,7 @@ def test_resource_type(resource_types):
 
     resp_desc = ("The number of seconds to wait before you can attempt to "
                  "make a request again.\n")
-    assert resp_header.description == resp_desc
+    assert resp_header.description.raw == resp_desc
     assert resp_header.type == "integer"
     assert resp_header.required
 
@@ -271,7 +291,7 @@ def test_resource_type_uri_params(resource_types):
     assert uri_param.name == "mediaTypeExtension"
 
     desc = "Use .json to specify application/json media type."
-    assert uri_param.description == desc
+    assert uri_param.description.raw == desc
     assert uri_param.enum == [".json"]
     assert uri_param.min_length is None
     assert uri_param.type == "string"
@@ -282,7 +302,7 @@ def test_resource_type_uri_params(resource_types):
 def test_resource_type_query_params(resource_types):
     query_param = resource_types[4].query_params[0]
     assert query_param.name == "ids"
-    assert query_param.description == "A comma-separated list of IDs"
+    assert query_param.description.raw == "A comma-separated list of IDs"
     assert query_param.display_name == "Some sort of IDs"
     assert query_param.type == "string"
     assert query_param.required
@@ -291,7 +311,7 @@ def test_resource_type_query_params(resource_types):
 def test_resource_type_form_params(resource_types):
     form_param = resource_types[5].form_params[0]
     assert form_param.name == "aFormParam"
-    assert form_param.description == "An uncreative form parameter"
+    assert form_param.description.raw == "An uncreative form parameter"
     assert form_param.display_name == "Some sort of Form Parameter"
     assert form_param.type == "string"
     assert form_param.required
@@ -302,7 +322,7 @@ def test_resource_type_base_uri_params(resource_types):
     assert base_uri_params.name == "subdomain"
 
     desc = "subdomain for the baseUriType resource type"
-    assert base_uri_params.description == desc
+    assert base_uri_params.description.raw == desc
 
     assert base_uri_params.default == "fooBar"
 
@@ -312,7 +332,7 @@ def test_resource_type_properties(resource_types):
     assert another_example.name == "anotherExample"
 
     desc = "Another Resource Type example"
-    assert another_example.description == desc
+    assert another_example.description.raw == desc
 
     usage = "Some sort of usage description"
     assert another_example.usage == usage
@@ -347,7 +367,7 @@ def test_resource_type_with_trait(resource_types):
     assert query_param.type == "string"
 
     desc = "A comma-separated list of fields to filter query"
-    assert query_param.description == desc
+    assert query_param.description.raw == desc
 
     example = "tracks.items(added_by.id,track(name,href,album(name,href)))"
     assert query_param.example == example
@@ -362,7 +382,7 @@ def test_resource_type_secured_by(resource_types):
     assert scheme.type == "OAuth 2.0"
 
     desc = "Spotify supports OAuth 2.0 for authenticating all API requests.\n"
-    assert scheme.description == desc
+    assert scheme.description.raw == desc
 
     desc_by = {
         "headers": {
@@ -443,7 +463,7 @@ def test_resource_no_method_properties(resources):
 def test_resource_headers(resources):
     assert resources[0].headers[0].name == "X-bogus-header"
     desc = "just an extra header for funsies"
-    assert resources[0].headers[0].description == desc
+    assert resources[0].headers[0].description.raw == desc
 
 
 def test_resource_inherited_properties(resources):
@@ -455,7 +475,7 @@ def test_resource_inherited_properties(resources):
 
     res = resources[11]
     assert res.is_ == ["protocolTrait"]
-    assert res.traits[0].description == "A trait to assign a protocol"
+    assert res.traits[0].description.raw == "A trait to assign a protocol"
     assert res.traits[0].protocols == ["HTTP"]
 
 
@@ -500,7 +520,7 @@ def test_resource_assigned_trait(resources):
 
     assert res.name == "/search"
     assert res.is_ == ["paged"]
-    assert res.traits[0].description == "A description of the paged trait"
+    assert res.traits[0].description.raw == "A description of the paged trait"
     assert res.traits[0].media_type == "application/xml"
     assert res.uri_params == res.traits[0].uri_params
 
@@ -549,7 +569,7 @@ def test_resource_responses(resources):
 
     desc = ("The number of seconds to wait before you can attempt to make "
             "a request again.\n")
-    assert res.responses[0].headers[0].description == desc
+    assert res.responses[0].headers[0].description.raw == desc
 
     res_response = res.responses[0].headers[0]
     res_type_resp = res.resource_type.responses[0].headers[0]
@@ -560,7 +580,7 @@ def test_resource_responses(resources):
     assert res.display_name == "playlists"
     assert res.responses[0].code == 201
     assert res.responses[0].headers[0].name == "X-another-bogus-header"
-    assert res.responses[0].headers[0].description == "A bogus header"
+    assert res.responses[0].headers[0].description.raw == "A bogus header"
     assert res.responses[0].body[0].mime_type == "application/json"
     assert res.responses[0].body[0].schema == "Playlist"
 
@@ -572,7 +592,7 @@ def test_resource_base_uri_params(resources):
     assert res.base_uri_params[0].name == "subdomain"
 
     desc = "subdomain for the baseUriType resource type"
-    assert res.base_uri_params[0].description == desc
+    assert res.base_uri_params[0].description.raw == desc
     assert res.base_uri_params[0].default == "fooBar"
 
     res = resources[-12]
@@ -582,23 +602,23 @@ def test_resource_base_uri_params(resources):
     assert res.base_uri_params[0].default == "barFoo"
 
     desc = "a test base URI parameter for resource-level"
-    assert res.base_uri_params[0].description == desc
+    assert res.base_uri_params[0].description.raw == desc
 
 
 def test_resource_form_params(resources):
     res = resources[-3]
 
     assert res.display_name == "formParamResource"
-    assert res.description == "A example resource with form parameters"
+    assert res.description.raw == "A example resource with form parameters"
     assert res.form_params[0].name == "foo"
-    assert res.form_params[0].description == "Post some foo"
+    assert res.form_params[0].description.raw == "Post some foo"
     assert res.form_params[0].type == "string"
     assert res.form_params[0].required
     assert res.form_params[0].min_length == 10
     assert res.form_params[0].max_length == 100
 
     assert res.form_params[1].name == "bar"
-    assert res.form_params[1].description == "Post some bar"
+    assert res.form_params[1].description.raw == "Post some bar"
     assert res.form_params[1].type == "string"
     assert res.form_params[1].required is False
     assert res.form_params[1].min_length == 15
