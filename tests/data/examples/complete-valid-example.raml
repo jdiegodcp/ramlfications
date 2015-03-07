@@ -142,6 +142,9 @@ securitySchemes:
             description: |
               Used to send a valid OAuth 2 access token.
             type: string
+          X-Foo-Header:
+            description: a foo header
+            type: string
         responses:
           401:
             description: |
@@ -163,6 +166,32 @@ securitySchemes:
           - "user-library-modify"
           - "user-read-private"
           - "user-read-email"
+  - custom_auth:
+      description: custom auth for testing
+      type: Custom Auth
+      describedBy:
+        mediaType: application/x-www-form-urlencode
+        usage: Some usage description
+        protocols: [HTTPS]
+        queryParameters:
+          fooQParam:
+            description: A foo Query parameter
+            type: string
+        uriParameters:
+          subDomain:
+            description: subdomain of auth
+            default: fooauth
+        formParameters:
+          fooFormParam:
+            description: A foo form parameter
+            type: string
+        body:
+          application/x-www-form-urlencoded:
+            formParameters:
+              anotherFormParam:
+                description: another form parameter
+      settings:
+        foo: bar
 traits:
   - filterable:
       usage: Some description about using filterable

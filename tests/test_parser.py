@@ -123,6 +123,71 @@ def api():
 
 
 #####
+# Test Security Schemes
+#####
+@pytest.fixture
+def sec_schemes():
+    raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
+    loaded_raml_file = loader.RAMLLoader().load(raml_file)
+    api = pw.parse_raml(loaded_raml_file)
+    return api.security_schemes
+
+
+def test_create_security_schemes(sec_schemes):
+    assert len(sec_schemes) == 2
+    assert sec_schemes[0].name == "oauth_2_0"
+    assert sec_schemes[0].type == "OAuth 2.0"
+
+    desc = "Spotify supports OAuth 2.0 for authenticating all API requests.\n"
+    assert sec_schemes[0].description.raw == desc
+
+    assert len(sec_schemes[0].headers) == 2
+    assert sec_schemes[0].headers[0].name == "Authorization"
+    assert sec_schemes[0].headers[1].name == "X-Foo-Header"
+
+    assert len(sec_schemes[0].responses) == 2
+    assert sec_schemes[0].responses[0].code == 401
+
+    desc = ("Bad or expired token. This can happen if the user revoked a "
+            "token or\nthe access token has expired. You should "
+            "re-authenticate the user.\n")
+    assert sec_schemes[0].responses[0].description.raw == desc
+
+    assert sec_schemes[0].responses[1].code == 403
+
+    desc = ("Bad OAuth request (wrong consumer key, bad nonce, expired\n"
+            "timestamp...). Unfortunately, re-authenticating the user won't "
+            "help here.\n")
+    assert sec_schemes[0].responses[1].description.raw == desc
+
+    settings = {
+        "authorizationUri": "https://accounts.spotify.com/authorize",
+        "accessTokenUri": "https://accounts.spotify.com/api/token",
+        "authorizationGrants": ["code", "token"],
+        "scopes": [
+            "playlist-read-private",
+            "playlist-modify-public",
+            "playlist-modify-private",
+            "user-library-read",
+            "user-library-modify",
+            "user-read-private",
+            "user-read-email"
+        ]
+    }
+    assert sec_schemes[0].settings == settings
+
+
+def test_create_security_schemes_custom(sec_schemes):
+    custom = sec_schemes[1]
+
+    assert custom.name == "custom_auth"
+    assert custom.type == "Custom Auth"
+    assert len(custom.uri_params) == 1
+    assert len(custom.form_params) == 1
+    assert len(custom.query_params) == 1
+
+
+#####
 # Test Traits
 #####
 @pytest.fixture
@@ -388,6 +453,10 @@ def test_resource_type_secured_by(resource_types):
         "headers": {
             "Authorization": {
                 "description": "Used to send a valid OAuth 2 access token.\n",
+                "type": "string"
+            },
+            "X-Foo-Header": {
+                "description": "a foo header",
                 "type": "string"
             }
         },

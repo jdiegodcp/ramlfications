@@ -32,6 +32,7 @@ def parse_raml(loaded_raml_file):
     :returns: :py:class:`.raml.RootNode` object.
     """
     root = create_root(loaded_raml_file)
+    root.security_schemes = create_sec_schemes(root.raml_obj.data, root)
     root.traits = create_traits(root.raml_obj.data, root)
     root.resource_types = create_resource_types(root.raml_obj.data, root)
     root.resources = create_resources(root.raml_obj.data, [], root,
@@ -131,6 +132,146 @@ def create_root(loaded_raml_file):
         schemas=schemas(),
         raml_file=loaded_raml_file.raml_file
     )
+
+
+def create_sec_schemes(raml_data, root):
+    """
+    Parse security schemes into ``SecurityScheme`` objects
+
+    :param dict raml_data: Raw RAML data
+    :param RootNode root: Root Node
+    :returns: list of :py:class:`.parameters.SecurityScheme` objects
+    """
+    def map_object_types(item):
+        return {
+            "headers": headers,
+            "body": body,
+            "responses": responses,
+            "queryParameters": query_params,
+            "uriParameters": uri_params,
+            "formParameters": form_params,
+            "usage": usage,
+            "mediaType": media_type,
+            "protocols": protocols,
+            "documentation": documentation,
+        }[item]
+
+    def type_():
+        return data.get("type")
+
+    def headers(header_data):
+        _headers = []
+        header_data = header_data.get("headers", {})
+        for k, v in list(iteritems(header_data)):
+            h = _create_base_param_obj({k: v}, Header)
+            _headers.extend(h)
+        return _headers
+
+    def body(body_data):
+        body_data = body_data.get("body", {})
+        _body = []
+        for k, v in list(iteritems(body_data)):
+            body = Body(
+                mime_type=k,
+                raw=v,
+                schema=v.get("schema"),
+                example=v.get("example"),
+                form_params=v.get("formParameters")
+            )
+            _body.append(body)
+        return _body
+
+    def responses(resp_data):
+        _resps = []
+        resp_data = resp_data.get("responses", {})
+        for k, v in list(iteritems(resp_data)):
+            response = Response(
+                code=k,
+                raw=v,
+                desc=v.get("description"),
+                headers=headers(v.get("headers", {})),
+                body=body(v.get("body", {}))
+            )
+            _resps.append(response)
+        return _resps
+
+    def query_params(param_data):
+        param_data = param_data.get("queryParameters", {})
+        _params = []
+        for k, v in list(iteritems(param_data)):
+            p = _create_base_param_obj({k: v}, QueryParameter)
+            _params.append(p)
+        return _params
+
+    def uri_params(param_data):
+        param_data = param_data.get("uriParameters")
+        _params = []
+        for k, v in list(iteritems(param_data)):
+            p = _create_base_param_obj({k: v}, URIParameter)
+            _params.append(p)
+        return _params
+
+    def form_params(param_data):
+        param_data = param_data.get("formParameters", {})
+        _params = []
+        for k, v in list(iteritems(param_data)):
+            p = _create_base_param_obj({k: v}, FormParameter)
+            _params.append(p)
+        return _params
+
+    def usage(desc_by_data):
+        return desc_by_data.get("usage")
+
+    def media_type(desc_by_data):
+        return desc_by_data.get("mediaType")
+
+    def protocols(desc_by_data):
+        return desc_by_data.get("protocols")
+
+    def documentation(desc_by_data):
+        d = desc_by_data.get('documentation', [])
+        assert isinstance(d, list), "Error parsing documentation"
+        docs = [Documentation(i.get('title'), i.get('content')) for i in d]
+        return docs or None
+
+    def set_property(node, obj, node_data):
+        func = map_object_types(obj)
+        item_objs = func({obj: node_data})
+        setattr(node, str(obj), item_objs)
+
+    def described_by():
+        return data.get("describedBy", {})
+
+    def description():
+        return data.get("description")
+
+    def settings():
+        return data.get("settings")
+
+    def initial_wrap(key, data):
+        return SecurityScheme(
+            name=key,
+            raw=data,
+            type=type_(),
+            described_by=described_by(),
+            desc=description(),
+            settings=settings()
+        )
+
+    def final_wrap(node):
+        for obj, node_data in list(iteritems(node.described_by)):
+            set_property(node, obj, node_data)
+        return node
+
+    schemes = raml_data.get("securitySchemes", [])
+    scheme_objs = []
+    for s in schemes:
+        name = list(iterkeys(s))[0]
+        data = list(itervalues(s))[0]
+        node = initial_wrap(name, data)
+        node = final_wrap(node)
+        scheme_objs.append(node)
+    return scheme_objs or None
 
 
 def create_traits(raml_data, root):
