@@ -55,10 +55,10 @@ def test_docs(root):
                    "out [developer\n site]"
                    "(https://developer.spotify.com/web-api/).\n")
 
-    assert exp_title == root.docs[0].title.raw
-    assert exp_title == repr(root.docs[0].title)
-    assert exp_content == root.docs[0].content.raw
-    assert exp_content == repr(root.docs[0].content)
+    assert exp_title == root.documentation[0].title.raw
+    assert exp_title == repr(root.documentation[0].title)
+    assert exp_content == root.documentation[0].content.raw
+    assert exp_content == repr(root.documentation[0].content)
 
     title_html = "<p>Spotify Web API Docs</p>\n"
     content_html = ("<p>Welcome to the <em>Spotify Web API</em> demo "
@@ -67,8 +67,8 @@ def test_docs(root):
                     "this RAML specification.\nFor more information about how "
                     "to use the API, check out <a href=\"https://developer."
                     "spotify.com/web-api/\">developer\n site</a>.</p>\n")
-    assert title_html == root.docs[0].title.html
-    assert content_html == root.docs[0].content.html
+    assert title_html == root.documentation[0].title.html
+    assert content_html == root.documentation[0].content.html
 
 
 def test_base_uri_params(root):

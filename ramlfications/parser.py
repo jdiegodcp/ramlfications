@@ -128,7 +128,7 @@ def create_root(loaded_raml_file):
         base_uri_params=base_uri_params(),
         uri_params=uri_params(),
         media_type=media_type(),
-        docs=docs(),
+        documentation=docs(),
         schemas=schemas(),
         raml_file=loaded_raml_file.raml_file
     )

@@ -57,7 +57,7 @@ class RootNode(object):
     uri_params       = attr.ib(repr=False, validator=root_uri_params)
     protocols        = attr.ib(repr=False, validator=root_protocols)
     title            = attr.ib(repr=False, validator=root_title)
-    docs             = attr.ib(repr=False, validator=root_docs)
+    documentation    = attr.ib(repr=False, validator=root_docs)
     schemas          = attr.ib(repr=False, validator=root_schemas)
     media_type       = attr.ib(repr=False, validator=root_media_type)
     resource_types   = attr.ib(repr=False, init=False)
