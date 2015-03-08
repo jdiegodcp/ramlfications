@@ -200,7 +200,7 @@ def create_sec_schemes(raml_data, root):
         _params = []
         for k, v in list(iteritems(param_data)):
             p = _create_base_param_obj({k: v}, QueryParameter)
-            _params.append(p)
+            _params.extend(p)
         return _params
 
     def uri_params(param_data):
@@ -208,7 +208,7 @@ def create_sec_schemes(raml_data, root):
         _params = []
         for k, v in list(iteritems(param_data)):
             p = _create_base_param_obj({k: v}, URIParameter)
-            _params.append(p)
+            _params.extend(p)
         return _params
 
     def form_params(param_data):
@@ -216,7 +216,7 @@ def create_sec_schemes(raml_data, root):
         _params = []
         for k, v in list(iteritems(param_data)):
             p = _create_base_param_obj({k: v}, FormParameter)
-            _params.append(p)
+            _params.extend(p)
         return _params
 
     def usage(desc_by_data):
@@ -237,7 +237,7 @@ def create_sec_schemes(raml_data, root):
     def set_property(node, obj, node_data):
         func = map_object_types(obj)
         item_objs = func({obj: node_data})
-        setattr(node, str(obj), item_objs)
+        setattr(node, func.func_name, item_objs)
 
     def described_by():
         return data.get("describedBy", {})

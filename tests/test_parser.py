@@ -185,6 +185,15 @@ def test_create_security_schemes_custom(sec_schemes):
     assert len(custom.uri_params) == 1
     assert len(custom.form_params) == 1
     assert len(custom.query_params) == 1
+    assert len(custom.body) == 1
+
+    assert custom.uri_params[0].name == "subDomain"
+    assert custom.query_params[0].name == "fooQParam"
+    assert custom.form_params[0].name == "fooFormParam"
+    assert custom.body[0].mime_type == "application/x-www-form-urlencoded"
+
+    assert custom.documentation[0].title.raw == "foo docs"
+    assert custom.documentation[0].content.raw == "foo content"
 
 
 #####
