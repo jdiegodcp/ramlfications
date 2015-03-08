@@ -134,7 +134,6 @@ class FormParameter(BaseParameter):
     required = attr.ib(repr=False, default=False)
 
 
-@attr.s
 class Documentation(object):
     """
     User documentation for the API.
@@ -142,16 +141,20 @@ class Documentation(object):
     :param str title: Title of documentation.
     :param str content: Content of documentation.
     """
-    title_ = attr.ib()
-    content_ = attr.ib(repr=False)
+    def __init__(self, _title, _content):
+        self._title = _title
+        self._content = _content
 
     @property
     def title(self):
-        return Content(self.title_)
+        return Content(self._title)
 
     @property
     def content(self):
-        return Content(self.content_)
+        return Content(self._content)
+
+    def __repr__(self):
+        return "Documentation(title='{0}')".format(self.title)
 
 
 @attr.s
