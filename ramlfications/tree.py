@@ -14,6 +14,7 @@ import sys
 from six import iteritems, itervalues
 from termcolor import colored
 
+from .config import setup_config
 from .parser import parse_raml
 
 COLOR_MAP = {
