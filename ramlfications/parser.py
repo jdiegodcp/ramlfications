@@ -86,15 +86,15 @@ def create_root(loaded_raml_file):
         return raml.get("version")
 
     def protocols():
-        explicit_protos = raml.get('protocols')
+        explicit_protos = raml.get("protocols")
         implicit_protos = re.findall(r"(https|http)", base_uri())
 
         return explicit_protos or implicit_protos or None
 
     def base_uri():
-        base_uri = raml.get('baseUri', "")
+        base_uri = raml.get("baseUri", "")
         if "{version}" in base_uri:
-            base_uri = base_uri.replace('{version}', str(raml.get('version')))
+            base_uri = base_uri.replace("{version}", str(raml.get("version")))
         return base_uri
 
     def base_uri_params():
@@ -109,9 +109,9 @@ def create_root(loaded_raml_file):
         return raml.get("mediaType")
 
     def docs():
-        d = raml.get('documentation', [])
+        d = raml.get("documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(i.get('title'), i.get('content')) for i in d]
+        docs = [Documentation(i.get("title"), i.get("content")) for i in d]
         return docs or None
 
     def schemas():
@@ -229,9 +229,9 @@ def create_sec_schemes(raml_data, root):
         return desc_by_data.get("protocols")
 
     def documentation(desc_by_data):
-        d = desc_by_data.get('documentation', [])
+        d = desc_by_data.get("documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(i.get('title'), i.get('content')) for i in d]
+        docs = [Documentation(i.get("title"), i.get("content")) for i in d]
         return docs or None
 
     def set_property(node, obj, node_data):
@@ -289,7 +289,7 @@ def create_traits(raml_data, root):
         return data.get("mediaType")
 
     def usage():
-        return data.get('usage')
+        return data.get("usage")
 
     def protocols():
         return data.get("protocols")
@@ -429,8 +429,8 @@ def create_resource_types(raml_data, root):
                         name=key,
                         raw=data_union,
                         root=root,
-                        headers=headers(data_union.get('headers', {})),
-                        body=body(data_union.get('body', {})),
+                        headers=headers(data_union.get("headers", {})),
+                        body=body(data_union.get("body", {})),
                         responses=responses(data_union),
                         uri_params=uri_params(data_union),
                         base_uri_params=base_uri_params(data_union),
@@ -453,7 +453,7 @@ def create_resource_types(raml_data, root):
         return res_type_objs
 
     def get_scheme(item):
-        schemes = raml_data.get('securitySchemes', [])
+        schemes = raml_data.get("securitySchemes", [])
         for s in schemes:
             if item == list(iterkeys(s))[0]:
                 return s
@@ -476,7 +476,7 @@ def create_resource_types(raml_data, root):
     #####
 
     def display_name(data, name):
-        return data.get('displayName', name)
+        return data.get("displayName", name)
 
     # TODO: clean up
     def headers(data):
@@ -582,13 +582,13 @@ def create_resource_types(raml_data, root):
         return _create_base_param_obj(form_params, FormParameter)
 
     def media_type():
-        return v.get('mediaType')
+        return v.get("mediaType")
 
     def description():
-        return v.get('description')
+        return v.get("description")
 
     def type_():
-        return v.get('type')
+        return v.get("type")
 
     def method(meth):
         if "?" in meth:
@@ -596,7 +596,7 @@ def create_resource_types(raml_data, root):
         return meth
 
     def usage():
-        return v.get('usage')
+        return v.get("usage")
 
     def optional():
         return "?" in meth
@@ -612,7 +612,7 @@ def create_resource_types(raml_data, root):
         return m + r or None
 
     def get_trait(item):
-        traits = raml_data.get('traits', [])
+        traits = raml_data.get("traits", [])
         for t in traits:
             if item == list(iterkeys(t))[0]:
                 return t
@@ -659,7 +659,7 @@ def create_resource_types(raml_data, root):
                 scheme = SecurityScheme(
                     name=list(iterkeys(assigned_scheme))[0],
                     raw=raw_data,
-                    type=raw_data.get('type'),
+                    type=raw_data.get("type"),
                     described_by=raw_data.get("describedBy"),
                     desc=raw_data.get("description"),
                     settings=raw_data.get("settings")
@@ -724,7 +724,7 @@ def create_resources(node, resources, root, parent):
     """
     for k, v in list(iteritems(node)):
         if k.startswith("/"):
-            avail = config.get('defaults', 'available_methods')
+            avail = config.get("defaults", "available_methods")
             methods = [m for m in avail if m in list(iterkeys(v))]
             if methods:
                 for m in methods:
@@ -799,7 +799,7 @@ def create_node(name, raw_data, method, parent, api):
         return []
 
     def get_scheme(item):
-        schemes = api.raw.get('securitySchemes', [])
+        schemes = api.raw.get("securitySchemes", [])
         for s in schemes:
             if isinstance(item, str):
                 if item == list(iterkeys(s))[0]:
@@ -824,11 +824,11 @@ def create_node(name, raw_data, method, parent, api):
     #####
     def display_name():
         """Set resource's ``displayName``."""
-        return raw_data.get('displayName', name)
+        return raw_data.get("displayName", name)
 
     def path():
         """Set resource's relative URI path."""
-        parent_path = ''
+        parent_path = ""
         if parent:
             parent_path = parent.path
         return parent_path + name
@@ -840,9 +840,9 @@ def create_node(name, raw_data, method, parent, api):
     def protocols():
         """Set resource's supported protocols."""
         trait_protocols = get_trait("protocols")
-        r_type_protocols = get_resource_type('protocols')
-        m_protocols = get_method('protocols')
-        r_protocols = get_resource('protocols')
+        r_type_protocols = get_resource_type("protocols")
+        m_protocols = get_method("protocols")
+        r_protocols = get_resource("protocols")
         if m_protocols:
             return m_protocols
         elif r_type_protocols:
@@ -874,9 +874,9 @@ def create_node(name, raw_data, method, parent, api):
             body = Body(
                 mime_type=k,
                 raw={k: v},
-                schema=v.get('schema'),
-                example=v.get('example'),
-                form_params=v.get('formParameters')
+                schema=v.get("schema"),
+                example=v.get("example"),
+                form_params=v.get("formParameters")
             )
             body_objects.append(body)
 
@@ -890,13 +890,13 @@ def create_node(name, raw_data, method, parent, api):
             for k, v in list(iteritems(headers)):
                 header = Header(
                     name=k,
-                    display_name=v.get('displayName', k),
+                    display_name=v.get("displayName", k),
                     method=method,
                     raw=headers,
-                    type=v.get('type', 'string'),
-                    desc=v.get('description'),
-                    example=v.get('example'),
-                    default=v.get('default'),
+                    type=v.get("type", "string"),
+                    desc=v.get("description"),
+                    example=v.get("example"),
+                    default=v.get("default"),
                     minimum=v.get("minimum"),
                     maximum=v.get("maximum"),
                     min_length=v.get("minLength"),
@@ -916,8 +916,8 @@ def create_node(name, raw_data, method, parent, api):
                 body = Body(
                     mime_type=k,
                     raw={k: v},
-                    schema=v.get('schema'),
-                    example=v.get('example'),
+                    schema=v.get("schema"),
+                    example=v.get("example"),
                     form_params=None
                 )
                 body_objs.append(body)
@@ -932,9 +932,9 @@ def create_node(name, raw_data, method, parent, api):
                 code=k,
                 raw={k: v},
                 method=method,
-                desc=v.get('description'),
-                headers=resp_headers(v.get('headers', {})),
-                body=resp_body(v.get('body', {}))
+                desc=v.get("description"),
+                headers=resp_headers(v.get("headers", {})),
+                body=resp_body(v.get("body", {}))
             )
             resp_objs.append(resp)
 
@@ -1066,7 +1066,7 @@ def create_node(name, raw_data, method, parent, api):
                     scheme = SecurityScheme(
                         name=list(iterkeys(assigned_scheme))[0],
                         raw=raw_data,
-                        type=raw_data.get('type'),
+                        type=raw_data.get("type"),
                         described_by=raw_data.get("describedBy"),
                         desc=raw_data.get("description"),
                         settings=raw_data.get("settings")

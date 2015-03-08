@@ -11,8 +11,10 @@ from .parameters import Content
 from .validate import *  # NOQA
 
 HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
-AVAILABLE_METHODS = ['get', 'post', 'put', 'delete', 'patch', 'head',
-                     'options', 'trace', 'connect']
+AVAILABLE_METHODS = [
+    "get", "post", "put", "delete", "patch", "head", "options",
+    "trace", "connect"
+]
 
 
 class RAMLParserError(Exception):

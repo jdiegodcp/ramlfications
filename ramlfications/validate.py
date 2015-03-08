@@ -12,8 +12,8 @@ from six import iterkeys
 from .base_config import config
 from .errors import *  # NOQA
 
-env_val = os.environ.get('RAML_VALIDATE') == '1'
-conf_val = config.get('main', 'validate') == 'True'
+env_val = os.environ.get("RAML_VALIDATE") == "1"
+conf_val = config.get("main", "validate") == "True"
 VALIDATE = env_val or conf_val
 
 
@@ -23,20 +23,20 @@ VALIDATE = env_val or conf_val
 
 def root_version(inst, attr, value):
     """Require an API Version (e.g. api.foo.com/v1)."""
-    base_uri = inst.raml_obj.data.get('baseUri')
-    if not value and '{version}' in base_uri:
+    base_uri = inst.raml_obj.data.get("baseUri")
+    if not value and"{version}" in base_uri:
         msg = ("RAML File's baseUri includes {version} parameter but no "
                "version is defined.")
         raise InvalidRootNodeError(msg)
     elif not value:
-        msg = 'RAML File does not define an API version.'
+        msg = "RAML File does not define an API version."
         raise InvalidRootNodeError(msg)
 
 
 def root_base_uri(inst, attr, value):
     """Require a Base URI."""
     if not value:
-        msg = 'RAML File does not define the baseUri.'
+        msg = "RAML File does not define the baseUri."
         raise InvalidRootNodeError(msg)
 
 
@@ -58,7 +58,7 @@ def root_uri_params(inst, attr, value):
     """
     if value:
         for v in value:
-            if v.name == 'version':
+            if v.name == "version":
                 msg = "'version' can only be defined in baseUriParameters."
                 raise InvalidRootNodeError(msg)
 
@@ -69,7 +69,7 @@ def root_protocols(inst, attr, value):
     """
     if value:
         for p in value:
-            if p.upper() not in config.get('defaults', 'protocols'):
+            if p.upper() not in config.get("defaults", "protocols"):
                 msg = ("'{0}' not a valid protocol for a RAML-defined "
                        "API.".format(p))
                 raise InvalidRootNodeError(msg)
@@ -80,7 +80,7 @@ def root_title(inst, attr, value):
     Require a title for the defined API.
     """
     if not value:
-        msg = 'RAML File does not define an API title.'
+        msg = "RAML File does not define an API title."
         raise InvalidRootNodeError(msg)
 
 
@@ -110,7 +110,7 @@ def root_media_type(inst, attr, value):
     """
     if value:
         match = validate_mime_type(value)
-        if value not in config.get('defaults', 'media_types') and not match:
+        if value not in config.get("defaults", "media_types") and not match:
             msg = "Unsupported MIME Media Type: '{0}'.".format(value)
             raise InvalidRootNodeError(msg)
 
@@ -130,7 +130,7 @@ def assigned_traits(inst, attr, value):
     represented in the RAML.
     """
     if value:
-        traits = inst.root.raw.get('traits', {})
+        traits = inst.root.raw.get("traits", {})
         if not traits:
             msg = ("Trying to assign traits that are not defined"
                    "in the root of the API.")
@@ -177,7 +177,7 @@ def assigned_res_type(inst, attr, value):
             )
             raise InvalidResourceNodeError(msg)
 
-        res_types = inst.root.raw.get('resourceTypes', {})
+        res_types = inst.root.raw.get("resourceTypes", {})
         res_type_names = [list(iterkeys(i))[0] for i in res_types]
         if isinstance(value, list):
             item = value[0]  # NOCOV
@@ -197,18 +197,18 @@ def assigned_res_type(inst, attr, value):
 #####
 def header_type(inst, attr, value):
     """Supported header type"""
-    if value and value not in config.get('defaults', 'prim_types'):
+    if value and value not in config.get("defaults", "prim_types"):
         msg = "'{0}' is not a valid primative parameter type".format(value)
-        raise InvalidParameterError(msg, 'header')
+        raise InvalidParameterError(msg, "header")
 
 
 def body_mime_type(inst, attr, value):
     """Supported MIME media type for request/response"""
     if value:
         match = validate_mime_type(value)
-        if value not in config.get('defaults', 'media_types') and not match:
+        if value not in config.get("defaults", "media_types") and not match:
             msg = "Unsupported MIME Media Type: '{0}'.".format(value)
-            raise InvalidParameterError(msg, 'body')
+            raise InvalidParameterError(msg, "body")
 
 
 def body_schema(inst, attr, value):
@@ -218,7 +218,7 @@ def body_schema(inst, attr, value):
     form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
     if inst.mime_type in form_types and value:
         msg = "Body must define formParameters, not schema/example."
-        raise InvalidParameterError(msg, 'body')
+        raise InvalidParameterError(msg, "body")
 
 
 def body_example(inst, attr, value):
@@ -228,7 +228,7 @@ def body_example(inst, attr, value):
     form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
     if inst.mime_type in form_types and value:
         msg = "Body must define formParameters, not schema/example."
-        raise InvalidParameterError(msg, 'body')
+        raise InvalidParameterError(msg, "body")
 
 
 def body_form(inst, attr, value):
@@ -240,7 +240,7 @@ def body_form(inst, attr, value):
     if inst.mime_type in form_types and not value:
         msg = "Body with mime_type '{0}' requires formParameters.".format(
             inst.mime_type)
-        raise InvalidParameterError(msg, 'body')
+        raise InvalidParameterError(msg, "body")
 
 
 def response_code(inst, attr, value):
@@ -250,10 +250,10 @@ def response_code(inst, attr, value):
     if not isinstance(value, int):
         msg = ("Response code '{0}' must be an integer representing an "
                "HTTP code.".format(value))
-        raise InvalidParameterError(msg, 'response')
-    if value not in config.get('custom', 'resp_codes'):
+        raise InvalidParameterError(msg, "response")
+    if value not in config.get("custom", "resp_codes"):
         msg = "'{0}' not a valid HTTP response code.".format(value)
-        raise InvalidParameterError(msg, 'response')
+        raise InvalidParameterError(msg, "response")
 
 
 #####
