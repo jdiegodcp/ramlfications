@@ -608,7 +608,12 @@ def test_resource_assigned_trait(resources):
     assert res.is_ == ["paged"]
     assert res.traits[0].description.raw == "A description of the paged trait"
     assert res.traits[0].media_type == "application/xml"
-    assert res.uri_params == res.traits[0].uri_params
+
+    params = [p.name for p in res.uri_params]
+    t_params = [p.name for p in res.traits[0].uri_params]
+
+    for t in t_params:
+        assert t in params
 
 
 def test_resource_protocols(resources):
@@ -682,7 +687,7 @@ def test_resource_base_uri_params(resources):
     assert res.base_uri_params[0].default == "fooBar"
 
     res = resources[-12]
-
+    assert len(res.base_uri_params) == 1
     assert res.display_name == "users-profile"
     assert res.base_uri_params[0].name == "subdomain"
     assert res.base_uri_params[0].default == "barFoo"
@@ -720,3 +725,8 @@ def test_resource_security_scheme(resources):
         {"oauth_2_0": {"scopes": ["playlist-read-private"]}}
     ]
     assert res.security_schemes[0].name == "oauth_2_0"
+
+
+def test_resource_inherit_parent(resources):
+    res = resources[2]
+    assert len(res.uri_params) == 4

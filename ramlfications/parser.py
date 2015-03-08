@@ -953,6 +953,14 @@ def create_node(name, raw_data, method, parent, root):
         params = _create_base_param_obj(uri_params, URIParameter, root.config)
         if params:
             param_objs.extend(params)
+        if parent and parent.uri_params:
+            param_objs.extend(parent.uri_params)
+        if root.uri_params:
+            root_params = root.uri_params
+            param_names = [p.name for p in param_objs]
+            _params = [p for p in root_params if p.name not in param_names]
+            param_objs.extend(_params)
+
         return param_objs or None
 
     def base_uri_params():
@@ -963,6 +971,15 @@ def create_node(name, raw_data, method, parent, root):
         params = _create_base_param_obj(uri_params, URIParameter, root.config)
         if params:
             param_objs.extend(params)
+
+        # if parent and parent.base_uri_params:
+            # param_objs.extend(parent.base_uri_params)
+
+        if root.base_uri_params:
+            root_params = root.base_uri_params
+            param_names = [p.name for p in param_objs]
+            _params = [p for p in root_params if p.name not in param_names]
+            param_objs.extend(_params)
         return param_objs or None
 
     def query_params():
