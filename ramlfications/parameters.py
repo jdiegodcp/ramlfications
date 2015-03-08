@@ -78,11 +78,11 @@ class BaseParameter(object):
     :param str type: Primative type of parameter. Defaults to ``string`` if \
         not set.
     """
-    name         = attr.ib(repr=False)
+    name         = attr.ib()
     raw          = attr.ib(repr=False,
                            validator=attr.validators.instance_of(dict))
     desc         = attr.ib(repr=False)
-    display_name = attr.ib()
+    display_name = attr.ib(repr=False)
     min_length   = attr.ib(repr=False, validator=string_type_parameter)
     max_length   = attr.ib(repr=False, validator=string_type_parameter)
     minimum      = attr.ib(repr=False, validator=integer_number_type_parameter)
