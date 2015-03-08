@@ -89,6 +89,8 @@ class BaseParameter(object):
     maximum      = attr.ib(repr=False, validator=integer_number_type_parameter)
     example      = attr.ib(repr=False)
     default      = attr.ib(repr=False)
+    config       = attr.ib(repr=False,
+                           validator=attr.validators.instance_of(dict))
     repeat       = attr.ib(repr=False, default=False)
     pattern      = attr.ib(repr=False, default=None,
                            validator=string_type_parameter)
@@ -207,6 +209,8 @@ class Header(object):
     max_length   = attr.ib(repr=False, validator=string_type_parameter)
     minimum      = attr.ib(repr=False, validator=integer_number_type_parameter)
     maximum      = attr.ib(repr=False, validator=integer_number_type_parameter)
+    config       = attr.ib(repr=False,
+                           validator=attr.validators.instance_of(dict))
     type         = attr.ib(repr=False, default="string", validator=header_type)
     enum         = attr.ib(repr=False, default=None,
                            validator=string_type_parameter)
@@ -246,6 +250,8 @@ class Body(object):
     schema      = attr.ib(repr=False, validator=body_schema)
     example     = attr.ib(repr=False, validator=body_example)
     form_params = attr.ib(repr=False, validator=body_form)
+    config      = attr.ib(repr=False,
+                          validator=attr.validators.instance_of(dict))
 
 
 @attr.s
@@ -266,6 +272,8 @@ class Response(object):
     desc     = attr.ib(repr=False)
     headers  = attr.ib(repr=False)
     body     = attr.ib(repr=False)
+    config   = attr.ib(repr=False,
+                       validator=attr.validators.instance_of(dict))
     method   = attr.ib(default=None)
 
     @property
@@ -295,6 +303,8 @@ class SecurityScheme(object):
                             validator=attr.validators.instance_of(dict))
     desc          = attr.ib(repr=False)
     settings      = attr.ib(repr=False,
+                            validator=attr.validators.instance_of(dict))
+    config        = attr.ib(repr=False,
                             validator=attr.validators.instance_of(dict))
 
     @property

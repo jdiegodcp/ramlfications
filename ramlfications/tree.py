@@ -122,7 +122,7 @@ def _print_tree(api, ordered_resources, print_color, verbosity):
     _print_verbosity(ordered_resources, print_color, verbosity)
 
 
-def tree(load_obj, color, output, verbosity, validate):  # pragma: no cover
+def tree(load_obj, color, output, verbosity, validate, config):  # NOCOV
     """
     Create a tree visualization of given RAML file.
 
@@ -136,7 +136,8 @@ def tree(load_obj, color, output, verbosity, validate):  # pragma: no cover
     :raises InvalidRamlFileError: If error occured trying to validate the RAML
         file (see ``validate.py``)
     """
-    api = parse_raml(load_obj)
+    config = setup_config(config)
+    api = parse_raml(load_obj, config)
     resources = _get_tree(api)
 
     if output:

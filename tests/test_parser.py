@@ -10,6 +10,7 @@ import pytest
 
 from ramlfications import loader
 from ramlfications import parser as pw
+from ramlfications.config import setup_config
 from ramlfications.raml import RootNode, ResourceTypeNode, TraitNode
 from .base import EXAMPLES
 
@@ -24,11 +25,13 @@ def loaded_raml():
 def root():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = loader.RAMLLoader().load(raml_file)
-    return pw.create_root(loaded_raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.create_root(loaded_raml_file, config)
 
 
 def test_parse_raml(loaded_raml):
-    root = pw.parse_raml(loaded_raml)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    root = pw.parse_raml(loaded_raml, config)
     assert isinstance(root, RootNode)
 
 
@@ -119,7 +122,8 @@ def test_media_type(root):
 def api():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = loader.RAMLLoader().load(raml_file)
-    return pw.parse_raml(loaded_raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
 
 
 #####
@@ -129,7 +133,8 @@ def api():
 def sec_schemes():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = loader.RAMLLoader().load(raml_file)
-    api = pw.parse_raml(loaded_raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    api = pw.parse_raml(loaded_raml_file, config)
     return api.security_schemes
 
 
@@ -203,7 +208,8 @@ def test_create_security_schemes_custom(sec_schemes):
 def traits():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = loader.RAMLLoader().load(raml_file)
-    api = pw.parse_raml(loaded_raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    api = pw.parse_raml(loaded_raml_file, config)
     return api.traits
 
 
@@ -293,7 +299,8 @@ def test_trait_base_uri_params(traits):
 def resource_types():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = loader.RAMLLoader().load(raml_file)
-    api = pw.parse_raml(loaded_raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    api = pw.parse_raml(loaded_raml_file, config)
     return api.resource_types
 
 
@@ -510,7 +517,8 @@ def test_resource_type_secured_by(resource_types):
 def resources():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = loader.RAMLLoader().load(raml_file)
-    api = pw.parse_raml(loaded_raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    api = pw.parse_raml(loaded_raml_file, config)
     return api.resources
 
 

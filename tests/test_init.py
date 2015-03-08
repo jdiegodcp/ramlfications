@@ -20,7 +20,8 @@ def raml():
 
 
 def test_parse(raml):
-    result = parse(raml)
+    config = os.path.join(EXAMPLES + "test-config.ini")
+    result = parse(raml, config)
     assert result
     assert isinstance(result, RootNode)
 

@@ -5,16 +5,10 @@
 from __future__ import absolute_import, division, print_function
 
 import re
-import os
 
 from six import iterkeys
 
-from .base_config import config
 from .errors import *  # NOQA
-
-env_val = os.environ.get("RAML_VALIDATE") == "1"
-conf_val = config.get("main", "validate") == "True"
-VALIDATE = env_val or conf_val
 
 
 #####
@@ -69,7 +63,7 @@ def root_protocols(inst, attr, value):
     """
     if value:
         for p in value:
-            if p.upper() not in config.get("defaults", "protocols"):
+            if p.upper() not in inst.config.get("protocols"):
                 msg = ("'{0}' not a valid protocol for a RAML-defined "
                        "API.".format(p))
                 raise InvalidRootNodeError(msg)
@@ -110,7 +104,7 @@ def root_media_type(inst, attr, value):
     """
     if value:
         match = validate_mime_type(value)
-        if value not in config.get("defaults", "media_types") and not match:
+        if value not in inst.config.get("media_types") and not match:
             msg = "Unsupported MIME Media Type: '{0}'.".format(value)
             raise InvalidRootNodeError(msg)
 
@@ -197,7 +191,7 @@ def assigned_res_type(inst, attr, value):
 #####
 def header_type(inst, attr, value):
     """Supported header type"""
-    if value and value not in config.get("defaults", "prim_types"):
+    if value and value not in inst.config.get("prim_types"):
         msg = "'{0}' is not a valid primative parameter type".format(value)
         raise InvalidParameterError(msg, "header")
 
@@ -206,7 +200,7 @@ def body_mime_type(inst, attr, value):
     """Supported MIME media type for request/response"""
     if value:
         match = validate_mime_type(value)
-        if value not in config.get("defaults", "media_types") and not match:
+        if value not in inst.config.get("media_types") and not match:
             msg = "Unsupported MIME Media Type: '{0}'.".format(value)
             raise InvalidParameterError(msg, "body")
 
@@ -251,7 +245,7 @@ def response_code(inst, attr, value):
         msg = ("Response code '{0}' must be an integer representing an "
                "HTTP code.".format(value))
         raise InvalidParameterError(msg, "response")
-    if value not in config.get("custom", "resp_codes"):
+    if value not in inst.config.get("resp_codes"):
         msg = "'{0}' not a valid HTTP response code.".format(value)
         raise InvalidParameterError(msg, "response")
 

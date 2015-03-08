@@ -68,6 +68,8 @@ class RootNode(object):
     resources        = attr.ib(repr=False, init=False,
                                validator=root_resources)
     raml_obj         = attr.ib(repr=False)
+    config           = attr.ib(repr=False,
+                               validator=attr.validators.instance_of(dict))
 
 
 @attr.s

@@ -10,11 +10,12 @@ __license__ = 'Apache 2.0'
 
 import os
 
+from ramlfications.config import setup_config
 from ramlfications.loader import RAMLLoader
 from ramlfications.parser import parse_raml
 
 
-def parse(raml_file, production=True):
+def parse(raml_file, config_file=None, production=True):
     """
     Module helper function to parse a RAML File.  First loads the RAML file
     with :py:class:`.loader.RAMLLoader` then parses with
@@ -35,7 +36,8 @@ def parse(raml_file, production=True):
         `specification <http://raml.org/spec.html>`_.
     """
     loader = RAMLLoader().load(raml_file)
-    return parse_raml(loader)
+    config = setup_config(config_file)
+    return parse_raml(loader, config)
 
 
 def load(raml_file):
@@ -52,7 +54,7 @@ def load(raml_file):
     return RAMLLoader().load(raml_file)
 
 
-def validate(raml_file, production=True):
+def validate(raml_file, config_file=None):
     """
     Module helper function to validate a RAML File.  First loads \
     the RAML file \
@@ -68,9 +70,7 @@ def validate(raml_file, production=True):
         file (see :py:mod:`.validate`)
 
     """
-    os.environ['RAML_VALIDATE'] = '1'
     loader = RAMLLoader().load(raml_file)
-    try:
-        parse_raml(loader)
-    finally:
-        os.environ.pop('RAML_VALIDATE')
+    config = setup_config(config_file)
+    config["validate"] = True
+    parse_raml(loader, config)

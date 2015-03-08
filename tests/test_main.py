@@ -52,9 +52,11 @@ def test_tree(runner):
     Successfully print out tree of RAML file via CLI.
     """
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
+    config_file = os.path.join(EXAMPLES + "test-config.ini")
     exp_code = 0
     exp_msg = None
-    result = runner.invoke(main.tree, [raml_file, "--color=light"])
+    result = runner.invoke(main.tree, [raml_file, "--color=light",
+                           "--config={0}".format(config_file)])
     check_result(exp_code, exp_msg, result)
 
 

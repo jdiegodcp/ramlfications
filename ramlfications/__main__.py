@@ -19,11 +19,14 @@ def main():
 
 
 @main.command(help="Validate a RAML file.")
-@click.argument('ramlfile', type=click.Path(exists=True))
-def validate(ramlfile):
+@click.argument("ramlfile", type=click.Path(exists=True))
+@click.option("--config", "-c", type=click.Path(exists=True))
+def validate(ramlfile, config):
     """Validate a given RAML file."""
+    if config:
+        print("{0}".format(config))
     try:
-        vvalidate(ramlfile, production=True)
+        vvalidate(ramlfile, config)
         click.secho("Success! Valid RAML file: {0}".format(ramlfile),
                     fg="green")
 
@@ -44,11 +47,12 @@ def validate(ramlfile):
               help="Include methods for each endpoint")
 @click.option("-V", "--validate", default=False, is_flag=True,
               help="Validate RAML file")
-def tree(ramlfile, color, output, verbose, validate):
+@click.option("-C", "--config", type=click.Path(exists=True))
+def tree(ramlfile, color, output, verbose, validate, config):
     """Pretty-print a tree of the RAML-defined API."""
     try:
         load_obj = RAMLLoader().load(ramlfile)
-        ttree(load_obj, color, output, verbose, validate)
+        ttree(load_obj, color, output, verbose, validate, config)
     except InvalidRAMLError as e:
         msg = '"{0}" is not a valid RAML file: {1}'.format(
             click.format_filename(load_obj.raml_file), e)
