@@ -98,3 +98,6 @@ class RAMLLoader(object):
                 return RAMLDict(raml.name, raml_file, loaded_raml)
         except IOError as e:
             raise LoadRAMLFileError(e)
+        except yaml.parser.ParserError as e:
+            msg = "Error parsing RAML: {0}".format(e)
+            raise LoadRAMLFileError(msg)
