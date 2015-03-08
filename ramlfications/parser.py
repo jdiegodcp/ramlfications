@@ -1024,13 +1024,13 @@ def create_node(name, raw_data, method, parent, api):
                 assigned_type = get_method.get("type")
                 if assigned_type:
                     if isinstance(assigned_type, dict):
-                        return list(iterkeys(assigned_type))[0]
+                        return list(iterkeys(assigned_type))[0]  # pragma: no cover
                     else:
                         return assigned_type
 
         assigned_type = raw_data.get("type")
         if isinstance(assigned_type, dict):
-            return list(iterkeys(assigned_type))[0]
+            return list(iterkeys(assigned_type))[0]  # pragma: no cover
         return assigned_type
 
     def resource_type():
