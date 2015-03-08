@@ -153,7 +153,7 @@ class Documentation(object):
     def content(self):
         return Content(self._content)
 
-    def __repr__(self):  # pragma: no cover
+    def __repr__(self):  # NOCOV
         return "Documentation(title='{0}')".format(self.title)
 
 

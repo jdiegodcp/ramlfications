@@ -139,13 +139,13 @@ def assigned_traits(inst, attr, value):
         if isinstance(value, list):
             for v in value:
                 if isinstance(v, dict):
-                    if list(iterkeys(v))[0] not in trait_names:  # pragma: no cover
+                    if list(iterkeys(v))[0] not in trait_names:  # NOCOV
                         msg = (
                             "Trait '{0}' is assigned to '{1}' but is not def"
                             "ined in the root of the API.".format(v, inst.path)
                         )
                         raise InvalidResourceNodeError(msg)
-                    if not isinstance(v.keys()[0], str):  # pragma: no cover
+                    if not isinstance(v.keys()[0], str):  # NOCOV
                         msg = ("'{0}' needs to be a string referring to a "
                                "trait, or a dictionary mapping parameter "
                                "values to a trait".format(v))
@@ -180,9 +180,9 @@ def assigned_res_type(inst, attr, value):
         res_types = inst.root.raw.get('resourceTypes', {})
         res_type_names = [list(iterkeys(i))[0] for i in res_types]
         if isinstance(value, list):
-            item = value[0]  # pragma: no cover
+            item = value[0]  # NOCOV
         elif isinstance(value, dict):
-            item = list(iterkeys(value))[0]  # pragma: no cover
+            item = list(iterkeys(value))[0]  # NOCOV
         else:
             item = value
         if item not in res_type_names:
