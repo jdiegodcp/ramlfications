@@ -89,6 +89,7 @@ def create_root(loaded_raml_file, config):
     def protocols():
         explicit_protos = raml.get("protocols")
         implicit_protos = re.findall(r"(https|http)", base_uri())
+        implicit_protos = [p.upper() for p in implicit_protos]
 
         return explicit_protos or implicit_protos or None
 
@@ -913,19 +914,17 @@ def create_node(name, raw_data, method, parent, root):
 
         def resp_body(body):
             """Set response body."""
-            body_objs = []
-
-            for k, v in list(iteritems(body)):
-                body = Body(
-                    mime_type=k,
-                    raw={k: v},
-                    schema=v.get("schema"),
-                    example=v.get("example"),
-                    form_params=None,
-                    config=root.config
-                )
-                body_objs.append(body)
-            return body_objs or None
+            body_list = []
+            b = Body(
+                mime_type="application/json",
+                raw=body,
+                schema=body.get("schema"),
+                example=body.get("example"),
+                form_params=None,
+                config=root.config
+            )
+            body_list.append(b)
+            return body_list or None
 
         resps = get_property_levels("responses")
         type_resp = get_resource_type("responses")

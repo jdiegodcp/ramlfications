@@ -302,10 +302,8 @@ class SecurityScheme(object):
     described_by  = attr.ib(repr=False,
                             validator=attr.validators.instance_of(dict))
     desc          = attr.ib(repr=False)
-    settings      = attr.ib(repr=False,
-                            validator=attr.validators.instance_of(dict))
-    config        = attr.ib(repr=False,
-                            validator=attr.validators.instance_of(dict))
+    settings      = attr.ib(repr=False)
+    config        = attr.ib(repr=False)
 
     @property
     def description(self):

@@ -45,12 +45,12 @@ def add_custom_config(user_config, parser_config):
     if user_config.has_section("custom"):
         items = user_config.items("custom")
         for i in items:
-            if i not in CONFIG_VARS:
+            if i[0] not in CONFIG_VARS:
                 continue
-            key = i[0]
-            add_items = i[1].strip().split(",")
-            pc[key] = list(set(pc[key].append(add_items)))
+            conf = user_config.get("custom", i[0]).strip().split(",")
+            pc[i[0]].extend(conf)
 
+    pc["resp_codes"] = [int(r) for r in pc["resp_codes"]]
     pc["validate"] = user_config.get("main", "validate") or False
     pc["production"] = user_config.get("main", "production") or False
 
@@ -70,7 +70,7 @@ def setup_config(config_file=None):
         "media_types": MEDIA_TYPES,
         "protocols": PROTOCOLS,
         "http_methods": HTTP_METHODS,
-        "raml_version": RAML_VERSIONS,
+        "raml_versions": RAML_VERSIONS,
         "prim_types": PRIM_TYPES,
     }
 
@@ -81,5 +81,4 @@ def setup_config(config_file=None):
 
     optional = [m + "?" for m in parser_config["http_methods"]]
     parser_config["http_optional"] = optional + parser_config["http_methods"]
-
     return parser_config
