@@ -13,7 +13,7 @@ from ramlfications import parse
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
 from ramlfications.raml import RootNode, ResourceTypeNode, TraitNode
-from .base import EXAMPLES
+from tests.base import EXAMPLES
 
 
 @pytest.fixture

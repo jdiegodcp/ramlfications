@@ -49,7 +49,6 @@ def add_custom_config(user_config, parser_config):
                 continue
             conf = user_config.get("custom", i[0]).strip().split(",")
             pc[i[0]].extend(conf)
-
     pc["resp_codes"] = [int(r) for r in pc["resp_codes"]]
     pc["validate"] = user_config.get("main", "validate") or False
     pc["production"] = user_config.get("main", "production") or False
