@@ -119,6 +119,9 @@ def create_root(loaded_raml_file, config):
     def schemas():
         return raml.get("schemas")
 
+    def secured_by():
+        return raml.get("securedBy")
+
     raml = loaded_raml_file.data
     return RootNode(
         raml_obj=loaded_raml_file,
@@ -133,7 +136,8 @@ def create_root(loaded_raml_file, config):
         documentation=docs(),
         schemas=schemas(),
         raml_file=loaded_raml_file.raml_file,
-        config=config
+        config=config,
+        secured_by=secured_by()
     )
 
 
@@ -1005,10 +1009,15 @@ def create_node(name, raw_data, method, parent, root):
 
     def media_type():
         """Set resource's supported media types."""
-        return raw_data.get("mediaType")
+        if raw_data.get("mediaType"):
+            return raw_data.get("mediaType")
+        if root.media_type:
+            return root.media_type
 
     def description():
         """Set resource's description."""
+        if raw_data.get(method, {}).get("description"):
+            return raw_data.get(method, {}).get("description")
         return raw_data.get("description")
 
     def is_():
@@ -1075,7 +1084,12 @@ def create_node(name, raw_data, method, parent, root):
                 secured_by = method_level.get("securedBy")
                 if secured_by:
                     return secured_by
-        return raw_data.get("securedBy")
+        resource_level = raw_data.get("securedBy")
+        if resource_level:
+            return resource_level
+        root_level = root.secured_by
+        if root_level:
+            return root_level
 
     def security_schemes():
         """Set resource's assigned security scheme objects."""

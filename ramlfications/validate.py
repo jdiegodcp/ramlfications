@@ -115,6 +115,10 @@ def root_resources(inst, attr, value):
         raise InvalidRootNodeError(msg)
 
 
+def root_secured_by(inst, attr, value):
+    pass
+
+
 #####
 # Shared Validators for Resource & Resource Type Node
 #####

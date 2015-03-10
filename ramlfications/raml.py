@@ -62,6 +62,7 @@ class RootNode(object):
     documentation    = attr.ib(repr=False, validator=root_docs)
     schemas          = attr.ib(repr=False, validator=root_schemas)
     media_type       = attr.ib(repr=False, validator=root_media_type)
+    secured_by       = attr.ib(repr=False, validator=root_secured_by)
     resource_types   = attr.ib(repr=False, init=False)
     traits           = attr.ib(repr=False, init=False)
     security_schemes = attr.ib(repr=False, init=False)

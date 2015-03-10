@@ -3,13 +3,11 @@
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
 
-import json
 import os
 
 import pytest
 
 from ramlfications import loader
-from ramlfications import parse
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
 from ramlfications.raml import (
@@ -78,6 +76,10 @@ def test_schemas(root):
 
 def test_media_type(root):
     assert root.media_type == "application/json"
+
+
+def test_secured_by(root):
+    assert root.secured_by == ["oauth_1_0"]
 
 
 #####
@@ -317,6 +319,21 @@ def resources(api):
     return api.resources
 
 
+ATTRIBUTES = [
+    "absolute_uri", "base_uri_params", "body", "description", "display_name",
+    "form_params", "headers", "is_", "media_type", "method", "name", "parent",
+    "path", "protocols", "query_params", "raw", "resource_type", "responses",
+    "root", "secured_by", "security_schemes", "traits", "type", "uri_params"
+]
+
+STR_ATTRS = [
+    "absolute_uri", "display_name", "media_type", "method", "name",
+    "path", "type"
+]
+
+ABSOLUTE_URI = "https://api.twitter.com/1.1/"
+
+
 def test_resources(resources):
     assert len(resources) == 109
     for r in resources:
@@ -341,9 +358,114 @@ def test_resources_statuses(resources):
     assert res.query_params is None
     assert res.form_params is None
     assert res.parent is None
-    # assert res.media_type == "application/json"
+    assert res.media_type == "application/json"
     assert res.absolute_uri == "https://api.twitter.com/1.1/statuses"
     assert res.path == "/statuses"
     assert res.protocols == ["HTTPS"]
-    # assert res.secured_by == ["oauth_1_0"]
-    # assert len(res.security_schemes) == 1
+    assert res.secured_by == ["oauth_1_0"]
+    assert len(res.security_schemes) == 1
+
+
+def test_resources_statuses_mention_timeline(resources):
+    res = resources[1]
+
+    desc = ("Returns the 20 most recent mentions (tweets containing a users's "
+            "@screen_name)\nfor the authenticating user.\nThe timeline "
+            "returned is the equivalent of the one seen when you view your\n"
+            "mentions on twitter.com.\nThis method can only return up to "
+            "800 tweets.\n")
+
+    exp_data = {
+        "absolute_uri": ABSOLUTE_URI + "statuses/mentions_timeline{mediaTypeExtension}",  # NOQA
+        "display_name": "/mentions_timeline{mediaTypeExtension}",
+        "media_type": "application/json",
+        "method": "get",
+        "name": "/mentions_timeline{mediaTypeExtension}",
+        "path": "/statuses/mentions_timeline{mediaTypeExtension}",
+        "type": "base"
+    }
+    for key, value in exp_data.items():
+        data = getattr(res, key)
+        assert value == data
+
+    assert res.description.raw == desc
+    assert res.secured_by == ["oauth_1_0"]
+    # actual sec scheme objects may be different since resource could
+    # have certain scopes assigned.
+    assert res.security_schemes[0].raw == res.root.security_schemes[0].raw
+    assert res.protocols == ["HTTPS"]
+    assert res.headers is None
+    assert res.body is None
+    assert res.form_params is None
+    assert res.is_ == ["nestedable", "trimmable"]
+    assert res.type == "base"
+
+    assert len(res.traits) == 2
+    assert res.traits[0] == res.root.traits[0]
+    assert res.traits[1] == res.root.traits[1]
+
+    assert res.resource_type == res.root.resource_types[0]
+
+    assert len(res.uri_params) == 1
+    assert res.uri_params[0].name == "mediaTypeExtension"
+    assert res.uri_params[0].enum == [".json"]
+    desc = "Use .json to specify application/json media type."
+    assert res.uri_params[0].description.raw == desc
+
+    assert len(res.query_params) == 6
+
+    param = res.query_params[0]
+    assert param.name == "include_entities"
+    assert param.enum == [0, 1, True, False, None, "f"]
+    desc = "The entities node will not be included when set to false."
+    assert param.description.raw == desc
+
+    param = res.query_params[1]
+    assert param.name == "trim_user"
+    assert param.enum == [0, 1, True, False, None, "f"]
+    desc = ("When set to either true, t or 1, each tweet returned in a "
+            "timeline will\ninclude a user object including only the status "
+            "authors numerical ID.\nOmit this parameter to receive the "
+            "complete user object.\n")
+    assert param.description.raw == desc
+
+    param = res.query_params[2]
+    assert param.name == "count"
+    assert param.type == "integer"
+    assert param.maximum == 200
+    desc = ("Specifies the number of tweets to try and retrieve, up to a "
+            "maximum of\n200. The value of count is best thought of as a "
+            "limit to the number of\ntweets to return because suspended or "
+            "deleted content is removed after\nthe count has been applied. "
+            "We include retweets in the count, even if\ninclude_rts is not "
+            "supplied. It is recommended you always send include_rts=1\n"
+            "when using this API method.\n")
+    assert param.description.raw == desc
+
+    param = res.query_params[3]
+    assert param.name == "since_id"
+    assert param.type == "integer"
+    desc = ("Returns results with an ID greater than (that is, more recent "
+            "than) the\nspecified ID. There are limits to the number of "
+            "Tweets which can be accessed\nthrough the API. If the limit of "
+            "Tweets has occured since the since_id, the\nsince_id will be "
+            "forced to the oldest ID available.\n")
+    assert param.description.raw == desc
+
+    param = res.query_params[4]
+    assert param.name == "max_id"
+    assert param.type == "integer"
+    desc = ("Returns results with an ID less than (that is, older than) or "
+            "equal to\nthe specified ID.\n")
+    assert param.description.raw == desc
+
+    param = res.query_params[5]
+    assert param.name == "contributor_details"
+    assert param.type == "string"
+    desc = ("This parameter enhances the contributors element of the status "
+            "response\nto include the screen_name of the contributor. By "
+            "default only the user_id\nof the contributor is included.\n")
+    assert param.description.raw == desc
+
+    # TODO: FIXME - responses are not being inherited properly
+    # assert len(res.responses) == 15

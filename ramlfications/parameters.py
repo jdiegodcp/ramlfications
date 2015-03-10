@@ -299,8 +299,7 @@ class SecurityScheme(object):
     raw           = attr.ib(repr=False, init=True,
                             validator=attr.validators.instance_of(dict))
     type          = attr.ib(repr=False)
-    described_by  = attr.ib(repr=False,
-                            validator=attr.validators.instance_of(dict))
+    described_by  = attr.ib(repr=False)
     desc          = attr.ib(repr=False)
     settings      = attr.ib(repr=False)
     config        = attr.ib(repr=False)
