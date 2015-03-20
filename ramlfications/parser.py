@@ -19,6 +19,7 @@ from .parameters import (
     FormParameter, SecurityScheme
 )
 from .raml import RootNode, ResourceNode, ResourceTypeNode, TraitNode
+from .utils import load_schema
 
 __all__ = ["parse_raml"]
 
@@ -181,8 +182,8 @@ def create_sec_schemes(raml_data, root):
             body = Body(
                 mime_type=k,
                 raw=v,
-                schema=v.get("schema"),
-                example=v.get("example"),
+                schema=load_schema(v.get("schema")),
+                example=load_schema(v.get("example")),
                 form_params=v.get("formParameters"),
                 config=root.config
             )
@@ -331,8 +332,8 @@ def create_traits(raml_data, root):
             body = Body(
                 mime_type=key,
                 raw=value,
-                schema=value.get("schema"),
-                example=value.get("example"),
+                schema=load_schema(value.get("schema")),
+                example=load_schema(value.get("example")),
                 form_params=value.get("formParameters"),
                 config=root.config
             )
@@ -517,8 +518,8 @@ def create_resource_types(raml_data, root):
             body = Body(
                 mime_type=key,
                 raw=value,
-                schema=value.get("schema"),
-                example=value.get("example"),
+                schema=load_schema(value.get("schema")),
+                example=load_schema(value.get("example")),
                 form_params=value.get("formParameters"),
                 config=root.config
             )
@@ -765,6 +766,23 @@ def create_node(name, raw_data, method, parent, root):
     #####
     # Helper functions
     #####
+    def get_union(resource, method, inherited):
+        union = {}
+        for key, value in list(iteritems(inherited)):
+            if resource.get(method) is not None:
+                if key not in list(iterkeys(resource.get(method, {}))):
+                    union[key] = value
+                else:
+                    resource_values = resource.get(method, {}).get(key)
+                    inherited_values = inherited.get(key, {})
+                    union[key] = dict(list(iteritems(resource_values)) +
+                                      list(iteritems(inherited_values)))
+        if resource.get(method) is not None:
+            for key, value in list(iteritems(resource.get(method, {}))):
+                if key not in list(iterkeys(inherited)):
+                    union[key] = value
+        return union
+
     def get_method(property):
         """Returns ``property`` defined at the method level, or ``None``."""
         if method is not None:
@@ -880,8 +898,8 @@ def create_node(name, raw_data, method, parent, root):
             body = Body(
                 mime_type=k,
                 raw={k: v},
-                schema=v.get("schema"),
-                example=v.get("example"),
+                schema=load_schema(v.get("schema")),
+                example=load_schema(v.get("example")),
                 form_params=v.get("formParameters"),
                 config=root.config
             )
@@ -922,8 +940,8 @@ def create_node(name, raw_data, method, parent, root):
             b = Body(
                 mime_type="application/json",
                 raw=body,
-                schema=body.get("schema"),
-                example=body.get("example"),
+                schema=load_schema(body.get("schema")),
+                example=load_schema(body.get("example")),
                 form_params=None,
                 config=root.config
             )
@@ -934,17 +952,39 @@ def create_node(name, raw_data, method, parent, root):
         type_resp = get_resource_type("responses")
         trait_resp = get_trait("responses")
         resp_objs = type_resp + trait_resp
+        resp_codes = [r.code for r in resp_objs]
         for k, v in list(iteritems(resps)):
-            resp = Response(
-                code=k,
-                raw={k: v},
-                method=method,
-                desc=v.get("description"),
-                headers=resp_headers(v.get("headers", {})),
-                body=resp_body(v.get("body", {})),
-                config=root.config
-            )
-            resp_objs.append(resp)
+            if k in resp_codes:
+                resp = [r for r in resp_objs if r.code == k][0]
+                index = resp_objs.index(resp)
+                inherit_resp = resp_objs.pop(index)
+                headers = resp_headers(v.get("headers", {}))
+                if inherit_resp.headers:
+                    headers = headers.extend(inherit_resp.headers)
+                body = resp_body(v.get("body", {}))
+                if inherit_resp.body:
+                    body = body.extend(inherit_resp.body)
+                resp = Response(
+                    code=k,
+                    raw={k: v},  # should prob get data union
+                    method=method,
+                    desc=v.get("description") or inherit_resp.desc,
+                    headers=headers,
+                    body=body,
+                    config=root.config
+                )
+                resp_objs.insert(index, resp)  # preserve order
+            else:
+                resp = Response(
+                    code=k,
+                    raw={k: v},
+                    method=method,
+                    desc=v.get("description"),
+                    headers=resp_headers(v.get("headers", {})),
+                    body=resp_body(v.get("body", {})),
+                    config=root.config
+                )
+                resp_objs.append(resp)
 
         return resp_objs or None
 

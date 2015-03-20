@@ -467,5 +467,163 @@ def test_resources_statuses_mention_timeline(resources):
             "default only the user_id\nof the contributor is included.\n")
     assert param.description.raw == desc
 
-    # TODO: FIXME - responses are not being inherited properly
-    # assert len(res.responses) == 15
+    assert len(res.responses) == 15
+
+    r = res.responses[0]
+
+    assert r.code == 200
+    assert r.description.raw == "Success!"
+    assert len(r.body) == 1
+    assert r.body[0].schema is not None
+    assert r.body[0].example is not None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[1]
+
+    assert r.code == 304
+    desc = "There was no new data to return."
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[2]
+    assert r.code == 400
+    desc = ("The request was invalid or cannot be otherwise served. An "
+            "accompanying\nerror message will explain further. In API v1.1, "
+            "requests withou\nauthentication are considered invalid and will "
+            "yield this response.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[3]
+    assert r.code == 401
+    desc = ("Authentication credentials were missing or incorrect.")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[4]
+    assert r.code == 403
+    desc = ("The request is understood, but it has been refused or access "
+            "is no\nallowed. An accompanying error message will explain why. "
+            "This code is\nused when requests are being denied due to "
+            "update limits.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[5]
+    assert r.code == 404
+    desc = ("The URI requested is invalid or the resource requested, such as "
+            "a user,\ndoes not exists. Also returned when the requested "
+            "format is not supported\nby the requested method.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[6]
+    assert r.code == 406
+    desc = ("Returned by the Search API when an invalid format is specified "
+            "in the\nrequest.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[7]
+    assert r.code == 410
+    desc = ("This resource is gone. Used to indicate that an API endpoint "
+            "has been\nturned off. For example: \"The Twitter REST API "
+            "v1 will soon stop\nfunctioning. Please migrate to API v1.1.\"\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[8]
+    assert r.code == 420
+    desc = ("Returned by the version 1 Search and Trends APIs when you are "
+            "being rate\nlimited.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[9]
+    assert r.code == 422
+    desc = ("Returned when an image uploaded to POST account/update_profile"
+            "_banner is\nunable to be processed.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[10]
+    assert r.code == 429
+    desc = ("Returned in API v1.1 when a request cannot be served due to the\n"
+            "application's rate limit having been exhausted for the resource. "
+            "See Rate\nLimiting in API v1.1.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[11]
+    assert r.code == 500
+    desc = ("Something is broken. Please post to the group so the Twitter "
+            "team can\ninvestigate.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[12]
+    assert r.code == 502
+    desc = "Twitter is down or being upgraded."
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[13]
+    assert r.code == 503
+    desc = ("The Twitter servers are up, but overloaded with requests. Try "
+            "again later.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+    r = res.responses[14]
+    assert r.code == 504
+    desc = ("The Twitter servers are up, but the request couldn't be "
+            "serviced due to\nsome failure within our stack. Try again "
+            "later.\n")
+    assert r.description.raw == desc
+    assert r.body is None
+    assert r.headers is None
+    assert r.config is not None
+
+
+def test_resources_statuses_user_timeline(resources):
+    res = resources[2]
+
+    desc = ("Returns a collection of the most recent Tweets posted by the "
+            "user indicated\nby the screen_name or user_id parameters.\n"
+            "User timelines belonging to protected users may only be "
+            "requested when the\nauthenticated user either \"owns\" the "
+            "timeline or is an approved follower of\nthe owner.\n"
+            "The timeline returned is the equivalent of the one seen when "
+            "you view a user's\nprofile on twitter.com.\nThis method can only "
+            "return up to 3,200 of a user's most recent Tweets. Native\n"
+            "retweets of other statuses by the user is included in this "
+            "total, regardless\nof whether include_rts is set to false "
+            "when requesting this resource.\n")
+    assert res.description.raw == desc
