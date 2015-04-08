@@ -8,7 +8,10 @@ from setuptools.command.test import test as TestCommand  # NOQA
 
 
 def install_requires():
-    install_requires = ["pyyaml", "click", "markdown2", "six", "termcolor", "attrs"]
+    install_requires = [
+        "pyyaml", "click", "markdown2", "six", "termcolor", "attrs",
+        "xmltodict"
+    ]
     if sys.version_info[:2] == (2, 6):
         install_requires.append("ordereddict")
     return install_requires
