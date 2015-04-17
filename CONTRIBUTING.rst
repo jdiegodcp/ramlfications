@@ -31,5 +31,4 @@ Thank you for considering to contribute to ``ramlfications``!
 .. _`good commit messages`: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 .. _`Code of Conduct`: https://www.python.org/psf/codeofconduct/
 .. _changelog: https://github.com/spotify/ramlfications/blob/master/docs/changelog.rst
-.. _AUTHORS.rst: https://github.com/echonchick/ramlfications/blob/master/AUTHORS.rst
-.. _`semantic versioning`: http://semver.org
+.. _AUTHORS.rst: https://github.com/spotify/ramlfications/blob/master/AUTHORS.rst
