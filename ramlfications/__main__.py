@@ -6,9 +6,10 @@ from __future__ import absolute_import, division, print_function
 
 import click
 
-from .loader import RAMLLoader
 from .tree import tree as ttree
 from .errors import InvalidRAMLError
+from ._helpers import load_file
+
 from ramlfications import validate as vvalidate
 
 
@@ -23,8 +24,6 @@ def main():
 @click.option("--config", "-c", type=click.Path(exists=True))
 def validate(ramlfile, config):
     """Validate a given RAML file."""
-    if config:
-        print("{0}".format(config))
     try:
         vvalidate(ramlfile, config)
         click.secho("Success! Valid RAML file: {0}".format(ramlfile),
@@ -51,11 +50,11 @@ def validate(ramlfile, config):
 def tree(ramlfile, color, output, verbose, validate, config):
     """Pretty-print a tree of the RAML-defined API."""
     try:
-        load_obj = RAMLLoader().load(ramlfile)
+        load_obj = load_file(ramlfile)
         ttree(load_obj, color, output, verbose, validate, config)
     except InvalidRAMLError as e:
         msg = '"{0}" is not a valid RAML file: {1}'.format(
-            click.format_filename(load_obj.raml_file), e)
+            click.format_filename(ramlfile), e)
         click.secho(msg, fg="red", err=True)
         raise SystemExit(1)
 

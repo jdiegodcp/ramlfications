@@ -16,7 +16,7 @@ from .errors import *  # NOQA
 
 def root_version(inst, attr, value):
     """Require an API Version (e.g. api.foo.com/v1)."""
-    base_uri = inst.raml_obj.data.get("baseUri")
+    base_uri = inst.raml_obj.get("baseUri")
     if not value and"{version}" in base_uri:
         msg = ("RAML File's baseUri includes {version} parameter but no "
                "version is defined.")

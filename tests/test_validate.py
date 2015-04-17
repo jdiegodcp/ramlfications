@@ -6,10 +6,11 @@ import os
 
 import pytest
 
-from ramlfications import loader
 from ramlfications import errors
 from ramlfications.config import setup_config
 from ramlfications.parser import parse_raml as parse
+from ramlfications._helpers import load_file
+
 from .base import VALIDATE
 
 
@@ -18,7 +19,7 @@ raises = pytest.raises(errors.InvalidRootNodeError)
 
 def load_raml(filename):
     raml_file = os.path.join(VALIDATE + filename)
-    return loader.RAMLLoader().load(raml_file)
+    return load_file(raml_file)
 
 
 def load_config(filename):

@@ -6,8 +6,9 @@ import os
 
 import pytest
 
-from ramlfications import tree, loader, parser
+from ramlfications import tree, parser
 from ramlfications.config import setup_config
+from ramlfications._helpers import load_file
 
 from .base import EXAMPLES
 from .data.fixtures import tree_fixtures
@@ -16,7 +17,7 @@ from .data.fixtures import tree_fixtures
 @pytest.fixture
 def api():
     raml_str = os.path.join(EXAMPLES, "simple-tree.raml")
-    loaded_raml = loader.RAMLLoader().load(raml_str)
+    loaded_raml = load_file(raml_str)
     config_file = os.path.join(EXAMPLES + "test-config.ini")
     config = setup_config(config_file)
     return parser.parse_raml(loaded_raml, config)

@@ -7,11 +7,37 @@ __author__ = "Lynn Root"
 __version__ = "0.1.0"
 __license__ = "Apache 2.0"
 
-import os
 
 from ramlfications.config import setup_config
-from ramlfications.loader import RAMLLoader
 from ramlfications.parser import parse_raml
+
+from ramlfications._helpers import load_file, load_string
+
+
+def load(raml_file):
+    """
+    Module helper function to load a RAML File using \
+    :py:class:`.loader.RAMLLoader`.
+
+    :param str raml_file: String path to RAML file
+    :return: loaded RAML
+    :rtype: dict
+    :raises LoadRamlFileError: If error occurred trying to load the RAML file
+    """
+    return load_file(raml_file)
+
+
+def loads(raml_string):
+    """
+    Module helper function to load a RAML File using \
+    :py:class:`.loader.RAMLLoader`.
+
+    :param str raml_string: String of RAML data
+    :return: loaded RAML
+    :rtype: dict
+    :raises LoadRamlFileError: If error occurred trying to load the RAML file
+    """
+    return load_string(raml_string)
 
 
 def parse(raml_file, config_file=None, production=True):
@@ -34,23 +60,9 @@ def parse(raml_file, config_file=None, production=True):
     :raises InvalidRamlFileError: RAML file is invalid according to RAML \
         `specification <http://raml.org/spec.html>`_.
     """
-    loader = RAMLLoader().load(raml_file)
+    loader = load(raml_file)
     config = setup_config(config_file)
     return parse_raml(loader, config)
-
-
-def load(raml_file):
-    """
-    Module helper function to load a RAML File using \
-    :py:class:`.loader.RAMLLoader`.
-
-    :param str raml_file: String path to RAML file
-    :return: loaded RAML file
-    :rtype: RAMLDict
-    :raises LoadRamlFileError: If error occurred trying to load the RAML file
-        (see :py:class:`.loader.RAMLLoader`)
-    """
-    return RAMLLoader().load(raml_file)
 
 
 def validate(raml_file, config_file=None):
@@ -69,7 +81,7 @@ def validate(raml_file, config_file=None):
         file (see :py:mod:`.validate`)
 
     """
-    loader = RAMLLoader().load(raml_file)
+    loader = load(raml_file)
     config = setup_config(config_file)
     config["validate"] = True
     parse_raml(loader, config)

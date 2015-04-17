@@ -21,53 +21,42 @@ def dict_equal(dict1, dict2):
     return True
 
 
-def test_raml_basestring():
-    raml_file = os.path.join(str(EXAMPLES + "complete-valid-example.raml"))
-    raml = loader.RAMLLoader().load(raml_file)
-    assert raml is not None
-
-
-def test_raml_fileobj():
-    raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
+def test_load_file():
+    raml_file = os.path.join(EXAMPLES + "base-includes.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
-        assert raml is not None
-        assert raml.raml_file.closed
+
+        expected_data = {
+            'external': {
+                'propertyA': 'valueA',
+                'propertyB': 'valueB'
+            },
+            'foo': {
+                'foo': 'FooBar',
+                'bar': 'BarBaz'
+            },
+            'title': 'GitHub API Demo - Includes',
+            'version': 'v3'
+        }
+
+        assert dict_equal(raml, expected_data)
 
 
-def test_no_raml_file():
-    raml_file = os.path.join(EXAMPLES + "this-file-doesnt-exist.raml")
-    with pytest.raises(LoadRAMLFileError):
-        loader.RAMLLoader().load(raml_file)
+def test_load_string():
+    raml_str = ("""
+                - foo
+                - bar
+                - baz
+                """)
+    raml = loader.RAMLLoader().load(raml_str)
+
+    expected_data = ["foo", "bar", "baz"]
+    assert raml.sort() == expected_data.sort()
 
 
-def test_none_raml_file():
-    raml_file = None
-    with pytest.raises(LoadRAMLFileError):
-        loader.RAMLLoader().load(raml_file)
-
-
-def test_root_includes():
-    raml_file = os.path.join(EXAMPLES + "base-includes.raml")
-    raml = loader.RAMLLoader().load(raml_file)
-
-    expected_data = {
-        'external': {
-            'propertyA': 'valueA',
-            'propertyB': 'valueB'
-        },
-        'foo': {
-            'foo': 'FooBar',
-            'bar': 'BarBaz'
-        },
-        'title': 'GitHub API Demo - Includes',
-        'version': 'v3'
-    }
-
-    assert dict_equal(raml.data, expected_data)
-
-
-def test_incorrect_raml_obj():
-    raml_file = dict(nota="raml_file")
-    with pytest.raises(LoadRAMLFileError):
-        loader.RAMLLoader().load(raml_file)
+def test_yaml_parser_error():
+    raml_obj = os.path.join(EXAMPLES, "invalid_yaml.yml")
+    with pytest.raises(LoadRAMLFileError) as e:
+        loader.RAMLLoader().load(open(raml_obj))
+    msg = "Error parsing RAML:"
+    assert msg in e.value.args[0]

@@ -23,18 +23,18 @@ from .utils import load_schema
 __all__ = ["parse_raml"]
 
 
-def parse_raml(loaded_raml_file, config):
+def parse_raml(loaded_raml, config):
     """
     Parse loaded RAML file into RAML/Python objects.
 
-    :param RAMLDict loaded_raml_file: OrderedDict of loaded RAML file
+    :param RAMLDict loaded_raml: OrderedDict of loaded RAML file
     :returns: :py:class:`.raml.RootNode` object.
     """
-    root = create_root(loaded_raml_file, config)
-    root.security_schemes = create_sec_schemes(root.raml_obj.data, root)
-    root.traits = create_traits(root.raml_obj.data, root)
-    root.resource_types = create_resource_types(root.raml_obj.data, root)
-    root.resources = create_resources(root.raml_obj.data, [], root,
+    root = create_root(loaded_raml, config)
+    root.security_schemes = create_sec_schemes(root.raml_obj, root)
+    root.traits = create_traits(root.raml_obj, root)
+    root.resource_types = create_resource_types(root.raml_obj, root)
+    root.resources = create_resources(root.raml_obj, [], root,
                                       parent=None)
     if config.get("validate"):
         attr.validate(root)
@@ -73,12 +73,12 @@ def _create_base_param_obj(property_data, param_obj, config):
     return objects or None
 
 
-def create_root(loaded_raml_file, config):
+def create_root(raml, config):
     """
     Creates a Root Node based off of the RAML's root section.
 
-    :param RAMLDict loaded_raml_file: loaded RAML file
-    :returns: :py:class:`.raml.RootNode` object with API root properties set
+    :param RAMLDict raml: loaded RAML file
+    :returns: :py:class:`.raml.RootNode` object with API root attributes set
     """
     def title():
         return raml.get("title")
@@ -122,9 +122,8 @@ def create_root(loaded_raml_file, config):
     def secured_by():
         return raml.get("securedBy")
 
-    raml = loaded_raml_file.data
     return RootNode(
-        raml_obj=loaded_raml_file,
+        raml_obj=raml,
         raw=raml,
         title=title(),
         version=version(),
@@ -135,7 +134,6 @@ def create_root(loaded_raml_file, config):
         media_type=media_type(),
         documentation=docs(),
         schemas=schemas(),
-        raml_file=loaded_raml_file.raml_file,
         config=config,
         secured_by=secured_by()
     )

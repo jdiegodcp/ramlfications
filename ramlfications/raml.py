@@ -25,7 +25,6 @@ class RootNode(object):
     """
     API Root Node
 
-    :param str raml_file: string path to RAML file
     :param dict raw: dict of loaded RAML data
     :param str version: API version
     :param str base_uri: API's base URI
@@ -49,7 +48,6 @@ class RootNode(object):
         or ``None``
     :param raml_obj: loaded :py:class:`raml.RAMLDict` object
     """
-    raml_file        = attr.ib()
     raw              = attr.ib(repr=False)
     version          = attr.ib(repr=False, validator=root_version)
     base_uri         = attr.ib(repr=False, validator=root_base_uri)
@@ -57,7 +55,7 @@ class RootNode(object):
                                validator=root_base_uri_params)
     uri_params       = attr.ib(repr=False, validator=root_uri_params)
     protocols        = attr.ib(repr=False, validator=root_protocols)
-    title            = attr.ib(repr=False, validator=root_title)
+    title            = attr.ib(validator=root_title)
     documentation    = attr.ib(repr=False, validator=root_docs)
     schemas          = attr.ib(repr=False, validator=root_schemas)
     media_type       = attr.ib(repr=False, validator=root_media_type)
