@@ -2,7 +2,6 @@
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
 
-import json
 import os
 
 import pytest
@@ -39,7 +38,7 @@ def test_create_root(root):
 
 
 def test_base_uri(root):
-    expected = "https://{subdomain}.spotify.com/v1/{communityPath}"
+    expected = "https://{subdomain}.example.com/v1/{communityPath}"
     assert expected == root.base_uri
 
 
@@ -49,26 +48,22 @@ def test_protocols(root):
 
 
 def test_docs(root):
-    exp_title = "Spotify Web API Docs"
-    exp_content = ("Welcome to the _Spotify Web API_ demo specification. "
+    exp_title = "Example Web API Docs"
+    exp_content = ("Welcome to the _Example Web API_ demo specification. "
                    "This is *not* the complete API\nspecification, and is "
-                   "meant for testing purposes within this RAML specification."
-                   "\nFor more information about how to use the API, check "
-                   "out [developer\n site]"
-                   "(https://developer.spotify.com/web-api/).\n")
+                   "meant for testing purposes within this RAML "
+                   "specification.\n")
 
     assert exp_title == root.documentation[0].title.raw
     assert exp_title == repr(root.documentation[0].title)
     assert exp_content == root.documentation[0].content.raw
     assert exp_content == repr(root.documentation[0].content)
 
-    title_html = "<p>Spotify Web API Docs</p>\n"
-    content_html = ("<p>Welcome to the <em>Spotify Web API</em> demo "
+    title_html = "<p>Example Web API Docs</p>\n"
+    content_html = ("<p>Welcome to the <em>Example Web API</em> demo "
                     "specification. This is <em>not</em> the complete API\n"
                     "specification, and is meant for testing purposes within "
-                    "this RAML specification.\nFor more information about how "
-                    "to use the API, check out <a href=\"https://developer."
-                    "spotify.com/web-api/\">developer\n site</a>.</p>\n")
+                    "this RAML specification.</p>\n")
     assert title_html == root.documentation[0].title.html
     assert content_html == root.documentation[0].content.html
 
@@ -98,7 +93,7 @@ def test_uri_params(root):
 
 
 def test_title(root):
-    exp_name = "Spotify Web API Demo"
+    exp_name = "Example Web API"
     assert exp_name == root.title
 
 
@@ -108,7 +103,7 @@ def test_version(root):
 
 
 def test_schemas(root):
-    exp_schema = {'Playlist': {'name': 'New Playlist', 'public': False}}
+    exp_schema = {'Thingy': {'name': 'New Thingy', 'public': False}}
     assert exp_schema == root.schemas[0]
 
 
@@ -142,7 +137,8 @@ def test_create_security_schemes(sec_schemes):
     assert sec_schemes[0].name == "oauth_2_0"
     assert sec_schemes[0].type == "OAuth 2.0"
 
-    desc = "Spotify supports OAuth 2.0 for authenticating all API requests.\n"
+    desc = ("Example API supports OAuth 2.0 for authenticating all API "
+            "requests.\n")
     assert sec_schemes[0].description.raw == desc
 
     assert len(sec_schemes[0].headers) == 2
@@ -165,17 +161,14 @@ def test_create_security_schemes(sec_schemes):
     assert sec_schemes[0].responses[1].description.raw == desc
 
     settings = {
-        "authorizationUri": "https://accounts.spotify.com/authorize",
-        "accessTokenUri": "https://accounts.spotify.com/api/token",
+        "authorizationUri": "https://accounts.example.com/authorize",
+        "accessTokenUri": "https://accounts.example.com/api/token",
         "authorizationGrants": ["code", "token"],
         "scopes": [
-            "playlist-read-private",
-            "playlist-modify-public",
-            "playlist-modify-private",
-            "user-library-read",
-            "user-library-modify",
-            "user-read-private",
-            "user-read-email"
+            "user-public-profile",
+            "user-email",
+            "user-activity",
+            "nsa-level-privacy"
         ]
     }
     assert sec_schemes[0].settings == settings
@@ -225,7 +218,7 @@ def test_trait_query_params(traits):
     assert trait.query_params[0].type == "string"
     assert trait.query_params[0].display_name == "Fields"
 
-    example = "tracks.items(added_by.id,track(name,href,album(name,href)))"
+    example = "gizmos.items(added_by.id,gizmo(name,href,widget(name,href)))"
     assert trait.query_params[0].example == example
 
 
@@ -253,11 +246,11 @@ def test_trait_uri_params(traits):
     assert trait.uri_params[0].maximum == 50
     assert trait.uri_params[0].default == 20
 
-    desc = "The maximum number of track objects to return"
+    desc = "The maximum number of gizmo objects to return"
     assert trait.uri_params[0].description.raw == desc
     assert repr(trait.uri_params[0].description) == desc
 
-    desc_html = "<p>The maximum number of track objects to return</p>\n"
+    desc_html = "<p>The maximum number of gizmo objects to return</p>\n"
     assert trait.uri_params[0].description.html == desc_html
 
 
@@ -334,8 +327,7 @@ def test_resource_type(resource_types):
     response = resource_type.responses[0]
     assert response.code == 403
 
-    desc = ("API rate limit exceeded. See http://developer.spotify.com/"
-            "web-api/#rate-limiting for details.\n")
+    desc = ("API rate limit exceeded.\n")
     assert response.description.raw == desc
     assert response.method == "get"
 
@@ -427,10 +419,10 @@ def test_resource_type_inherited(resource_types):
     assert inherited.usage == "Some sort of usage text"
     assert inherited.display_name == "inherited example"
 
-    inherited_response = inherited.responses[0]
+    inherited_response = inherited.responses[1]
     assert inherited_response.code == 403
 
-    new_response = inherited.responses[1]
+    new_response = inherited.responses[2]
     assert new_response.code == 500
 
 
@@ -449,7 +441,7 @@ def test_resource_type_with_trait(resource_types):
     desc = "A comma-separated list of fields to filter query"
     assert query_param.description.raw == desc
 
-    example = "tracks.items(added_by.id,track(name,href,album(name,href)))"
+    example = "gizmos.items(added_by.id,gizmo(name,href,widget(name,href)))"
     assert query_param.example == example
 
 
@@ -461,7 +453,8 @@ def test_resource_type_secured_by(resource_types):
     assert scheme.name == "oauth_2_0"
     assert scheme.type == "OAuth 2.0"
 
-    desc = "Spotify supports OAuth 2.0 for authenticating all API requests.\n"
+    desc = ("Example API supports OAuth 2.0 for authenticating all API "
+            "requests.\n")
     assert scheme.description.raw == desc
 
     desc_by = {
@@ -493,17 +486,14 @@ def test_resource_type_secured_by(resource_types):
     assert scheme.described_by == desc_by
 
     settings = {
-        "authorizationUri": "https://accounts.spotify.com/authorize",
-        "accessTokenUri": "https://accounts.spotify.com/api/token",
+        "authorizationUri": "https://accounts.example.com/authorize",
+        "accessTokenUri": "https://accounts.example.com/api/token",
         "authorizationGrants": ["code", "token"],
         "scopes": [
-            "playlist-read-private",
-            "playlist-modify-public",
-            "playlist-modify-private",
-            "user-library-read",
-            "user-library-modify",
-            "user-read-private",
-            "user-read-email"
+            "user-public-profile",
+            "user-email",
+            "user-activity",
+            "nsa-level-privacy"
         ]
     }
     assert scheme.settings == settings
@@ -522,19 +512,24 @@ def resources():
 
 
 def test_resource_properties(resources):
-    assert resources[0].name == "/albums"
-    assert resources[0].display_name == "several-albums"
+    assert resources[0].name == "/widgets"
+    assert resources[0].display_name == "several-widgets"
     assert resources[0].method == "get"
     assert resources[0].protocols == ["HTTPS"]
+    assert resources[0].media_type == "application/xml"
 
-    assert resources[1].parent.name == "/albums"
-    assert resources[1].path == "/albums/{id}"
+    assert resources[1].parent.name == "/widgets"
+    assert resources[1].path == "/widgets/{id}"
 
-    abs_uri = "https://{subdomain}.spotify.com/v1/{communityPath}/albums/{id}"
+    abs_uri = "https://{subdomain}.example.com/v1/{communityPath}/widgets/{id}"
     assert resources[1].absolute_uri == abs_uri
+    assert resources[1].media_type == "application/xml"
 
     assert resources[2].is_ == ["paged"]
+    assert resources[2].media_type == "application/xml"
     assert resources[12].type == "collection"
+
+    assert resources[3].media_type == "text/xml"
 
 
 def test_resource_no_method_properties(resources):
@@ -567,7 +562,7 @@ def test_resource_inherited_properties(resources):
 def test_resource_assigned_type(resources):
     res = resources[19]
 
-    assert res.display_name == "playlist"
+    assert res.display_name == "thingy"
     assert res.method == "get"
     assert res.type == "item"
 
@@ -619,7 +614,7 @@ def test_resource_protocols(resources):
     res = resources[13]
 
     assert res.method == "put"
-    assert res.name == "/tracks"
+    assert res.name == "/widgets"
 
     assert res.protocols == ["HTTP"]
 
@@ -640,14 +635,30 @@ def test_resource_responses(resources):
         "$schema": "http://json-schema.org/draft-03/schema",
         "type": "array",
         "items": {
-            "$ref": "schemas/playlist.json"
+            "$ref": "schemas/thingy.json"
         }
     }
-    assert json.loads(res.responses[0].body[0].schema) == schema
+    assert res.responses[0].body[0].schema == schema
+
+    res = resources[10]
+    headers = [h.name for h in res.responses[0].headers]
+    assert ["X-search-header", "X-another-header"] == headers
+    body = res.responses[0].body[0].schema
+    assert body == {"name": "the search body"}
+    body = res.responses[0].body[1].schema
+    assert body == {"name": "an schema body"}
+
+    res = resources[19]
+    headers = [h.name for h in res.responses[0].headers]
+    assert "X-waiting-period" in headers
+    body = res.responses[0].body[0].schema
+    assert body == {"name": "string"}
+    codes = [r.code for r in res.responses]
+    assert [200, 403] == sorted(codes)
 
     res = resources[-9]
 
-    assert res.path == "/users/{user_id}/playlists/{playlist_id}"
+    assert res.path == "/users/{user_id}/thingys/{thingy_id}"
     assert res.type == "item"
     assert res.responses[0] == res.resource_type.responses[0]
     assert len(res.responses[0].headers) == 1
@@ -667,18 +678,18 @@ def test_resource_responses(resources):
 
     res = resources[-10]
 
-    assert res.display_name == "playlists"
+    assert res.display_name == "thingys"
     assert res.responses[0].code == 201
     assert res.responses[0].headers[0].name == "X-another-bogus-header"
     assert res.responses[0].headers[0].description.raw == "A bogus header"
     assert res.responses[0].body[0].mime_type == "application/json"
-    assert res.responses[0].body[0].schema == "Playlist"
+    assert res.responses[0].body[0].schema == "Thingy"
 
 
 def test_resource_base_uri_params(resources):
     res = resources[2]
 
-    assert res.display_name == "album-tracks"
+    assert res.display_name == "widget-gizmos"
     assert res.base_uri_params[0].name == "subdomain"
 
     desc = "subdomain for the baseUriType resource type"
@@ -719,9 +730,9 @@ def test_resource_form_params(resources):
 def test_resource_security_scheme(resources):
     res = resources[17]
     assert res.method == "get"
-    assert res.name == "/users/{user_id}/playlists"
+    assert res.name == "/users/{user_id}/thingys"
     assert res.secured_by == [
-        {"oauth_2_0": {"scopes": ["playlist-read-private"]}}
+        {"oauth_2_0": {"scopes": ["thingy-read-private"]}}
     ]
     assert res.security_schemes[0].name == "oauth_2_0"
 

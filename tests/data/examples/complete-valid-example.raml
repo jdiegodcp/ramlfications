@@ -1,8 +1,8 @@
 #%RAML 0.8
-title: Spotify Web API Demo
+title: Example Web API
 version: v1
 protocols: [ HTTPS ]
-baseUri: https://{subdomain}.spotify.com/{version}/{communityPath}
+baseUri: https://{subdomain}.example.com/{version}/{communityPath}
 baseUriParameters:
   subdomain:
     description: subdomain of API
@@ -15,14 +15,12 @@ uriParameters:
    minLength: 1
 mediaType: application/json
 documentation:
-  - title: Spotify Web API Docs
+  - title: Example Web API Docs
     content: |
-      Welcome to the _Spotify Web API_ demo specification. This is *not* the complete API
+      Welcome to the _Example Web API_ demo specification. This is *not* the complete API
       specification, and is meant for testing purposes within this RAML specification.
-      For more information about how to use the API, check out [developer
-       site](https://developer.spotify.com/web-api/).
 schemas:
-  - Playlist: !include includes/post-playlist-schema.json
+  - Thingy: !include includes/post-thingy-schema.json
 resourceTypes:
   - base:
       uriParameters:
@@ -41,7 +39,7 @@ resourceTypes:
         responses:
           403:
             description: |
-              API rate limit exceeded. See http://developer.spotify.com/web-api/#rate-limiting for details.
+              API rate limit exceeded.
             headers:
               X-waiting-period:
                 description: |
@@ -111,6 +109,18 @@ resourceTypes:
                 displayName: Foo
                 description: some foo bar
         responses:
+          200:
+            description: A 200 response
+            headers:
+              X-another-header:
+                description: a 200 header
+                type: string
+                required: true
+                example: f00bAr
+            body:
+              application/json:
+                schema: {"name": "an schema body"}
+                example: {"name": "an example body"}
           500:
             description: A 500 response
             headers:
@@ -134,7 +144,7 @@ resourceTypes:
 securitySchemes:
   - oauth_2_0:
       description: |
-          Spotify supports OAuth 2.0 for authenticating all API requests.
+          Example API supports OAuth 2.0 for authenticating all API requests.
       type: OAuth 2.0
       describedBy:
         headers:
@@ -155,17 +165,14 @@ securitySchemes:
               Bad OAuth request (wrong consumer key, bad nonce, expired
               timestamp...). Unfortunately, re-authenticating the user won't help here.
       settings:
-        authorizationUri: https://accounts.spotify.com/authorize
-        accessTokenUri: https://accounts.spotify.com/api/token
+        authorizationUri: https://accounts.example.com/authorize
+        accessTokenUri: https://accounts.example.com/api/token
         authorizationGrants: [ code, token ]
         scopes:
-          - "playlist-read-private"
-          - "playlist-modify-public"
-          - "playlist-modify-private"
-          - "user-library-read"
-          - "user-library-modify"
-          - "user-read-private"
-          - "user-read-email"
+          - "user-public-profile"
+          - "user-email"
+          - "user-activity"
+          - "nsa-level-privacy"
   - custom_auth:
       description: custom auth for testing
       type: Custom Auth
@@ -202,7 +209,7 @@ traits:
         fields:
           description: A comma-separated list of fields to filter query
           type: string
-          example: tracks.items(added_by.id,track(name,href,album(name,href)))
+          example: gizmos.items(added_by.id,gizmo(name,href,widget(name,href)))
           displayName: Fields
       headers:
         X-example-header:
@@ -220,7 +227,7 @@ traits:
       uriParameters:
         limit:
           displayName: Limit
-          description: The maximum number of track objects to return
+          description: The maximum number of gizmo objects to return
           type: integer
           example: 10
           minimum: 0
@@ -228,7 +235,7 @@ traits:
           maximum: 50
         offset:
           displayName: Offset
-          description: The index of the first track to return
+          description: The index of the first gizmo to return
           type: integer
           example: 5
           default: 0
@@ -258,69 +265,72 @@ traits:
       queryParameters:
         <<tokenName>>:
           description: A valid <<tokenName>> is required
-/albums:
-  displayName: several-albums
+/widgets:
+  displayName: several-widgets
   get:
+    mediaType: application/xml
     description: |
-      [Get Several Albums](https://developer.spotify.com/web-api/get-several-albums/)
+      [Get Several Widgets](https://developer.example.com/widgets/)
     headers:
       X-bogus-header:
         description: just an extra header for funsies
     queryParameters:
       ids:
-        displayName: Spotify Album IDs
+        displayName: Example Widget IDs
         type: string
         description: A comma-separated list of IDs
         required: true
-        example: "382ObEPsp2rxGrnsizN5TX,1A2GTWGtFfWp7KSQTwWOyo,2noRn2Aes5aoNVsU6iWThc"
+        example: "widget1,widget2,widget3"
   /{id}:
-    displayName: album
+    displayName: widget
+    mediaType: application/xml
     uriParameters:
       id:
-        displayName: Spotify Album ID
+        displayName: Example Widget ID
         type: string
-        description: The Spotify ID for the album
-        example: 4aawyAB9vmqN3uQ7FjRGTy
+        description: The Example ID for the widget
+        example: widget2
     get:
       type: protocolExampleType
       description: |
-        [Get an Album](https://developer.spotify.com/web-api/get-album/)
-    /tracks:
-      displayName: album-tracks
+        [Get a Widget](https://developer.example.com/widgets/)
+    /gizmos:
+      displayName: widget-gizmos
       type: baseUriType
       get:
         is: [ paged ]
         description: |
-          [Get an Album's Tracks](https://developer.spotify.com/web-api/get-albums-tracks/)
-/artists:
-  displayName: several-artists
+          [Get a Widget's Gizmos](https://developer.example.com/widget-gizmos/)
+/thingys:
+  displayName: several-thingys
   get:
+    type: anotherExample
     description: |
-      [Get Several Artists](https://developer.spotify.com/web-api/get-several-artists/)
+      [Get Several Thingys](https://developer.example.com/thingys/)
     queryParameters:
       ids:
-        displayName: Spotify Artist IDs
+        displayName: Example Thingy IDs
         type: string
         description: A comma-separated list of IDs
         required: true
-        example: '2CIMQHirSU0MQqyYHq0eOx,57dN52uHvrHOxijzpIgu3E,1vCWHaC5f2uS3yhpwWbIA6'
+        example: 'thingy1,thingy2,thingy3'
   /{id}:
-    displayName: artist
+    displayName: thingy
     uriParameters:
       id:
-        displayName: Spotify Artist ID
+        displayName: Example Thingy ID
         type: string
-        description: The Spotify ID for the artist
-        example: 0TnOYISbd1XYRBk9myaseg
+        description: The Example ID for the thingy
+        example: thingy1
         required: true
     get:
       description: |
-        [Get an Artist](https://developer.spotify.com/web-api/get-artist/)
-    /top-tracks:
-      displayName: artist-top-tracks
+        [Get a Thingy](https://developer.example.com/thingys/)
+    /top-doodads:
+      displayName: thingy-top-doodads
       get:
         description: |
-          [Get an Artist's Top Tracks](https://developer.spotify.com/web-api/get-artists-top-tracks/)
+          [Get a Thingy's Top Doodads](https://developer.example.com/thingys/)
         queryParameters:
           country:
             displayName: Country
@@ -328,74 +338,84 @@ traits:
             type: string
             example: ES
             required: true
-    /related-artists:
-      displayName: artist-related-artists
+    /related-thingys:
+      displayName: thingy-related-thingys
       get:
         description: |
-          [Get an Artist's Related Artists](https://developer.spotify.com/web-api/get-related-artists/)
-    /albums:
-      displayName: artist-albums
+          [Get a Thingy's Related Thingys](https://developer.example.com/thingys/)
+    /doodads:
+      displayName: thingy-doodads
       get:
         is: [ paged ]
         description: |
-          [Get an Artist's Albums](https://developer.spotify.com/web-api/get-artists-albums/)
+          [Get a Thingy's Doodads](https://developer.example.com/thingys/)
         queryParameters:
-          album_type:
-            displayName: Album Type
-            description: Filter by album types
+          thingy_type:
+            displayName: Thingy Type
+            description: Filter by thingy types
             type: string
-            enum: ["single", "album", "appears_on", "compilation"]
+            enum: ["do_your_thang", "thingamajig", "thingamabob"]
             required: false
-            example: album
+            example: do_your_thang
           country:
             displayName: Country
             description: The country (an ISO 3166-1 alpha-2 country code)
             type: string
             example: ES
             required: false
-/tracks:
-  displayName: several-tracks
+/gizmos:
+  displayName: several-gizmos
   get:
     description: |
-      [Get Several Tracks](https://developer.spotify.com/web-api/get-several-tracks/)
+      [Get Several Gizmos](https://developer.example.com/gizmos/)
     queryParameters:
       ids:
-        displayName: Spotify Track IDs
+        displayName: Example Gizmo IDs
         type: string
         description: A comma-separated list of IDs
         required: true
-        example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+        example: 'gizmo1,gizmo2,gizmo3'
   /{id}:
-    displayName: track
+    displayName: gizmo
     type: baseUriType
     uriParameters:
       id:
         type: string
-        displayName: Spotify Track ID
-        example: 1zHlj4dQ8ZAtrayhuDDmkY
+        displayName: Example Gizmo ID
+        example: gizmo3
     get:
       description: |
-        [Get a Track](https://developer.spotify.com/web-api/get-track/)
+        [Get a Gizmo](https://developer.example.com/gizmos/)
 /search:
   displayName: search-item
+  type: inheritBaseExample
   get:
     is: [ paged ]
     description: |
-      [Search for an Item](https://developer.spotify.com/web-api/search-item/)
+      [Search for a Whachamacallit](https://developer.example.com/searh/)
     queryParameters:
       q:
         displayName: Query
         type: string
-        description: "The search query's keywords (and optional field filters). The search is not case-sensitive: 'roadhouse' will match 'Roadhouse', 'roadHouse', etc. Keywords will be matched in any order unless surrounded by quotes, thus q=roadhouse&20blues will match both 'Blues Roadhouse' and 'Roadhouse of the Blues'. Quotation marks can be used to limit the match to a phrase: q=roadhouse&20blues will match 'My Roadhouse Blues' but not 'Roadhouse of the Blues'. By default, results are returned when a match is found in any field of the target object type. Searches can be made more specific by specifying an album, artist or track field filter. For example q=album:gold%20artist:abba&type=album will search for albums with the text 'gold' in the album name and the text 'abba' in an artist name. Other possible field filters, depending on object types being searched, include year, genre, upc, and isrc. For example, q=damian%20genre:reggae-pop&type=artist. The asterisk (*) character can, with some limitations, be used as a wildcard (maximum: 2 per query). It will match a variable number of non-white-space characters. It cannot be used in a quoted phrase, in a field filter, or as the first character of the keyword string."
-        example: Muse
+        description: "The search query's keywords"
+        example: doohicky
         required: true
       type:
         displayName: Item Type
-        description: A comma-separated list of item types to search across. Search results will include hits from all the specified item types; for example q=name:abacab&type=album,track will return both albums and tracks with "abacab" in their name.
+        description: A comma-separated list of item types to search across.
         type: string
-        example: artist
-        enum: ["album", "artist", "track"]
+        example: gizmo
+        enum: ["widget", "gizmo", "thingy"]
         required: true
+    responses:
+      200:
+        headers:
+          X-search-header:
+            description: the search header
+        body:
+          application/json:
+            schema: {"name": "the search body"}
+            example: {"name": "the example search body"}
 /me:
   displayName: current-user
   securedBy: [ oauth_2_0 ]
@@ -403,47 +423,47 @@ traits:
   get:
     is: [ protocolTrait ]
     description: |
-      [Get Current User's Profile](https://developer.spotify.com/web-api/get-current-users-profile/)
-  /tracks:
-    displayName: current-user-saved-tracks
+      [Get Current User's Profile](https://developer.example.com/get-current-users-profile/)
+  /widgets:
+    displayName: current-user-saved-widgets
     type: collection
     get:
       is: [ paged ]
       description: |
-        [Get Current User's Saved Tracks](https://developer.spotify.com/web-api/get-users-saved-tracks/)
+        [Get Current User's Saved Widgets](https://developer.example.com/get-users-saved-widgets/)
       securedBy: [ oauth_2_0: {scopes: ['user-library-read']}]
     put:
       description: |
-        [Save Tracks for Current User](https://developer.spotify.com/web-api/save-tracks-user/)
+        [Save Widgets for Current User](https://developer.example.com/save-widgets-user/)
       securedBy: [ oauth_2_0: {scopes: ['user-library-modify']}]
       protocols: ["HTTP"]
       queryParameters:
         ids:
-          displayName: Spotify Track IDs
+          displayName: Widget IDs
           type: string
           description: A comma-separated list of IDs
           required: true
           example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
     delete:
       description: |
-        [Remove Tracks for Current User](https://developer.spotify.com/web-api/remove-tracks-user/)
+        [Remove Widgets for Current User](https://developer.example.com/remove-widgets-user/)
       securedBy: [ oauth_2_0: {scopes: ['user-library-modify']}]
       queryParameters:
         ids:
-          displayName: Spotify Track IDs
+          displayName: Widget IDs
           type: string
           description: A comma-separated list of IDs
           required: true
           example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
     /contains:
-      displayName: current-user-contains-saved-tracks
+      displayName: current-user-contains-saved-widgets
       get:
         description: |
-          [Check Current User's Saved Tracks](https://developer.spotify.com/web-api/check-users-saved-tracks/)
+          [Check Current User's Saved Widgets](https://developer.example.com/check-users-saved-widgets/)
         securedBy: [ oauth_2_0: {scopes: ['user-library-read']}]
         queryParameters:
           ids:
-            displayName: Spotify Track IDs
+            displayName: Widget IDs
             type: string
             description: A comma-separated list of IDs
             required: true
@@ -459,25 +479,25 @@ traits:
     user_id:
       displayName: User ID
       type: string
-      description: The user's Spotify user ID.
+      description: The user's Example Site user ID.
       example: smedjan
   get:
     description: |
-      [Get a User's Profile](https://developer.spotify.com/web-api/get-users-profile/)
-/users/{user_id}/playlists:
+      [Get a User's Profile](https://developer.example.com/get-users-profile/)
+/users/{user_id}/thingys:
   type: collection
   uriParameters:
     user_id:
       displayName: User ID
       type: string
-      description: The user's Spotify user ID.
+      description: The user's Example Site user ID.
       example: smedjan
-  displayName: playlists
+  displayName: thingys
   get:
     is: [ paged ]
     description: |
-      [Get a List of a User's Playlists](https://developer.spotify.com/web-api/get-list-users-playlists/)
-    securedBy: [ oauth_2_0: {scopes: ['playlist-read-private']}]
+      [Get a List of a User's Thingys](https://developer.example.com/get-list-users-thingys/)
+    securedBy: [ oauth_2_0: {scopes: ['thingy-read-private']}]
     responses:
       200:
         body:
@@ -487,18 +507,17 @@ traits:
                 "$schema": "http://json-schema.org/draft-03/schema",
                 "type": "array",
                 "items": {
-                  "$ref": "schemas/playlist.json"
+                  "$ref": "schemas/thingy.json"
                 }
               }
-            #example: !include examples/playlists-get.json
   post:
     description: |
-      [Create a Playlist](https://developer.spotify.com/web-api/create-playlist/)
-    securedBy: [ oauth_2_0: {scopes: ['playlist-modify-public', 'playlist-modify-private']}]
+      [Create a Thingy](https://developer.example.com/create-thingy/)
+    securedBy: [ oauth_2_0: {scopes: ['thingy-modify-public', 'thingy-modify-private']}]
     body:
       application/json:
-        schema: !include includes/post-playlist-schema.json
-        example: !include includes/post-playlist-example.json
+        schema: !include includes/post-thingy-schema.json
+        example: !include includes/post-thingy-example.json
     responses:
       201:
         headers:
@@ -506,59 +525,59 @@ traits:
             description: A bogus header
         body:
           application/json:
-            schema: Playlist
-  /{playlist_id}:
+            schema: Thingy
+  /{thingy_id}:
     type: item
-    displayName: playlist
+    displayName: thingy
     uriParameters:
-      playlist_id:
-        displayName: Playlist ID
-        description: The Spotify playlist ID.
+      thingy_id:
+        displayName: Thingy ID
+        description: The Example thingy ID.
         example: 3dEjWfgB5jC6zn6tLoy9yy
         type: string
         required: true
     get:
       description: |
-        [Get a Playlist](https://developer.spotify.com/web-api/get-playlist/)
-      securedBy: [ oauth_2_0: { scopes: ['playlist-read-private']}]
+        [Get a Thingy](https://developer.example.com/get-thingy/)
+      securedBy: [ oauth_2_0: { scopes: ['thingy-read-private']}]
       is: [ filterable ]
       responses:
         200:
           body:
             application/json:
-              schema: Playlist
+              schema: Thingy
     put:
       description: |
-        [Change a Playlist's Details](https://developer.spotify.com/web-api/change-playlist-details/)
-      securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
+        [Change a Thingy's Details](https://developer.example.com/change-thingy-details/)
+      securedBy: [ oauth_2_0: { scopes: ['thingy-modify-public', 'thingy-modify-private']}]
       body:
         application/json:
-          schema: !include includes/post-playlist-schema.json
-          example: !include includes/post-playlist-example.json
-    /tracks:
+          schema: !include includes/post-thingy-schema.json
+          example: !include includes/post-thingy-example.json
+    /gizmos:
       type: collection
-      displayName: playlist-tracks
+      displayName: thingy-gizmos
       get:
         description: |
-          [Get a Playlist's Tracks](https://developer.spotify.com/web-api/get-playlists-tracks/)
-        securedBy: [ oauth_2_0: { scopes: ['playlist-read-private']}]
+          [Get a Thingy's Gizmos](https://developer.example.com/get-thingys-gizmos/)
+        securedBy: [ oauth_2_0: { scopes: ['thingys-read-private']}]
         is: [ filterable, paged ]
       post:
         description: |
-          [Add Tracks to a Playlist](https://developer.spotify.com/web-api/add-tracks-to-playlist/)
-        securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
+          [Add Gizmos to a Thingy](https://developer.example.com/add-gizmos-to-thingy/)
+        securedBy: [ oauth_2_0: { scopes: ['thingy-modify-public', 'thingy-modify-private']}]
         body:
           application/json:
       put:
         description: |
-          [Replace a Playlist's tracks](https://developer.spotify.com/web-api/replace-playlists-tracks/)
-        securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
+          [Replace a Thingy's gizmos](https://developer.example.com/replace-thingys-gizmos/)
+        securedBy: [ oauth_2_0: { scopes: ['thingy-modify-public', 'thingy-modify-private']}]
         body:
           application/json:
       delete:
         description: |
-          [Remove Tracks from a Playlist](https://developer.spotify.com/web-api/remove-tracks-playlist/)
-        securedBy: [ oauth_2_0: { scopes: ['playlist-modify-public', 'playlist-modify-private']}]
+          [Remove Gizmos from a Thingy](https://developer.example.com/web-api/remove-gizmos-thingy/)
+        securedBy: [ oauth_2_0: { scopes: ['thingy-modify-public', 'thingy-modify-private']}]
         body:
           application/json:
 /form_parameters:
