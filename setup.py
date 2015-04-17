@@ -48,7 +48,7 @@ class PyTest(TestCommand):
 
 setup(
     name="ramlfications",
-    version="0.1.0",
+    version="0.1.0a1",
     description="Python RAML parser",
     long_description=long_description,
     url="https://ramlfications.readthedocs.org/",
