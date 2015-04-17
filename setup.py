@@ -62,7 +62,7 @@ setup(
         ]
     },
     classifiers=[
-        "Development Status :: 4 – Beta",
+        "Development Status :: 3 – Alpha",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: Apache License 2.0",
