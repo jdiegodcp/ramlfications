@@ -9,7 +9,7 @@ from setuptools.command.test import test as TestCommand  # NOQA
 
 def install_requires():
     install_requires = [
-        "pyyaml", "click", "markdown2", "six", "termcolor", "attrs",
+        "attrs", "click", "markdown2", "pyyaml", "six", "termcolor",
         "xmltodict"
     ]
     if sys.version_info[:2] == (2, 6):
