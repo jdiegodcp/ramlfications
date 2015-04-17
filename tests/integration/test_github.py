@@ -494,7 +494,6 @@ def test_resource_type_delete_base(resource_types):
     assert res.responses[0].description.raw == desc
 
 
-@pytest.mark.skipif(1 == 1, reason="FIX: responses are not getting added")
 def test_resource_type_get_item(resource_types):
     res = resource_types[5]
 
@@ -509,31 +508,36 @@ def test_resource_type_get_item(resource_types):
     assert res.uri_params is None
     assert res.optional
 
-    header = res.headers[0]
+    def _sort_headers(item):
+        return item.name
+
+    headers = sorted(res.headers, key=_sort_headers)
+
+    header = headers[0]
+    assert header.name == "Accept"
+    assert header.type == "string"
+    assert header.description.raw == "Is used to set specified media type."
+
+    header = headers[1]
     assert header.name == "X-GitHub-Media-Type"
     assert header.type == "string"
     desc = "You can check the current version of media type in responses.\n"
     assert header.description.raw == desc
 
-    header = res.headers[1]
-    assert header.name == "Accept"
-    assert header.type == "string"
-    assert header.description.raw == "Is used to set specified media type."
+    header = headers[2]
+    assert header.name == "X-GitHub-Request-Id"
+    assert header.type == "integer"
 
-    header = res.headers[2]
+    header = headers[3]
     assert header.name == "X-RateLimit-Limit"
     assert header.type == "integer"
 
-    header = res.headers[3]
+    header = headers[4]
     assert header.name == "X-RateLimit-Remaining"
     assert header.type == "integer"
 
-    header = res.headers[4]
+    header = headers[5]
     assert header.name == "X-RateLimit-Reset"
-    assert header.type == "integer"
-
-    header = res.headers[5]
-    assert header.name == "X-GitHub-Request-Id"
     assert header.type == "integer"
 
     assert res.responses[0].code == 403
