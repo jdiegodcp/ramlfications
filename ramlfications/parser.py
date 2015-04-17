@@ -244,7 +244,7 @@ def create_sec_schemes(raml_data, root):
     def set_property(node, obj, node_data):
         func = map_object_types(obj)
         item_objs = func({obj: node_data})
-        setattr(node, func.func_name, item_objs)
+        setattr(node, func.__name__, item_objs)
 
     def described_by():
         return data.get("describedBy", {})

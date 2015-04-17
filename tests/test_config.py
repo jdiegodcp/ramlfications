@@ -6,6 +6,8 @@ import os
 
 import pytest
 
+from six import iteritems
+
 from ramlfications.config import setup_config
 from ramlfications.config import (
     AUTH_SCHEMES, HTTP_RESP_CODES, MEDIA_TYPES, PROTOCOLS, HTTP_METHODS,
@@ -40,6 +42,14 @@ def _clean(a_list):
     return sorted(list(set(a_list)))
 
 
+def _dict_equal(dict1, dict2):
+    for k, v1 in list(iteritems(dict1)):
+        assert k in dict2
+        v2 = dict2[k]
+        assert v1, v2
+    return True
+
+
 def test_no_config_file_given(basic_config):
     parsed_config = setup_config(config_file=None)
     assert parsed_config == basic_config
@@ -61,7 +71,7 @@ def test_config_file(config, basic_config):
 
     parsed_config = setup_config(config)
 
-    assert bc == parsed_config
+    assert _dict_equal(bc, parsed_config)
 
 
 def test_no_config_file_found():
@@ -69,5 +79,5 @@ def test_no_config_file_found():
     with pytest.raises(IOError) as e:
         setup_config(config_file)
 
-    msg = "No such file or directory: '{0}'".format(config_file)
-    assert e.value[0] == msg
+    msg = ("No such file or directory: '{0}'".format(config_file),)
+    assert e.value.args == msg
