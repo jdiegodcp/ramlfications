@@ -9,8 +9,9 @@ import pytest
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
 from ramlfications.raml import RootNode, ResourceTypeNode, TraitNode
-from .base import EXAMPLES
 from ramlfications._helpers import load_file
+
+from .base import EXAMPLES
 
 
 @pytest.fixture(scope="session")

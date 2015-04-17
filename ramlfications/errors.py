@@ -31,5 +31,5 @@ class InvalidParameterError(InvalidRAMLError):
 # Loader Exceptions
 #####
 
-class LoadRAMLFileError(Exception):
+class LoadRAMLError(Exception):
     pass

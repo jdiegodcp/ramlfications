@@ -8,7 +8,7 @@ import pytest
 from six import iteritems
 
 from ramlfications import loader
-from ramlfications.errors import LoadRAMLFileError
+from ramlfications.errors import LoadRAMLError
 
 from .base import EXAMPLES
 
@@ -56,7 +56,7 @@ def test_load_string():
 
 def test_yaml_parser_error():
     raml_obj = os.path.join(EXAMPLES, "invalid_yaml.yaml")
-    with pytest.raises(LoadRAMLFileError) as e:
+    with pytest.raises(LoadRAMLError) as e:
         loader.RAMLLoader().load(open(raml_obj))
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]

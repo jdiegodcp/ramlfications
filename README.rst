@@ -72,8 +72,8 @@ To run a specific test setup (options include: ``py26``, ``py27``, ``py33``, ``p
 
 To run tests without tox::
 
-    (env) $ nosetests
-    (env) $ nosetests --with-coverage --cover-package=ramlfications
+    (env) $ py.test
+    (env) $ py.test --cov ramlfications --cov-report term-missing
 
 
 Build Docs
@@ -83,6 +83,10 @@ Documentation is build with Sphinx_, written in rST, uses the `Read the Docs`_ t
 a slightly customized CSS, and is hosted on `Read the Docs site`_.
 
 To rebuild docs locally, within the parent ``ramlfications`` directory::
+
+    (env) $ tox -e docs
+
+or::
 
     (env) $ sphinx-build -b docs/ docs/_build
 

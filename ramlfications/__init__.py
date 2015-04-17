@@ -22,7 +22,7 @@ def load(raml_file):
     :param str raml_file: String path to RAML file
     :return: loaded RAML
     :rtype: dict
-    :raises LoadRamlFileError: If error occurred trying to load the RAML file
+    :raises LoadRAMLError: If error occurred trying to load the RAML file
     """
     return load_file(raml_file)
 
@@ -35,53 +35,53 @@ def loads(raml_string):
     :param str raml_string: String of RAML data
     :return: loaded RAML
     :rtype: dict
-    :raises LoadRamlFileError: If error occurred trying to load the RAML file
+    :raises LoadRAMLError: If error occurred trying to load the RAML file
     """
     return load_string(raml_string)
 
 
-def parse(raml_file, config_file=None, production=True):
+def parse(raml, config_file=None):
     """
     Module helper function to parse a RAML File.  First loads the RAML file
     with :py:class:`.loader.RAMLLoader` then parses with
     :py:func:`.parser.parse_raml` to return a :py:class:`.raml.RAMLRoot`
     object.
 
-    :param str raml_file: String path to RAML file
-    :param bool validate: Whether or not to validate the RAML file \
-        while parsing
-    :param bool parse: If ``False``, then just validate
+    :param raml: Either string path to the RAML file, a file object, or \
+        a string representation of RAML.
+    :param str config_file:  String path to desired config file, if any.
     :return: parsed API
     :rtype: RAMLRoot
-    :raises LoadRamlFileError: If error occurred trying to load the RAML file
+    :raises LoadRAMLError: If error occurred trying to load the RAML file
         (see :py:class:`.loader.RAMLLoader`)
     :raises RAMLParserError: If error occurred during parsing of RAML file
         (see :py:class:`.raml.RAMLRoot`)
     :raises InvalidRamlFileError: RAML file is invalid according to RAML \
         `specification <http://raml.org/spec.html>`_.
     """
-    loader = load(raml_file)
+    loader = load(raml)
     config = setup_config(config_file)
     return parse_raml(loader, config)
 
 
-def validate(raml_file, config_file=None):
+def validate(raml, config_file=None):
     """
     Module helper function to validate a RAML File.  First loads \
     the RAML file \
     with :py:class:`.loader.RAMLLoader` then validates with \
     :py:func:`.validate.validate_raml`.
 
-    :param str raml_file: String path to RAML file
-    :param bool production: If the RAML file is meant to be production-ready
+    :param str raml: Either string path to the RAML file, a file object, \or
+        a string representation of RAML.
+    :param str config_file:  String path to desired config file, if any.
     :return: No return value if successful
-    :raises LoadRamlFileError: If error occurred trying to load the RAML file
+    :raises LoadRAMLError: If error occurred trying to load the RAML file
         (see :py:class:`.loader.RAMLLoader`)
     :raises InvalidRamlFileError: If error occurred trying to validate the RAML
         file (see :py:mod:`.validate`)
 
     """
-    loader = load(raml_file)
+    loader = load(raml)
     config = setup_config(config_file)
     config["validate"] = True
     parse_raml(loader, config)

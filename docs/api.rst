@@ -1,57 +1,20 @@
 API Definition
 ==============
 
-
+.. automodule:: ramlfications
 
 Main functions
 --------------
 
 The following three functions are meant for you to use primarily when parsing a
-RAML file.
-
-.. py:function:: ramlfications.parse(raml_file)
-
-    Module helper function to parse a RAML File.  First loads the RAML file
-    with :py:class:`.loader.RAMLLoader` then parses with
-    :py:func:`.parser.parse_raml` to return a :py:class:`.raml.RAMLRoot`
-    object.
-
-    :param str raml_file: String path to RAML file
-    :return: fully-parsed parsed API
-    :rtype: RAMLRoot
-    :raises LoadRAMLFileError: Exception trying to load the RAML file
-    :raises InvalidRootNodeError: Exception trying to parse the root of RAML file
-    :raises InvalidResourceNodeError: Exception trying to parse a resource, \
-        resource type, or trait node.
-    :raises InvalidParameterError: Exception trying to parse a named parameter \
-        (e.g. :py:class:`ramlfications.parameters.URIParameter`, \
-        :py:class:`ramlfications.parameters.Header` )
+RAML file/string.
 
 
-.. py:function:: ramlfications.load(raml_file)
+.. autofunction:: parse
+.. autofunction:: load
+.. autofunction:: loads
+.. autofunction:: validate
 
-    Module helper function to load a RAML File using :py:class:`.loader.RAMLLoader`.
-
-    :param str raml_file: String path to RAML file
-    :return: loaded RAML file
-    :rtype: RAMLDict
-    :raises LoadRAMLFileError:  Exception trying to load the RAML file
-
-.. py:function:: ramlfications.validate(raml_file, production=True)
-
-    Module helper function to validate a RAML File.  First loads the RAML file
-    with :py:class:`.loader.RAMLLoader` then validates with :py:func:`.validate.validate_raml`.
-
-    :param str raml_file: String path to RAML file
-    :param bool production: If the RAML file is meant to be production-ready
-    :return: No return value if successful
-    :raises LoadRAMLFileError: Exception trying to load the RAML file
-    :raises InvalidRootNodeError: Exception trying to parse the root of RAML file
-    :raises InvalidResourceNodeError: Exception trying to parse a resource, \
-        resource type, or trait node.
-    :raises InvalidParameterError: Exception trying to parse a named parameter \
-        (e.g. :py:class:`ramlfications.parameters.URIParameter`, \
-        :py:class:`ramlfications.parameters.Header` )
 
 Core
 ----
@@ -85,13 +48,9 @@ raml
 
     API Root Node
 
-    .. py:attribute:: raml_file
-
-        ``str`` path to RAML file.
-
     .. py:attribute:: raw
 
-        Ordered ``dict`` of all raw data from the RAML file.
+        Ordered ``dict`` of all raw data from the RAML file/string.
 
     .. py:attribute:: version
 
@@ -166,7 +125,7 @@ raml
 
     .. py:attribute:: raw
 
-        ``dict`` of the raw data of the ``Node`` from the RAML file
+        ``dict`` of the raw data of the ``Node`` from the RAML file/string
 
     .. py:attribute:: root
 
@@ -320,7 +279,8 @@ raml
 
     .. py:attribute:: resource_type
 
-        The assigned :py:class:`.ResourceTypeNode` object from :py:attr:`.ResourceNode.type`, or ``None``
+        The assigned :py:class:`.ResourceTypeNode` object from \
+        :py:attr:`.ResourceNode.type`, or ``None``
 
     .. py:attribute:: secured_by
 
@@ -381,7 +341,7 @@ Parameters
     .. py:attribute:: raw
 
         ``dict`` of all raw data associated with the parameter from
-        the RAML file.
+        the RAML file/string.
 
     .. py:attribute:: description
 
@@ -392,7 +352,7 @@ Parameters
 
         ``str`` of a user-friendly name for display or documentation purposes.
 
-        If ``displayName`` is not specified in RAML file, defaults to ``name``.
+        If ``displayName`` is not specified in RAML data, defaults to ``name``.
 
     .. py:attribute:: min_length
 
@@ -478,7 +438,7 @@ Parameters
     .. py:attribute:: raw
 
         ``dict`` of all raw data associated with the ``Body`` from
-        the RAML file
+        the RAML file/string
 
     .. py:attribute:: schema
 
@@ -517,7 +477,7 @@ Parameters
     .. py:attribute:: raw
 
         ``dict`` of all raw data associated with the ``Response`` from
-        the RAML file
+        the RAML file/string
 
     .. py:attribute:: description
 
@@ -558,7 +518,7 @@ Parameters
     .. py:attribute:: raw
 
         ``dict`` of all raw data associated with the ``SecurityScheme`` from
-        the RAML file
+        the RAML file/string
 
     .. py:attribute:: type
 
@@ -590,7 +550,6 @@ Loader
 
 .. autoclass:: ramlfications.loader.RAMLLoader
     :members:
-    :private-members:
 
 Validate
 ^^^^^^^^

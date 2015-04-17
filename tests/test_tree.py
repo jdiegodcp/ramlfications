@@ -55,7 +55,7 @@ def test_print_tree_dark(api, capsys):
     assert out == expected_result
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME")
+@pytest.mark.skipif(1 == 1, reason="HALP! I AM COLORBLIND")
 def test_print_tree_light_v(api, capsys):
     expected_result = tree_fixtures.tree_light_v
     print_tree(api, "light", 1)
@@ -66,7 +66,7 @@ def test_print_tree_light_v(api, capsys):
     assert out == expected_result
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME")
+@pytest.mark.skipif(1 == 1, reason="HALP! I AM COLORBLIND")
 def test_print_tree_light_vv(api, capsys):
     expected_result = tree_fixtures.tree_light_vv
     print_tree(api, "light", 2)
@@ -76,7 +76,7 @@ def test_print_tree_light_vv(api, capsys):
     assert out == expected_result
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME")
+@pytest.mark.skipif(1 == 1, reason="HALP! I AM COLORBLIND")
 def test_print_tree_light_vvv(api, capsys):
     expected_result = tree_fixtures.tree_light_vvv
     print_tree(api, "light", 3)

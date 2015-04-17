@@ -12,7 +12,7 @@ import os
 
 import yaml
 
-from .errors import LoadRAMLFileError
+from .errors import LoadRAMLError
 
 
 class RAMLLoader(object):
@@ -47,20 +47,17 @@ class RAMLLoader(object):
 
     def load(self, raml):
         """
-        Loads the desired RAML file and returns an instance of ``RAMLDict``.
+        Loads the desired RAML file and returns data.
 
-        Accepts either:
-        :param str raml_file: string path to RAML file
-        :param unicode raml_file: unicode string path to RAML file
-        :param file raml_file: file-like object of RAML file \
-            (must have a ``read`` method)
+        :param raml: Either a string/unicode path to RAML file, a file object,\
+            or string-representation of RAML.
 
-        :return: An instance of ``RAMLDict``
-        :rtype: ``RAMLDict``
+        :return: Data from RAML file
+        :rtype: ``dict``
         """
 
         try:
             return self._ordered_load(raml, yaml.SafeLoader)
         except yaml.parser.ParserError as e:
             msg = "Error parsing RAML: {0}".format(e)
-            raise LoadRAMLFileError(msg)
+            raise LoadRAMLError(msg)

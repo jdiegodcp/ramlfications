@@ -10,6 +10,34 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> api = ramlfications.parse(RAML_FILE)
 
 
+Configuration
+-------------
+
+Perhaps your API supports response codes beyond what IETF supports (default for this parser). \
+Or maybe you implemented your own authentication scheme that your API uses :superscript:`I hope not!`.
+
+Example configuration file::
+
+    [main]
+    validate = True
+
+    [custom]
+    append = True
+    resp_codes = 420, 421, 422
+    auth_schemes = oauth_3_0, oauth_4_0
+    media_types = application/vnd.github.v3, foo/bar
+    protocols = FTP
+    raml_versions = 0.8
+
+Feed the configuration into the parse function like so:
+
+.. code-block:: python
+
+   >>> import ramlfications
+   >>> RAML_FILE = "/path/to/my-api.raml"
+   >>> CONFIG_FILE = "/path/to/my-config.ini"
+   >>> api = ramlfications.parse(RAML_FILE, CONFIG_FILE)
+
 RAML Root Section
 -----------------
 
@@ -184,9 +212,13 @@ For example, a simplified RAML file::
           get:
             queryParameters:
               <<queryParamName>>:
-                description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+                description: |
+                  Return <<resourcePathName>> that have their <<queryParamName>>
+                  matching the given value
               <<fallbackParamName>>:
-                description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+                description: |
+                  If no values match the value given for <<queryParamName>>,
+                  use <<fallbackParamName>> instead
       - collection:
           usage: This resourceType should be used for any collection of items
           description: The collection of <<resourcePathName>>

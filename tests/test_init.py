@@ -7,7 +7,7 @@ import pytest
 
 from ramlfications import parse, load, loads, validate
 from ramlfications.raml import RootNode
-from ramlfications.errors import LoadRAMLFileError
+from ramlfications.errors import LoadRAMLError
 
 from .base import EXAMPLES
 
@@ -36,7 +36,7 @@ def test_parse(raml):
 
 def test_parse_nonexistant_file():
     raml_file = "/tmp/non-existant-raml-file.raml"
-    with pytest.raises(LoadRAMLFileError):
+    with pytest.raises(LoadRAMLError):
         parse(raml_file)
 
 
@@ -48,7 +48,7 @@ def test_load(raml):
 
 def test_load_nonexistant_file():
     raml_file = "/tmp/non-existant-raml-file.raml"
-    with pytest.raises(LoadRAMLFileError):
+    with pytest.raises(LoadRAMLError):
         parse(raml_file)
 
 
@@ -65,5 +65,5 @@ def test_validate(raml):
 
 def test_validate_nonexistant_file():
     raml_file = "/tmp/non-existant-raml-file.raml"
-    with pytest.raises(LoadRAMLFileError):
+    with pytest.raises(LoadRAMLError):
         validate(raml_file)

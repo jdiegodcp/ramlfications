@@ -59,6 +59,14 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> id_param.example
    'f00b@r1D'
 
+You can pass in an optional config file to add additional values for certain parameters. Find out more \
+within the :doc:`extendedusage`:
+
+.. code-block:: python
+
+   >>> CONFIG_FILE = "/path/to/config.ini"
+   >>> api = ramlfications.parse(RAML_FILE, CONFIG_FILE)
+
 For more complete understanding of what's available when parsing a RAML file, check the :doc:`extendedusage` \
 or the :doc:`api`.
 
