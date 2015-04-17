@@ -55,7 +55,7 @@ def test_load_string():
 
 
 def test_yaml_parser_error():
-    raml_obj = os.path.join(EXAMPLES, "invalid_yaml.yml")
+    raml_obj = os.path.join(EXAMPLES, "invalid_yaml.yaml")
     with pytest.raises(LoadRAMLFileError) as e:
         loader.RAMLLoader().load(open(raml_obj))
     msg = "Error parsing RAML:"
