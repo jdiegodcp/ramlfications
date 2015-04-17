@@ -919,11 +919,20 @@ def create_node(name, raw_data, method, parent, root):
         def resp_body(body):
             """Set response body."""
             body_list = []
+            if body.get("schema"):
+                schema = body.get("schema")
+                example = body.get("example")
+            elif body.get("application/json"):
+                schema = body.get("application/json", {}).get("schema")
+                example = body.get("application/json", {}).get("example")
+            else:
+                schema = {}
+                example = {}
             b = Body(
                 mime_type="application/json",
                 raw=body,
-                schema=load_schema(body.get("schema")),
-                example=load_schema(body.get("example")),
+                schema=load_schema(schema),
+                example=load_schema(example),
                 form_params=None,
                 config=root.config
             )
@@ -942,10 +951,16 @@ def create_node(name, raw_data, method, parent, root):
                 inherit_resp = resp_objs.pop(index)
                 headers = resp_headers(v.get("headers", {}))
                 if inherit_resp.headers:
-                    headers = headers.extend(inherit_resp.headers)
+                    if headers:
+                        headers.extend(inherit_resp.headers)
+                    else:
+                        headers = inherit_resp.headers
                 body = resp_body(v.get("body", {}))
                 if inherit_resp.body:
-                    body = body.extend(inherit_resp.body)
+                    if body:
+                        body.extend(inherit_resp.body)
+                    else:
+                        body = inherit_resp.body
                 resp = Response(
                     code=k,
                     raw={k: v},  # should prob get data union
