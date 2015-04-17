@@ -3,23 +3,23 @@
 # Copyright (c) 2014 Spotify AB
 from __future__ import absolute_import, division, print_function
 
-import json
 import os
 
 import pytest
 
-from ramlfications import loader
 from ramlfications import parse
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
 from ramlfications.raml import RootNode, ResourceTypeNode, TraitNode
+from ramlfications._helpers import load_file
+
 from tests.base import EXAMPLES
 
 
 @pytest.fixture(scope="session")
 def github_raml():
     raml_file = os.path.join(EXAMPLES + "github.raml")
-    return loader.RAMLLoader().load(raml_file)
+    return load_file(raml_file)
 
 
 def test_parse_raml(github_raml):
@@ -31,7 +31,7 @@ def test_parse_raml(github_raml):
 @pytest.fixture(scope="session")
 def root():
     raml_file = os.path.join(EXAMPLES + "github.raml")
-    loaded_raml_file = loader.RAMLLoader().load(raml_file)
+    loaded_raml_file = load_file(raml_file)
     config = setup_config(EXAMPLES + "github-config.ini")
     return pw.create_root(loaded_raml_file, config)
 

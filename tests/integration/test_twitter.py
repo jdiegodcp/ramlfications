@@ -7,19 +7,20 @@ import os
 
 import pytest
 
-from ramlfications import loader
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
 from ramlfications.raml import (
     RootNode, ResourceTypeNode, TraitNode, ResourceNode
 )
+from ramlfications._helpers import load_file
+
 from tests.base import EXAMPLES
 
 
 @pytest.fixture(scope="session")
 def raml():
     raml_file = os.path.join(EXAMPLES + "twitter.raml")
-    return loader.RAMLLoader().load(raml_file)
+    return load_file(raml_file)
 
 
 def test_parse_raml(raml):
