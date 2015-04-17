@@ -1,5 +1,3 @@
-TEMPORARY DOCS LOCATION: `GHE Pages <https://ghe.spotify.net/pages/lynn/ramlfications <https://ghe.spotify.net/pages/lynn/ramlfications>`_
-
 ramlfications: RAML reference implementation in Python
 ======================================================
 
