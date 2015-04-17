@@ -9,9 +9,6 @@ env:
     - TOX_ENV=docs
     - TOX_ENV=flake8
     - TOX_ENV=manifest
-    - TOX_ENV=verbose
-    - TOX_ENV=setup
-    - TOX_ENV=setupcov
 
 install:
     - pip install tox coveralls
