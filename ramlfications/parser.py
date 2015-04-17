@@ -723,7 +723,7 @@ def create_resources(node, resources, root, parent):
     endpoint.
 
     :param dict node: Dictionary of node to traverse
-    :param list resources: List of collected ``ResourceNode``s
+    :param list resources: List of collected ``ResourceNode`` s
     :param RootNode root: The ``RootNode`` of the API
     :param ResourceNode parent: Parent ``ResourceNode`` of current ``node``
     :returns: List of :py:class:`.raml.ResourceNode` objects.

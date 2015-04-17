@@ -26,7 +26,6 @@ def test_validate(runner):
     """
     Successfully validate RAML file via CLI.
     """
-    # For each test add a one-liner what you're testing.
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     exp_code = 0
     exp_msg = "Success! Valid RAML file: {0}\n".format(raml_file)
