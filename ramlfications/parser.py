@@ -765,23 +765,6 @@ def create_node(name, raw_data, method, parent, root):
     #####
     # Helper functions
     #####
-    def get_union(resource, method, inherited):
-        union = {}
-        for key, value in list(iteritems(inherited)):
-            if resource.get(method) is not None:
-                if key not in list(iterkeys(resource.get(method, {}))):
-                    union[key] = value
-                else:
-                    resource_values = resource.get(method, {}).get(key)
-                    inherited_values = inherited.get(key, {})
-                    union[key] = dict(list(iteritems(resource_values)) +
-                                      list(iteritems(inherited_values)))
-        if resource.get(method) is not None:
-            for key, value in list(iteritems(resource.get(method, {}))):
-                if key not in list(iterkeys(inherited)):
-                    union[key] = value
-        return union
-
     def get_method(attribute):
         """Returns ``attribute`` defined at the method level, or ``None``."""
         if method is not None:  # must explicitly say `not None`
