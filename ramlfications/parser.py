@@ -41,11 +41,11 @@ def parse_raml(loaded_raml, config):
     return root
 
 
-def _create_base_param_obj(property_data, param_obj, config):
+def _create_base_param_obj(attribute_data, param_obj, config):
     """Helper function to create a BaseParameter object"""
     objects = []
 
-    for key, value in list(iteritems(property_data)):
+    for key, value in list(iteritems(attribute_data)):
         if param_obj is URIParameter:
             required = value.get("required", True)
         else:
@@ -458,15 +458,15 @@ def create_resource_types(raml_data, root):
             if item == list(iterkeys(s))[0]:
                 return s
 
-    def get_inherited_type_params(data, property, params):
+    def get_inherited_type_params(data, attribute, params):
         inherited = get_inherited_resource(data.get("type"))
         inherited = inherited.get(data.get("type"))
-        inherited_params = inherited.get(property, {})
+        inherited_params = inherited.get(attribute, {})
 
         return dict(list(iteritems(params)) +
                     list(iteritems(inherited_params)))
 
-    def get_property_by_level(res_data, method_data, item, default={}):
+    def get_attribute(res_data, method_data, item, default={}):
         method_level = method_data.get(item, default)
         resource_level = res_data.get(item, default)
         return method_level, resource_level
@@ -485,7 +485,7 @@ def create_resource_types(raml_data, root):
         )
         return items
 
-    def get_property_by_level_dict(data, item):
+    def get_attribute_dict(data, item):
         resource_level = v.get(item, {})
         method_level = data.get(item, {})
         return dict(list(iteritems(resource_level)) +
@@ -555,7 +555,7 @@ def create_resource_types(raml_data, root):
         return response_objects or None
 
     def uri_params(data):
-        uri_params = get_property_by_level_dict(data, "uriParameters")
+        uri_params = get_attribute_dict(data, "uriParameters")
 
         if v.get("type"):
             uri_params = get_inherited_type_params(v, "uriParameters",
@@ -563,12 +563,12 @@ def create_resource_types(raml_data, root):
         return _create_base_param_obj(uri_params, URIParameter, root.config)
 
     def base_uri_params(data):
-        uri_params = get_property_by_level_dict(data, "baseUriParameters")
+        uri_params = get_attribute_dict(data, "baseUriParameters")
 
         return _create_base_param_obj(uri_params, URIParameter, root.config)
 
     def query_params(data):
-        query_params = get_property_by_level_dict(data, "queryParameters")
+        query_params = get_attribute_dict(data, "queryParameters")
 
         if v.get("type"):
             query_params = get_inherited_type_params(v, "queryParameters",
@@ -578,7 +578,7 @@ def create_resource_types(raml_data, root):
                                       root.config)
 
     def form_params(data):
-        form_params = get_property_by_level_dict(data, "formParameters")
+        form_params = get_attribute_dict(data, "formParameters")
 
         if v.get("type"):
             form_params = get_inherited_type_params(v, "formParameters",
@@ -607,13 +607,13 @@ def create_resource_types(raml_data, root):
         return "?" in meth
 
     def protocols(data):
-        m, r = get_property_by_level(v, data, "protocols", None)
+        m, r = get_attribute(v, data, "protocols", None)
         if m:
             return m
         return r
 
     def is_(data):
-        m, r = get_property_by_level(v, data, "is", default=[])
+        m, r = get_attribute(v, data, "is", default=[])
         return m + r or None
 
     def get_trait(item):
@@ -651,7 +651,7 @@ def create_resource_types(raml_data, root):
         return None
 
     def secured_by(data):
-        m, r = get_property_by_level(v, data, "securedBy", [])
+        m, r = get_attribute(v, data, "securedBy", [])
         return m + r or None
 
     def security_schemes(data):
@@ -782,31 +782,31 @@ def create_node(name, raw_data, method, parent, root):
                     union[key] = value
         return union
 
-    def get_method(property):
-        """Returns ``property`` defined at the method level, or ``None``."""
-        if method is not None:
-            get_item = raw_data.get(method, {})
-            if get_item is not None:
-                return get_item.get(property, {})
+    def get_method(attribute):
+        """Returns ``attribute`` defined at the method level, or ``None``."""
+        if method is not None:  # must explicitly say `not None`
+            get_attribute = raw_data.get(method, {})
+            if get_attribute is not None:
+                return get_attribute.get(attribute, {})
         return {}
 
-    def get_resource(property):
-        """Returns ``property`` defined at the resource level, or ``None``."""
-        return raw_data.get(property, {})
+    def get_resource(attribute):
+        """Returns ``attribute`` defined at the resource level, or ``None``."""
+        return raw_data.get(attribute, {})
 
-    def get_resource_type(property):
-        """Returns ``property`` defined in the resource type, or ``None``."""
+    def get_resource_type(attribute):
+        """Returns ``attribute`` defined in the resource type, or ``None``."""
         if type_():
             types = root.resource_types
             r_type = [r for r in types if r.name == type_()]
             if r_type:
-                if hasattr(r_type[0], property):
-                    if getattr(r_type[0], property) is not None:
-                        return getattr(r_type[0], property)
+                if hasattr(r_type[0], attribute):
+                    if getattr(r_type[0], attribute) is not None:
+                        return getattr(r_type[0], attribute)
         return []
 
-    def get_trait(property):
-        """Returns ``property`` defined in a trait, or ``None``."""
+    def get_trait(attribute):
+        """Returns ``attribute`` defined in a trait, or ``None``."""
 
         if is_():
             traits = root.traits
@@ -815,9 +815,9 @@ def create_node(name, raw_data, method, parent, root):
                 for i in is_():
                     trait = [t for t in traits if t.name == i]
                     if trait:
-                        if hasattr(trait[0], property):
-                            if getattr(trait[0], property) is not None:
-                                trait_objs.extend(getattr(trait[0], property))
+                        if hasattr(trait[0], attribute):
+                            if getattr(trait[0], attribute) is not None:
+                                trait_objs.extend(getattr(trait[0], attribute))
                 return trait_objs
         return []
 
@@ -831,15 +831,15 @@ def create_node(name, raw_data, method, parent, root):
                 if list(iterkeys(item))[0] == list(iterkeys(s))[0]:
                     return s
 
-    def get_property_levels(property):
-        method_level = get_method(property)
-        resource_level = get_resource(property)
+    def get_attribute_levels(attribute):
+        method_level = get_method(attribute)
+        resource_level = get_resource(attribute)
         return OrderedDict(list(iteritems(method_level)) +
                            list(iteritems(resource_level)))
 
-    def get_inherited_properties(property):
-        type_objects = get_resource_type(property)
-        trait_objects = get_trait(property)
+    def get_inherited_attributes(attribute):
+        type_objects = get_resource_type(attribute)
+        trait_objects = get_trait(attribute)
         return type_objects + trait_objects
 
     #####
@@ -878,8 +878,8 @@ def create_node(name, raw_data, method, parent, root):
 
     def headers():
         """Set resource's supported headers."""
-        headers = get_property_levels("headers")
-        header_objs = get_inherited_properties("headers")
+        headers = get_attribute_levels("headers")
+        header_objs = get_inherited_attributes("headers")
 
         _headers = _create_base_param_obj(headers, Header, root.config)
         if _headers:
@@ -889,8 +889,8 @@ def create_node(name, raw_data, method, parent, root):
 
     def body():
         """Set resource's supported request/response body."""
-        bodies = get_property_levels("body")
-        body_objects = get_inherited_properties("body")
+        bodies = get_attribute_levels("body")
+        body_objects = get_inherited_attributes("body")
         for k, v in list(iteritems(bodies)):
             if v is None:
                 continue
@@ -947,7 +947,7 @@ def create_node(name, raw_data, method, parent, root):
             body_list.append(b)
             return body_list or None
 
-        resps = get_property_levels("responses")
+        resps = get_attribute_levels("responses")
         type_resp = get_resource_type("responses")
         trait_resp = get_trait("responses")
         resp_objs = type_resp + trait_resp
@@ -989,8 +989,8 @@ def create_node(name, raw_data, method, parent, root):
 
     def uri_params():
         """Set resource's URI parameters."""
-        uri_params = get_property_levels("uriParameters")
-        param_objs = get_inherited_properties("uri_params")
+        uri_params = get_attribute_levels("uriParameters")
+        param_objs = get_inherited_attributes("uri_params")
 
         params = _create_base_param_obj(uri_params, URIParameter, root.config)
         if params:
@@ -1007,8 +1007,8 @@ def create_node(name, raw_data, method, parent, root):
 
     def base_uri_params():
         """Set resource's base URI parameters."""
-        uri_params = get_property_levels("baseUriParameters")
-        param_objs = get_inherited_properties("base_uri_params")
+        uri_params = get_attribute_levels("baseUriParameters")
+        param_objs = get_inherited_attributes("base_uri_params")
 
         params = _create_base_param_obj(uri_params, URIParameter, root.config)
         if params:
@@ -1026,8 +1026,8 @@ def create_node(name, raw_data, method, parent, root):
 
     def query_params():
         """Set resource's query parameters."""
-        query_params = get_property_levels("queryParameters")
-        param_objs = get_inherited_properties("query_params")
+        query_params = get_attribute_levels("queryParameters")
+        param_objs = get_inherited_attributes("query_params")
 
         params = _create_base_param_obj(query_params, QueryParameter,
                                         root.config)
@@ -1037,8 +1037,8 @@ def create_node(name, raw_data, method, parent, root):
 
     def form_params():
         """Set resource's form parameters."""
-        form_params = get_property_levels("formParameters")
-        param_objs = get_inherited_properties("form_params")
+        form_params = get_attribute_levels("formParameters")
+        param_objs = get_inherited_attributes("form_params")
 
         params = _create_base_param_obj(form_params, FormParameter,
                                         root.config)
@@ -1048,6 +1048,13 @@ def create_node(name, raw_data, method, parent, root):
 
     def media_type():
         """Set resource's supported media types."""
+        if raw_data.get(method, {}):
+            if raw_data.get(method, {}).get("mediaType"):
+                return raw_data.get(method, {}).get("mediaType")
+        if get_trait("media_type"):
+            return "".join(get_trait("media_type"))
+        if get_resource_type("media_type"):
+            return get_resource_type("media_type")
         if raw_data.get("mediaType"):
             return raw_data.get("mediaType")
         if root.media_type:
@@ -1055,8 +1062,9 @@ def create_node(name, raw_data, method, parent, root):
 
     def description():
         """Set resource's description."""
-        if raw_data.get(method, {}).get("description"):
-            return raw_data.get(method, {}).get("description")
+        if raw_data.get(method, {}):
+            if raw_data.get(method, {}).get("description"):
+                return raw_data.get(method, {}).get("description")
         return raw_data.get("description")
 
     def is_():
