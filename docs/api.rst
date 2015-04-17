@@ -211,7 +211,7 @@ raml
 
     .. py:attribute:: protocols
 
-        ``list`` of ``str``s of supported protocols.  Defaults to
+        ``list`` of ``str`` s of supported protocols.  Defaults to \
         :py:obj:`.RootNode.protocols`.
 
 
@@ -236,7 +236,7 @@ raml
 
     .. py:attribute:: display_name
 
-        ``str`` of user-friendly name of resource type, defaults to :py:attr:`.name`
+        ``str`` of user-friendly name of resource type, defaults to :py:attr:`.BaseNode.name`
 
     .. py:attribute:: type
 
@@ -320,7 +320,7 @@ raml
 
     .. py:attribute:: resource_type
 
-        The assigned :py:class:`.ResourceTypeNode` object from :py:attr:`.type`, or ``None``
+        The assigned :py:class:`.ResourceTypeNode` object from :py:attr:`.ResourceNode.type`, or ``None``
 
     .. py:attribute:: secured_by
 
@@ -587,8 +587,6 @@ Loader
 ^^^^^^
 
 .. automodule:: ramlfications.loader
-
-.. autoclass:: ramlfications.loader.RAMLDict
 
 .. autoclass:: ramlfications.loader.RAMLLoader
     :members:

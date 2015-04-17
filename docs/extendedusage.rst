@@ -270,7 +270,7 @@ Resources
 relative URI (relative to the ``base_uri`` and, if nested, relative to
 its parent URI).
 
-For example, `Foo API`_ defines ``/foo/bar`` as a resource (a
+For example, `Foo API` defines ``/foo/bar`` as a resource (a
 "top-level resource" to be exact).  It also defines ``/{id}`` under ``/foo/bar``,
 making ``/{id}`` a nested resource, relative to ``/foo/bar``.  The relative path
 would be ``/foo/bar/{id}``, and the absolute URI path would be
