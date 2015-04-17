@@ -13,6 +13,10 @@ ramlfications: RAML reference implementation in Python
    :target: https://coveralls.io/r/spotify/ramlfications?branch=master
    :alt: Current coverage
 
+.. image:: https://readthedocs.org/projects/ramlfications/badge/?version=latest
+   :target: https://readthedocs.org/projects/ramlfications/?badge=latest
+   :alt: Documentation Status
+
 .. begin
 
 Requirements and Installation
