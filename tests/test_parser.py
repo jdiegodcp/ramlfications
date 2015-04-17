@@ -14,13 +14,13 @@ from .base import EXAMPLES
 from ramlfications._helpers import load_file
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def loaded_raml():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     return load_file(raml_file)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def root():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = load_file(raml_file)
@@ -117,7 +117,7 @@ def test_media_type(root):
     assert exp_media_type == root.media_type
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def api():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = load_file(raml_file)
@@ -128,7 +128,7 @@ def api():
 #####
 # Test Security Schemes
 #####
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sec_schemes():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = load_file(raml_file)
@@ -203,7 +203,7 @@ def test_create_security_schemes_custom(sec_schemes):
 #####
 # Test Traits
 #####
-@pytest.fixture
+@pytest.fixture(scope="session")
 def traits():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = load_file(raml_file)
@@ -294,7 +294,7 @@ def test_trait_base_uri_params(traits):
 #####
 # Test Resource Types
 #####
-@pytest.fixture
+@pytest.fixture(scope="session")
 def resource_types():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = load_file(raml_file)
@@ -512,7 +512,7 @@ def test_resource_type_secured_by(resource_types):
 #####
 # Test Resources
 #####
-@pytest.fixture
+@pytest.fixture(scope="session")
 def resources():
     raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
     loaded_raml_file = load_file(raml_file)

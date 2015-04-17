@@ -12,7 +12,7 @@ from ramlfications.errors import LoadRAMLFileError
 from .base import EXAMPLES
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def raml():
     return os.path.join(EXAMPLES + "complete-valid-example.raml")
 

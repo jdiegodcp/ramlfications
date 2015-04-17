@@ -14,7 +14,7 @@ from .base import EXAMPLES
 from .data.fixtures import tree_fixtures
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def api():
     raml_str = os.path.join(EXAMPLES, "simple-tree.raml")
     loaded_raml = load_file(raml_str)

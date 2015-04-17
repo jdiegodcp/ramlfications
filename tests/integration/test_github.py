@@ -16,7 +16,7 @@ from ramlfications.raml import RootNode, ResourceTypeNode, TraitNode
 from tests.base import EXAMPLES
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def github_raml():
     raml_file = os.path.join(EXAMPLES + "github.raml")
     return loader.RAMLLoader().load(raml_file)
@@ -28,7 +28,7 @@ def test_parse_raml(github_raml):
     assert isinstance(root, RootNode)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def root():
     raml_file = os.path.join(EXAMPLES + "github.raml")
     loaded_raml_file = loader.RAMLLoader().load(raml_file)
@@ -78,7 +78,7 @@ def test_media_type(root):
 # Security Schemes
 #####
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sec_schemes():
     raml_file = os.path.join(EXAMPLES + "github.raml")
     config = os.path.join(EXAMPLES + "github-config.ini")
@@ -146,7 +146,7 @@ def test_create_security_schemes(sec_schemes):
 # Traits
 #####
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def traits():
     raml_file = os.path.join(EXAMPLES + "github.raml")
     config = os.path.join(EXAMPLES + "github-config.ini")
@@ -249,7 +249,7 @@ def test_trait_filterable(traits):
 # Resource Types
 #####
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def resource_types():
     raml_file = os.path.join(EXAMPLES + "github.raml")
     config = os.path.join(EXAMPLES + "github-config.ini")

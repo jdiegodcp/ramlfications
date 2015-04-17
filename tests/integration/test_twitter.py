@@ -16,7 +16,7 @@ from ramlfications.raml import (
 from tests.base import EXAMPLES
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def raml():
     raml_file = os.path.join(EXAMPLES + "twitter.raml")
     return loader.RAMLLoader().load(raml_file)
@@ -28,13 +28,13 @@ def test_parse_raml(raml):
     assert isinstance(root, RootNode)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def root(raml):
     config = setup_config(EXAMPLES + "twitter-config.ini")
     return pw.create_root(raml, config)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def api(raml):
     config = setup_config(EXAMPLES + "twitter-config.ini")
     return pw.parse_raml(raml, config)
