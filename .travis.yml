@@ -9,6 +9,9 @@ env:
 - TOX_ENV=docs
 - TOX_ENV=flake8
 - TOX_ENV=manifest
+matrix:
+  allow_failures:
+    - env: TOX_ENV=pypy
 install:
 - pip install tox coveralls
 script:
