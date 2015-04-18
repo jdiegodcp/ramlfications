@@ -1,27 +1,27 @@
 language: python
 python: 2.7
 env:
-  - TOX_ENV=py26
-  - TOX_ENV=py27
-  - TOX_ENV=py33
-  - TOX_ENV=py34
-  - TOX_ENV=pypy
-  - TOX_ENV=docs
-  - TOX_ENV=flake8
-  - TOX_ENV=manifest
+- TOX_ENV=py26
+- TOX_ENV=py27
+- TOX_ENV=py33
+- TOX_ENV=py34
+- TOX_ENV=pypy
+- TOX_ENV=docs
+- TOX_ENV=flake8
+- TOX_ENV=manifest
 install:
-  - pip install tox coveralls
+- pip install tox coveralls
 script:
-  - tox --hashseed 0 -e $TOX_ENV
+- tox --hashseed 0 -e $TOX_ENV
 after_success:
-  - coveralls
+- coveralls
 notifications:
   email: false
 deploy:
   provider: pypi
   user: roguelynn
   password:
-    secure: ZyYlPKLFOR5VCSHTJ9bM5QQloQW/lI8tR72gmolG+rMwReNWcyVWMY2ViirWihglcyEYQO15ZhzORGVH173i9ipaOvKf38LSVy2p+fGcPP0KJuz38gv7PTLegcza+9tB3tGuOBacj5jXRVJ4J06yBAMCD05EGfNi+dibydRyKME=
+    secure: XgUz7PiCHCOVM1yZeNfuy2j73aAGpW5HtTocmjlKNqG9wKXGkqV4IFWneznE1n8hqQj+Tqmm4MQ0AftJcomEh9WESVsglwMOqwMericRcsVkrEq+XHPynMfqsUc/MEr+zAB/Tj9SsbYMjP8zsk4TdJx/s+EbYFXsDfHrxcQY6q4=
   on:
     tags: true
-  distributions: "sdist bdist_wheel"
+  distributions: sdist bdist_wheel
