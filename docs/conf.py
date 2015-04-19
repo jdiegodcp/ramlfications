@@ -146,7 +146,7 @@ if sphinx_rtd_theme:
 else:
     html_theme = "default"
 
-html_style = "custom.css"
+html_style = "css/custom.css"
 
 # on_rtd is whether we are on readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
