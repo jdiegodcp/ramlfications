@@ -1,6 +1,6 @@
 Changelog
 =========
 
-0.1.0 (2014-xx-xx)
-------------------
-Initial release of ``ramlfications``\!
+0.1.0a1 (2015-04-18)
+--------------------
+Initial alpha release of ``ramlfications``\!
