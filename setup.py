@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
 import io
-import codecs
 import os
 import re
 import sys
@@ -16,14 +15,6 @@ META_PATH = os.path.join("ramlfications", "__init__.py")
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-
-# def read(*parts):
-#     """
-#     Build an absolute path from *parts* and and return the contents of the
-#     resulting file.  Assume UTF-8 encoding.
-#     """
-#     with codecs.open(os.path.join(HERE, *parts), "rb", "utf-8") as f:
-#         return f.read()
 
 def read(*filenames, **kwargs):
     encoding = kwargs.get('encoding', 'utf-8')
