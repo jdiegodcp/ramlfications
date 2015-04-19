@@ -5,16 +5,16 @@ ramlfications: RAML reference implementation in Python
    :target: https://pypi.python.org/pypi/ramlfications/
    :alt: Latest Version
 
-.. image:: https://travis-ci.org/econchick/ramlfications.png?branch=master
+.. image:: https://travis-ci.org/spotify/ramlfications.png?branch=master
    :target: https://travis-ci.org/spotify/ramlfications
    :alt: CI status
 
-.. image:: https://coveralls.io/repos/econchick/ramlfications/badge.svg?branch=master
+.. image:: https://coveralls.io/repos/spotify/ramlfications/badge.svg?branch=master
    :target: https://coveralls.io/r/spotify/ramlfications?branch=master
    :alt: Current coverage
 
 .. image:: https://readthedocs.org/projects/ramlfications/badge/?version=latest
-   :target: http://ramlfications.readthedocs.org/en/latest/
+   :target: https://ramlfications.readthedocs.org/en/latest/
    :alt: Documentation Status
 
 .. begin
