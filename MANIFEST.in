@@ -5,4 +5,4 @@ recursive-include docs/_static *
 prune docs/_build
 recursive-include tests *.py *.json *.md *.py *.raml *.yaml *.xsd *.ini
 recursive-include data *.json
-include bin/update_mime_types
+include scripts/update_mime_types

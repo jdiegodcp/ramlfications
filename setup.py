@@ -114,7 +114,7 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    scripts=['bin/update_mime_types'],
+    scripts=['scripts/update_mime_types'],
     install_requires=install_requires(),
     tests_require=[
         "pytest",
