@@ -9,7 +9,7 @@ ramlfications: RAML reference implementation in Python
    :target: https://travis-ci.org/spotify/ramlfications
    :alt: CI status
 
-.. image:: https://coveralls.io/repos/econchick/ramlfications/badge.png?branch=master
+.. image:: https://coveralls.io/repos/econchick/ramlfications/badge.svg?branch=master
    :target: https://coveralls.io/r/spotify/ramlfications?branch=master
    :alt: Current coverage
 
