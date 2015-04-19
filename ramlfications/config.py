@@ -3,12 +3,21 @@
 
 from __future__ import absolute_import, division, print_function
 
+import json
 import os
 
 from six import iterkeys
 from six.moves import configparser
 from six.moves import BaseHTTPServer as httpserver  # NOQA
 
+
+def _load_media_types():
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    par_dir = os.path.join(current_dir, os.pardir)
+    data_dir = os.path.join(par_dir, "data")
+    media_types_file = os.path.join(data_dir, "supported_mime_types.json")
+    with open(media_types_file, "r") as f:
+        return json.load(f)
 
 HTTP_METHODS = [
     "get", "post", "put", "delete", "patch", "head",
@@ -18,11 +27,7 @@ HTTP_OPTIONAL = [m + "?" for m in HTTP_METHODS].extend(HTTP_METHODS)
 
 RAML_VERSIONS = ["0.8"]
 PROTOCOLS = ["HTTP", "HTTPS"]
-MEDIA_TYPES = [
-    "text/yaml", "text-x-yaml", "application/yaml", "application/x-yaml",
-    "multipart/form-data", "text/html", "application/x-www-form-urlencoded",
-    "text/plain"
-]
+MEDIA_TYPES = _load_media_types()
 AUTH_SCHEMES = [
     "oauth_1_0", "oauth_2_0",
     "basic", "basic_auth", "basicAuth", "basicAuthentication",

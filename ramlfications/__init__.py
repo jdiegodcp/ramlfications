@@ -3,9 +3,17 @@
 
 from __future__ import absolute_import, division, print_function
 
+__version__ = "0.1.0a2"
+
 __author__ = "Lynn Root"
-__version__ = "0.1.0a1"
-__license__ = "Apache 2.0"
+__email__ = "lynn@spotify.com"
+
+__title__ = "ramlfications"
+__description__ = "Python RAML parser"
+__uri__ = "https://ramlfications.readthedocs.org"
+
+__license__ = "Apache License 2.0"
+__copyright__ = "Copyright (c) 2014-2015 Spotify AB"
 
 
 from ramlfications.config import setup_config
