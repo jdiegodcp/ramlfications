@@ -14,7 +14,7 @@ ramlfications: RAML reference implementation in Python
    :alt: Current coverage
 
 .. image:: https://readthedocs.org/projects/ramlfications/badge/?version=latest
-   :target: https://readthedocs.org/projects/ramlfications/?badge=latest
+   :target: http://ramlfications.readthedocs.org/en/latest/
    :alt: Documentation Status
 
 .. begin
