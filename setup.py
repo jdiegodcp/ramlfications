@@ -44,8 +44,8 @@ def find_meta(meta):
 
 def install_requires():
     install_requires = [
-        "attrs", "click", "markdown2", "pyyaml", "requests", "six",
-        "termcolor", "xmltodict"
+        "attrs", "click", "markdown2", "pyyaml", "six", "termcolor",
+        "xmltodict"
     ]
     if sys.version_info[:2] == (2, 6):
         install_requires.append("ordereddict")
@@ -105,10 +105,6 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    scripts=['scripts/update_mime_types'],
-    package_data={
-        '': ['data/supported_mime_types.json']
-    },
     install_requires=install_requires(),
     tests_require=[
         "pytest",

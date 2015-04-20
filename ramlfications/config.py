@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function
 
 import json
 import os
-import pkg_resources
 
 from six import iterkeys
 from six.moves import configparser
@@ -14,11 +13,9 @@ from six.moves import BaseHTTPServer as httpserver  # NOQA
 
 def _load_media_types():
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    par_dir = os.path.join(current_dir, os.path.pardir)
-    data_dir = os.path.join(par_dir, "data")
-    media_types_file = pkg_resources.resource_string(
-        __name__, "data/supported_mime_types.json"
-    )
+    data_dir = os.path.join(current_dir, "data")
+    media_types_file = os.path.join(data_dir, "supported_mime_types.json")
+
     with open(media_types_file, "r") as f:
         return json.load(f)
 

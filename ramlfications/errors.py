@@ -33,3 +33,11 @@ class InvalidParameterError(InvalidRAMLError):
 
 class LoadRAMLError(Exception):
     pass
+
+
+#####
+# Update MIME Media Type Exception
+#####
+
+class MediaTypeError(Exception):
+    pass
