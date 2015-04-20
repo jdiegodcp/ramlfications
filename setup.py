@@ -44,8 +44,8 @@ def find_meta(meta):
 
 def install_requires():
     install_requires = [
-        "attrs", "click", "markdown2", "pyyaml", "six", "termcolor",
-        "xmltodict"
+        "attrs", "click", "markdown2", "pyyaml", "requests", "six",
+        "termcolor", "xmltodict"
     ]
     if sys.version_info[:2] == (2, 6):
         install_requires.append("ordereddict")
@@ -82,7 +82,7 @@ setup(
     author=find_meta("author"),
     author_email=find_meta("email"),
     keywords=["raml", "rest"],
-    packages=find_packages(exclude=["tests"]),
+    packages=find_packages(exclude=["tests*"]),
     entry_points={
         'console_scripts': [
             'ramlfications = ramlfications.__main__:main'
@@ -106,6 +106,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     scripts=['scripts/update_mime_types'],
+    package_data={
+        '': ['data/supported_mime_types.json']
+    },
     install_requires=install_requires(),
     tests_require=[
         "pytest",
