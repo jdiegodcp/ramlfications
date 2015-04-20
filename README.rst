@@ -9,12 +9,12 @@ ramlfications: RAML reference implementation in Python
    :target: https://travis-ci.org/spotify/ramlfications
    :alt: CI status
 
-.. image:: https://coveralls.io/repos/spotify/ramlfications/badge.png?branch=master
+.. image:: https://coveralls.io/repos/spotify/ramlfications/badge.svg?branch=master
    :target: https://coveralls.io/r/spotify/ramlfications?branch=master
    :alt: Current coverage
 
 .. image:: https://readthedocs.org/projects/ramlfications/badge/?version=latest
-   :target: https://readthedocs.org/projects/ramlfications/?badge=latest
+   :target: https://ramlfications.readthedocs.org/en/latest/
    :alt: Documentation Status
 
 .. begin
@@ -31,13 +31,13 @@ The latest stable version can be found on PyPI_, and you can install via pip_::
 
 ``ramlfications`` runs on Python 2.6, 2.7, and 3.3+, and PyPy. Both Linux and OS X are supported.
 
-Continue onto :doc:`usage` to get started on using ``ramlfications``.
+Continue onto `usage`_ to get started on using ``ramlfications``.
 
 
 Developer Setup
 ---------------
 
-If you'd like to contribute or develop upon ``ramlfications``, be sure to read :doc:`contributing`
+If you'd like to contribute or develop upon ``ramlfications``, be sure to read `How to Contribute`_
 first.
 
 System requirements:
@@ -103,3 +103,5 @@ Then within ``ramlfications/docs/_build`` you can open the index.html page in yo
 .. _Sphinx: http://sphinx-doc.org/
 .. _`Read the Docs`: https://github.com/snide/sphinx_rtd_theme
 .. _`Read the Docs site`: https://ramlfications.readthedocs.org
+.. _`usage`: http://ramlfications.readthedocs.org/en/latest/usage.html
+.. _`How to Contribute`: http://ramlfications.readthedocs.org/en/latest/contributing.html
