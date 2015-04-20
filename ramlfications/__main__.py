@@ -60,8 +60,8 @@ def tree(ramlfile, color, output, verbose, validate, config):
         raise SystemExit(1)
 
 
-@click.command(help="Update RAMLfications' supported MIME types from IANA")
-def update_mime_types():
+@main.command(help="Update RAMLfications' supported MIME types from IANA")
+def update():
     umt()
 
 

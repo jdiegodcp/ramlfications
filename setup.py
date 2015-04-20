@@ -105,6 +105,7 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
+    package_data={"": ["data/supported_mime_types.json"]},
     install_requires=install_requires(),
     tests_require=[
         "pytest",

@@ -63,7 +63,7 @@ def insecure_download_xml():
 
 
 def xml_to_dict(response_text):
-    xml_data = xmltodict.prase(response_text)
+    xml_data = xmltodict.parse(response_text)
     if xml_data is not None or xml_data is not "":
         return xml_data
     else:
@@ -116,7 +116,7 @@ def update_mime_types():
         log.setLevel(logging.DEBUG)
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG)
-        msg = "%(asctime)s - update_mime_types - %(levelname)s - %(message)s"
+        msg = "updating MIME types - %(levelname)s - %(message)s"
         formatter = logging.Formatter(msg)
         console.setFormatter(formatter)
 
@@ -131,7 +131,7 @@ def update_mime_types():
     else:
         msg = ("Downloading over HTTPS but can not verify the host's "
                "certificate.  To avoid this in the future, `pip install"
-               "requests`.")
+               " requests`.")
         log.warn(msg)
         raw_data = insecure_download_xml()
 
