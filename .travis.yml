@@ -11,7 +11,7 @@ env:
 - TOX_ENV=manifest
 matrix:
   allow_failures:
-    - env: TOX_ENV=pypy
+  - env: TOX_ENV=pypy
 install:
 - pip install tox coveralls
 script:
@@ -20,6 +20,8 @@ after_success:
 - coveralls
 notifications:
   email: false
+  slack:
+    secure: RGdJmcQiapxCZWALwbogYykeuqUWhKgFtMR7JgRqPg/swcqbvD2rWYkT7eqUBrUldU7dTFhXt0RRqBf6J5vm4WcvkY5heQ4OpTi7R4itIiMLPndN24eG//PaOMhqrUyjkCsrWb0B7nuGRXmnH0C5xkPS/Dz1acugPG7zzXBKbKk=
 deploy:
   provider: pypi
   user: roguelynn
