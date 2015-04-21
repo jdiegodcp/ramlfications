@@ -8,6 +8,7 @@ import click
 
 from .tree import tree as ttree
 from .errors import InvalidRAMLError
+from .utils import update_mime_types as umt
 from ._helpers import load_file
 
 from ramlfications import validate as vvalidate
@@ -57,6 +58,11 @@ def tree(ramlfile, color, output, verbose, validate, config):
             click.format_filename(ramlfile), e)
         click.secho(msg, fg="red", err=True)
         raise SystemExit(1)
+
+
+@main.command(help="Update RAMLfications' supported MIME types from IANA")
+def update():
+    umt()
 
 
 if __name__ == "__main__":

@@ -68,3 +68,13 @@ def test_tree_invalid(runner):
         raml_file, 'RAML File does not define an API title.')
     result = runner.invoke(main.tree, [raml_file, "--color=light"])
     check_result(exp_code, exp_msg, result)
+
+
+def test_update(runner):
+    """
+    Successfully update supported mime types
+    """
+    exp_code = 0
+    exp_msg = None
+    result = runner.invoke(main.update)
+    check_result(exp_code, exp_msg, result)
