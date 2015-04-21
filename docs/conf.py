@@ -93,7 +93,7 @@ copyright = u'2014{0}, Lynn Root, Spotify AB'.format(
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = "0.1.1"
+release = find_version("../ramlfications/__init__.py")
 # The short X.Y version.
 version = release.rsplit(u".", 1)[0]
 

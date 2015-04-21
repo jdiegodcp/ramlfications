@@ -200,7 +200,7 @@ def create_sec_schemes(raml_data, root):
                 config=root.config
             )
             _resps.append(response)
-        return _resps
+        return sorted(_resps, key=lambda x: x.code)
 
     def query_params(param_data):
         param_data = param_data.get("queryParameters", {})
@@ -349,7 +349,7 @@ def create_traits(raml_data, root):
                 config=root.config
             )
             response_objects.append(response)
-        return response_objects or None
+        return sorted(response_objects, key=lambda x: x.code) or None
 
     def wrap(key, data):
         return TraitNode(
@@ -551,8 +551,9 @@ def create_resource_types(raml_data, root):
                 method=method(meth)
             )
             response_objects.append(response)
-
-        return response_objects or None
+        if response_objects:
+            return sorted(response_objects, key=lambda x: x.code)
+        return None
 
     def uri_params(data):
         uri_params = get_attribute_dict(data, "uriParameters")
