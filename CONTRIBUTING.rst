@@ -8,6 +8,7 @@ To make participation as pleasant as possible, this project adheres to the `Code
 Here are a few hints and rules to get you started:
 
 - Take a look at the :doc:`wishlist` for inspiration.
+- Any GitHub issue that is not assigned is up for grabs.
 - Add yourself to the AUTHORS.rst_ file in an alphabetical fashion.
   Every contribution is valuable and shall be credited.
 - If your change is noteworthy, add an entry to the changelog_.
