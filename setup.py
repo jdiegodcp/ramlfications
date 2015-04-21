@@ -108,7 +108,7 @@ setup(
     package_data={"": ["data/supported_mime_types.json"]},
     install_requires=install_requires(),
     tests_require=[
-        "pytest",
+        "pytest", "mock"
     ],
     cmdclass={
         "test": PyTest,

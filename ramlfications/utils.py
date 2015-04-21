@@ -10,11 +10,11 @@ import os
 
 import xmltodict
 
-try:
+try:  # NOCOV
     import requests
     SECURE_DOWNLOAD = True
 except ImportError:
-    import urllib2
+    import six.moves.urllib.request as urllib
     SECURE_DOWNLOAD = False
 
 from .errors import MediaTypeError
@@ -55,23 +55,22 @@ def secure_download_xml():
 
 def insecure_download_xml():
     try:
-        response = urllib2.urlopen(IANA_URL)
-        return response.read()
-    except urllib2.URLError as e:
+        response = urllib.urlopen(IANA_URL)
+    except urllib.URLError as e:
         msg = "Error downloading XML from IANA: {0}".format(e)
         raise MediaTypeError(msg)
+    return response.read()
 
 
 def xml_to_dict(response_text):
-    xml_data = xmltodict.parse(response_text)
-    if xml_data is not None or xml_data is not "":
-        return xml_data
-    else:
-        msg = "Whoops! Error parsing into XML, no data found."
+    try:
+        return xmltodict.parse(response_text)
+    except xmltodict.expat.ExpatError as e:
+        msg = "Error parsing XML: {0}".format(e)
         raise MediaTypeError(msg)
 
 
-def extract_mime_types(registry):
+def _extract_mime_types(registry):
     mime_types = []
     records = registry.get("record", {})
     reg_name = registry.get("@id")
@@ -88,14 +87,17 @@ def extract_mime_types(registry):
 
 
 def parse_xml_data(xml_data):
-    registries = xml_data.get("registry", {}).get("registry", {})
+    registries = xml_data.get("registry", {}).get("registry")
+    if not registries:
+        msg = "No registries found to parse."
+        raise MediaTypeError(msg)
     if len(registries) is not 9:
-        msg = ("Uh oh! a different amount of registries: "
-               "{d}".format(len(registries)))
+        msg = ("Expected 9 registries but parsed "
+               "{0}".format(len(registries)))
         raise MediaTypeError(msg)
     all_mime_types = []
     for registry in registries:
-        mime_types = extract_mime_types(registry)
+        mime_types = _extract_mime_types(registry)
         all_mime_types.extend(mime_types)
 
     return all_mime_types
