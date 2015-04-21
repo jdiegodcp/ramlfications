@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?xml-stylesheet type="text/xsl" href="media-types.xsl"?>
+<?oxygen RNGSchema="media-types.rng" type="xml"?>
+<registry xmlns="http://www.iana.org/assignments" id="media-types">
+  <title>Media Types</title>
+  <category>Multipurpose Internet Mail Extensions (MIME) and Media Types</category>
+  <updated>2015-04-15</updated>
+
+
+
+  <registration_rule>Expert Review for Vendor and Personal Trees.</registration_rule>
+  <expert>Ned Freed (primary), Murray Kucherawy (secondary), Mark Baker (secondary), Bjoern Hoehrmann (secondary)</expert>
+  <xref type="rfc" data="rfc6838"/>
+  <xref type="rfc" data="rfc4855"/>
+  <note>Per Section 3.1 of <xref type="rfc" data="rfc6838"/>, Standards Tree requests made through IETF
+documents will be reviewed and approved by the IESG, while requests made by
+other recognized standards organizations will be reviewed by the Designated
+Expert in accordance with the Specification Required policy. IANA will verify
+that this organization is recognized as a standards organization by the
+IESG.</note>
+<note><xref type="rfc" data="rfc2046"/> specifies that Media Types (formerly known as MIME types) and Media
+Subtypes will be assigned and listed by the IANA.
+
+Procedures for registering Media Types can be found in <xref type="rfc" data="rfc6838"/>, <xref type="rfc" data="rfc4289"/>,
+and <xref type="rfc" data="rfc6657"/>. Additional procedures for registering media types for transfer via
+Real-time Transport Protocol (RTP) can be found in <xref type="rfc" data="rfc4855"/>.
+
+The following is the list of Directories of Content Types and Subtypes. If you wish to
+register a Media Type with the IANA, please see the following for the online application:
+
+<xref type="uri" data="http://www.iana.org/form/media-types">Application for registration of Media Types</xref>
+
+Other Media Type Parameters: <xref type="registry" data="media-types-parameters"/>
+Media Type Sub-Parameters: <xref type="registry" data="media-type-sub-parameters"/>
+</note>
+
+
+</registry>

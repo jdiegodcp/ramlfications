@@ -1,10 +1,45 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (c) 2014 Spotify AB
+# Copyright (c) 2015 Spotify AB
 import io
+import os
+import re
 import sys
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand  # NOQA
+
+
+NAME = "ramlfications"
+META_PATH = os.path.join("ramlfications", "__init__.py")
+
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*filenames, **kwargs):
+    encoding = kwargs.get('encoding', 'utf-8')
+    sep = kwargs.get('sep', '\n')
+    buf = []
+    for fl in filenames:
+        with io.open(fl, encoding=encoding) as f:
+            buf.append(f.read())
+    return sep.join(buf)
+
+
+META_FILE = read(META_PATH)
+
+
+def find_meta(meta):
+    """
+    Extract __*meta*__ from META_FILE.
+    """
+    meta_match = re.search(
+        r"^__{meta}__ = ['\"]([^'\"]*)['\"]".format(meta=meta),
+        META_FILE, re.M
+    )
+    if meta_match:
+        return meta_match.group(1)
+    raise RuntimeError("Unable to find __{meta}__ string.".format(meta=meta))
 
 
 def install_requires():
@@ -16,15 +51,6 @@ def install_requires():
         install_requires.append("ordereddict")
     return install_requires
 
-
-def read(*filenames, **kwargs):
-    encoding = kwargs.get('encoding', 'utf-8')
-    sep = kwargs.get('sep', '\n')
-    buf = []
-    for fl in filenames:
-        with io.open(fl, encoding=encoding) as f:
-            buf.append(f.read())
-    return sep.join(buf)
 
 long_description = read('README.rst', 'docs/changelog.rst')
 
@@ -47,22 +73,23 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(
-    name="ramlfications",
-    version="0.1.0a1",
-    description="Python RAML parser",
+    name=NAME,
+    version=find_meta("version"),
+    description=find_meta("description"),
     long_description=long_description,
-    url="https://ramlfications.readthedocs.org/",
-    license="Apache License 2.0",
-    author="Lynn Root",
-    author_email="lynn@spotify.com",
-    packages=find_packages(exclude=["tests"]),
+    url=find_meta("uri"),
+    license=find_meta("license"),
+    author=find_meta("author"),
+    author_email=find_meta("email"),
+    keywords=["raml", "rest"],
+    packages=find_packages(exclude=["tests*"]),
     entry_points={
         'console_scripts': [
             'ramlfications = ramlfications.__main__:main'
         ]
     },
     classifiers=[
-        "Development Status :: 3 – Alpha",
+        "Development Status :: 4 – Beta",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: Apache License 2.0",
@@ -78,9 +105,10 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
+    package_data={"": ["data/supported_mime_types.json"]},
     install_requires=install_requires(),
     tests_require=[
-        "pytest",
+        "pytest", "mock"
     ],
     cmdclass={
         "test": PyTest,
