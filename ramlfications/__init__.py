@@ -4,7 +4,7 @@
 from __future__ import absolute_import, division, print_function
 
 __author__ = "Lynn Root"
-__version__ = "0.1.0a1"
+__version__ = "0.1.0b1"
 __license__ = "Apache 2.0"
 
 
