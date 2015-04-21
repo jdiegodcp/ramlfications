@@ -17,6 +17,18 @@ ramlfications: RAML reference implementation in Python
    :target: https://ramlfications.readthedocs.org/en/latest/
    :alt: Documentation Status
 
+.. image:: https://pypip.in/py_versions/ramlfications/badge.svg
+    :target: https://pypi.python.org/pypi/ramlfications/
+    :alt: Supported Python versions
+
+.. image:: https://pypip.in/implementation/ramlfications/badge.svg
+    :target: https://pypi.python.org/pypi/ramlfications/
+    :alt: Supported Python implementations
+
+.. image:: https://pypip.in/status/ramlfications/badge.svg
+    :target: https://pypi.python.org/pypi/ramlfications/
+    :alt: Development Status
+
 .. begin
 
 Requirements and Installation
