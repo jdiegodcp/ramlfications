@@ -84,7 +84,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'RAMLfications'
 year = datetime.date.today().year
-copyright = u'2014{0}, Lynn Root'.format(
+copyright = u'2014{0}, Lynn Root, Spotify AB'.format(
     u'-{0}'.format(year) if year != 2014 else u""
 )
 
@@ -93,7 +93,7 @@ copyright = u'2014{0}, Lynn Root'.format(
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = "0.1.0"
+release = "0.1.1"
 # The short X.Y version.
 version = release.rsplit(u".", 1)[0]
 
