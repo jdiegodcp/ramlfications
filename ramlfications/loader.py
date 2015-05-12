@@ -35,11 +35,7 @@ class RAMLLoader(object):
                 return inputfile.read()
 
         with open(file_name) as inputfile:
-            try:
-                return yaml.load(inputfile)
-            except yaml.loader.ConstructorError:
-                msg = "Recursively-including files not supported."
-                raise LoadRAMLError(msg)
+            return yaml.load(inputfile, self._ordered_loader)
 
     def _ordered_load(self, stream, loader=yaml.Loader):
         """
@@ -54,6 +50,9 @@ class RAMLLoader(object):
         OrderedLoader.add_constructor("!include", self._yaml_include)
         OrderedLoader.add_constructor(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
+
+        self._ordered_loader = OrderedLoader
+
         return yaml.load(stream, OrderedLoader)
 
     def load(self, raml):
