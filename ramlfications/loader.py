@@ -27,8 +27,19 @@ class RAMLLoader(object):
         # Get the path out of the yaml file
         file_name = os.path.join(os.path.dirname(loader.name), node.value)
 
+        file_ext = os.path.splitext(file_name)[1]
+        parsable_ext = [".yaml", ".yml", ".raml", ".json"]
+
+        if file_ext not in parsable_ext:
+            with open(file_name) as inputfile:
+                return inputfile.read()
+
         with open(file_name) as inputfile:
-            return yaml.load(inputfile)
+            try:
+                return yaml.load(inputfile)
+            except yaml.loader.ConstructorError:
+                msg = "Recursively-including files not supported."
+                raise LoadRAMLError(msg)
 
     def _ordered_load(self, stream, loader=yaml.Loader):
         """
@@ -59,5 +70,8 @@ class RAMLLoader(object):
         try:
             return self._ordered_load(raml, yaml.SafeLoader)
         except yaml.parser.ParserError as e:
+            msg = "Error parsing RAML: {0}".format(e)
+            raise LoadRAMLError(msg)
+        except yaml.constructor.ConstructorError as e:
             msg = "Error parsing RAML: {0}".format(e)
             raise LoadRAMLError(msg)

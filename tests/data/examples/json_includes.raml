@@ -1,0 +1,8 @@
+#%RAML 0.8
+title: Sample API Demo - JSON Includes
+version: v1
+schemas:
+    - json: !include includes/example.json
+baseUri: http://foo-json.bar
+/foo:
+  displayName: foo resource
