@@ -42,6 +42,44 @@ def test_load_file():
         assert dict_equal(raml, expected_data)
 
 
+def test_load_file_with_nested_includes():
+    raml_file = os.path.join(EXAMPLES + "nested-includes.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+
+        expected_data = {
+            'include_one': {
+                'external': {
+                    'propertyA': 'valueA',
+                    'propertyB': 'valueB'
+                },
+                'foo': {
+                    'foo': 'FooBar',
+                    'bar': 'BarBaz'
+                },
+                'not_yaml': "This is just a string.\n",
+            },
+            'title': 'GitHub API Demo - Includes',
+            'version': 'v3'
+        }
+
+        assert dict_equal(raml, expected_data)
+
+
+def test_load_file_with_nonyaml_include():
+    raml_file = os.path.join(EXAMPLES + "nonyaml-includes.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+
+        expected_data = {
+            'not_yaml': "This is just a string.\n",
+            'title': 'GitHub API Demo - Includes',
+            'version': 'v3'
+        }
+
+        assert dict_equal(raml, expected_data)
+
+
 def test_load_string():
     raml_str = ("""
                 - foo
@@ -59,14 +97,6 @@ def test_yaml_parser_error():
     with pytest.raises(LoadRAMLError) as e:
         loader.RAMLLoader().load(open(raml_obj))
     msg = "Error parsing RAML:"
-    assert msg in e.value.args[0]
-
-
-def test_cyclic_includes_raises_error():
-    raml_file = os.path.join(EXAMPLES + "cyclic_includes.raml")
-    with pytest.raises(LoadRAMLError) as e:
-        loader.RAMLLoader().load(open(raml_file))
-    msg = "Recursively-including files not supported."
     assert msg in e.value.args[0]
 
 
