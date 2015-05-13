@@ -103,11 +103,7 @@ def parse_xml_data(xml_data):
     return all_mime_types
 
 
-def save_data(mime_types):
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(current_dir, "data")
-    output_file = os.path.join(data_dir, "supported_mime_types.json")
-
+def save_data(output_file, mime_types):
     with open(output_file, "w") as f:
         json.dump(mime_types, f)
 
@@ -140,6 +136,11 @@ def update_mime_types():
     log.debug("Data received; parsing...")
     xml_data = xml_to_dict(raw_data)
     mime_types = parse_xml_data(xml_data)
-    save_data(mime_types)
+
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    data_dir = os.path.join(current_dir, "data")
+    output_file = os.path.join(data_dir, "supported_mime_types.json")
+
+    save_data(output_file, mime_types)
 
     log.debug("Done! Supported IANA MIME media types have been updated.")

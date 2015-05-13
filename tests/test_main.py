@@ -70,11 +70,15 @@ def test_tree_invalid(runner):
     check_result(exp_code, exp_msg, result)
 
 
-def test_update(runner):
+def test_update(runner, monkeypatch):
     """
     Successfully update supported mime types
     """
+    monkeypatch.setattr(
+        "ramlfications.utils.save_data", lambda x, y: ["foo/bar"]
+    )
     exp_code = 0
     exp_msg = None
+
     result = runner.invoke(main.update)
     check_result(exp_code, exp_msg, result)
