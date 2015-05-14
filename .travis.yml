@@ -27,7 +27,3 @@ deploy:
   on:
     tags: true
   distributions: sdist bdist_wheel
-matrix:
-  allow_failures:
-    - env: TOX_ENV=py33
-    - env: TOX_ENV=py34
