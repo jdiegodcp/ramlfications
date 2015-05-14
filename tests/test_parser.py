@@ -741,3 +741,94 @@ def test_resource_security_scheme(resources):
 def test_resource_inherit_parent(resources):
     res = resources[2]
     assert len(res.uri_params) == 4
+
+
+#####
+# Test Includes parsing
+#####
+@pytest.fixture(scope="session")
+def xml_includes():
+    raml_file = os.path.join(EXAMPLES + "xsd_includes.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_includes_xml(xml_includes):
+    api = xml_includes
+    assert api.title == "Sample API Demo - XSD Includes"
+    assert api.version == "v1"
+    assert api.schemas == [{
+        "xml": {
+            "root": {
+                "false": "true",
+                "name": "foo",
+            }
+        },
+    }]
+
+
+@pytest.fixture(scope="session")
+def json_includes():
+    raml_file = os.path.join(EXAMPLES + "json_includes.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_includes_json(json_includes):
+    api = json_includes
+    assert api.title == "Sample API Demo - JSON Includes"
+    assert api.version == "v1"
+    assert api.schemas == [{
+        "json": {
+            "false": True,
+            "name": "foo",
+        },
+    }]
+
+
+@pytest.fixture(scope="session")
+def md_includes():
+    raml_file = os.path.join(EXAMPLES + "md_includes.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_includes_md(md_includes):
+    api = md_includes
+    assert api.title == "Sample API Demo - Markdown Includes"
+    assert api.version == "v1"
+    markdown_raw = """## Foo
+
+*Bacon ipsum dolor* amet pork belly _doner_ rump brisket. [Cupim jerky \
+shoulder][0] ball tip, jowl bacon meatloaf shank kielbasa turducken corned \
+beef beef turkey porchetta.
+
+### Doner meatball pork belly andouille drumstick sirloin
+
+Porchetta picanha tail sirloin kielbasa, pig meatball short ribs drumstick \
+jowl. Brisket swine spare ribs picanha t-bone. Ball tip beef tenderloin jowl \
+doner andouille cupim meatball. Porchetta hamburger filet mignon jerky flank, \
+meatball salami beef cow venison tail ball tip pork belly.
+
+[0]: https://baconipsum.com/?paras=1&type=all-meat&start-with-lorem=1
+"""
+    assert api.documentation[0].content.raw == markdown_raw
+
+    markdown_html = """<h2>Foo</h2>
+
+<p><em>Bacon ipsum dolor</em> amet pork belly <em>doner</em> rump brisket. \
+<a href="https://baconipsum.com/?paras=1&amp;type=all-meat&amp;start-with-\
+lorem=1">Cupim jerky shoulder</a> ball tip, jowl bacon meatloaf shank \
+kielbasa turducken corned beef beef turkey porchetta.</p>
+
+<h3>Doner meatball pork belly andouille drumstick sirloin</h3>
+
+<p>Porchetta picanha tail sirloin kielbasa, pig meatball short ribs drumstick \
+jowl. Brisket swine spare ribs picanha t-bone. Ball tip beef tenderloin jowl \
+doner andouille cupim meatball. Porchetta hamburger filet mignon jerky flank, \
+meatball salami beef cow venison tail ball tip pork belly.</p>
+"""
+    assert api.documentation[0].content.html == markdown_html

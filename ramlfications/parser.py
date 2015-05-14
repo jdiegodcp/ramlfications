@@ -117,7 +117,14 @@ def create_root(raml, config):
         return docs or None
 
     def schemas():
-        return raml.get("schemas")
+        _schemas = raml.get("schemas")
+        if not _schemas:
+            return None
+        schemas = []
+        for schema in _schemas:
+            value = load_schema(list(itervalues(schema))[0])
+            schemas.append({list(iterkeys(schema))[0]: value})
+        return schemas or None
 
     def secured_by():
         return raml.get("securedBy")

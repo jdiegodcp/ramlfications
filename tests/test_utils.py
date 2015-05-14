@@ -2,8 +2,9 @@
 # Copyright (c) 2015 Spotify AB
 import json
 import os
+import tempfile
 
-from mock import Mock
+from mock import Mock, patch
 import pytest
 import xmltodict
 
@@ -128,40 +129,41 @@ def test_insecure_download(downloaded_xml):
         assert results == xml.read()
 
 
-def test_insecure_download_flag(monkeypatch):
+@patch("ramlfications.utils.insecure_download_xml")
+@patch("ramlfications.utils.parse_xml_data")
+@patch("ramlfications.utils.xml_to_dict")
+@patch("ramlfications.utils.save_data")
+def test_insecure_download_flag(_a, _b, _c, _d, monkeypatch):
     monkeypatch.setattr(utils, "SECURE_DOWNLOAD", False)
 
-    # lots of mocking D:
+    # # lots of mocking D:
     utils.urllib2 = Mock()
-    utils.xml_to_dict = Mock()
-    utils.parse_xml_data = Mock()
-    utils.save_data = Mock()
-    utils.insecure_download_xml = Mock()
 
     utils.update_mime_types()
     utils.insecure_download_xml.assert_called_once()
 
 
-def test_secure_download_flag(monkeypatch):
+@patch("ramlfications.utils.xml_to_dict")
+@patch("ramlfications.utils.parse_xml_data")
+@patch("ramlfications.utils.save_data")
+def test_secure_download_flag(_a, _b_, c, monkeypatch):
     monkeypatch.setattr(utils, "SECURE_DOWNLOAD", True)
 
     # lots of mocking D:
     utils.requests = Mock()
-    utils.xml_to_dict = Mock()
-    utils.parse_xml_data = Mock()
-    utils.save_data = Mock()
     utils.secure_download_xml = Mock()
 
     utils.update_mime_types()
     utils.secure_download_xml.assert_called_once()
 
 
-def test_update_mime_types(downloaded_xml):
+@patch("ramlfications.utils.xml_to_dict")
+@patch("ramlfications.utils.parse_xml_data")
+@patch("ramlfications.utils.secure_download_xml")
+@patch("ramlfications.utils.insecure_download_xml")
+@patch("ramlfications.utils.save_data")
+def test_update_mime_types(_a, _b, _c, _d, _e, downloaded_xml):
     utils.requests = Mock()
-    utils.xml_to_dict = Mock()
-    utils.parse_xml_data = Mock()
-    utils.save_data = Mock()
-    utils.secure_download_xml = Mock()
 
     with open(downloaded_xml, "r") as raw_data:
         utils.update_mime_types()
@@ -170,3 +172,15 @@ def test_update_mime_types(downloaded_xml):
         utils.xml_to_dict.assert_called_once()
         utils.parse_xml_data.assert_called_once()
         utils.save_data.assert_called_once()
+
+
+def test_save_data():
+    content = ["foo/bar", "bar/baz"]
+    temp_output = tempfile.mkstemp()[1]
+    utils.save_data(temp_output, content)
+
+    result = open(temp_output).read()
+    result = json.loads(result)
+    assert result == content
+
+    os.remove(temp_output)

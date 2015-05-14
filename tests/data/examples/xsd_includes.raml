@@ -1,0 +1,8 @@
+#%RAML 0.8
+title: Sample API Demo - XSD Includes
+version: v1
+schemas:
+    - xml: !include includes/example.xsd
+baseUri: http://foo-xml.bar
+/foo:
+  displayName: foo resource
