@@ -101,7 +101,7 @@ def test_parse_xml_data_incorrect_reg(incorrect_registry_count):
 @pytest.fixture(scope="session")
 def no_registries():
     xml_file = os.path.join(UPDATE, "no_registries.xml")
-    with open(xml_file, "r") as f:
+    with open(xml_file, "r", encoding="UTF-8") as f:
         data = f.read()
         return xmltodict.parse(data)
 
