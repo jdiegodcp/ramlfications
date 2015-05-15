@@ -8,6 +8,7 @@ Changelog
 Added:
 
 - New ``#ramlfications`` channel on `freenode`_ (web chat link)! Come chat, I'm lonely.
+- Documentation for configuration and the ``update`` command.
 
 Fixed:
 
