@@ -202,57 +202,55 @@ The full usage is:
 
 .. code-block:: bash
 
-   $ ramlfications [OPTIONS] COMMAND RAMLFILE
+   $ ramlfications [OPTIONS] COMMAND [ARGS]
 
 The ``RAMLFILE`` is a file containing the RAML-defined API you’d like to work with.
 
 Valid ``COMMAND`` s are the following:
 
-.. option:: validate
+.. option:: validate RAMLFILE
 
    Validate the RAML file according to the `RAML Specification`_.
 
-.. option:: tree
+   .. program:: validate
+   .. option:: -c PATH, --config PATH
 
-   Visualize the RAML file via your console.
+      Additionally supported items beyond RAML spec.
 
 
-Valid ``OPTIONS`` for all commands are the following:
+.. option:: update
 
-.. option:: --help
+   Update RAMLfications' supported MIME types from IANA.
 
-   Show a brief usage summary and exit.
 
-Valid ``OPTIONS`` for the ``tree`` command are the following:
+.. option:: tree RAMLFILE
 
-.. option:: -c light|dark
+   Visualize the RAML file as a tree.
 
-   Use a light color scheme for dark terminal backgrounds [DEFAULT], or dark color scheme for light backgrounds.
+   .. program:: tree
+   .. option:: -c PATH, --config PATH
 
-.. option:: --color light|dark
+      Additionally supported items beyond RAML spec.
 
-   Use a light color scheme for dark terminal backgrounds [DEFAULT], or dark color scheme for light backgrounds.
+   .. option:: -C <light|dark>, --color <light|dark>
 
-.. option:: -o
+      Use a light color scheme for dark terminal backgrounds [DEFAULT], or dark color scheme for light backgrounds.
 
-   Save tree output desired file
+   .. option:: -o FILENAME, --output FILENAME
 
-.. option:: --output
+      Save tree output to desired file
 
-   Save tree output desired file
+   .. option:: -v
 
-.. option:: -v
+      Increase verbose output of the tree one level: adds the HTTP methods
 
-   Increase verbose output of the tree one level: adds the HTTP methods
+   .. option:: -vv
 
-.. option:: -vv
+      Increase verbose output of the tree one level: adds the parameter names
 
-   Increase verbose output of the tree one level: adds the parameter names
+   .. option:: -vvv
 
-.. option:: -vvv
-
-   Increase verbose output of the tree one level: adds the parameter display name
-
+      Increase verbose output of the tree one level: adds the parameter display name
 
 
 

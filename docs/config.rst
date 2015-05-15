@@ -1,6 +1,11 @@
 Configuration
 =============
 
+.. _supported:
+
+Supported
+---------
+
 In support of the `RAML spec`_, ``ramlfications`` will automatically support
 the following:
 
@@ -15,7 +20,7 @@ RAML Versions
 
 HTTP Methods
 ^^^^^^^^^^^^
-| **Config variable**: ``http_method``
+| **Config variable**: ``http_methods``
 | **Config type**: list of strings
 | **Supported**: ``GET``, ``POST``, ``PUT``, ``DELETE``, ``PATCH``, ``HEAD``, ``OPTIONS``, ``TRACE``, ``CONNECT``
 |
@@ -59,6 +64,56 @@ MIME Media Types
 
 .. note::
     If you would like to update your own setup with the latest `IANA`_ supported MIME media types, refer to :doc:`usage`.
+
+
+User-specified
+--------------
+
+You may define additional values beyond what ``ramlfications`` already supports above.
+
+To do so, create your own ``ini`` file with a ``[custom]`` section.
+
+Then add the attributes defined :ref:`above <supported>` that you want to support.
+You can **only** add support to the configuration values explained above.
+
+.. warning::
+
+    Additionally supported values defined in your configuration will only **add** to the values
+    that ``ramlfications`` will validate against; it will **not** overwrite values that the
+    ``ramlfications`` supports as defined in the `RAML spec`_.
+
+An example ``config.ini`` file::
+
+    [custom]
+    raml_versions = 0.9, 1.0
+    http_methods = foo, bar
+    auth_schemes = oauth_3_0, my_auth
+    media_types = application/vnd.foobar.v2
+    protocols = FTP
+    resp_codes = 429, 440
+
+
+Usage
+^^^^^
+
+To use your configuration from within Python:
+
+.. code-block:: python
+
+    >>> from ramlfications import parse, validate
+    >>> RAML_FILE = "path/to/api.raml"
+    >>> CONFIG_FILE = "path/to/api.ini"
+    >>> api = parse(RAML_FILE, CONFIG_FILE)
+    >>> validate(RAML_FILE, CONFIG_FILE)
+    >>>
+
+To use via the command line:
+
+.. code-block:: bash
+
+    $ ramlfications validate --config path/to/api.ini path/to/api.raml
+    $ ramlfications tree --config path/to/api.ini path/to/api.raml
+
 
 .. _`RAML spec`: http://raml.org/spec.html
 .. _`default media type`: http://raml.org/spec.html#default-media-type
