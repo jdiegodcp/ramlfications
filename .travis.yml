@@ -17,6 +17,7 @@ after_success:
 - coveralls
 notifications:
   email: false
+  irc: "chat.freenode.net#ramlfications"
   slack:
     secure: RGdJmcQiapxCZWALwbogYykeuqUWhKgFtMR7JgRqPg/swcqbvD2rWYkT7eqUBrUldU7dTFhXt0RRqBf6J5vm4WcvkY5heQ4OpTi7R4itIiMLPndN24eG//PaOMhqrUyjkCsrWb0B7nuGRXmnH0C5xkPS/Dz1acugPG7zzXBKbKk=
 deploy:
