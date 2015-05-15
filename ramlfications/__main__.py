@@ -38,7 +38,7 @@ def validate(ramlfile, config):
 
 @main.command(help="Visualize the RAML file as a tree.")
 @click.argument('ramlfile', type=click.Path(exists=True))
-@click.option("-c", "--color", type=click.Choice(['dark', 'light']),
+@click.option("-C", "--color", type=click.Choice(['dark', 'light']),
               default=None,
               help=("Color theme 'light' for dark-screened backgrounds"))
 @click.option("-o", "--output", type=click.File('w'),
@@ -47,7 +47,8 @@ def validate(ramlfile, config):
               help="Include methods for each endpoint")
 @click.option("-V", "--validate", default=False, is_flag=True,
               help="Validate RAML file")
-@click.option("-C", "--config", type=click.Path(exists=True))
+@click.option("-c", "--config", type=click.Path(exists=True),
+              help="Additionally supported items beyond RAML spec.")
 def tree(ramlfile, color, output, verbose, validate, config):
     """Pretty-print a tree of the RAML-defined API."""
     try:
