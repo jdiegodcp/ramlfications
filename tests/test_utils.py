@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
+import sys
+
+if sys.version_info[0] == 2:
+    from io import open
+
 import json
 import os
 import tempfile
@@ -31,19 +36,19 @@ def no_data_xml():
 @pytest.fixture(scope="session")
 def expected_data():
     expected_json = os.path.join(UPDATE, "expected_mime_types.json")
-    with open(expected_json, "r") as f:
+    with open(expected_json, "r", encoding="UTF-8") as f:
         return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def parsed_xml(downloaded_xml):
-    with open(downloaded_xml, "r") as f:
+    with open(downloaded_xml, "r", encoding="UTF-8") as f:
         data = f.read()
         return xmltodict.parse(data)
 
 
 def test_xml_to_dict(downloaded_xml):
-    with open(downloaded_xml, "r") as f:
+    with open(downloaded_xml, "r", encoding="UTF-8") as f:
         data = f.read()
         xml_data = utils.xml_to_dict(data)
         assert xml_data is not None
@@ -52,7 +57,7 @@ def test_xml_to_dict(downloaded_xml):
 
 def test_xml_to_dict_no_data(no_data_xml):
     with pytest.raises(utils.MediaTypeError) as e:
-        with open(no_data_xml, "r") as f:
+        with open(no_data_xml, "r", encoding="UTF-8") as f:
             data = f.read()
             utils.xml_to_dict(data)
 
@@ -62,7 +67,7 @@ def test_xml_to_dict_no_data(no_data_xml):
 
 def test_xml_to_dict_invalid(invalid_xml):
     with pytest.raises(utils.MediaTypeError) as e:
-        with open(invalid_xml, "r") as f:
+        with open(invalid_xml, "r", encoding="UTF-8") as f:
             data = f.read()
             utils.xml_to_dict(data)
 
@@ -80,7 +85,7 @@ def test_parse_xml_data(parsed_xml, expected_data):
 @pytest.fixture(scope="session")
 def incorrect_registry_count():
     xml_file = os.path.join(UPDATE, "unexpected_registry_count.xml")
-    with open(xml_file, "r") as f:
+    with open(xml_file, "r", encoding="UTF-8") as f:
         data = f.read()
         return xmltodict.parse(data)
 
@@ -96,7 +101,7 @@ def test_parse_xml_data_incorrect_reg(incorrect_registry_count):
 @pytest.fixture(scope="session")
 def no_registries():
     xml_file = os.path.join(UPDATE, "no_registries.xml")
-    with open(xml_file, "r") as f:
+    with open(xml_file, "r", encoding="UTF-8") as f:
         data = f.read()
         return xmltodict.parse(data)
 
@@ -109,66 +114,70 @@ def test_parse_xml_data_no_reg(no_registries):
     assert e.value.args == msg
 
 
-def test_secure_download_xml(downloaded_xml):
+def test_requests_download_xml(downloaded_xml):
     utils.requests = Mock()
-    with open(downloaded_xml) as xml:
+    with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         expected = xml.read()
         utils.requests.get.return_value.text = expected
-        results = utils.secure_download_xml()
+        results = utils.requests_download_xml()
 
         assert results == expected
 
 
-def test_insecure_download(downloaded_xml):
+def test_urllib_download(downloaded_xml):
     utils.urllib = Mock()
-    with open(downloaded_xml) as xml:
+    with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         utils.urllib.urlopen.return_value = xml
-        results = utils.insecure_download_xml()
+        results = utils.urllib_download_xml()
 
-    with open(downloaded_xml) as xml:
+    with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         assert results == xml.read()
 
 
-@patch("ramlfications.utils.insecure_download_xml")
 @patch("ramlfications.utils.parse_xml_data")
 @patch("ramlfications.utils.xml_to_dict")
 @patch("ramlfications.utils.save_data")
-def test_insecure_download_flag(_a, _b, _c, _d, monkeypatch):
+def test_insecure_download_urllib_flag(_a, _b, _c, mocker, monkeypatch):
     monkeypatch.setattr(utils, "SECURE_DOWNLOAD", False)
+    monkeypatch.setattr(utils, "URLLIB", True)
+    utils.requests = Mock()
 
-    # # lots of mocking D:
-    utils.urllib2 = Mock()
+    mocker.patch("ramlfications.utils.urllib_download_xml")
 
     utils.update_mime_types()
-    utils.insecure_download_xml.assert_called_once()
+    utils.urllib_download_xml.assert_called_once()
+
+    mocker.stopall()
 
 
 @patch("ramlfications.utils.xml_to_dict")
 @patch("ramlfications.utils.parse_xml_data")
 @patch("ramlfications.utils.save_data")
-def test_secure_download_flag(_a, _b_, c, monkeypatch):
+def test_secure_download_requests_flag(_a, _b_, _c, mocker, monkeypatch):
     monkeypatch.setattr(utils, "SECURE_DOWNLOAD", True)
+    monkeypatch.setattr(utils, "URLLIB", False)
+    utils.urllib = Mock()
 
-    # lots of mocking D:
-    utils.requests = Mock()
-    utils.secure_download_xml = Mock()
+    mocker.patch("ramlfications.utils.requests_download_xml")
 
     utils.update_mime_types()
-    utils.secure_download_xml.assert_called_once()
+    utils.requests_download_xml.assert_called_once()
+
+    mocker.stopall()
 
 
 @patch("ramlfications.utils.xml_to_dict")
 @patch("ramlfications.utils.parse_xml_data")
-@patch("ramlfications.utils.secure_download_xml")
-@patch("ramlfications.utils.insecure_download_xml")
+@patch("ramlfications.utils.requests_download_xml")
+@patch("ramlfications.utils.urllib_download_xml")
 @patch("ramlfications.utils.save_data")
 def test_update_mime_types(_a, _b, _c, _d, _e, downloaded_xml):
     utils.requests = Mock()
 
-    with open(downloaded_xml, "r") as raw_data:
+    with open(downloaded_xml, "r", encoding="UTF-8") as raw_data:
         utils.update_mime_types()
-        utils.secure_download_xml.assert_called_once()
-        utils.secure_download_xml.return_value = raw_data.read()
+        utils.requests_download_xml.assert_called_once()
+        utils.requests_download_xml.return_value = raw_data.read()
         utils.xml_to_dict.assert_called_once()
         utils.parse_xml_data.assert_called_once()
         utils.save_data.assert_called_once()
@@ -179,7 +188,7 @@ def test_save_data():
     temp_output = tempfile.mkstemp()[1]
     utils.save_data(temp_output, content)
 
-    result = open(temp_output).read()
+    result = open(temp_output, "r", encoding="UTF-8").read()
     result = json.loads(result)
     assert result == content
 

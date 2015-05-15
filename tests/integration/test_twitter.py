@@ -19,25 +19,28 @@ from tests.base import EXAMPLES
 
 @pytest.fixture(scope="session")
 def raml():
-    raml_file = os.path.join(EXAMPLES + "twitter.raml")
+    raml_file = os.path.join(EXAMPLES, "twitter.raml")
     return load_file(raml_file)
 
 
 def test_parse_raml(raml):
-    config = setup_config(EXAMPLES + "twitter-config.ini")
+    config_file = os.path.join(EXAMPLES, "twitter-config.ini")
+    config = setup_config(config_file)
     root = pw.parse_raml(raml, config)
     assert isinstance(root, RootNode)
 
 
 @pytest.fixture(scope="session")
 def root(raml):
-    config = setup_config(EXAMPLES + "twitter-config.ini")
+    config_file = os.path.join(EXAMPLES, "twitter-config.ini")
+    config = setup_config(config_file)
     return pw.create_root(raml, config)
 
 
 @pytest.fixture(scope="session")
 def api(raml):
-    config = setup_config(EXAMPLES + "twitter-config.ini")
+    config_file = os.path.join(EXAMPLES, "twitter-config.ini")
+    config = setup_config(config_file)
     return pw.parse_raml(raml, config)
 
 

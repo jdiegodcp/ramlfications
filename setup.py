@@ -107,6 +107,9 @@ setup(
     ],
     package_data={"": ["data/supported_mime_types.json"]},
     install_requires=install_requires(),
+    extras_require={
+        "all": ["requests[security]"]
+    },
     tests_require=[
         "pytest", "mock"
     ],

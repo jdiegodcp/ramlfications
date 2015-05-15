@@ -7,15 +7,25 @@ from __future__ import absolute_import, division, print_function
 import json
 import logging
 import os
+import sys
 
 import xmltodict
 
-try:  # NOCOV
-    import requests
-    SECURE_DOWNLOAD = True
-except ImportError:
+PYVER = sys.version_info[:3]
+
+if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):
     import six.moves.urllib.request as urllib
-    SECURE_DOWNLOAD = False
+    URLLIB = True
+    SECURE_DOWNLOAD = True
+else:
+    try:  # NOCOV
+        import requests
+        URLLIB = False
+        SECURE_DOWNLOAD = True
+    except ImportError:
+        import six.moves.urllib.request as urllib
+        URLLIB = True
+        SECURE_DOWNLOAD = False
 
 from .errors import MediaTypeError
 
@@ -44,7 +54,7 @@ def load_schema(data):
     return data
 
 
-def secure_download_xml():
+def requests_download_xml():
     try:
         response = requests.get(IANA_URL)
         return response.text
@@ -53,7 +63,7 @@ def secure_download_xml():
         raise MediaTypeError(msg)
 
 
-def insecure_download_xml():
+def urllib_download_xml():
     try:
         response = urllib.urlopen(IANA_URL)
     except urllib.URLError as e:
@@ -124,14 +134,16 @@ def update_mime_types():
     log = setup_logger()
 
     log.debug("Getting XML data from IANA")
-    if SECURE_DOWNLOAD:
-        raw_data = secure_download_xml()
+    if SECURE_DOWNLOAD and not URLLIB:
+        raw_data = requests_download_xml()
+    elif SECURE_DOWNLOAD and URLLIB:
+        raw_data = urllib_download_xml()
     else:
         msg = ("Downloading over HTTPS but can not verify the host's "
                "certificate.  To avoid this in the future, `pip install"
-               " requests`.")
+               " \"requests[security]\"`.")
         log.warn(msg)
-        raw_data = insecure_download_xml()
+        raw_data = urllib_download_xml()
 
     log.debug("Data received; parsing...")
     xml_data = xml_to_dict(raw_data)

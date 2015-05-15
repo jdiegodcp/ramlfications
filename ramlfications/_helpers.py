@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
+import sys
+
+if sys.version_info[0] == 2:
+    from io import open
+
 import os
 
 import six
@@ -30,7 +35,7 @@ def _get_raml_object(raml_file):
 
     if isinstance(raml_file, six.text_type) or isinstance(
             raml_file, bytes):
-        return open(os.path.abspath(raml_file), 'r')
+        return open(os.path.abspath(raml_file), 'r', encoding="UTF-8")
     elif hasattr(raml_file, 'read'):
         return raml_file
     else:
