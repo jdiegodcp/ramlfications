@@ -46,6 +46,22 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
+
+def find_latest_release_date():
+    """
+    Build a date string from the latest release logged in ``changelog.rst``
+    """
+    changelog = read("changelog.rst")
+    # format of either YYYY-MM-DD or YYYY/MM/DD
+    date_regex = re.compile("(\d{4}[-/]\d{2}[-/]\d{2})")
+    date_match = date_regex.findall(changelog)[0]
+    if date_match:
+        release_date = datetime.datetime.strptime(date_match, "%Y-%m-%d")
+        fmt_release_date = release_date.strftime("%b %-d, %Y")
+        return fmt_release_date
+    raise RuntimeError("Unable to find latest release date in changelog.rst")
+
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -103,7 +119,7 @@ version = release.rsplit(u".", 1)[0]
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
-#today = ''
+today = find_latest_release_date()
 # Else, today_fmt is used as the format for a strftime call.
 #today_fmt = '%B %d, %Y'
 

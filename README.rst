@@ -107,6 +107,12 @@ or::
 Then within ``ramlfications/docs/_build`` you can open the index.html page in your browser.
 
 
+Still have issues?
+^^^^^^^^^^^^^^^^^^
+
+Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `Twitter`_.
+"roguelynn" is the maintainer, a.k.a `econchick`_ on GitHub, and based in San Fran.
+
 
 .. _pip: https://pip.pypa.io/en/latest/installing.html#install-pip
 .. _PyPI: https://pypi.python.org/project/ramlfications/
@@ -117,3 +123,6 @@ Then within ``ramlfications/docs/_build`` you can open the index.html page in yo
 .. _`Read the Docs site`: https://ramlfications.readthedocs.org
 .. _`usage`: http://ramlfications.readthedocs.org/en/latest/usage.html
 .. _`How to Contribute`: http://ramlfications.readthedocs.org/en/latest/contributing.html
+.. _`webchat`: http://webchat.freenode.net?channels=%23ramlfications&uio=ND10cnVlJjk9dHJ1ZQb4
+.. _`econchick`: https://github.com/econchick
+.. _`Twitter`: https://twitter.com/roguelynn

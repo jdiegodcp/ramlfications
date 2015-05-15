@@ -15,7 +15,7 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> RAML_FILE = "/path/to/my-api.raml"
    >>> api = ramlfications.parse(RAML_FILE)
    >>> api
-   <RootNode(raml_file="path/to/my-api.raml")>
+   RootNode(title='Example Web API')
    >>> api.title
    'My Foo API'
    >>> api.version
@@ -24,37 +24,37 @@ To parse a RAML file, include ramlfications in your project and call the parse f
 .. code-block:: python
 
    >>> api.security_schemes
-   [<SecurityScheme(name="oauth_2_0")>]
+   [SecurityScheme(name='oauth_2_0')]
    >>> oauth2 = api.security_schemes[0]
    >>> oauth2.name
    'oauth_2_0'
    >>> oauth2.type
    'OAuth 2.0'
-   >>> oauth2.settings.scopes
+   >>> oauth2.settings.get("scopes")
    ['playlist-read-private', 'playlist-modify-public',..., 'user-read-email']
-   >>> oauth2.settings.access_token_uri
+   >>> oauth2.settings.get("accessTokenUri")
    'https://accounts.foo.com/api/token'
 
 .. code-block:: python
 
    >>> api.resources
-   [<ResourceNode(method='GET', path='/foo')>, <ResourceNode(method='PUT', path='/foo')>, ..., <ResourceNode(method='GET', path='/foo/bar/{id}')>]
+   [ResourceNode(method='get', path='/foo'), ResourceNode(method='put', path='/foo'), ..., ResourceNode(method='get', path='/foo/bar/{id}')]
    >>> foo_bar = api.resources[-1]
    >>> foo_bar.name
    '/{id}'
    >>> foo_bar.display_name
    'fooBarID'
-   >>> foo_bar.absolute_path
+   >>> foo_bar.absolute_uri
    'https://api.foo.com/v1/foo/bar/{id}'
    >>> foo_bar.uri_params
-   [<URIParameter(name='id')>]
+   [URIParameter(name='id')]
 
 .. code-block:: python
 
-   >>> uri_param = foo_bar.uri_params[0]
-   >>> uri_param.required
+   >>> id_param = foo_bar.uri_params[0]
+   >>> id_param.required
    True
-   >>> uri_param.type
+   >>> id_param.type
    'string'
    >>> id_param.example
    'f00b@r1D'
@@ -109,6 +109,25 @@ To validate a RAML file with Python:
     When using ``validate`` within Python (versus the command line utility), if the RAML \
     file is valid, then nothing is returned.  Only invalid files will return an exception.
 
+If you have additionally supported items beyond the standard (e.g. protocols beyond HTTP/S), you
+can still validate your code by passing in your config file.
+
+.. code-block:: bash
+
+   $ cat api.ini
+   [custom]
+   protocols = FTP
+
+.. code-block:: python
+
+   >>> from ramlfications import validate
+   >>> RAML_FILE = "/path/to/support-ftp-protocol.raml"
+   >>> CONFIG_FILE = "/path/to/api.ini"
+   >>> validate(RAML_FILE, CONFIG_FILE)
+   >>>
+
+To learn more about ``ramlfications`` configuration including default/supported configuration,
+check out :doc:`config`.
 
 Tree
 ----
@@ -155,6 +174,26 @@ And the most verbose:
    |    ⌙ GET
    |       URI Params
    |        ⌙ id: ID of foo
+
+
+Update
+------
+
+At the time of this release (|today|), the MIME media types that ``ramlfications`` supports can be found
+on `GitHub`_.
+
+However, you do have the ability to update your own setup with the latest-supported MIME media types as
+defined by the `IANA`_.  To do so:
+
+.. code-block:: bash
+
+   $ ramlfications update
+
+.. note::
+   If you are running Python version 2.7.8 or earlier, or Python version 3.4.2 or earlier, it is
+   encouraged to have ``requests[all]`` installed in your environment.
+   The command will still work without the package using the standard lib's ``urllib2``, but does
+   not perform SSL certificate verification.  Please see `PEP 467`_ for more details.
 
 Options and Arguments
 ---------------------
@@ -218,3 +257,6 @@ Valid ``OPTIONS`` for the ``tree`` command are the following:
 
 
 .. _`RAML Specification`: http://raml.org/spec.html
+.. _GitHub: https://github.com/spotify/ramlfications/blob/master/ramlfications/data/supported_mime_types.json
+.. _IANA: https://www.iana.org/assignments/media-types/media-types.xml
+.. _`PEP 467`: https://www.python.org/dev/peps/pep-0476/

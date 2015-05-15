@@ -7,15 +7,24 @@ from __future__ import absolute_import, division, print_function
 import json
 import logging
 import os
+import sys
 
 import xmltodict
 
-try:  # NOCOV
-    import requests
-    SECURE_DOWNLOAD = True
-except ImportError:
+PYVER = sys.version_info[:3]
+
+if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):
     import six.moves.urllib.request as urllib
-    SECURE_DOWNLOAD = False
+    URLLIB = True
+else:
+    try:  # NOCOV
+        import requests
+        URLLIB = False
+        SECURE_DOWNLOAD = True
+    except ImportError:
+        import six.moves.urllib.request as urllib
+        URLLIB = True
+        SECURE_DOWNLOAD = False
 
 from .errors import MediaTypeError
 

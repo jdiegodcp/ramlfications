@@ -16,6 +16,7 @@ User's Guide
    installation
    usage
    extendedusage
+   config
    api
 
 
