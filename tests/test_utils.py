@@ -114,66 +114,70 @@ def test_parse_xml_data_no_reg(no_registries):
     assert e.value.args == msg
 
 
-def test_secure_download_xml(downloaded_xml):
+def test_requests_download_xml(downloaded_xml):
     utils.requests = Mock()
     with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         expected = xml.read()
         utils.requests.get.return_value.text = expected
-        results = utils.secure_download_xml()
+        results = utils.requests_download_xml()
 
         assert results == expected
 
 
-def test_insecure_download(downloaded_xml):
+def test_urllib_download(downloaded_xml):
     utils.urllib = Mock()
     with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         utils.urllib.urlopen.return_value = xml
-        results = utils.insecure_download_xml()
+        results = utils.urllib_download_xml()
 
     with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         assert results == xml.read()
 
 
-@patch("ramlfications.utils.insecure_download_xml")
 @patch("ramlfications.utils.parse_xml_data")
 @patch("ramlfications.utils.xml_to_dict")
 @patch("ramlfications.utils.save_data")
-def test_insecure_download_flag(_a, _b, _c, _d, monkeypatch):
+def test_insecure_download_urllib_flag(_a, _b, _c, mocker, monkeypatch):
     monkeypatch.setattr(utils, "SECURE_DOWNLOAD", False)
+    monkeypatch.setattr(utils, "URLLIB", True)
+    utils.requests = Mock()
 
-    # # lots of mocking D:
-    utils.urllib2 = Mock()
+    mocker.patch("ramlfications.utils.urllib_download_xml")
 
     utils.update_mime_types()
-    utils.insecure_download_xml.assert_called_once()
+    utils.urllib_download_xml.assert_called_once()
+
+    mocker.stopall()
 
 
 @patch("ramlfications.utils.xml_to_dict")
 @patch("ramlfications.utils.parse_xml_data")
 @patch("ramlfications.utils.save_data")
-def test_secure_download_flag(_a, _b_, c, monkeypatch):
+def test_secure_download_requests_flag(_a, _b_, _c, mocker, monkeypatch):
     monkeypatch.setattr(utils, "SECURE_DOWNLOAD", True)
+    monkeypatch.setattr(utils, "URLLIB", False)
+    utils.urllib = Mock()
 
-    # lots of mocking D:
-    utils.requests = Mock()
-    utils.secure_download_xml = Mock()
+    mocker.patch("ramlfications.utils.requests_download_xml")
 
     utils.update_mime_types()
-    utils.secure_download_xml.assert_called_once()
+    utils.requests_download_xml.assert_called_once()
+
+    mocker.stopall()
 
 
 @patch("ramlfications.utils.xml_to_dict")
 @patch("ramlfications.utils.parse_xml_data")
-@patch("ramlfications.utils.secure_download_xml")
-@patch("ramlfications.utils.insecure_download_xml")
+@patch("ramlfications.utils.requests_download_xml")
+@patch("ramlfications.utils.urllib_download_xml")
 @patch("ramlfications.utils.save_data")
 def test_update_mime_types(_a, _b, _c, _d, _e, downloaded_xml):
     utils.requests = Mock()
 
     with open(downloaded_xml, "r", encoding="UTF-8") as raw_data:
         utils.update_mime_types()
-        utils.secure_download_xml.assert_called_once()
-        utils.secure_download_xml.return_value = raw_data.read()
+        utils.requests_download_xml.assert_called_once()
+        utils.requests_download_xml.return_value = raw_data.read()
         utils.xml_to_dict.assert_called_once()
         utils.parse_xml_data.assert_called_once()
         utils.save_data.assert_called_once()
