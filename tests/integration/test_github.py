@@ -18,21 +18,23 @@ from tests.base import EXAMPLES
 
 @pytest.fixture(scope="session")
 def github_raml():
-    raml_file = os.path.join(EXAMPLES + "github.raml")
+    raml_file = os.path.join(EXAMPLES, "github.raml")
     return load_file(raml_file)
 
 
 def test_parse_raml(github_raml):
-    config = setup_config(EXAMPLES + "github-config.ini")
+    config_file = os.path.join(EXAMPLES, "github-config.ini")
+    config = setup_config(config_file)
     root = pw.parse_raml(github_raml, config)
     assert isinstance(root, RootNode)
 
 
 @pytest.fixture(scope="session")
 def root():
-    raml_file = os.path.join(EXAMPLES + "github.raml")
+    raml_file = os.path.join(EXAMPLES, "github.raml")
     loaded_raml_file = load_file(raml_file)
-    config = setup_config(EXAMPLES + "github-config.ini")
+    config_file = os.path.join(EXAMPLES, "github-config.ini")
+    config = setup_config(config_file)
     return pw.create_root(loaded_raml_file, config)
 
 
@@ -80,8 +82,8 @@ def test_media_type(root):
 
 @pytest.fixture(scope="session")
 def sec_schemes():
-    raml_file = os.path.join(EXAMPLES + "github.raml")
-    config = os.path.join(EXAMPLES + "github-config.ini")
+    raml_file = os.path.join(EXAMPLES, "github.raml")
+    config = os.path.join(EXAMPLES, "github-config.ini")
     api = parse(raml_file, config)
     return api.security_schemes
 
@@ -148,8 +150,8 @@ def test_create_security_schemes(sec_schemes):
 
 @pytest.fixture(scope="session")
 def traits():
-    raml_file = os.path.join(EXAMPLES + "github.raml")
-    config = os.path.join(EXAMPLES + "github-config.ini")
+    raml_file = os.path.join(EXAMPLES, "github.raml")
+    config = os.path.join(EXAMPLES, "github-config.ini")
     api = parse(raml_file, config)
     return api.traits
 
@@ -251,8 +253,8 @@ def test_trait_filterable(traits):
 
 @pytest.fixture(scope="session")
 def resource_types():
-    raml_file = os.path.join(EXAMPLES + "github.raml")
-    config = os.path.join(EXAMPLES + "github-config.ini")
+    raml_file = os.path.join(EXAMPLES, "github.raml")
+    config = os.path.join(EXAMPLES, "github-config.ini")
     api = parse(raml_file, config)
     return api.resource_types
 

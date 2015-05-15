@@ -26,7 +26,7 @@ def test_validate(runner):
     """
     Successfully validate RAML file via CLI.
     """
-    raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
+    raml_file = os.path.join(EXAMPLES, "complete-valid-example.raml")
     exp_code = 0
     exp_msg = "Success! Valid RAML file: {0}\n".format(raml_file)
     result = runner.invoke(main.validate, [raml_file])
@@ -37,7 +37,7 @@ def test_validate_fail(runner):
     """
     Raise error for invalid RAML file via CLI when validating.
     """
-    raml_file = os.path.join(VALIDATE + "no-title.raml")
+    raml_file = os.path.join(VALIDATE, "no-title.raml")
     exp_code = 1
     exp_msg = "Error validating file {0}: {1}\n".format(
         raml_file, 'RAML File does not define an API title.')
@@ -49,8 +49,8 @@ def test_tree(runner):
     """
     Successfully print out tree of RAML file via CLI.
     """
-    raml_file = os.path.join(EXAMPLES + "complete-valid-example.raml")
-    config_file = os.path.join(EXAMPLES + "test-config.ini")
+    raml_file = os.path.join(EXAMPLES, "complete-valid-example.raml")
+    config_file = os.path.join(EXAMPLES, "test-config.ini")
     exp_code = 0
     exp_msg = None
     result = runner.invoke(main.tree, [raml_file, "--color=light",
@@ -62,7 +62,7 @@ def test_tree_invalid(runner):
     """
     Raise error for invalid RAML file via CLI when printing the tree.
     """
-    raml_file = os.path.join(VALIDATE + "no-title.raml")
+    raml_file = os.path.join(VALIDATE, "no-title.raml")
     exp_code = 1
     exp_msg = '"{0}" is not a valid RAML file: {1}\n'.format(
         raml_file, 'RAML File does not define an API title.')
