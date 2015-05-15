@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
+import sys
+
+if sys.version_info[0] == 2:
+    from io import open
+
 import json
 import os
 import tempfile
@@ -31,19 +36,19 @@ def no_data_xml():
 @pytest.fixture(scope="session")
 def expected_data():
     expected_json = os.path.join(UPDATE, "expected_mime_types.json")
-    with open(expected_json, "r") as f:
+    with open(expected_json, "r", encoding="UTF-8") as f:
         return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def parsed_xml(downloaded_xml):
-    with open(downloaded_xml, "r") as f:
+    with open(downloaded_xml, "r", encoding="UTF-8") as f:
         data = f.read()
         return xmltodict.parse(data)
 
 
 def test_xml_to_dict(downloaded_xml):
-    with open(downloaded_xml, "r") as f:
+    with open(downloaded_xml, "r", encoding="UTF-8") as f:
         data = f.read()
         xml_data = utils.xml_to_dict(data)
         assert xml_data is not None
@@ -52,7 +57,7 @@ def test_xml_to_dict(downloaded_xml):
 
 def test_xml_to_dict_no_data(no_data_xml):
     with pytest.raises(utils.MediaTypeError) as e:
-        with open(no_data_xml, "r") as f:
+        with open(no_data_xml, "r", encoding="UTF-8") as f:
             data = f.read()
             utils.xml_to_dict(data)
 
@@ -62,7 +67,7 @@ def test_xml_to_dict_no_data(no_data_xml):
 
 def test_xml_to_dict_invalid(invalid_xml):
     with pytest.raises(utils.MediaTypeError) as e:
-        with open(invalid_xml, "r") as f:
+        with open(invalid_xml, "r", encoding="UTF-8") as f:
             data = f.read()
             utils.xml_to_dict(data)
 
@@ -80,7 +85,7 @@ def test_parse_xml_data(parsed_xml, expected_data):
 @pytest.fixture(scope="session")
 def incorrect_registry_count():
     xml_file = os.path.join(UPDATE, "unexpected_registry_count.xml")
-    with open(xml_file, "r") as f:
+    with open(xml_file, "r", encoding="UTF-8") as f:
         data = f.read()
         return xmltodict.parse(data)
 
@@ -111,7 +116,7 @@ def test_parse_xml_data_no_reg(no_registries):
 
 def test_secure_download_xml(downloaded_xml):
     utils.requests = Mock()
-    with open(downloaded_xml) as xml:
+    with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         expected = xml.read()
         utils.requests.get.return_value.text = expected
         results = utils.secure_download_xml()
@@ -121,11 +126,11 @@ def test_secure_download_xml(downloaded_xml):
 
 def test_insecure_download(downloaded_xml):
     utils.urllib = Mock()
-    with open(downloaded_xml) as xml:
+    with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         utils.urllib.urlopen.return_value = xml
         results = utils.insecure_download_xml()
 
-    with open(downloaded_xml) as xml:
+    with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         assert results == xml.read()
 
 
@@ -165,7 +170,7 @@ def test_secure_download_flag(_a, _b_, c, monkeypatch):
 def test_update_mime_types(_a, _b, _c, _d, _e, downloaded_xml):
     utils.requests = Mock()
 
-    with open(downloaded_xml, "r") as raw_data:
+    with open(downloaded_xml, "r", encoding="UTF-8") as raw_data:
         utils.update_mime_types()
         utils.secure_download_xml.assert_called_once()
         utils.secure_download_xml.return_value = raw_data.read()
@@ -179,7 +184,7 @@ def test_save_data():
     temp_output = tempfile.mkstemp()[1]
     utils.save_data(temp_output, content)
 
-    result = open(temp_output).read()
+    result = open(temp_output, "r", encoding="UTF-8").read()
     result = json.loads(result)
     assert result == content
 
