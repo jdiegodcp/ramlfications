@@ -70,15 +70,26 @@ def test_tree_invalid(runner):
     check_result(exp_code, exp_msg, result)
 
 
-def test_update(runner, monkeypatch):
+def test_update(runner, mocker):
     """
     Successfully update supported mime types
     """
-    monkeypatch.setattr(
-        "ramlfications.utils.save_data", lambda x, y: ["foo/bar"]
-    )
-    exp_code = 0
-    exp_msg = None
+    json_file = "ramlfications/data/supported_mime_types.json"
+    parent = os.path.dirname(os.path.pardir)
+    json_path = os.path.join(parent, json_file)
 
-    result = runner.invoke(main.update)
-    check_result(exp_code, exp_msg, result)
+    start_mtime = os.path.getmtime(json_path)
+
+    from ramlfications import utils
+    mocker.patch("ramlfications.utils.update_mime_types")
+    mocker.patch("ramlfications.utils.save_data")
+
+    runner.invoke(main.update)
+
+    utils.update_mime_types.assert_called_once()
+    utils.save_data.assert_called_once()
+
+    end_mtime = os.path.getmtime(json_path)
+
+    # sanity check that data was not written to file
+    assert start_mtime == end_mtime
