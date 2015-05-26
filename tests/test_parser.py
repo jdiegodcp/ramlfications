@@ -104,10 +104,10 @@ def test_version(root):
 
 
 def test_schemas(root):
-    exp_thingy_json_schema = {'Thingy': {'name': 'New Thingy', 'public': False}}
-    assert exp_thingy_json_schema == root.schemas[0]
+    thingy_json_schema = {'Thingy': {'name': 'New Thingy', 'public': False}}
+    assert thingy_json_schema == root.schemas[0]
 
-    exp_thingy_xsd_schema = {
+    thingy_xsd_schema = {
         'ThingyXsd': {
             'xs:schema': {
                 '@attributeFormDefault': 'unqualified',
@@ -131,9 +131,9 @@ def test_schemas(root):
             }
         }
     }
-    assert exp_thingy_xsd_schema == root.schemas[1]
+    assert thingy_xsd_schema == root.schemas[1]
 
-    exp_thingy_xsd_list_schema = {
+    thingy_xsd_list_schema = {
         'ThingyListXsd': {
             'xs:schema': {
                 '@attributeFormDefault': 'unqualified',
@@ -158,7 +158,7 @@ def test_schemas(root):
             }
         }
     }
-    assert exp_thingy_xsd_list_schema == root.schemas[2]
+    assert thingy_xsd_list_schema == root.schemas[2]
 
 
 def test_media_type(root):
@@ -711,7 +711,6 @@ def test_resource_responses(resources):
 
     schema = res.responses[0].body[2].schema
     assert schema == {"name": "an schema body"}
-
 
     res = resources[19]
     headers = [h.name for h in res.responses[0].headers]
