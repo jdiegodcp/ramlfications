@@ -631,15 +631,18 @@ def test_resource_responses(resources):
 
     assert res.responses[0].code == 200
     assert res.responses[0].body[0].mime_type == "application/json"
+    assert res.responses[0].body[1].mime_type == "text/xml"
+    assert len(res.responses[0].body) == 2
 
-    schema = {
+    json_schema = {
         "$schema": "http://json-schema.org/draft-03/schema",
         "type": "array",
         "items": {
             "$ref": "schemas/thingy.json"
         }
     }
-    assert res.responses[0].body[0].schema == schema
+    assert res.responses[0].body[0].schema == json_schema
+    assert res.responses[0].body[1].schema == 'ThingyListXsd'
 
     res = resources[10]
     headers = [h.name for h in res.responses[0].headers]
