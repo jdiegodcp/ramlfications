@@ -21,6 +21,8 @@ documentation:
       specification, and is meant for testing purposes within this RAML specification.
 schemas:
   - Thingy: !include includes/post-thingy-schema.json
+  - ThingyXsd: !include includes/thingy.xsd
+  - ThingyListXsd: !include includes/thingy-list.xsd
 resourceTypes:
   - base:
       uriParameters:
@@ -510,6 +512,13 @@ traits:
                   "$ref": "schemas/thingy.json"
                 }
               }
+          text/xml:
+            schema: ThingyListXsd
+            example: |
+              <thingies>
+                <thingy><name>Foo</name></thingy>
+                <thingy><name>Bar</name></thingy>
+              </thingies>
   post:
     description: |
       [Create a Thingy](https://developer.example.com/create-thingy/)

@@ -19,6 +19,7 @@ from .parameters import (
 )
 from .raml import RootNode, ResourceNode, ResourceTypeNode, TraitNode
 from .utils import load_schema
+from .config import MEDIA_TYPES
 
 __all__ = ["parse_raml"]
 
@@ -927,24 +928,37 @@ def create_node(name, raw_data, method, parent, root):
         def resp_body(body):
             """Set response body."""
             body_list = []
-            if body.get("schema"):
-                schema = body.get("schema")
-                example = body.get("example")
-            elif body.get("application/json"):
-                schema = body.get("application/json", {}).get("schema")
-                example = body.get("application/json", {}).get("example")
-            else:
-                schema = {}
-                example = {}
-            b = Body(
-                mime_type="application/json",
-                raw=body,
-                schema=load_schema(schema),
-                example=load_schema(example),
-                form_params=None,
-                config=root.config
-            )
-            body_list.append(b)
+            default_body = {}
+            for (key, spec) in body.items():
+                if key not in MEDIA_TYPES:
+                    # if a root mediaType was defined, the response body
+                    # may omit the mime_type definition
+                    if key == 'schema':
+                        default_body['schema'] = load_schema(spec) if spec else {}
+                    if key == 'example':
+                        default_body['example'] = load_schema(spec) if spec else {}
+                else:
+                    mime_type = key
+                    schema = spec.get('schema', '')
+                    example = spec.get('example', '')
+                    body_list.append(Body(
+                        mime_type=mime_type,
+                        raw=spec,
+                        schema=load_schema(schema) if schema else {},
+                        example=load_schema(example) if example else {},
+                        form_params=None,
+                        config=root.config
+                    ))
+            if default_body:
+                body_list.append(Body(
+                    mime_type=root.media_type,
+                    raw=body,
+                    schema=default_body['schema'],
+                    example=default_body['example'],
+                    form_params=None,
+                    config=root.config
+                ))
+
             return body_list or None
 
         resps = get_attribute_levels("responses")
