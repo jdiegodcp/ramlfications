@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.1.4 (2015-05-27)
+------------------
+
+Added:
+
+- Support for recursive ``!includes`` in RAML files (0.1.3 would handle the error, now actually supports it. Thanks `Ben`_ for your `PR`_!).
 
 0.1.3 (2015-05-14)
 ------------------
@@ -38,3 +44,4 @@ Initial alpha release of ``ramlfications``\!
 
 .. _`PR`: https://github.com/spotify/ramlfications/pull/8
 .. _`freenode`: http://webchat.freenode.net?channels=%23ramlfications&uio=ND10cnVlJjk9dHJ1ZQb4
+.. _`Ben`: https://github.com/benhamill
