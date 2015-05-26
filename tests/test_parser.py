@@ -104,8 +104,61 @@ def test_version(root):
 
 
 def test_schemas(root):
-    exp_schema = {'Thingy': {'name': 'New Thingy', 'public': False}}
-    assert exp_schema == root.schemas[0]
+    exp_thingy_json_schema = {'Thingy': {'name': 'New Thingy', 'public': False}}
+    assert exp_thingy_json_schema == root.schemas[0]
+
+    exp_thingy_xsd_schema = {
+        'ThingyXsd': {
+            'xs:schema': {
+                '@attributeFormDefault': 'unqualified',
+                '@elementFormDefault': 'qualified',
+                '@xmlns:xs': 'http://www.w3.org/2001/XMLSchema',
+                'xs:element': {
+                    '@name': 'thingy',
+                    '@type': 'thingyType'
+                },
+                'xs:complexType': {
+                    '@name': 'thingyType',
+                    'xs:sequence': {
+                        'xs:element': {
+                            '@type': 'xs:string',
+                            '@name': 'name',
+                            '@minOccurs': '1',
+                            '@maxOccurs': '1'
+                        }
+                    }
+                }
+            }
+        }
+    }
+    assert exp_thingy_xsd_schema == root.schemas[1]
+
+    exp_thingy_xsd_list_schema = {
+        'ThingyListXsd': {
+            'xs:schema': {
+                '@attributeFormDefault': 'unqualified',
+                '@elementFormDefault': 'qualified',
+                '@xmlns:xs': 'http://www.w3.org/2001/XMLSchema',
+                'xs:include': {
+                    '@schemaLocation': './thingy.xsd'
+                },
+                'xs:element': {
+                    '@name': 'thingies',
+                    'xs:complexType': {
+                        'xs:sequence': {
+                            '@minOccurs': '0',
+                            '@maxOccurs': 'unbounded',
+                            'xs:element': {
+                                '@type': 'thingyType',
+                                '@name': 'thingy'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    assert exp_thingy_xsd_list_schema == root.schemas[2]
 
 
 def test_media_type(root):
@@ -647,10 +700,18 @@ def test_resource_responses(resources):
     res = resources[10]
     headers = [h.name for h in res.responses[0].headers]
     assert ["X-search-header", "X-another-header"] == headers
-    body = res.responses[0].body[0].schema
-    assert body == {"name": "the search body"}
-    body = res.responses[0].body[1].schema
-    assert body == {"name": "an schema body"}
+
+    schema = res.responses[0].body[0].schema
+    assert schema == {"name": "the search body"}
+
+    schema = res.responses[0].body[1].schema
+    assert schema == {}
+    example = res.responses[0].body[1].example
+    assert example == {}
+
+    schema = res.responses[0].body[2].schema
+    assert schema == {"name": "an schema body"}
+
 
     res = resources[19]
     headers = [h.name for h in res.responses[0].headers]
