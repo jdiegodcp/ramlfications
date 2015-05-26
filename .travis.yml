@@ -19,7 +19,7 @@ notifications:
   email: false
   irc: "chat.freenode.net#ramlfications"
   slack:
-    secure: RGdJmcQiapxCZWALwbogYykeuqUWhKgFtMR7JgRqPg/swcqbvD2rWYkT7eqUBrUldU7dTFhXt0RRqBf6J5vm4WcvkY5heQ4OpTi7R4itIiMLPndN24eG//PaOMhqrUyjkCsrWb0B7nuGRXmnH0C5xkPS/Dz1acugPG7zzXBKbKk=
+    secure: "G1bX3FdqzbQb/f5CNwatSdPTbxKBo4HT5/wodDNtFyoj9ePd+Xh/h+d97QGB+6Swn7Gnp3r9bqmJrkffogc+N8RzhOJiFfVfOtXWqUa1Y5r/rxO0xZz7Q8PVRAIW0N6YYnq8t4bp9R3yYOdQYtgfUOmKq2TlnEEtZA4MeH7jYwc="
 deploy:
   provider: pypi
   user: roguelynn
