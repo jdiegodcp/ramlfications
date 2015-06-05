@@ -31,14 +31,16 @@ def parse_raml(loaded_raml, config):
     :param RAMLDict loaded_raml: OrderedDict of loaded RAML file
     :returns: :py:class:`.raml.RootNode` object.
     """
+    validate = str(config.get("validate")).lower() == 'true'
+    attr.set_run_validators(validate)
     root = create_root(loaded_raml, config)
     root.security_schemes = create_sec_schemes(root.raml_obj, root)
     root.traits = create_traits(root.raml_obj, root)
     root.resource_types = create_resource_types(root.raml_obj, root)
     root.resources = create_resources(root.raml_obj, [], root,
                                       parent=None)
-    if config.get("validate"):
-        attr.validate(root)
+    if validate:
+        attr.validate(root)  # need to validate again for root node
     return root
 
 
@@ -934,34 +936,21 @@ def create_node(name, raw_data, method, parent, root):
                     # if a root mediaType was defined, the response body
                     # may omit the mime_type definition
                     if key == 'schema':
-                        schema = load_schema(spec) if spec else {}
-                        default_body['schema'] = schema
+                        default_body['schema'] = load_schema(spec) if spec else {}
                     if key == 'example':
-                        example = load_schema(spec) if spec else {}
-                        default_body['example'] = example
+                        default_body['example'] = load_schema(spec) if spec else {}
                 else:
                     mime_type = key
-                    if spec is None:
-                        # spec might be '!!null'
-                        body_list.append(Body(
-                            mime_type=mime_type,
-                            raw=body,
-                            schema={},
-                            example={},
-                            form_params=None,
-                            config=root.config
-                        ))
-                    else:
-                        schema = spec.get('schema', '')
-                        example = spec.get('example', '')
-                        body_list.append(Body(
-                            mime_type=mime_type,
-                            raw=spec,
-                            schema=load_schema(schema) if schema else {},
-                            example=load_schema(example) if example else {},
-                            form_params=None,
-                            config=root.config
-                        ))
+                    schema = spec.get('schema', '')
+                    example = spec.get('example', '')
+                    body_list.append(Body(
+                        mime_type=mime_type,
+                        raw=spec,
+                        schema=load_schema(schema) if schema else {},
+                        example=load_schema(example) if example else {},
+                        form_params=None,
+                        config=root.config
+                    ))
             if default_body:
                 body_list.append(Body(
                     mime_type=root.media_type,
