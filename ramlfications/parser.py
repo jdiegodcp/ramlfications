@@ -31,14 +31,16 @@ def parse_raml(loaded_raml, config):
     :param RAMLDict loaded_raml: OrderedDict of loaded RAML file
     :returns: :py:class:`.raml.RootNode` object.
     """
+    validate = str(config.get("validate")).lower() == 'true'
+    attr.set_run_validators(validate)
     root = create_root(loaded_raml, config)
     root.security_schemes = create_sec_schemes(root.raml_obj, root)
     root.traits = create_traits(root.raml_obj, root)
     root.resource_types = create_resource_types(root.raml_obj, root)
     root.resources = create_resources(root.raml_obj, [], root,
                                       parent=None)
-    if config.get("validate"):
-        attr.validate(root)
+    if validate:
+        attr.validate(root)  # need to validate again for root node
     return root
 
 

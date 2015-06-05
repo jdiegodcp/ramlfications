@@ -63,10 +63,12 @@ def test_tree_invalid(runner):
     Raise error for invalid RAML file via CLI when printing the tree.
     """
     raml_file = os.path.join(VALIDATE, "no-title.raml")
+    config_file = os.path.join(VALIDATE, "valid-config.ini")
     exp_code = 1
     exp_msg = '"{0}" is not a valid RAML file: {1}\n'.format(
         raml_file, 'RAML File does not define an API title.')
-    result = runner.invoke(main.tree, [raml_file, "--color=light"])
+    result = runner.invoke(main.tree, [raml_file, "--color=light",
+                           "--config={0}".format(config_file)])
     check_result(exp_code, exp_msg, result)
 
 
