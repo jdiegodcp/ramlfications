@@ -61,8 +61,10 @@ def add_custom_config(user_config, parser_config):
             conf = [c.strip() for c in conf]
             pc[i[0]] = pc[i[0]] + conf
     pc["resp_codes"] = _clean([int(r) for r in pc["resp_codes"]])
-    pc["validate"] = user_config.get("main", "validate") or False
-    pc["production"] = user_config.get("main", "production") or False
+    pc["validate"] = user_config.has_option("main", "validate") and \
+        user_config.get("main", "validate")
+    pc["production"] = user_config.has_option("main", "production") and \
+        user_config.get("main", "production")
 
     return pc
 
