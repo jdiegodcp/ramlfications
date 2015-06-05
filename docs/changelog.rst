@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.1.5 (2015-06-05)
+------------------
+
+Fixed:
+
+- Configuration parsing for validation/production.  Thanks `vrajmohan`_!
+- Parsing of response bodies (fixes `Issue 12`_).  Thanks `Igor`_!
+
 0.1.4 (2015-05-27)
 ------------------
 
@@ -45,3 +53,6 @@ Initial alpha release of ``ramlfications``\!
 .. _`PR`: https://github.com/spotify/ramlfications/pull/8
 .. _`freenode`: http://webchat.freenode.net?channels=%23ramlfications&uio=ND10cnVlJjk9dHJ1ZQb4
 .. _`Ben`: https://github.com/benhamill
+.. _`vrajmohan`: https://github.com/spotify/ramlfications/pull/16
+.. _`Issue 12`: https://github.com/spotify/ramlfications/issues/12
+.. _`Igor`: https://github.com/spotify/ramlfications/pull/13
