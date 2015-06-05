@@ -109,6 +109,8 @@ def _print_verbosity(resources, color, verbosity):
 
 
 def _print_metadata(api, color):
+    if not api.title:
+        api.title = "MISSING TITLE"
     head = _set_ansi("=" * len(api.title), color, 0) + "\n"
     head += _set_ansi(api.title, color, 1) + "\n"
     head += _set_ansi("=" * len(api.title), color, 0) + "\n"
