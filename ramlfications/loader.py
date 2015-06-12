@@ -10,7 +10,10 @@ except ImportError:  # pragma: no cover
 
 import copy
 import os
-import urlparse
+try:
+    import urlparse
+except ImportError:
+    urllib.parse as urlparse
 
 import yaml
 
