@@ -61,8 +61,9 @@ class RAMLLoader(object):
             file_name = relative_path
         else:
             raise LoadRAMLError(
-                "Invalid JSON reference: unable to process %s (%s, %s)" %
-                (ref_source, file_name, uri)
+                "Invalid JSON ref: unable to process {src}".format(
+                    src=ref_source
+                )
             )
 
         # Load the ref if we dont have it
@@ -85,8 +86,10 @@ class RAMLLoader(object):
                 reffed_json = reffed_json[key]
             except KeyError:
                 raise LoadRAMLError(
-                    "Invalid JSON reference: %s not found in %s" %
-                    (ref_fragment, reffed_json.keys())
+                    "Invalid JSON ref: {fragment} not found in {keys}".format(
+                        fragment=ref_fragment,
+                        keys=reffed_json.keys()
+                    )
                 )
 
         return reffed_json
