@@ -13,7 +13,7 @@ import os
 try:
     import urlparse
 except ImportError:
-    urllib.parse as urlparse
+    import urllib.parse as urlparse
 
 import yaml
 

@@ -203,6 +203,7 @@ def test_includes_has_invalid_tag():
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
 
+
 def test_json_ref_in_schema_relative():
     raml_file = os.path.join(EXAMPLES, "json_include_with_ref.raml")
     with open(raml_file) as f:
@@ -212,17 +213,18 @@ def test_json_ref_in_schema_relative():
             "version": "v1",
             "baseUri": "http://foo-json.bar",
             "schemas": [{
-                            "json": {
-                                "name": "foo",
-                                "second_name": "bar",
-                                "false": True
-                            },
-                            }],
+                "json": {
+                    "name": "foo",
+                    "second_name": "bar",
+                    "false": True
+                },
+            }],
             "/foo": {
                 "displayName": "foo resource"
             }
         }
         assert dict_equal(raml, expected_data)
+
 
 def test_json_ref_in_schema_absolute():
     # Set up the file with an absolute path
@@ -256,6 +258,7 @@ def test_json_ref_in_schema_absolute():
         }
         assert dict_equal(raml, expected_data)
 
+
 def test_json_ref_in_schema_url():
     raml_file = os.path.join(EXAMPLES, "json_include_with_url_ref.raml")
     with open(raml_file) as r:
@@ -276,4 +279,3 @@ def test_json_ref_in_schema_url():
             }
         }
         assert dict_equal(raml, expected_data)
-
