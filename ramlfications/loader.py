@@ -10,12 +10,9 @@ except ImportError:  # pragma: no cover
 
 import copy
 import os
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
 
 import yaml
+from six.moves.urllib.parse import urlparse
 
 from .errors import LoadRAMLError
 from .utils import download_url
@@ -58,7 +55,7 @@ class RAMLLoader(object):
         file_name, uri = None, None
         if ref_source.startswith('/'):  # Absolute path
             file_name = ref_source if os.path.isfile(ref_source) else None
-        elif bool(urlparse.urlparse(ref_source).scheme):  # URL
+        elif bool(urlparse(ref_source).scheme):  # URL
             uri = ref_source
         elif base_path and os.path.exists(relative_path):
             file_name = relative_path
