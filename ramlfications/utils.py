@@ -54,22 +54,49 @@ def load_schema(data):
     return data
 
 
-def requests_download_xml():
+def requests_download(url):
     try:
-        response = requests.get(IANA_URL)
+        response = requests.get(url)
         return response.text
     except requests.exceptions.RequestException as e:
         msg = "Error downloading XML from IANA: {0}".format(e)
         raise MediaTypeError(msg)
 
 
-def urllib_download_xml():
+def urllib_download(url):
     try:
-        response = urllib.urlopen(IANA_URL)
+        response = urllib.urlopen(url)
     except urllib.URLError as e:
         msg = "Error downloading XML from IANA: {0}".format(e)
         raise MediaTypeError(msg)
     return response.read()
+
+
+def download_url(url):
+    def setup_logger():
+        log = logging.getLogger(__name__)
+        log.setLevel(logging.DEBUG)
+        console = logging.StreamHandler()
+        console.setLevel(logging.DEBUG)
+        msg = "download - %(levelname)s - %(message)s"
+        formatter = logging.Formatter(msg)
+        console.setFormatter(formatter)
+
+        log.addHandler(console)
+        return log
+
+    log = setup_logger()
+    if SECURE_DOWNLOAD and not URLLIB:
+        raw_data = requests_download(url)
+    elif SECURE_DOWNLOAD and URLLIB:
+        raw_data = urllib_download(url)
+    else:
+        msg = ("Downloading over HTTPS but can not verify the host's "
+               "certificate.  To avoid this in the future, `pip install"
+               " \"requests[security]\"`.")
+        log.warn(msg)
+        raw_data = urllib_download(url)
+    return raw_data
 
 
 def xml_to_dict(response_text):
@@ -134,17 +161,7 @@ def update_mime_types():
     log = setup_logger()
 
     log.debug("Getting XML data from IANA")
-    if SECURE_DOWNLOAD and not URLLIB:
-        raw_data = requests_download_xml()
-    elif SECURE_DOWNLOAD and URLLIB:
-        raw_data = urllib_download_xml()
-    else:
-        msg = ("Downloading over HTTPS but can not verify the host's "
-               "certificate.  To avoid this in the future, `pip install"
-               " \"requests[security]\"`.")
-        log.warn(msg)
-        raw_data = urllib_download_xml()
-
+    raw_data = download_url(IANA_URL)
     log.debug("Data received; parsing...")
     xml_data = xml_to_dict(raw_data)
     mime_types = parse_xml_data(xml_data)
