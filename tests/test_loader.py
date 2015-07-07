@@ -204,8 +204,8 @@ def test_includes_has_invalid_tag():
     assert msg in e.value.args[0]
 
 
-def test_json_ref_in_schema_relative():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_ref.raml")
+def test_json_ref_in_schema_relative_empty_fragment():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_empty_fragment.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
         expected_data = {
@@ -217,6 +217,48 @@ def test_json_ref_in_schema_relative():
                     "name": "foo",
                     "second_name": "bar",
                     "false": True
+                },
+            }],
+            "/foo": {
+                "displayName": "foo resource"
+            }
+        }
+        assert dict_equal(raml, expected_data)
+
+
+def test_json_ref_in_schema_relative_nonempty_fragment():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_nonempty_fragment.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+        expected_data = {
+            "title": "Sample API Demo - JSON Includes",
+            "version": "v1",
+            "baseUri": "http://foo-json.bar",
+            "schemas": [{
+                "json": {
+                    "name": "foo",
+                    "second_name": "bar"
+                },
+            }],
+            "/foo": {
+                "displayName": "foo resource"
+            }
+        }
+        assert dict_equal(raml, expected_data)
+
+
+def test_json_ref_in_schema_internal_fragment_reference():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_internal_fragment.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+        expected_data = {
+            "title": "Sample API Demo - JSON Includes",
+            "version": "v1",
+            "baseUri": "http://foo-json.bar",
+            "schemas": [{
+                "json": {
+                    "name": "foo",
+                    "internal": "yes",
                 },
             }],
             "/foo": {
