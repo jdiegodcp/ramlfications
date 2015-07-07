@@ -109,7 +109,7 @@ def test_include_json():
         expected_data = {
             "title": "Sample API Demo - JSON Includes",
             "version": "v1",
-            "baseUri": "http://foo-json.bar",
+            "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
                     "name": "foo",
@@ -138,7 +138,7 @@ def test_include_xsd():
         expected_data = {
             "title": "Sample API Demo - XSD Includes",
             "version": "v1",
-            "baseUri": "http://foo-xml.bar",
+            "baseUri": "http://xml.example.com",
             "schemas": [{
                 "xml": xml_raw,
             }],
@@ -173,7 +173,7 @@ meatball salami beef cow venison tail ball tip pork belly.
         expected_data = {
             "title": "Sample API Demo - Markdown Includes",
             "version": "v1",
-            "baseUri": "http://foo-markdown.bar",
+            "baseUri": "http://markdown.example.com",
             "/foo": {
                 "displayName": "foo resource"
             },
@@ -204,19 +204,61 @@ def test_includes_has_invalid_tag():
     assert msg in e.value.args[0]
 
 
-def test_json_ref_in_schema_relative():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_ref.raml")
+def test_json_ref_in_schema_relative_empty_fragment():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_empty_fragment.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
         expected_data = {
             "title": "Sample API Demo - JSON Includes",
             "version": "v1",
-            "baseUri": "http://foo-json.bar",
+            "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
                     "name": "foo",
                     "second_name": "bar",
                     "false": True
+                },
+            }],
+            "/foo": {
+                "displayName": "foo resource"
+            }
+        }
+        assert dict_equal(raml, expected_data)
+
+
+def test_json_ref_in_schema_relative_nonempty_fragment():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_nonempty_fragment.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+        expected_data = {
+            "title": "Sample API Demo - JSON Includes",
+            "version": "v1",
+            "baseUri": "http://json.example.com",
+            "schemas": [{
+                "json": {
+                    "name": "foo",
+                    "second_name": "bar"
+                },
+            }],
+            "/foo": {
+                "displayName": "foo resource"
+            }
+        }
+        assert dict_equal(raml, expected_data)
+
+
+def test_json_ref_in_schema_internal_fragment_reference():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_internal_fragment.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+        expected_data = {
+            "title": "Sample API Demo - JSON Includes",
+            "version": "v1",
+            "baseUri": "http://json.example.com",
+            "schemas": [{
+                "json": {
+                    "name": "foo",
+                    "internal": "yes",
                 },
             }],
             "/foo": {
@@ -232,7 +274,7 @@ def test_json_ref_in_schema_absolute():
                            "example_with_absolute_ref.json"), 'w') as f:
         f.write(json.dumps({
             "second_name": "bar",
-            "$ref": "{0}#/".format(
+            "$ref": "file://{0}#".format(
                 os.path.join(EXAMPLES, "includes", "example.json")
             )
         }))
@@ -244,7 +286,7 @@ def test_json_ref_in_schema_absolute():
         expected_data = {
             "title": "Sample API Demo - JSON Includes",
             "version": "v1",
-            "baseUri": "http://foo-json.bar",
+            "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
                     "name": "foo",
@@ -266,7 +308,7 @@ def test_json_ref_in_schema_url():
         expected_data = {
             "title": "Sample API Demo - JSON Includes",
             "version": "v1",
-            "baseUri": "http://foo-json.bar",
+            "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
                     "name": "foo",

@@ -15,6 +15,7 @@ PYVER = sys.version_info[:3]
 
 if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):
     import six.moves.urllib.request as urllib
+    import six.moves.urllib.error as urllib_error
     URLLIB = True
     SECURE_DOWNLOAD = True
 else:
@@ -24,6 +25,7 @@ else:
         SECURE_DOWNLOAD = True
     except ImportError:
         import six.moves.urllib.request as urllib
+        import six.moves.urllib.error as urllib_error
         URLLIB = True
         SECURE_DOWNLOAD = False
 
@@ -66,7 +68,8 @@ def requests_download(url):
 def urllib_download(url):
     try:
         response = urllib.urlopen(url)
-    except urllib.URLError as e:
+    except urllib_error.URLError as e:
+        import pdb; pdb.set_trace()
         msg = "Error downloading XML from IANA: {0}".format(e)
         raise MediaTypeError(msg)
     return response.read()
