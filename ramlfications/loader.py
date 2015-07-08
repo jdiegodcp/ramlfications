@@ -48,51 +48,35 @@ class RAMLLoader(object):
             return parsed
 
     def _lookup_json_ref(self, ref_key, base_path=None):
-        ref_source, ref_fragment = ref_key.split("#/")
+        if "#" not in ref_key: raise Exception("Ref values must contain a fragment (#).")
 
-        # Determine the correct identifier
-        relative_path = os.path.join(base_path, ref_source)
-        file_name, uri = None, None
-        if ref_source.startswith('/'):  # Absolute path
-            file_name = ref_source if os.path.isfile(ref_source) else None
-        elif bool(urlparse(ref_source).scheme):  # URL
-            uri = ref_source
-        elif base_path and os.path.exists(relative_path):
-            file_name = relative_path
-        else:
-            raise LoadRAMLError(
-                "Invalid JSON ref: unable to process {src}".format(
-                    src=ref_source
-                )
-            )
+        ref_uri, ref_fragment = ref_key.split("#")
 
         # Load the ref if we dont have it
-        if ref_source not in self.refs.keys():
-            if file_name is not None:
-                with open(file_name) as reffed_file:
-                    self.refs[file_name] = yaml.load(
-                        reffed_file,
-                        self._ordered_loader
-                    )
-            elif uri is not None:
-                response = download_url(uri)
-                self.refs[uri] = yaml.load(response)
+        if ref_uri not in self.refs.keys():
+            response = download_url(ref_uri)
+            self.refs[ref_uri] = yaml.load(response)
 
-        reffed_json = self.refs[file_name if file_name else uri]
+        # Hack to make the "whole file" be the empty string, which is the
+        # part of the reference fragment before the first slash (or the whole
+        # fragment, if there's no slash).
+        dereferenced_json = { "": self.refs[ref_uri] }
 
-        # If no path, use the whole object, otherwise down the hole we go
-        for key in filter(lambda x: len(x) > 0, ref_fragment.split('/')):
+        for reference_token in ref_fragment.split('/'):
+            # Replace JSON Pointer escape sequences
+            reference_token = reference_token.replace("~1", "/").replace("~0", "~")
+
             try:
-                reffed_json = reffed_json[key]
+                dereferenced_json = dereferenced_json[reference_token]
             except KeyError:
                 raise LoadRAMLError(
-                    "Invalid JSON ref: {fragment} not found in {keys}".format(
-                        fragment=ref_fragment,
-                        keys=reffed_json.keys()
+                    "Invalid JSON ref: '{token}' not found in {keys}".format(
+                        token=reference_token,
+                        keys=dereferenced_json.keys()
                     )
                 )
 
-        return reffed_json
+        return dereferenced_json
 
     def _parse_json_refs(self, schema, base_path=None):
         expanded = copy.deepcopy(schema)
