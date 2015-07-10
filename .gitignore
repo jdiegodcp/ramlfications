@@ -29,5 +29,3 @@ coverage.xml
 docs/_build/
 docs/_templates/
 cover
-
-tests/data/examples/includes/example_with_absolute_ref.json

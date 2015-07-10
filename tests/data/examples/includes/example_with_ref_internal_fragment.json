@@ -1,4 +1,7 @@
 {
-    "second_name": "bar",
-    "$ref": "file:example.json#"
+  "references": {
+    "internal": "yes"
+  },
+  "name": "foo",
+  "is_this_internal?": [{"$ref": "#/references/internal"}]
 }
