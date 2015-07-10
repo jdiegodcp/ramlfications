@@ -23,7 +23,6 @@ class RAMLLoader(object):
     Extends YAML loader to load RAML files with ``!include`` tags.
     """
     refs = {}
-
     def _yaml_include(self, loader, node):
         """
         Adds the ability to follow ``!include`` directives within
@@ -41,26 +40,38 @@ class RAMLLoader(object):
 
         with open(file_name) as inputfile:
             parsed = yaml.load(inputfile, self._ordered_loader)
+
             if file_ext == ".json":
                 parsed = self._parse_json_refs(
-                    parsed, os.path.dirname(file_name)
+                    parsed,
+                    os.path.dirname(file_name),
                 )
+
             return parsed
 
-    def _lookup_json_ref(self, ref_key, base_path=None):
+    def _lookup_json_ref(self, ref_key, base_path=None, parent_schema=None):
+        """
+        Traverses the json pointer and returns the value of the pointer.
+        """
         if "#" not in ref_key: raise Exception("Ref values must contain a fragment (#).")
 
         ref_uri, ref_fragment = ref_key.split("#")
-
-        # Load the ref if we dont have it
+        # Load the ref and cache it if the ref is not an internal reference
         if ref_uri not in self.refs.keys():
-            response = download_url(ref_uri)
-            self.refs[ref_uri] = yaml.load(response)
+            if ref_uri is not '':
+                response = download_url(ref_uri)
+                self.refs[ref_uri] = self._ordered_load(response, yaml.SafeLoader)
+
 
         # Hack to make the "whole file" be the empty string, which is the
         # part of the reference fragment before the first slash (or the whole
-        # fragment, if there's no slash).
-        dereferenced_json = { "": self.refs[ref_uri] }
+        # fragment, if there's no slash). Also, grab the correct schema from the cache.
+
+        if ref_uri is not "":
+            dereferenced_json = {"": self.refs[ref_uri]}
+        else:
+            dereferenced_json = {"": parent_schema}
+
 
         for reference_token in ref_fragment.split('/'):
             # Replace JSON Pointer escape sequences
@@ -75,26 +86,26 @@ class RAMLLoader(object):
                         keys=dereferenced_json.keys()
                     )
                 )
-
         return dereferenced_json
 
-    def _parse_json_refs(self, schema, base_path=None):
+    def _parse_json_refs(self, schema, base_path=None, parent_schema=None):
+        """
+        Traverses the json schema and resolves the ref pointers recursively
+        """
+
+        if parent_schema is None: parent_schema = schema
         expanded = copy.deepcopy(schema)
-        if type(schema) in [dict, OrderedDict]:
+        if isinstance(schema, dict):
             for k, v in schema.items():
-                if type(v) in [dict, OrderedDict]:
-                    expanded[k] = self._parse_json_refs(v, base_path)
-                elif type(v) == list:
+                if isinstance(v, dict):
+                    expanded[k] = self._parse_json_refs(v, base_path, parent_schema=parent_schema)
+                elif isinstance(v, list):
                     for idx in xrange(len(v)):
                         expanded[k][idx] = self._parse_json_refs(
-                            v[idx], base_path
+                            v[idx], base_path, parent_schema=parent_schema
                         )
                 elif k == '$ref':
-                    # For a $ref, dereference it
-                    del expanded['$ref']
-                    expanded.update(
-                        self._lookup_json_ref(v, base_path=base_path)
-                    )
+                    return  self._lookup_json_ref(v, base_path=base_path, parent_schema=parent_schema)
         return expanded
 
     def _ordered_load(self, stream, loader=yaml.Loader):

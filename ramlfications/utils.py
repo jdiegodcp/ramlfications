@@ -76,19 +76,7 @@ def urllib_download(url):
 
 
 def download_url(url):
-    def setup_logger():
-        log = logging.getLogger(__name__)
-        log.setLevel(logging.DEBUG)
-        console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG)
-        msg = "download - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(msg)
-        console.setFormatter(formatter)
-
-        log.addHandler(console)
-        return log
-
-    log = setup_logger()
+    log = setup_logger("download")
     if SECURE_DOWNLOAD and not URLLIB:
         raw_data = requests_download(url)
     elif SECURE_DOWNLOAD and URLLIB:
@@ -147,21 +135,20 @@ def save_data(output_file, mime_types):
     with open(output_file, "w") as f:
         json.dump(mime_types, f)
 
+def setup_logger(message):
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.DEBUG)
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG)
+    msg = "{message} - %(levelname)s - %(message)s".format(message=message)
+    formatter = logging.Formatter(msg)
+    console.setFormatter(formatter)
+
+    log.addHandler(console)
+    return log
 
 def update_mime_types():
-    def setup_logger():
-        log = logging.getLogger(__name__)
-        log.setLevel(logging.DEBUG)
-        console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG)
-        msg = "updating MIME types - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(msg)
-        console.setFormatter(formatter)
-
-        log.addHandler(console)
-        return log
-
-    log = setup_logger()
+    log = setup_logger("updating MIME types")
 
     log.debug("Getting XML data from IANA")
     raw_data = download_url(IANA_URL)

@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import py
 
 import json
 import pytest
@@ -203,6 +204,13 @@ def test_includes_has_invalid_tag():
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
 
+def test_invalid_key():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_invalid_ref_key.raml")
+    with pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(open(raml_file))
+
+    msg = "Invalid JSON ref:"
+    assert msg in e.value.args[0]
 
 def test_json_ref_in_schema_relative_empty_fragment():
     raml_file = os.path.join(EXAMPLES, "json_include_with_ref_empty_fragment.raml")
@@ -215,7 +223,6 @@ def test_json_ref_in_schema_relative_empty_fragment():
             "schemas": [{
                 "json": {
                     "name": "foo",
-                    "second_name": "bar",
                     "false": True
                 },
             }],
@@ -236,7 +243,7 @@ def test_json_ref_in_schema_relative_nonempty_fragment():
             "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
-                    "name": "foo",
+                    "first_name": "foo",
                     "second_name": "bar"
                 },
             }],
@@ -257,8 +264,11 @@ def test_json_ref_in_schema_internal_fragment_reference():
             "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
+                  "references": {
+                        "internal": "yes",
+                    },
                     "name": "foo",
-                    "internal": "yes",
+                    "is_this_internal?": ["yes"],
                 },
             }],
             "/foo": {
@@ -268,19 +278,8 @@ def test_json_ref_in_schema_internal_fragment_reference():
         assert dict_equal(raml, expected_data)
 
 
-def test_json_ref_in_schema_absolute():
-    # Set up the file with an absolute path
-    with open(os.path.join(EXAMPLES, "includes",
-                           "example_with_absolute_ref.json"), 'w') as f:
-        f.write(json.dumps({
-            "second_name": "bar",
-            "$ref": "file://{0}#".format(
-                os.path.join(EXAMPLES, "includes", "example.json")
-            )
-        }))
-
-    # Now load it
-    raml_file = os.path.join(EXAMPLES, "json_include_with_absolute_ref.raml")
+def test_json_ref_in_schema_double_internal_fragment_reference():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_double_ref_internal_fragment.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
         expected_data = {
@@ -289,16 +288,61 @@ def test_json_ref_in_schema_absolute():
             "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
+                  "references": {
+                        "internal": "yes",
+                        "two": True,
+                    },
                     "name": "foo",
-                    "second_name": "bar",
-                    "false": True
+                    "is_this_internal?": "yes",
+                    "two_references": True,
                 },
             }],
             "/foo": {
-                "displayName": "foo resource"
+                "displayName": "foo resource",
             }
         }
         assert dict_equal(raml, expected_data)
+
+
+def test_json_ref_in_schema_absolute(tmpdir):
+    # Set up the file with an absolute path
+
+    json_schema_file = tmpdir.join("example_with_absolute_ref.json")
+    json_schema_file.write(json.dumps({
+        "second_name": "bar",
+        "$ref": "file://{0}#".format(
+            os.path.join(EXAMPLES, "includes", "example.json")
+        )
+    }))
+
+    raml_file = tmpdir.join("json_include_with_absolute_ref.raml")
+    raml_file.write("""#%RAML 0.8
+title: Sample API Demo - JSON Includes
+version: v1
+schemas:
+    - json: !include {json_file}
+baseUri: http://json.example.com
+/foo:
+  displayName: foo resource
+""".format(json_file=str(json_schema_file)))
+
+    # Now load it
+    raml = loader.RAMLLoader().load(raml_file.read())
+    expected_data = {
+        "title": "Sample API Demo - JSON Includes",
+        "version": "v1",
+        "baseUri": "http://json.example.com",
+        "schemas": [{
+            "json": {
+                "name": "foo",
+                "false": True
+            },
+        }],
+        "/foo": {
+            "displayName": "foo resource"
+        }
+    }
+    assert dict_equal(raml, expected_data)
 
 
 def test_json_ref_in_schema_url():
@@ -312,7 +356,6 @@ def test_json_ref_in_schema_url():
             "schemas": [{
                 "json": {
                     "name": "foo",
-                    "second_name": "bar",
                     "false": True
                 },
             }],
