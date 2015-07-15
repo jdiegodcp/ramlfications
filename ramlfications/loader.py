@@ -78,8 +78,8 @@ class RAMLLoader(object):
 
         for reference_token in ref_fragment.split('/'):
             # Replace JSON Pointer escape sequences
-            reference_token =
-                reference_token.replace("~1", "/").replace("~0", "~")
+            reference_token = reference_token.replace(
+                                            "~1", "/").replace("~0", "~")
 
             try:
                 dereferenced_json = dereferenced_json[reference_token]
