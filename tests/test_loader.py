@@ -211,6 +211,14 @@ def test_invalid_key():
     msg = "Invalid JSON ref:"
     assert msg in e.value.args[0]
 
+def test_missing_fragment():
+    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_missing_fragment.raml")
+    with pytest.raises(Exception) as e:
+        loader.RAMLLoader().load(open(raml_file))
+
+    msg = "Ref values must contain a fragment (#)."
+    assert msg in e.value.args[0]
+
 def test_json_ref_in_schema_relative_empty_fragment():
     raml_file = os.path.join(EXAMPLES, "json_include_with_ref_empty_fragment.raml")
     with open(raml_file) as f:
