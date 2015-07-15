@@ -12,7 +12,6 @@ import copy
 import os
 
 import yaml
-from six.moves.urllib.parse import urlparse
 
 from .errors import LoadRAMLError
 from .utils import download_url
@@ -24,6 +23,7 @@ class RAMLLoader(object):
     """
     refs = {}
     def _yaml_include(self, loader, node):
+
         """
         Adds the ability to follow ``!include`` directives within
         RAML Files.
@@ -53,19 +53,22 @@ class RAMLLoader(object):
         """
         Traverses the json pointer and returns the value of the pointer.
         """
-        if "#" not in ref_key: raise Exception("Ref values must contain a fragment (#).")
+        if "#" not in ref_key:
+            raise Exception("Ref values must contain a fragment (#).")
 
         ref_uri, ref_fragment = ref_key.split("#")
         # Load the ref and cache it if the ref is not an internal reference
         if ref_uri not in self.refs.keys():
             if ref_uri is not '':
                 response = download_url(ref_uri)
-                self.refs[ref_uri] = self._ordered_load(response, yaml.SafeLoader)
+                self.refs[ref_uri] = self._ordered_load(response,
+                                                        yaml.SafeLoader)
 
 
         # Hack to make the "whole file" be the empty string, which is the
         # part of the reference fragment before the first slash (or the whole
-        # fragment, if there's no slash). Also, grab the correct schema from the cache.
+        # fragment, if there's no slash). Also, grab the correct schema from the
+        # cache.
 
         if ref_uri is not "":
             dereferenced_json = {"": self.refs[ref_uri]}
