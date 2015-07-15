@@ -22,6 +22,7 @@ class RAMLLoader(object):
     Extends YAML loader to load RAML files with ``!include`` tags.
     """
     refs = {}
+
     def _yaml_include(self, loader, node):
 
         """
@@ -64,7 +65,6 @@ class RAMLLoader(object):
                 self.refs[ref_uri] = self._ordered_load(response,
                                                         yaml.SafeLoader)
 
-
         # Hack to make the "whole file" be the empty string, which is the
         # part of the reference fragment before the first slash (or the whole
         # fragment, if there's no slash). Also, grab the correct schema from the
@@ -78,7 +78,8 @@ class RAMLLoader(object):
 
         for reference_token in ref_fragment.split('/'):
             # Replace JSON Pointer escape sequences
-            reference_token = reference_token.replace("~1", "/").replace("~0", "~")
+            reference_token =
+                reference_token.replace("~1", "/").replace("~0", "~")
 
             try:
                 dereferenced_json = dereferenced_json[reference_token]
@@ -96,19 +97,25 @@ class RAMLLoader(object):
         Traverses the json schema and resolves the ref pointers recursively
         """
 
-        if parent_schema is None: parent_schema = schema
+        if parent_schema is None:
+            parent_schema = schema
+
         expanded = copy.deepcopy(schema)
         if isinstance(schema, dict):
             for k, v in schema.items():
                 if isinstance(v, dict):
-                    expanded[k] = self._parse_json_refs(v, base_path, parent_schema=parent_schema)
+                    expanded[k] = self._parse_json_refs(v,
+                                                        base_path,
+                                                        parent_schema)
                 elif isinstance(v, list):
                     for idx in xrange(len(v)):
                         expanded[k][idx] = self._parse_json_refs(
                             v[idx], base_path, parent_schema=parent_schema
                         )
                 elif k == '$ref':
-                    return  self._lookup_json_ref(v, base_path=base_path, parent_schema=parent_schema)
+                    return  self._lookup_json_ref(v,
+                                                  base_path=base_path,
+                                                  parent_schema=parent_schema)
         return expanded
 
     def _ordered_load(self, stream, loader=yaml.Loader):
