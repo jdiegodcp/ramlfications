@@ -13,7 +13,7 @@ import os
 
 import yaml
 
-import six
+from six.moves import range
 
 from .errors import LoadRAMLError
 from .utils import download_url
@@ -109,7 +109,7 @@ class RAMLLoader(object):
                                                         base_path,
                                                         parent_schema)
                 elif isinstance(v, list):
-                    for idx in six.range(len(v)):
+                    for idx in range(len(v)):
                         expanded[k][idx] = self._parse_json_refs(
                             v[idx], base_path, parent_schema=parent_schema
                         )
