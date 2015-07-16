@@ -140,10 +140,11 @@ class RAMLLoader(object):
         Loads the desired RAML file and returns data.
 
         :param raml: Either a string/unicode path to RAML file,
-        a file object, or string-representation of RAML.
+            a file object, or string-representation of RAML.
 
         :return: Data from RAML file
         :rtype: ``dict``
+
         """
 
         try:
