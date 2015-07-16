@@ -67,19 +67,18 @@ class RAMLLoader(object):
 
         # Hack to make the "whole file" be the empty string, which is the
         # part of the reference fragment before the first slash (or the whole
-        # fragment, if there's no slash). Also, grab the correct schema from the
-        # cache.
+        # fragment, if there's no slash). Also, grab the correct schema from
+        # the cache.
 
         if ref_uri is not "":
             dereferenced_json = {"": self.refs[ref_uri]}
         else:
             dereferenced_json = {"": parent_schema}
 
-
         for reference_token in ref_fragment.split('/'):
             # Replace JSON Pointer escape sequences
-            reference_token = reference_token.replace(
-                                            "~1", "/").replace("~0", "~")
+            reference_token = reference_token.replace("~1", "/").replace(
+                "~0", "~")
 
             try:
                 dereferenced_json = dereferenced_json[reference_token]
@@ -113,9 +112,7 @@ class RAMLLoader(object):
                             v[idx], base_path, parent_schema=parent_schema
                         )
                 elif k == '$ref':
-                    return  self._lookup_json_ref(v,
-                                                  base_path=base_path,
-                                                  parent_schema=parent_schema)
+                    return self._lookup_json_ref(v, base_path, parent_schema)
         return expanded
 
     def _ordered_load(self, stream, loader=yaml.Loader):
@@ -140,8 +137,8 @@ class RAMLLoader(object):
         """
         Loads the desired RAML file and returns data.
 
-        :param raml: Either a string/unicode path to RAML file, a file object,\
-            or string-representation of RAML.
+        :param raml: Either a string/unicode path to RAML file,
+        a file object, or string-representation of RAML.
 
         :return: Data from RAML file
         :rtype: ``dict``

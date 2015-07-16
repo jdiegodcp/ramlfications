@@ -134,7 +134,6 @@ def test_include_xsd():
    <name>foo</name>
 </root>
 """
-
         expected_data = {
             "title": "Sample API Demo - XSD Includes",
             "version": "v1",
@@ -203,24 +202,30 @@ def test_includes_has_invalid_tag():
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
 
+
 def test_invalid_key():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_invalid_ref_key.raml")
+    raml_file = os.path.join(EXAMPLES,
+                             "json_include_with_invalid_ref_key.raml")
     with pytest.raises(LoadRAMLError) as e:
         loader.RAMLLoader().load(open(raml_file))
 
     msg = "Invalid JSON ref:"
     assert msg in e.value.args[0]
 
+
 def test_missing_fragment():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_missing_fragment.raml")
+    raml_file = os.path.join(EXAMPLES,
+                             "json_include_with_ref_missing_fragment.raml")
     with pytest.raises(Exception) as e:
         loader.RAMLLoader().load(open(raml_file))
 
     msg = "Ref values must contain a fragment (#)."
     assert msg in e.value.args[0]
 
+
 def test_json_ref_in_schema_relative_empty_fragment():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_empty_fragment.raml")
+    raml_file = os.path.join(EXAMPLES,
+                             "json_include_with_ref_empty_fragment.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
         expected_data = {
@@ -241,7 +246,8 @@ def test_json_ref_in_schema_relative_empty_fragment():
 
 
 def test_json_ref_in_schema_relative_nonempty_fragment():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_nonempty_fragment.raml")
+    raml_file = os.path.join(EXAMPLES,
+                             "json_include_with_ref_nonempty_fragment.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
         expected_data = {
@@ -262,7 +268,8 @@ def test_json_ref_in_schema_relative_nonempty_fragment():
 
 
 def test_json_ref_in_schema_internal_fragment_reference():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_ref_internal_fragment.raml")
+    raml_file = os.path.join(EXAMPLES,
+                             "json_include_with_ref_internal_fragment.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
         expected_data = {
@@ -271,7 +278,8 @@ def test_json_ref_in_schema_internal_fragment_reference():
             "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
-                  "references": {
+                    "references":
+                    {
                         "internal": "yes",
                     },
                     "name": "foo",
@@ -286,7 +294,9 @@ def test_json_ref_in_schema_internal_fragment_reference():
 
 
 def test_json_ref_in_schema_double_internal_fragment_reference():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_double_ref_internal_fragment.raml")
+    raml_file = os.path.join(EXAMPLES,
+                             "json_include_with_double_ref_internal_fragment\
+                             .raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
         expected_data = {
@@ -295,7 +305,8 @@ def test_json_ref_in_schema_double_internal_fragment_reference():
             "baseUri": "http://json.example.com",
             "schemas": [{
                 "json": {
-                  "references": {
+                    "references":
+                    {
                         "internal": "yes",
                         "two": True,
                     },

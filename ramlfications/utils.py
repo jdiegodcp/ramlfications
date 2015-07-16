@@ -69,7 +69,6 @@ def urllib_download(url):
     try:
         response = urllib.urlopen(url)
     except urllib_error.URLError as e:
-        import pdb; pdb.set_trace()
         msg = "Error downloading XML from IANA: {0}".format(e)
         raise MediaTypeError(msg)
     return response.read()
@@ -135,6 +134,7 @@ def save_data(output_file, mime_types):
     with open(output_file, "w") as f:
         json.dump(mime_types, f)
 
+
 def setup_logger(message):
     log = logging.getLogger(__name__)
     log.setLevel(logging.DEBUG)
@@ -146,6 +146,7 @@ def setup_logger(message):
 
     log.addHandler(console)
     return log
+
 
 def update_mime_types():
     log = setup_logger("updating MIME types")
