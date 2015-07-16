@@ -294,9 +294,9 @@ def test_json_ref_in_schema_internal_fragment_reference():
 
 
 def test_json_ref_in_schema_double_internal_fragment_reference():
-    raml_file = os.path.join(EXAMPLES,
-                             "json_include_with_double_ref_internal_fragment\
-                             .raml")
+    raml_file = os.path.join(
+        EXAMPLES,
+        "json_include_with_double_ref_internal_fragment.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
         expected_data = {
