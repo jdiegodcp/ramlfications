@@ -7,6 +7,8 @@ import re
 
 from six import iterkeys
 
+from ._decorators import collecterrors
+
 from .errors import *  # NOQA
 
 
@@ -14,18 +16,17 @@ from .errors import *  # NOQA
 # RAMLRoot validators
 #####
 
+@collecterrors
 def root_version(inst, attr, value):
     """Require an API Version (e.g. api.foo.com/v1)."""
     base_uri = inst.raml_obj.get("baseUri")
-    if not value and"{version}" in base_uri:
+    if base_uri and "{version}" in base_uri and not value:
         msg = ("RAML File's baseUri includes {version} parameter but no "
                "version is defined.")
         raise InvalidRootNodeError(msg)
-    elif not value:
-        msg = "RAML File does not define an API version."
-        raise InvalidRootNodeError(msg)
 
 
+@collecterrors
 def root_base_uri(inst, attr, value):
     """Require a Base URI."""
     if not value:
@@ -33,6 +34,7 @@ def root_base_uri(inst, attr, value):
         raise InvalidRootNodeError(msg)
 
 
+@collecterrors
 def root_base_uri_params(inst, attr, value):
     """
     Require that Base URI parameters have a ``default`` parameter set.
@@ -49,6 +51,7 @@ def root_base_uri_params(inst, attr, value):
                 raise InvalidRootNodeError(msg)
 
 
+@collecterrors
 def root_uri_params(inst, attr, value):
     """
     Assert that where is no ``version`` parameter in the regular URI parameters
@@ -60,6 +63,7 @@ def root_uri_params(inst, attr, value):
                 raise InvalidRootNodeError(msg)
 
 
+@collecterrors
 def root_protocols(inst, attr, value):
     """
     Only support HTTP/S plus what is defined in user-config
@@ -72,6 +76,7 @@ def root_protocols(inst, attr, value):
                 raise InvalidRootNodeError(msg)
 
 
+@collecterrors
 def root_title(inst, attr, value):
     """
     Require a title for the defined API.
@@ -81,6 +86,7 @@ def root_title(inst, attr, value):
         raise InvalidRootNodeError(msg)
 
 
+@collecterrors
 def root_docs(inst, attr, value):
     """
     Assert that if there is ``documentation`` defined in the root of the
@@ -97,10 +103,12 @@ def root_docs(inst, attr, value):
 
 
 # TODO: finish
+@collecterrors
 def root_schemas(inst, attr, value):
     pass
 
 
+@collecterrors
 def root_media_type(inst, attr, value):
     """
     Only support media types based on config and regex
@@ -112,12 +120,14 @@ def root_media_type(inst, attr, value):
             raise InvalidRootNodeError(msg)
 
 
+@collecterrors
 def root_resources(inst, attr, value):
     if not value:
         msg = "API does not define any resources."
         raise InvalidRootNodeError(msg)
 
 
+@collecterrors
 def root_secured_by(inst, attr, value):
     pass
 
@@ -125,6 +135,7 @@ def root_secured_by(inst, attr, value):
 #####
 # Security Scheme Validators
 #####
+@collecterrors
 def defined_sec_scheme_settings(inst, attr, value):
     """Assert that ``settings`` are defined/not an empty map."""
     if not value:
@@ -136,6 +147,7 @@ def defined_sec_scheme_settings(inst, attr, value):
 #####
 # ResourceType validators
 #####
+@collecterrors
 def defined_resource_type(inst, attr, value):
     """
     Assert that a resource type is defined (e.g. not an empty map) or is
@@ -151,6 +163,7 @@ def defined_resource_type(inst, attr, value):
 #####
 # Trait validators
 #####
+@collecterrors
 def defined_trait(inst, attr, value):
     """Assert that a trait is defined (e.g. not an empty map)."""
     if not value:
@@ -161,6 +174,7 @@ def defined_trait(inst, attr, value):
 #####
 # Shared Validators for Resource & Resource Type Node
 #####
+@collecterrors
 def assigned_traits(inst, attr, value):
     """
     Assert assigned traits are defined in the RAML Root and correctly
@@ -202,6 +216,7 @@ def assigned_traits(inst, attr, value):
                     raise InvalidResourceNodeError(msg)
 
 
+@collecterrors
 def assigned_res_type(inst, attr, value):
     """
     Assert only one (or none) assigned resource type is defined in the RAML
@@ -232,6 +247,7 @@ def assigned_res_type(inst, attr, value):
 #####
 # Parameter Validators
 #####
+@collecterrors
 def header_type(inst, attr, value):
     """Supported header type"""
     if value and value not in inst.config.get("prim_types"):
@@ -239,6 +255,7 @@ def header_type(inst, attr, value):
         raise InvalidParameterError(msg, "header")
 
 
+@collecterrors
 def body_mime_type(inst, attr, value):
     """Supported MIME media type for request/response"""
     if value:
@@ -248,6 +265,7 @@ def body_mime_type(inst, attr, value):
             raise InvalidParameterError(msg, "body")
 
 
+@collecterrors
 def body_schema(inst, attr, value):
     """
     Assert no ``schema`` is defined if body as a form-related MIME media type
@@ -258,6 +276,7 @@ def body_schema(inst, attr, value):
         raise InvalidParameterError(msg, "body")
 
 
+@collecterrors
 def body_example(inst, attr, value):
     """
     Assert no ``example`` is defined if body as a form-related MIME media type
@@ -268,6 +287,7 @@ def body_example(inst, attr, value):
         raise InvalidParameterError(msg, "body")
 
 
+@collecterrors
 def body_form(inst, attr, value):
     """
     Assert ``formParameters`` are defined if body has a form-related
@@ -280,6 +300,7 @@ def body_form(inst, attr, value):
         raise InvalidParameterError(msg, "body")
 
 
+@collecterrors
 def response_code(inst, attr, value):
     """
     Assert a valid response code.
@@ -296,6 +317,7 @@ def response_code(inst, attr, value):
 #####
 # Primative Validators
 #####
+@collecterrors
 def integer_number_type_parameter(inst, attr, value):
     """
     Assert correct parameter attributes for ``integer`` or ``number``
@@ -310,6 +332,7 @@ def integer_number_type_parameter(inst, attr, value):
             raise InvalidParameterError(msg, "BaseParameter")
 
 
+@collecterrors
 def string_type_parameter(inst, attr, value):
     """
     Assert correct parameter attributes for ``string`` primative parameter

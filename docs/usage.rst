@@ -101,13 +101,17 @@ To validate a RAML file with Python:
 .. code-block:: python
 
    >>> from ramlfications import validate
-   >>> RAML_FILE = "/path/to/invalid/no-title.raml"
+   >>> RAML_FILE = "/path/to/invalid/no-base-uri-no-title.raml"
    >>> validate(RAML_FILE)
-   InvalidRootNodeError: RAML File does not define an API title.
+   InvalidRAMLError:
+       InvalidRootNodeError: RAML File does not define the baseUri.
+       InvalidRootNodeError: RAML File does not define an API title.
 
 .. note::
-    When using ``validate`` within Python (versus the command line utility), if the RAML \
-    file is valid, then nothing is returned.  Only invalid files will return an exception.
+    When using ``validate`` within Python (versus the command line utility), \
+    if the RAML file is valid, then nothing is returned; only invalid files \
+    will return an exception.  You can access the individual errors \
+    via the ``errors`` attribute on the exception.
 
 If you have additionally supported items beyond the standard (e.g. protocols beyond HTTP/S), you
 can still validate your code by passing in your config file.
