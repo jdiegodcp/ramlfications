@@ -61,7 +61,7 @@ class RAMLLoader(object):
         ref_uri, ref_fragment = ref_key.split("#")
         # Load the ref and cache it if the ref is not an internal reference
         if ref_uri not in self.refs.keys():
-            if ref_uri is not '':
+            if ref_uri != '':
                 # This is to ensure that the relative file paths are changed to
                 match = re.match(r'^file:[^/]', ref_uri)
                 if match:
@@ -80,7 +80,7 @@ class RAMLLoader(object):
         # fragment, if there's no slash). Also, grab the correct schema from
         # the cache.
 
-        if ref_uri is not "":
+        if ref_uri != "":
             dereferenced_json = {"": self.refs[ref_uri]}
         else:
             dereferenced_json = {"": parent_schema}
