@@ -64,13 +64,21 @@ def test_invalid_base_uri_not_defined():
     assert e.value.args == msg
 
 
-def test_invalid_base_uri_default_not_defined():
-    raml = load_raml("no-default-base-uri-params.raml")
+def test_invalid_base_uri_wrong_type():
+    raml = load_raml("invalid-base-uri-params.raml")
     config = load_config("valid-config.ini")
     with raises as e:
         parse(raml, config)
-    msg = ("The 'default' parameter is not set for base URI "
-           "parameter 'domainName'",)
+    msg = ("baseUriParameter 'domainName' must be a string",)
+    assert e.value.args == msg
+
+
+def test_invalid_base_uri_optional():
+    raml = load_raml("optional-base-uri-params.raml")
+    config = load_config("valid-config.ini")
+    with raises as e:
+        parse(raml, config)
+    msg = ("baseUriParameter 'domainName' must be required",)
     assert e.value.args == msg
 
 
