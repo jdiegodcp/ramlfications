@@ -1,11 +1,11 @@
 #%RAML 0.8
-title: GitHub API Demo - No Default Base URI Params
+title: GitHub API Demo - Invalid Base URI Param Type
 version: v3
 baseUri: https://{domainName}.github.com/{apiPath}
 baseUriParameters:
   domainName:
     description: "Domain Root Name"
-    type: string
+    type: integer
     example: blarg
     displayName: Domain root name
 uriParameters:
