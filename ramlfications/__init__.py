@@ -58,10 +58,12 @@ def parse(raml, config_file=None):
     :rtype: RAMLRoot
     :raises LoadRAMLError: If error occurred trying to load the RAML file
         (see :py:class:`.loader.RAMLLoader`)
-    :raises RAMLParserError: If error occurred during parsing of RAML file
-        (see :py:class:`.raml.RAMLRoot`)
-    :raises InvalidRamlFileError: RAML file is invalid according to RAML \
+    :raises InvalidRootNodeError: API metadata is invalid according to RAML \
         `specification <http://raml.org/spec.html>`_.
+    :raises InvalidResourceNodeError: API resource endpoint is invalid \
+        according to RAML `specification <http://raml.org/spec.html>`_.
+    :raises InvalidParameterError: Named parameter is invalid \
+        according to RAML `specification <http://raml.org/spec.html>`_.
     """
     loader = load(raml)
     config = setup_config(config_file)
@@ -81,9 +83,12 @@ def validate(raml, config_file=None):
     :return: No return value if successful
     :raises LoadRAMLError: If error occurred trying to load the RAML file
         (see :py:class:`.loader.RAMLLoader`)
-    :raises InvalidRamlFileError: If error occurred trying to validate the RAML
-        file (see :py:mod:`.validate`)
-
+    :raises InvalidRootNodeError: API metadata is invalid according to RAML \
+        `specification <http://raml.org/spec.html>`_.
+    :raises InvalidResourceNodeError: API resource endpoint is invalid \
+        according to RAML `specification <http://raml.org/spec.html>`_.
+    :raises InvalidParameterError: Named parameter is invalid \
+        according to RAML `specification <http://raml.org/spec.html>`_.
     """
     loader = load(raml)
     config = setup_config(config_file)

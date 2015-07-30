@@ -128,15 +128,19 @@ def tree(load_obj, color, output, verbosity, validate, config):  # NOCOV
     """
     Create a tree visualization of given RAML file.
 
-    :param ramlfications.loader.RAMLDict load_obj: Loaded RAML File
+    :param dict load_obj: Loaded RAML File
     :param str color: ``light``, ``dark`` or ``None`` (default) for the color
         output
     :param str output: Path to output file, if given
     :param str verbosity: Level of verbosity to print out
     :return: ASCII Tree representation of API
     :rtype: stdout to screen or given file name
-    :raises InvalidRamlFileError: If error occured trying to validate the RAML
-        file (see ``validate.py``)
+    :raises InvalidRootNodeError: API metadata is invalid according to RAML \
+        `specification <http://raml.org/spec.html>`_.
+    :raises InvalidResourceNodeError: API resource endpoint is invalid \
+        according to RAML `specification <http://raml.org/spec.html>`_.
+    :raises InvalidParameterError: Named parameter is invalid \
+        according to RAML `specification <http://raml.org/spec.html>`_.
     """
     config = setup_config(config)
     api = parse_raml(load_obj, config)
