@@ -39,9 +39,13 @@ def root_base_uri_params(inst, attr, value):
     """
     if value:
         for v in value:
-            if not v.default:
-                msg = ("The 'default' parameter is not set for base URI "
-                       "parameter '{0}'".format(v.name))
+            if v.type != "string":
+                msg = ("baseUriParameter '{0}' must be a "
+                       "string".format(v.name))
+                raise InvalidRootNodeError(msg)
+            if v.required is False:
+                msg = ("baseUriParameter '{0}' must be "
+                       "required".format(v.name))
                 raise InvalidRootNodeError(msg)
 
 
