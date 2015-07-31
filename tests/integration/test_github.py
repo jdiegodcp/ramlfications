@@ -213,7 +213,9 @@ def test_trait_filterable(traits):
     assert state.default == "open"
     assert state.required
     assert state.type == "string"
-    assert state.description.raw is None
+    assert state.description is None
+    assert not hasattr(state.description, "raw")
+    assert not hasattr(state.description, "html")
 
     label = trait.query_params[2]
     assert label.name == "labels"
@@ -229,14 +231,18 @@ def test_trait_filterable(traits):
     assert sort.default == "created"
     assert sort.required
     assert sort.type == "string"
-    assert sort.description.raw is None
+    assert sort.description is None
+    assert not hasattr(sort.description, "raw")
+    assert not hasattr(sort.description, "html")
 
     direction = trait.query_params[4]
     assert direction.name == "direction"
     assert direction.enum == ["asc", "desc"]
     assert direction.default == "desc"
     assert direction.required
-    assert direction.description.raw is None
+    assert direction.description is None
+    assert not hasattr(direction.description, "raw")
+    assert not hasattr(direction.description, "html")
 
     since = trait.query_params[5]
     assert since.name == "since"

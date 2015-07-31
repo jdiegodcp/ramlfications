@@ -44,31 +44,48 @@ def parse_raml(loaded_raml, config):
     return root
 
 
+def _get(data, item, default=None):
+    """
+    Helper function to catch empty mappings in RAML. If item is optional
+    but not in the data, or data is ``None``, the default value is returned.
+
+    :param data: RAML data
+    :param str item: RAML key
+    :param default: default value if item is not in dict
+    :param bool optional: If RAML item is optional or needs to be defined
+    :ret: value for RAML key
+    """
+    try:
+        return data.get(item, default)
+    except AttributeError:
+        return default
+
+
 def _create_base_param_obj(attribute_data, param_obj, config):
     """Helper function to create a BaseParameter object"""
     objects = []
 
     for key, value in list(iteritems(attribute_data)):
         if param_obj is URIParameter:
-            required = value.get("required", True)
+            required = _get(value, "required", default=True)
         else:
-            required = value.get("required", False)
+            required = _get(value, "required", default=False)
         item = param_obj(
             name=key,
-            raw=value,
-            desc=value.get("description"),
-            display_name=value.get("displayName", key),
-            min_length=value.get("minLength"),
-            max_length=value.get("maxLength"),
-            minimum=value.get("minimum"),
-            maximum=value.get("maximum"),
-            default=value.get("default"),
-            enum=value.get("enum"),
-            example=value.get("example"),
+            raw={key: value},
+            desc=_get(value, "description"),
+            display_name=_get(value, "displayName", key),
+            min_length=_get(value, "minLength"),
+            max_length=_get(value, "maxLength"),
+            minimum=_get(value, "minimum"),
+            maximum=_get(value, "maximum"),
+            default=_get(value, "default"),
+            enum=_get(value, "enum"),
+            example=_get(value, "example"),
             required=required,
-            repeat=value.get("repeat", False),
-            pattern=value.get("pattern"),
-            type=value.get("type", "string"),
+            repeat=_get(value, "repeat", False),
+            pattern=_get(value, "pattern"),
+            type=_get(value, "type", "string"),
             config=config
         )
         objects.append(item)
@@ -301,39 +318,39 @@ def create_traits(raml_data, root):
     :returns: list of :py:class:`.raml.TraitNode` objects
     """
     def description():
-        return data.get("description")
+        return _get(data, "description")
 
     def media_type():
-        return data.get("mediaType")
+        return _get(data, "mediaType")
 
     def usage():
-        return data.get("usage")
+        return _get(data, "usage")
 
     def protocols():
-        return data.get("protocols")
+        return _get(data, "protocols")
 
     def query_params():
-        params = data.get("queryParameters", {})
+        params = _get(data, "queryParameters", {})
         return _create_base_param_obj(params, QueryParameter, root.config)
 
     def uri_params():
-        params = data.get("uriParameters", {})
+        params = _get(data, "uriParameters", {})
         return _create_base_param_obj(params, URIParameter, root.config)
 
     def form_params():
-        params = data.get("formParameters", {})
+        params = _get(data, "formParameters", {})
         return _create_base_param_obj(params, FormParameter, root.config)
 
     def base_uri_params():
-        params = data.get("baseUriParameters", {})
+        params = _get(data, "baseUriParameters", {})
         return _create_base_param_obj(params, URIParameter, root.config)
 
     def headers(data):
-        headers_ = data.get("headers", {})
+        headers_ = _get(data, "headers", {})
         return _create_base_param_obj(headers_, Header, root.config)
 
     def body(data):
-        body = data.get("body", {})
+        body = _get(data, "body", {})
         body_objects = []
         for key, value in list(iteritems(body)):
             body = Body(
@@ -349,7 +366,7 @@ def create_traits(raml_data, root):
 
     def responses():
         response_objects = []
-        for key, value in list(iteritems(data.get("responses", {}))):
+        for key, value in list(iteritems(_get(data, "responses", {}))):
             response = Response(
                 code=key,
                 raw=value,
@@ -477,8 +494,8 @@ def create_resource_types(raml_data, root):
                     list(iteritems(inherited_params)))
 
     def get_attribute(res_data, method_data, item, default={}):
-        method_level = method_data.get(item, default)
-        resource_level = res_data.get(item, default)
+        method_level = _get(method_data, item, default)
+        resource_level = _get(res_data, item, default)
         return method_level, resource_level
 
     def get_inherited_item(items, item_name):
@@ -496,8 +513,8 @@ def create_resource_types(raml_data, root):
         return items
 
     def get_attribute_dict(data, item):
-        resource_level = v.get(item, {})
-        method_level = data.get(item, {})
+        resource_level = _get(v, item, {})
+        method_level = _get(data, item, {})
         return dict(list(iteritems(resource_level)) +
                     list(iteritems(method_level)))
 
@@ -509,8 +526,8 @@ def create_resource_types(raml_data, root):
         return data.get("displayName", name)
 
     def headers(data):
-        _headers = data.get("headers", {})
-        if v.get("type"):
+        _headers = _get(data, "headers", {})
+        if _get(v, "type"):
             _headers = get_inherited_item(_headers, "headers")
 
         header_objs = _create_base_param_obj(_headers, Header, root.config)
@@ -521,8 +538,8 @@ def create_resource_types(raml_data, root):
         return header_objs
 
     def body(data):
-        _body = data.get("body", {})
-        if v.get("type"):
+        _body = _get(data, "body", default={})
+        if _get(v, "type"):
             _body = get_inherited_item(_body, "body")
 
         body_objects = []
@@ -540,21 +557,21 @@ def create_resource_types(raml_data, root):
 
     def responses(data):
         response_objects = []
-        _responses = data.get("responses", {})
-        if v.get("type"):
+        _responses = _get(data, "responses", {})
+        if _get(v, "type"):
             _responses = get_inherited_item(_responses, "responses")
 
         for key, value in list(iteritems(_responses)):
             _headers = data.get("responses", {}).get(key, {})
-            _headers = _headers.get("headers", {})
+            _headers = _get(_headers, "headers", {})
             header_objs = _create_base_param_obj(_headers, Header, root.config)
             if header_objs:
                 for h in header_objs:
                     h.method = method(meth)
             response = Response(
                 code=key,
-                raw=value,
-                desc=value.get("description"),
+                raw={key: value},
+                desc=_get(value, "description"),
                 headers=header_objs,
                 body=body(value),
                 config=root.config,
@@ -568,7 +585,7 @@ def create_resource_types(raml_data, root):
     def uri_params(data):
         uri_params = get_attribute_dict(data, "uriParameters")
 
-        if v.get("type"):
+        if _get(v, "type"):
             uri_params = get_inherited_type_params(v, "uriParameters",
                                                    uri_params)
         return _create_base_param_obj(uri_params, URIParameter, root.config)
@@ -581,7 +598,7 @@ def create_resource_types(raml_data, root):
     def query_params(data):
         query_params = get_attribute_dict(data, "queryParameters")
 
-        if v.get("type"):
+        if _get(v, "type"):
             query_params = get_inherited_type_params(v, "queryParameters",
                                                      query_params)
 
@@ -591,31 +608,34 @@ def create_resource_types(raml_data, root):
     def form_params(data):
         form_params = get_attribute_dict(data, "formParameters")
 
-        if v.get("type"):
+        if _get(v, "type"):
             form_params = get_inherited_type_params(v, "formParameters",
                                                     form_params)
 
         return _create_base_param_obj(form_params, FormParameter, root.config)
 
     def media_type():
-        return v.get("mediaType")
+        return _get(v, "mediaType")
 
     def description():
-        return v.get("description")
+        return _get(v, "description")
 
     def type_():
-        return v.get("type")
+        return _get(v, "type")
 
     def method(meth):
+        if not meth:
+            return None
         if "?" in meth:
             return meth[:-1]
         return meth
 
     def usage():
-        return v.get("usage")
+        return _get(v, "usage")
 
     def optional():
-        return "?" in meth
+        if meth:
+            return "?" in meth
 
     def protocols(data):
         m, r = get_attribute(v, data, "protocols", None)
@@ -716,15 +736,20 @@ def create_resource_types(raml_data, root):
 
     for res in resource_types:
         for k, v in list(iteritems(res)):
-            if "type" in list(iterkeys(v)):
-                r = get_inherited_type(root, res, v.get("type"), raml_data)
-                resource_type_objects.extend(r)
+            if isinstance(v, dict):
+                if "type" in list(iterkeys(v)):
+                    r = get_inherited_type(root, res, v.get("type"), raml_data)
+                    resource_type_objects.extend(r)
+                else:
+                    for meth in list(iterkeys(v)):
+                        if meth in accepted_methods:
+                            method_data = v.get(meth, {})
+                            resource = wrap(k, method_data, meth, v)
+                            resource_type_objects.append(resource)
             else:
-                for meth in list(iterkeys(v)):
-                    if meth in accepted_methods:
-                        method_data = v.get(meth, {})
-                        resource = wrap(k, method_data, meth, v)
-                        resource_type_objects.append(resource)
+                meth = None
+                resource = wrap(k, {}, meth, v)
+                resource_type_objects.append(resource)
     return resource_type_objects or None
 
 
@@ -908,20 +933,20 @@ def create_node(name, raw_data, method, parent, root):
             for k, v in list(iteritems(headers)):
                 header = Header(
                     name=k,
-                    display_name=v.get("displayName", k),
+                    display_name=_get(v, "displayName", default=k),
                     method=method,
                     raw=headers,
-                    type=v.get("type", "string"),
-                    desc=v.get("description"),
-                    example=v.get("example"),
-                    default=v.get("default"),
-                    minimum=v.get("minimum"),
-                    maximum=v.get("maximum"),
-                    min_length=v.get("minLength"),
-                    max_length=v.get("maxLength"),
-                    enum=v.get("enum"),
-                    repeat=v.get("repeat", False),
-                    pattern=v.get("pattern"),
+                    type=_get(v, "type", default="string"),
+                    desc=_get(v, "description"),
+                    example=_get(v, "example"),
+                    default=_get(v, "default"),
+                    minimum=_get(v, "minimum"),
+                    maximum=_get(v, "maximum"),
+                    min_length=_get(v, "minLength"),
+                    max_length=_get(v, "maxLength"),
+                    enum=_get(v, "enum"),
+                    repeat=_get(v, "repeat", default=False),
+                    pattern=_get(v, "pattern"),
                     config=root.config
                 )
                 header_objs.append(header)
@@ -986,7 +1011,7 @@ def create_node(name, raw_data, method, parent, root):
                 resp = [r for r in resp_objs if r.code == k][0]
                 index = resp_objs.index(resp)
                 inherit_resp = resp_objs.pop(index)
-                headers = resp_headers(v.get("headers", {}))
+                headers = resp_headers(_get(v, "headers", default={}))
                 if inherit_resp.headers:
                     if headers:
                         headers.extend(inherit_resp.headers)
@@ -1009,13 +1034,15 @@ def create_node(name, raw_data, method, parent, root):
                 )
                 resp_objs.insert(index, resp)  # preserve order
             else:
+                _headers = _get(v, "headers", default={})
+                _body = _get(v, "body", default={})
                 resp = Response(
                     code=k,
                     raw={k: v},
                     method=method,
-                    desc=v.get("description"),
-                    headers=resp_headers(v.get("headers", {})),
-                    body=resp_body(v.get("body", {})),
+                    desc=_get(v, "description"),
+                    headers=resp_headers(_headers),
+                    body=resp_body(_body),
                     config=root.config
                 )
                 resp_objs.append(resp)

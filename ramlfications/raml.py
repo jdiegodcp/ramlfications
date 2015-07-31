@@ -16,10 +16,6 @@ AVAILABLE_METHODS = [
 ]
 
 
-class RAMLParserError(Exception):
-    pass
-
-
 @attr.s
 class RootNode(object):
     """
@@ -95,7 +91,6 @@ class BaseNode(object):
     :param list protocols: List of ``str`` 's of supported protocols. \
         Defaults to :py:class:`RootNode`'s ``protocols``.
     """
-    raw             = attr.ib(repr=False)
     root            = attr.ib(repr=False)
     headers         = attr.ib(repr=False)
     body            = attr.ib(repr=False)
@@ -122,6 +117,7 @@ class TraitNode(BaseNode):
     :param str usage: Usage of trait
     """
     name  = attr.ib()
+    raw   = attr.ib(repr=False, validator=defined_trait)
     usage = attr.ib(repr=False)
 
 
@@ -152,6 +148,7 @@ class ResourceTypeNode(BaseNode):
 
     """
     name             = attr.ib()
+    raw              = attr.ib(repr=False, validator=defined_resource_type)
     type             = attr.ib(repr=False, validator=assigned_res_type)
     method           = attr.ib(repr=False)
     usage            = attr.ib(repr=False)
@@ -191,6 +188,7 @@ class ResourceNode(BaseNode):
         :py:class:`parameters.SecurityScheme` objects, or ``None``.
     """
     name             = attr.ib(repr=False)
+    raw              = attr.ib(repr=False)
     parent           = attr.ib(repr=False)
     method           = attr.ib()
     display_name     = attr.ib(repr=False)
