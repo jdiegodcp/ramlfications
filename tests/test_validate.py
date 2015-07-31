@@ -300,3 +300,39 @@ def test_invalid_string_type():
     msg = ("invalidParamType must be a string type to have min_length "
            "attribute set, not 'integer'.",)
     assert msg == e.value.args
+
+
+#####
+# ResourceType, Trait, and Security Scheme validators
+#####
+
+def test_empty_mapping_res_type():
+    raml = load_raml("empty-mapping-resource-type.raml")
+    config = load_config("valid-config.ini")
+    with pytest.raises(errors.InvalidResourceNodeError) as e:
+        parse(raml, config)
+
+    msg = ("The resourceType 'emptyType' requires definition.",)
+    assert e.value.args == msg
+
+
+def test_empty_mapping_trait():
+    raml = load_raml("empty-mapping-trait.raml")
+    config = load_config("valid-config.ini")
+    with pytest.raises(errors.InvalidResourceNodeError) as e:
+        parse(raml, config)
+
+    msg = ("The trait 'emptyTrait' requires definition.",)
+    assert e.value.args == msg
+
+
+def test_empty_mapping_sec_scheme_settings():
+    _raml = "empty-mapping-security-scheme-settings.raml"
+    raml = load_raml(_raml)
+    config = load_config("valid-config.ini")
+    with pytest.raises(errors.InvalidSecuritySchemeError) as e:
+        parse(raml, config)
+
+    msg = ("'settings' for security scheme 'EmptySettingsScheme' require "
+           "definition.",)
+    assert e.value.args == msg

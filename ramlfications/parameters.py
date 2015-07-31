@@ -29,17 +29,14 @@ class Content(object):
         """
         Return raw Markdown/plain text written in the RAML file
         """
-        return self.data or None
+        return self.data
 
     @property
     def html(self):
         """
         Returns parsed Markdown into HTML
         """
-        try:
-            return md.markdown(self.data)
-        except TypeError:
-            return None
+        return md.markdown(self.data)
 
     def __repr__(self):
         return self.raw
@@ -99,7 +96,9 @@ class BaseParameter(object):
 
     @property
     def description(self):
-        return Content(self.desc)
+        if self.desc:
+            return Content(self.desc)
+        return None
 
 
 @attr.s
@@ -221,7 +220,9 @@ class Header(object):
 
     @property
     def description(self):
-        return Content(self.desc)
+        if self.desc:
+            return Content(self.desc)
+        return None
 
 
 @attr.s
@@ -277,7 +278,9 @@ class Response(object):
 
     @property
     def description(self):
-        return Content(self.desc)
+        if self.desc:
+            return Content(self.desc)
+        return None
 
 
 @attr.s
@@ -300,9 +303,11 @@ class SecurityScheme(object):
     type          = attr.ib(repr=False)
     described_by  = attr.ib(repr=False)
     desc          = attr.ib(repr=False)
-    settings      = attr.ib(repr=False)
+    settings      = attr.ib(repr=False, validator=defined_sec_scheme_settings)
     config        = attr.ib(repr=False)
 
     @property
     def description(self):
-        return Content(self.desc)
+        if self.desc:
+            return Content(self.desc)
+        return None

@@ -86,8 +86,9 @@ def test_uri_params(root):
     assert root.uri_params[0].display_name == "Community Path"
     assert root.uri_params[0].type == "string"
     assert root.uri_params[0].min_length == 1
-    assert root.uri_params[0].description.raw is None
-    assert root.uri_params[0].description.html is None
+    assert root.uri_params[0].description is None
+    assert not hasattr(root.uri_params[0].description, "raw")
+    assert not hasattr(root.uri_params[0].description, "html")
     assert root.uri_params[0].default is None
     assert root.uri_params[0].enum is None
     assert root.uri_params[0].example is None
@@ -187,7 +188,7 @@ def sec_schemes():
 
 
 def test_create_security_schemes(sec_schemes):
-    assert len(sec_schemes) == 2
+    assert len(sec_schemes) == 3
     assert sec_schemes[0].name == "oauth_2_0"
     assert sec_schemes[0].type == "OAuth 2.0"
 
@@ -245,6 +246,13 @@ def test_create_security_schemes_custom(sec_schemes):
 
     assert custom.documentation[0].title.raw == "foo docs"
     assert custom.documentation[0].content.raw == "foo content"
+
+
+def test_security_scheme_no_desc(sec_schemes):
+    no_desc = sec_schemes[2]
+
+    assert no_desc.name == "no_desc"
+    assert no_desc.description is None
 
 
 #####
@@ -553,6 +561,34 @@ def test_resource_type_secured_by(resource_types):
     assert scheme.settings == settings
 
 
+def test_resource_type_empty_mapping():
+    raml_file = os.path.join(EXAMPLES + "empty-mapping-resource-type.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    config['validate'] = False
+    api = pw.parse_raml(loaded_raml_file, config)
+
+    assert len(api.resource_types) == 1
+
+    res = api.resource_types[0]
+
+    assert res.name == "emptyType"
+    assert res.raw == {}
+
+
+def test_resource_type_empty_mapping_headers():
+    raml_file = os.path.join(EXAMPLES + "empty-mapping.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    config['validate'] = False
+    api = pw.parse_raml(loaded_raml_file, config)
+
+    base_res_type = api.resource_types[0]
+
+    assert len(base_res_type.headers) == 3
+    assert base_res_type.headers[-1].description is None
+
+
 #####
 # Test Resources
 #####
@@ -804,6 +840,20 @@ def test_resource_security_scheme(resources):
 def test_resource_inherit_parent(resources):
     res = resources[2]
     assert len(res.uri_params) == 4
+
+
+def test_resource_response_no_desc():
+    raml_file = os.path.join(EXAMPLES + "empty-mapping.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    config['validate'] = False
+    api = pw.parse_raml(loaded_raml_file, config)
+
+    res = api.resources[-1]
+    response = res.responses[-1]
+
+    assert response.code == 204
+    assert response.description is None
 
 
 #####

@@ -1,0 +1,202 @@
+#%RAML 0.8
+title: Spotify Web API
+version: v1
+baseUri: https://api.spotify.com/{version}
+mediaType: application/json
+documentation:
+  - title: Spotify Web API Docs
+    content: |
+      Welcome to the _Spotify Web API_ specification. For more information about
+      how to use the API, check out the [Spotify's developer site](https://developer.spotify.com/web-api/).
+resourceTypes:
+  - base:
+      get?: &common
+        headers:
+          Accept:
+            description: It is used to set specified media type.
+            type: string
+          EmptyAccept:
+          EmptyAcceptParams:
+            description:
+        responses:
+          429:
+            description: |
+              API rate limit exceeded. See http://developer.spotify.com/web-api/user-guide/#rate-limiting for details.
+          430:
+      post?: *common
+      put?: *common
+      delete?: *common
+  - item:
+      type: base
+      get?:
+  - collection:
+      type: base
+      get?:
+securitySchemes:
+  - EmptySettingsScheme:
+      description: Security Scheme with empty settings
+      type: custom
+      settings:
+traits:
+  - filterable:
+      queryParameters:
+        fields:
+          description: A comma-separated list of fields to filter query
+          type: string
+          example: items(added_by.id,track(name,href,album(name,href)))
+          displayName: Fields
+  - paged:
+      queryParameters:
+        limit:
+          displayName: Limit
+          description: The maximum number of items to return
+          type: integer
+          example: 10
+          minimum: 0
+          default: 20
+          maximum: 50
+          required: false
+        offset:
+          displayName: Offset
+          description: The index of the first item to return
+          type: integer
+          example: 5
+          default: 0
+          required: false
+/me:
+  displayName: current-user
+  securedBy: [ oauth_2_0: {scopes: ["user-read-private", "user-read-birthdate", "user-read-email"]} ]
+  /tracks:
+    displayName: current-user-saved-tracks
+    type: collection
+    put:
+      description: |
+        [Save Tracks for Current User](https://developer.spotify.com/web-api/save-tracks-user/)
+      securedBy: [ oauth_2_0: {scopes: ["user-library-modify"]}]
+      queryParameters:
+        ids:
+          displayName: Spotify Track IDs
+          type: string
+          description: A comma-separated list of IDs
+          required: true
+          example: "7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B"
+      responses:
+        200:
+          body:
+            text/plain:
+    delete:
+      description: |
+        [Remove Tracks for Current User](https://developer.spotify.com/web-api/remove-tracks-user/)
+      securedBy: [ oauth_2_0: {scopes: ["user-library-modify"]}]
+      queryParameters:
+        ids:
+          displayName: Spotify Track IDs
+          type: string
+          description: A comma-separated list of IDs
+          required: true
+          example: "7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B"
+      responses:
+        200:
+          body:
+            text/plain:
+/users/{user_id}/playlists:
+  type: collection
+  uriParameters:
+    user_id:
+      displayName: Owner ID
+      type: string
+      description: The user's Spotify user ID.
+      example: jmperezperez
+  displayName: playlists
+  /{playlist_id}:
+    type: item
+    displayName: playlist
+    uriParameters:
+      playlist_id:
+        displayName: Playlist ID
+        description: The Spotify playlist ID.
+        example: 3cEYpjA9oz9GiPac4AsH4n
+        type: string
+        required: true
+    put:
+      description: |
+        [Change a Playlist's Details](https://developer.spotify.com/web-api/change-playlist-details/)
+      securedBy: [ oauth_2_0: { scopes: ["playlist-modify-public", "playlist-modify-private"]}]
+      responses:
+        200:
+          body:
+            text/plain:
+    /followers:
+      displayName: playlist-followers
+      put:
+        description: |
+          [Follow a Playlist](https://developer.spotify.com/web-api/follow-playlist/)
+        securedBy: [ oauth_2_0: { scopes: ["playlist-modify-public", "playlist-modify-private"]}]
+        body:
+          application/json:
+            schema: |
+              {
+                "$schema": "http://json-schema.org/draft-03/schema",
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "public": {
+                    "type": "boolean",
+                    "required": false
+                  }
+                }
+              }
+        responses:
+          200:
+            body:
+              text/plain:
+      delete:
+        description: |
+          [Unfollow a Playlist](https://developer.spotify.com/web-api/unfollow-playlist/)
+        securedBy: [ oauth_2_0: { scopes: ["playlist-modify-public", "playlist-modify-private"]}]
+        responses:
+          200:
+            body:
+              text/plain:
+/me/following:
+  displayName: following
+  put:
+    description: |
+      [Follow Artists or Users](https://developer.spotify.com/web-api/follow-artists-users/)
+    securedBy: [ oauth_2_0: {scopes: ["user-follow-modify"]} ]
+    queryParameters:
+      type:
+        displayName: Item Type
+        description: The type to follow.
+        type: string
+        example: artist
+        enum: ["artist", "user"]
+        required: true
+      ids:
+        displayName: Spotify IDs
+        type: string
+        description: A comma-separated list of the artists or users ids
+        required: true
+        example: "2CIMQHirSU0MQqyYHq0eOx,57dN52uHvrHOxijzpIgu3E,1vCWHaC5f2uS3yhpwWbIA6"
+    responses:
+      204:
+  delete:
+    description: |
+      [Unfollow Artists or Users](https://developer.spotify.com/web-api/unfollow-artists-users/)
+    securedBy: [ oauth_2_0: {scopes: ["user-follow-modify"]} ]
+    queryParameters:
+      type:
+        displayName: Item Type
+        description: The type to unfollow.
+        type: string
+        example: artist
+        enum: ["artist", "user"]
+        required: true
+      ids:
+        displayName: Spotify IDs
+        type: string
+        description: A comma-separated list of the artists or users ids
+        required: true
+        example: "2CIMQHirSU0MQqyYHq0eOx,57dN52uHvrHOxijzpIgu3E,1vCWHaC5f2uS3yhpwWbIA6"
+    responses:
+      204:

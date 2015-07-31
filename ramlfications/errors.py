@@ -27,6 +27,10 @@ class InvalidParameterError(InvalidRAMLError):
         self.parameter = parameter
 
 
+class InvalidSecuritySchemeError(InvalidRAMLError):
+    pass
+
+
 #####
 # Loader Exceptions
 #####
