@@ -7,8 +7,19 @@ To make participation as pleasant as possible, this project adheres to the `Code
 
 Here are a few hints and rules to get you started:
 
+- Current status of the project (including issues & PRs) can be seen on our `waffle.io`_ page.
+- Meaning of GitHub labels:
+    - ``help wanted``: Feeling generous with your time? These issues are up for grabs.  Ask any questions in the comments of the issue.
+    - ``in progress``: This issue is currently being worked on.
+    - ``ready``: Issue/bug has been confirmed, and is available for anyone to work on.
+    - ``feature``: Feature/idea to extend ``ramlfications``.
+    - ``bug``: A bug or issue within ``ramlfications``.
+    - ``no repro``: A filled bug that can not be reproduced (feel free to comment/reopen if you find you are seeing this bug).
+    - ``wontfix``: A filled issue deemed not relevant to the project in some way.
+    - ``duplicate``: Either duplicate issue or PR.
+
 - Take a look at the :doc:`wishlist` for inspiration.
-- Any GitHub issue that is not assigned is up for grabs.
+- Any GitHub issue that is labeled ``ready`` is up for grabs.
 - Add yourself to the AUTHORS.rst_ file in an alphabetical fashion.
   Every contribution is valuable and shall be credited.
 - If your change is noteworthy, add an entry to the changelog_.
@@ -33,3 +44,4 @@ Thank you for considering to contribute to ``ramlfications``!
 .. _`Code of Conduct`: https://www.python.org/psf/codeofconduct/
 .. _changelog: https://github.com/spotify/ramlfications/blob/master/docs/changelog.rst
 .. _AUTHORS.rst: https://github.com/spotify/ramlfications/blob/master/AUTHORS.rst
+.. _`waffle.io`: https://waffle.io/spotify/ramlfications
