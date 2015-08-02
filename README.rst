@@ -29,6 +29,10 @@ ramlfications: RAML reference implementation in Python
     :target: https://pypi.python.org/pypi/ramlfications/
     :alt: Development Status
 
+.. image:: https://badge.waffle.io/spotify/ramlfications.png?label=ready&title=Ready
+    :target: https://waffle.io/spotify/ramlfications
+    :alt: Project Management
+
 .. begin
 
 Requirements and Installation
@@ -51,6 +55,8 @@ Developer Setup
 
 If you'd like to contribute or develop upon ``ramlfications``, be sure to read `How to Contribute`_
 first.
+
+You can see the progress of ``ramlfications`` on our `waffle.io`_ page.
 
 System requirements:
 ^^^^^^^^^^^^^^^^^^^^
@@ -126,3 +132,4 @@ Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `Tw
 .. _`webchat`: http://webchat.freenode.net?channels=%23ramlfications&uio=ND10cnVlJjk9dHJ1ZQb4
 .. _`econchick`: https://github.com/econchick
 .. _`Twitter`: https://twitter.com/roguelynn
+.. _`waffle.io`: https://waffle.io/spotify/ramlfications
