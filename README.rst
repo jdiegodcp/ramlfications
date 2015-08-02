@@ -1,3 +1,6 @@
+.. image:: https://badge.waffle.io/spotify/ramlfications.png?label=ready&title=Ready 
+ :target: https://waffle.io/spotify/ramlfications
+ :alt: 'Stories in Ready'
 ramlfications: RAML reference implementation in Python
 ======================================================
 
