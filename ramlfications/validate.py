@@ -123,6 +123,42 @@ def root_secured_by(inst, attr, value):
 
 
 #####
+# Security Scheme Validators
+#####
+def defined_sec_scheme_settings(inst, attr, value):
+    """Assert that ``settings`` are defined/not an empty map."""
+    if not value:
+        msg = ("'settings' for security scheme '{0}' require "
+               "definition.".format(inst.name))
+        raise InvalidSecuritySchemeError(msg)
+
+
+#####
+# ResourceType validators
+#####
+def defined_resource_type(inst, attr, value):
+    """
+    Assert that a resource type is defined (e.g. not an empty map) or is
+    inherited from a defined resource type.
+    """
+    if not inst.type:
+        if not value:
+            msg = ("The resourceType '{0}' requires "
+                   "definition.".format(inst.name))
+            raise InvalidResourceNodeError(msg)
+
+
+#####
+# Trait validators
+#####
+def defined_trait(inst, attr, value):
+    """Assert that a trait is defined (e.g. not an empty map)."""
+    if not value:
+        msg = "The trait '{0}' requires definition.".format(inst.name)
+        raise InvalidResourceNodeError(msg)
+
+
+#####
 # Shared Validators for Resource & Resource Type Node
 #####
 def assigned_traits(inst, attr, value):

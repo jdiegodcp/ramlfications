@@ -1,0 +1,110 @@
+#%RAML 0.8
+title: Spotify Web API
+version: v1
+baseUri: https://api.spotify.com/{version}
+mediaType: application/json
+documentation:
+  - title: Spotify Web API Docs
+    content: |
+      Welcome to the _Spotify Web API_ specification. For more information about
+      how to use the API, check out the [Spotify's developer site](https://developer.spotify.com/web-api/).
+resourceTypes:
+  - base:
+      get?: &common
+        headers:
+          Accept:
+            description: It is used to set specified media type.
+            type: string
+          EmptyAccept:
+          EmptyAcceptParams:
+            description:
+        responses:
+          429:
+            description: |
+              API rate limit exceeded. See http://developer.spotify.com/web-api/user-guide/#rate-limiting for details.
+          430:
+      post?: *common
+      put?: *common
+      delete?: *common
+  - item:
+      type: base
+      get?:
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Spotify supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (access token without necessary scope).
+      settings:
+        authorizationUri: https://accounts.spotify.com/authorize
+        accessTokenUri: https://accounts.spotify.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "user-library-read"
+          - "user-library-modify"
+          - "user-read-private"
+          - "user-read-birthdate"
+          - "user-read-email"
+          - "user-follow-read"
+          - "user-follow-modify"
+          - "playlist-read-collaborative"
+          - "playlist-read-private"
+          - "playlist-modify-public"
+          - "playlist-modify-private"
+traits:
+  - emptyTrait:
+  - filterable:
+      queryParameters:
+        fields:
+          description: A comma-separated list of fields to filter query
+          type: string
+          example: items(added_by.id,track(name,href,album(name,href)))
+          displayName: Fields
+  - paged:
+      queryParameters:
+        limit:
+          displayName: Limit
+          description: The maximum number of items to return
+          type: integer
+          example: 10
+          minimum: 0
+          default: 20
+          maximum: 50
+          required: false
+        offset:
+          displayName: Offset
+          description: The index of the first item to return
+          type: integer
+          example: 5
+          default: 0
+          required: false
+/me:
+  displayName: current-user
+  securedBy: [ oauth_2_0: {scopes: ["user-read-private", "user-read-birthdate", "user-read-email"]} ]
+  /tracks:
+    displayName: current-user-saved-tracks
+    type: collection
+    put:
+      description: |
+        [Save Tracks for Current User](https://developer.spotify.com/web-api/save-tracks-user/)
+      securedBy: [ oauth_2_0: {scopes: ["user-library-modify"]}]
+      queryParameters:
+        ids:
+          displayName: Spotify Track IDs
+          type: string
+          description: A comma-separated list of IDs
+          required: true
+          example: "7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B"
