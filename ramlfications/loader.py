@@ -37,7 +37,7 @@ class RAMLLoader(object):
         with open(file_name) as inputfile:
             return yaml.load(inputfile, self._ordered_loader)
 
-    def _ordered_load(self, stream, loader=yaml.Loader):
+    def _ordered_load(self, stream, loader=yaml.SafeLoader):
         """
         Preserves order set in RAML file.
         """
