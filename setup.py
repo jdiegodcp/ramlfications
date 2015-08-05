@@ -89,10 +89,10 @@ setup(
         ]
     },
     classifiers=[
-        "Development Status :: 4 – Beta",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Natural Language :: English",
-        "License :: Apache License 2.0",
+        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
