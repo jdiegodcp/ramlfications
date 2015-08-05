@@ -1,37 +1,30 @@
 ramlfications: RAML reference implementation in Python
 ======================================================
 
-.. image:: https://pypip.in/version/ramlfications/badge.svg
-   :target: https://pypi.python.org/pypi/ramlfications/
-   :alt: Latest Version
-
-.. image:: https://travis-ci.org/spotify/ramlfications.png?branch=master
+.. image:: https://img.shields.io/travis/spotify/ramlfications.svg?style=flat-square
    :target: https://travis-ci.org/spotify/ramlfications
    :alt: CI status
 
-.. image:: https://coveralls.io/repos/spotify/ramlfications/badge.svg?branch=master
-   :target: https://coveralls.io/r/spotify/ramlfications?branch=master
-   :alt: Current coverage
+.. image:: https://img.shields.io/pypi/v/ramlfications.svg?style=flat-square
+   :target: https://pypi.python.org/pypi/ramlfications/
+   :alt: Latest Version
 
-.. image:: https://readthedocs.org/projects/ramlfications/badge/?version=latest
-   :target: https://ramlfications.readthedocs.org/en/latest/
-   :alt: Documentation Status
-
-.. image:: https://pypip.in/py_versions/ramlfications/badge.svg
-    :target: https://pypi.python.org/pypi/ramlfications/
-    :alt: Supported Python versions
-
-.. image:: https://pypip.in/implementation/ramlfications/badge.svg
-    :target: https://pypi.python.org/pypi/ramlfications/
-    :alt: Supported Python implementations
-
-.. image:: https://pypip.in/status/ramlfications/badge.svg
+.. image:: https://img.shields.io/pypi/status/ramlfications.svg?style=flat-square
     :target: https://pypi.python.org/pypi/ramlfications/
     :alt: Development Status
 
-.. image:: https://badge.waffle.io/spotify/ramlfications.png?label=ready&title=Ready
-    :target: https://waffle.io/spotify/ramlfications
-    :alt: Project Management
+.. image:: https://img.shields.io/pypi/l/ramlfications.svg?style=flat-square
+   :target: https://github.com/spotify/ramlfications/blob/master/LICENSE
+   :alt: License
+
+.. image:: https://img.shields.io/coveralls/spotify/ramlfications/master.svg?style=flat-square
+   :target: https://coveralls.io/r/spotify/ramlfications?branch=master
+   :alt: Current coverage
+
+.. image:: https://img.shields.io/pypi/pyversions/ramlfications.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/ramlfications/
+    :alt: Supported Python versions
+
 
 .. begin
 
