@@ -11,7 +11,8 @@ from six import iteritems
 from ramlfications import loader
 from ramlfications.errors import LoadRAMLError
 
-from .base import EXAMPLES
+from .base import EXAMPLES, JSONREF
+from .data.fixtures import load_fixtures as lf
 
 
 def dict_equal(dict1, dict2):
@@ -27,20 +28,8 @@ def test_load_file():
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
 
-        expected_data = {
-            'external': {
-                'propertyA': 'valueA',
-                'propertyB': 'valueB'
-            },
-            'foo': {
-                'foo': 'FooBar',
-                'bar': 'BarBaz'
-            },
-            'title': 'GitHub API Demo - Includes',
-            'version': 'v3'
-        }
-
-        assert dict_equal(raml, expected_data)
+    expected_data = lf.load_file_expected_data
+    assert dict_equal(raml, expected_data)
 
 
 def test_load_file_with_nested_includes():
@@ -48,23 +37,8 @@ def test_load_file_with_nested_includes():
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
 
-        expected_data = {
-            'include_one': {
-                'external': {
-                    'propertyA': 'valueA',
-                    'propertyB': 'valueB'
-                },
-                'foo': {
-                    'foo': 'FooBar',
-                    'bar': 'BarBaz'
-                },
-                'not_yaml': "This is just a string.\n",
-            },
-            'title': 'GitHub API Demo - Includes',
-            'version': 'v3'
-        }
-
-        assert dict_equal(raml, expected_data)
+    expected_data = lf.load_file_with_nested_includes_expected
+    assert dict_equal(raml, expected_data)
 
 
 def test_load_file_with_nonyaml_include():
@@ -72,13 +46,13 @@ def test_load_file_with_nonyaml_include():
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
 
-        expected_data = {
-            'not_yaml': "This is just a string.\n",
-            'title': 'GitHub API Demo - Includes',
-            'version': 'v3'
-        }
+    expected_data = {
+        'not_yaml': "This is just a string.\n",
+        'title': 'GitHub API Demo - Includes',
+        'version': 'v3'
+    }
 
-        assert dict_equal(raml, expected_data)
+    assert dict_equal(raml, expected_data)
 
 
 def test_load_string():
@@ -106,20 +80,7 @@ def test_include_json():
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
 
-        expected_data = {
-            "title": "Sample API Demo - JSON Includes",
-            "version": "v1",
-            "baseUri": "http://json.example.com",
-            "schemas": [{
-                "json": {
-                    "name": "foo",
-                    "false": True
-                },
-            }],
-            "/foo": {
-                "displayName": "foo resource"
-            }
-        }
+        expected_data = lf.include_json_expected
         assert dict_equal(raml, expected_data)
 
 
@@ -128,24 +89,8 @@ def test_include_xsd():
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
 
-        xml_raw = """<?xml version="1.0" encoding="UTF-8"?>
-<root>
-   <false>true</false>
-   <name>foo</name>
-</root>
-"""
-        expected_data = {
-            "title": "Sample API Demo - XSD Includes",
-            "version": "v1",
-            "baseUri": "http://xml.example.com",
-            "schemas": [{
-                "xml": xml_raw,
-            }],
-            "/foo": {
-                "displayName": "foo resource",
-            },
-        }
-        assert dict_equal(raml, expected_data)
+    expected_data = lf.include_xsd_expected
+    assert dict_equal(raml, expected_data)
 
 
 def test_include_markdown():
@@ -153,36 +98,8 @@ def test_include_markdown():
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
 
-        markdown_raw = """## Foo
-
-*Bacon ipsum dolor* amet pork belly _doner_ rump brisket. [Cupim jerky \
-shoulder][0] ball tip, jowl bacon meatloaf shank kielbasa turducken corned \
-beef beef turkey porchetta.
-
-### Doner meatball pork belly andouille drumstick sirloin
-
-Porchetta picanha tail sirloin kielbasa, pig meatball short ribs drumstick \
-jowl. Brisket swine spare ribs picanha t-bone. Ball tip beef tenderloin jowl \
-doner andouille cupim meatball. Porchetta hamburger filet mignon jerky flank, \
-meatball salami beef cow venison tail ball tip pork belly.
-
-[0]: https://baconipsum.com/?paras=1&type=all-meat&start-with-lorem=1
-"""
-
-        expected_data = {
-            "title": "Sample API Demo - Markdown Includes",
-            "version": "v1",
-            "baseUri": "http://markdown.example.com",
-            "/foo": {
-                "displayName": "foo resource"
-            },
-            "documentation": [{
-                "title": "example",
-                "content": markdown_raw,
-            }],
-        }
-        print(raml.get("markdown"))
-        assert dict_equal(raml, expected_data)
+    expected_data = lf.include_markdown_expected
+    assert dict_equal(raml, expected_data)
 
 
 def test_invalid_yaml_tag():
@@ -203,182 +120,110 @@ def test_includes_has_invalid_tag():
     assert msg in e.value.args[0]
 
 
-def test_invalid_key():
-    raml_file = os.path.join(EXAMPLES,
-                             "json_include_with_invalid_ref_key.raml")
-    with pytest.raises(LoadRAMLError) as e:
-        loader.RAMLLoader().load(open(raml_file))
-
-    msg = "Invalid JSON ref:"
-    assert msg in e.value.args[0]
-
-
-def test_missing_fragment():
-    raml_file = os.path.join(EXAMPLES,
-                             "json_include_with_ref_missing_fragment.raml")
-    with pytest.raises(Exception) as e:
-        loader.RAMLLoader().load(open(raml_file))
-
-    msg = "Ref values must contain a fragment (#)."
-    assert msg in e.value.args[0]
-
-
-def test_json_ref_in_schema_relative_empty_fragment():
-    raml_file = os.path.join(EXAMPLES,
-                             "json_include_with_ref_empty_fragment.raml")
+def test_jsonref_relative_empty_fragment():
+    raml_file = os.path.join(JSONREF, "jsonref_empty_fragment.raml")
     with open(raml_file) as f:
         raml = loader.RAMLLoader().load(f)
-        expected_data = {
-            "title": "Sample API Demo - JSON Includes",
-            "version": "v1",
-            "baseUri": "http://json.example.com",
-            "schemas": [{
-                "json": {
-                    "name": "foo",
-                    "false": True
-                },
-            }],
-            "/foo": {
-                "displayName": "foo resource"
-            }
-        }
-        assert dict_equal(raml, expected_data)
 
-
-def test_json_ref_in_schema_relative_nonempty_fragment():
-    raml_file = os.path.join(EXAMPLES,
-                             "json_include_with_ref_nonempty_fragment.raml")
-    with open(raml_file) as f:
-        raml = loader.RAMLLoader().load(f)
-        expected_data = {
-            "title": "Sample API Demo - JSON Includes",
-            "version": "v1",
-            "baseUri": "http://json.example.com",
-            "schemas": [{
-                "json": {
-                    "first_name": "foo",
-                    "second_name": "bar"
-                },
-            }],
-            "/foo": {
-                "displayName": "foo resource"
-            }
-        }
-        assert dict_equal(raml, expected_data)
-
-
-def test_json_ref_in_schema_internal_fragment_reference():
-    raml_file = os.path.join(EXAMPLES,
-                             "json_include_with_ref_internal_fragment.raml")
-    with open(raml_file) as f:
-        raml = loader.RAMLLoader().load(f)
-        expected_data = {
-            "title": "Sample API Demo - JSON Includes",
-            "version": "v1",
-            "baseUri": "http://json.example.com",
-            "schemas": [{
-                "json": {
-                    "references":
-                    {
-                        "internal": "yes",
-                    },
-                    "name": "foo",
-                    "is_this_internal?": ["yes"],
-                },
-            }],
-            "/foo": {
-                "displayName": "foo resource"
-            }
-        }
-        assert dict_equal(raml, expected_data)
-
-
-def test_json_ref_in_schema_double_internal_fragment_reference():
-    raml_file = os.path.join(
-        EXAMPLES,
-        "json_include_with_double_ref_internal_fragment.raml")
-    with open(raml_file) as f:
-        raml = loader.RAMLLoader().load(f)
-        expected_data = {
-            "title": "Sample API Demo - JSON Includes",
-            "version": "v1",
-            "baseUri": "http://json.example.com",
-            "schemas": [{
-                "json": {
-                    "references":
-                    {
-                        "internal": "yes",
-                        "two": True,
-                    },
-                    "name": "foo",
-                    "is_this_internal?": "yes",
-                    "two_references": True,
-                },
-            }],
-            "/foo": {
-                "displayName": "foo resource",
-            }
-        }
-        assert dict_equal(raml, expected_data)
-
-
-def test_json_ref_in_schema_absolute(tmpdir):
-    # Set up the file with an absolute path
-
-    json_schema_file = tmpdir.join("example_with_absolute_ref.json")
-    json_schema_file.write(json.dumps({
-        "second_name": "bar",
-        "$ref": "file://{0}#".format(
-            os.path.join(EXAMPLES, "includes", "example.json")
-        )
-    }))
-
-    raml_file = tmpdir.join("json_include_with_absolute_ref.raml")
-    raml_file.write("""#%RAML 0.8
-title: Sample API Demo - JSON Includes
-version: v1
-schemas:
-    - json: !include {json_file}
-baseUri: http://json.example.com
-/foo:
-  displayName: foo resource
-""".format(json_file=str(json_schema_file)))
-
-    # Now load it
-    raml = loader.RAMLLoader().load(raml_file.read())
-    expected_data = {
-        "title": "Sample API Demo - JSON Includes",
-        "version": "v1",
-        "baseUri": "http://json.example.com",
-        "schemas": [{
-            "json": {
-                "name": "foo",
-                "false": True
-            },
-        }],
-        "/foo": {
-            "displayName": "foo resource"
-        }
-    }
+    expected_data = lf.jsonref_relative_empty_fragment_expected
     assert dict_equal(raml, expected_data)
 
 
-def test_json_ref_in_schema_url():
-    raml_file = os.path.join(EXAMPLES, "json_include_with_url_ref.raml")
-    with open(raml_file) as r:
-        raml = loader.RAMLLoader().load(r)
-        expected_data = {
-            "title": "Sample API Demo - JSON Includes",
-            "version": "v1",
-            "baseUri": "http://json.example.com",
-            "schemas": [{
-                "json": {
-                    "name": "foo",
-                    "false": True
-                },
-            }],
-            "/foo": {
-                "displayName": "foo resource"
-            }
-        }
-        assert dict_equal(raml, expected_data)
+def test_jsonref_relative_nonempty_fragment():
+    raml_file = os.path.join(JSONREF, "jsonref_nonempty_fragment.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+
+    expected_data = lf.jsonref_relative_nonempty_fragment_expected
+    assert dict_equal(raml, expected_data)
+
+
+def test_jsonref_internal_fragment_reference():
+    raml_file = os.path.join(JSONREF, "jsonref_internal_fragment.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+
+    expected_data = lf.jsonref_internal_fragment_reference_expected
+    assert dict_equal(raml, expected_data)
+
+
+def test_jsonref_multiref_internal_fragments():
+    raml_file = os.path.join(JSONREF,
+                             "jsonref_multiref_internal_fragment.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+
+    expected_data = lf.jsonref_multiref_internal_fragments_expected
+    assert dict_equal(raml, expected_data)
+
+
+def test_jsonref_absolute_local_uri(tmpdir):
+    # Set up a tmp RAML file with an absolute path
+    json_schema_file = tmpdir.join("json_absolute_ref.json")
+    data = lf.json_ref_absolute_jsondump
+    json_schema_file.write(json.dumps(data))
+
+    raml_file = tmpdir.join("json_absolute_ref.raml")
+    output = lf.json_ref_absolute_ramlfile
+    raml_file.write(output.format(json_file=json_schema_file.strpath))
+
+    # Now load it
+    raml = loader.RAMLLoader().load(raml_file.read())
+    expected_data = lf.json_ref_absolute_expected
+    assert dict_equal(raml, expected_data)
+
+
+def test_jsonref_relative_local_uri():
+    # RAML file includes a JSON schema.  The JSON schema includes a
+    # reference to another local JSON file (same level)
+    ramlfile = os.path.join(JSONREF, "jsonref_relative_local.raml")
+    with open(ramlfile, "r") as f:
+        loaded_raml = loader.RAMLLoader().load(f)
+
+    schemas = loaded_raml.get("schemas")
+    expected = lf.jsonref_relative_local_expected
+    actual = schemas[0].get("jsonexample")
+
+    assert dict_equal(expected, actual)
+
+
+def test_jsonref_relative_local_uri_includes():
+    # RAML file includes a JSON schema.  JSON schema includes a reference
+    # to another local JSON file (in another directory)
+    ramlfile = os.path.join(JSONREF, "jsonref_relative_local_includes.raml")
+    with open(ramlfile, "r") as f:
+        loaded_raml = loader.RAMLLoader().load(f)
+
+    schemas = loaded_raml.get("schemas")
+
+    expected = lf.jsonref_relative_local_includes_expected
+
+    actual = schemas[0].get("jsonexample")
+    assert dict_equal(expected, actual)
+
+
+def test_jsonref_remote_uri(tmpdir, httpserver):
+    mock_remote_json = os.path.join(JSONREF, "jsonref_mock_remote.json")
+    httpserver.serve_content(open(mock_remote_json).read())
+
+    # since we don't know what port httpserver will be on until it's
+    # created, have to create the JSON file that ref's it with the url
+    # variable & RAML
+    jsonfile = tmpdir.join("jsonref_remote_url.json")
+    data = lf.jsonref_remote_uri_jsondump
+    mock_remote_url = httpserver.url + "#properties"
+    data["properties"]["images"]["items"][0]["$ref"] = mock_remote_url
+    jsonfile.write(json.dumps(data))
+
+    ramlfile = tmpdir.join("jsonref_remote_url.raml")
+    output = lf.jsonref_remote_uri_raml.format(json_file=jsonfile.strpath)
+    ramlfile.write(output)
+    readfile = ramlfile.read()
+    loaded = loader.RAMLLoader().load(readfile)
+    expected = lf.json_remote_uri_expected
+    assert dict_equal(expected, loaded)
+
+
+# TODO Add tests for the following use cases:
+# - 'file://' prepends `ref` link (should work)
+# - non-HTTP/S URIs do not work

@@ -48,6 +48,7 @@ class RAMLLoader(object):
         Parses JSON as well as resolves any `$ref`s, including references to
         local files and remote (HTTP/S) files.
         """
+        base_path = os.path.abspath(base_path)
         if not base_path.endswith("/"):
             base_path = base_path + "/"
         base_path = "file://" + base_path
@@ -56,7 +57,7 @@ class RAMLLoader(object):
             schema = jsonref.load(f, base_uri=base_path, jsonschema=True)
         return schema
 
-    def _ordered_load(self, stream, loader=yaml.Loader):
+    def _ordered_load(self, stream, loader=yaml.SafeLoader):
         """
         Preserves order set in RAML file.
         """

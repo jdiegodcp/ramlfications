@@ -13,7 +13,8 @@ import xmltodict
 
 PYVER = sys.version_info[:3]
 
-if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):
+if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):  # NOCOV
+    print("HELLO")
     import six.moves.urllib.request as urllib
     import six.moves.urllib.error as urllib_error
     URLLIB = True
@@ -56,40 +57,61 @@ def load_schema(data):
     return data
 
 
-def requests_download(url):
+def setup_logger(key):
+    """General logger"""
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.DEBUG)
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG)
+    msg = "{key} - %(levelname)s - %(message)s".format(key=key)
+    formatter = logging.Formatter(msg)
+    console.setFormatter(formatter)
+
+    log.addHandler(console)
+    return log
+
+
+def _requests_download(url):
+    """Download a URL using ``requests`` library"""
     try:
         response = requests.get(url)
         return response.text
     except requests.exceptions.RequestException as e:
-        msg = "Error downloading XML from IANA: {0}".format(e)
+        msg = "Error downloading from {0}: {1}".format(url, e)
         raise MediaTypeError(msg)
 
 
-def urllib_download(url):
+def _urllib_download(url):
+    """Download a URL using ``urllib`` library"""
     try:
         response = urllib.urlopen(url)
     except urllib_error.URLError as e:
-        msg = "Error downloading XML from IANA: {0}".format(e)
+        msg = "Error downloading from {0}: {1}".format(url, e)
         raise MediaTypeError(msg)
     return response.read()
 
 
 def download_url(url):
-    log = setup_logger("download")
+    """
+    General download function, given a URL.
+
+    If running 2.7.8 or earlier, or 3.4.2 or earlier, then use
+    ``requests`` if it's installed.  Otherwise, use ``urllib``.
+    """
+    log = setup_logger("DOWNLOAD")
     if SECURE_DOWNLOAD and not URLLIB:
-        raw_data = requests_download(url)
+        return _requests_download(url)
     elif SECURE_DOWNLOAD and URLLIB:
-        raw_data = urllib_download(url)
-    else:
-        msg = ("Downloading over HTTPS but can not verify the host's "
-               "certificate.  To avoid this in the future, `pip install"
-               " \"requests[security]\"`.")
-        log.warn(msg)
-        raw_data = urllib_download(url)
-    return raw_data
+        return _urllib_download(url)
+    msg = ("Downloading over HTTPS but can not verify the host's "
+           "certificate.  To avoid this in the future, `pip install"
+           " \"requests[security]\"`.")
+    log.warn(msg)
+    return _urllib_download(url)
 
 
-def xml_to_dict(response_text):
+def _xml_to_dict(response_text):
+    """Parse XML response from IANA into a Python ``dict``."""
     try:
         return xmltodict.parse(response_text)
     except xmltodict.expat.ExpatError as e:
@@ -98,6 +120,10 @@ def xml_to_dict(response_text):
 
 
 def _extract_mime_types(registry):
+    """
+    Parse out MIME types from a defined registry (e.g. "application",
+    "audio", etc).
+    """
     mime_types = []
     records = registry.get("record", {})
     reg_name = registry.get("@id")
@@ -113,7 +139,8 @@ def _extract_mime_types(registry):
     return mime_types
 
 
-def parse_xml_data(xml_data):
+def _parse_xml_data(xml_data):
+    """Parse the given XML data."""
     registries = xml_data.get("registry", {}).get("registry")
     if not registries:
         msg = "No registries found to parse."
@@ -130,37 +157,28 @@ def parse_xml_data(xml_data):
     return all_mime_types
 
 
-def save_data(output_file, mime_types):
+def _save_updated_mime_types(output_file, mime_types):
+    """Save the updated MIME Media types within the package."""
     with open(output_file, "w") as f:
         json.dump(mime_types, f)
 
 
-def setup_logger(message):
-    log = logging.getLogger(__name__)
-    log.setLevel(logging.DEBUG)
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    msg = "{message} - %(levelname)s - %(message)s".format(message=message)
-    formatter = logging.Formatter(msg)
-    console.setFormatter(formatter)
-
-    log.addHandler(console)
-    return log
-
-
 def update_mime_types():
-    log = setup_logger("updating MIME types")
+    """
+    Update MIME Media Types from IANA.  Requires internet connection.
+    """
+    log = setup_logger("UPDATE")
 
     log.debug("Getting XML data from IANA")
     raw_data = download_url(IANA_URL)
     log.debug("Data received; parsing...")
-    xml_data = xml_to_dict(raw_data)
-    mime_types = parse_xml_data(xml_data)
+    xml_data = _xml_to_dict(raw_data)
+    mime_types = _parse_xml_data(xml_data)
 
     current_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(current_dir, "data")
     output_file = os.path.join(data_dir, "supported_mime_types.json")
 
-    save_data(output_file, mime_types)
+    _save_updated_mime_types(output_file, mime_types)
 
     log.debug("Done! Supported IANA MIME media types have been updated.")

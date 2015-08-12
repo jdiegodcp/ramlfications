@@ -44,8 +44,8 @@ def find_meta(meta):
 
 def install_requires():
     install_requires = [
-        "attrs", "click", "markdown2", "pyyaml", "six", "termcolor",
-        "xmltodict"
+        "attrs", "click", "jsonref", "markdown2", "pyyaml", "six",
+        "termcolor", "xmltodict"
     ]
     if sys.version_info[:2] == (2, 6):
         install_requires.append("ordereddict")

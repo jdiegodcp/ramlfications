@@ -1,4 +1,0 @@
-{
-    "second_name": "bar",
-    "$ref": "https://raw.githubusercontent.com/spotify/ramlfications/master/tests/data/examples/includes/example.json#"
-}

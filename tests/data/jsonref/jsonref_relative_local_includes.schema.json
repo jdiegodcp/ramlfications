@@ -9,12 +9,7 @@
     "artists": {
         "type": "array",
         "description": "The artists of the album. Each artist object includes a link in href to more detailed information about the artist.",
-        "items": [{ "$ref": "file:artist.schema.json#properties" }]
-    },
-    "httpimages": {
-        "type": "array",
-        "description": "image obj from http",
-        "items": [{ "$ref": "https://raw.githubusercontent.com/spotify/web-api/master/specifications/raml/schemas/image.json#properties"}]
+        "items": [{ "$ref": "includes/artist.schema.json#properties" }]
     }
   }
 }

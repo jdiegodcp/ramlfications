@@ -84,12 +84,12 @@ def test_update(runner, mocker):
 
     from ramlfications import utils
     mocker.patch("ramlfications.utils.update_mime_types")
-    mocker.patch("ramlfications.utils.save_data")
+    mocker.patch("ramlfications.utils._save_updated_mime_types")
 
     runner.invoke(main.update)
 
     utils.update_mime_types.assert_called_once()
-    utils.save_data.assert_called_once()
+    utils._save_updated_mime_types.assert_called_once()
 
     end_mtime = os.path.getmtime(json_path)
 

@@ -17,13 +17,6 @@
     "uri": {
       "type": "string",
       "description": "The Spotify URI for the artist."
-    },
-    "images": {
-      "type": "array",
-      "description": "Images of the artist in various sizes, widest first.",
-      "items": {
-        "$ref": "/Users/lynnroot/Dev/spotify/ramlfications/tests/data/jsonref/includes/image.schema.json#properties"
-      }
     }
   }
 }
