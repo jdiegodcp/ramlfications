@@ -45,11 +45,3 @@ class LoadRAMLError(Exception):
 
 class MediaTypeError(Exception):
     pass
-
-
-#####
-# JSON parsing errors
-#####
-
-class InvalidJSONError(Exception):
-    pass

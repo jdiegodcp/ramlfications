@@ -14,7 +14,6 @@ import xmltodict
 PYVER = sys.version_info[:3]
 
 if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):  # NOCOV
-    print("HELLO")
     import six.moves.urllib.request as urllib
     import six.moves.urllib.error as urllib_error
     URLLIB = True

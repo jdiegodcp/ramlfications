@@ -20,10 +20,7 @@ class RAMLLoader(object):
     """
     Extends YAML loader to load RAML files with ``!include`` tags.
     """
-    refs = {}
-
     def _yaml_include(self, loader, node):
-
         """
         Adds the ability to follow ``!include`` directives within
         RAML Files.
