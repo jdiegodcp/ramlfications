@@ -1,0 +1,8 @@
+#%RAML 0.8
+title: Sample API Demo - JSON Includes
+version: v1
+schemas:
+    - jsonexample: !include jsonref_relative_local_file.schema.json
+baseUri: http://json.example.com
+/foo:
+  displayName: foo resource

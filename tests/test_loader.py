@@ -224,6 +224,44 @@ def test_jsonref_remote_uri(tmpdir, httpserver):
     assert dict_equal(expected, loaded)
 
 
-# TODO Add tests for the following use cases:
-# - 'file://' prepends `ref` link (should work)
-# - non-HTTP/S URIs do not work
+def test_jsonref_relative_local_file():
+    # 'file:' prepends the local filename in the JSON schema
+    ramlfile = os.path.join(JSONREF, "jsonref_relative_local_file.raml")
+    with open(ramlfile, "r") as f:
+        loaded_raml = loader.RAMLLoader().load(f)
+
+    schemas = loaded_raml.get("schemas")
+    expected = lf.jsonref_relative_local_file_expected
+    actual = schemas[0].get("jsonexample")
+
+    assert dict_equal(expected, actual)
+
+
+def test_jsonref_relative_local_includes_file():
+    # 'file:' prepends the local filename in the JSON schema
+    filename = "jsonref_relative_local_includes_file.raml"
+    ramlfile = os.path.join(JSONREF, filename)
+    with open(ramlfile, "r") as f:
+        loaded_raml = loader.RAMLLoader().load(f)
+
+    schemas = loaded_raml.get("schemas")
+    expected = lf.jsonref_relative_local_includes_expected
+    actual = schemas[0].get("jsonexample")
+
+    assert dict_equal(expected, actual)
+
+
+def test_jsonref_absolute_local_uri_file(tmpdir):
+    # Set up a tmp RAML file with an absolute path
+    json_schema_file = tmpdir.join("json_absolute_ref_file.json")
+    data = lf.json_ref_absolute_jsondump_file
+    json_schema_file.write(json.dumps(data))
+
+    raml_file = tmpdir.join("json_absolute_ref_file.raml")
+    output = lf.json_ref_absolute_ramlfile
+    raml_file.write(output.format(json_file=json_schema_file.strpath))
+
+    # Now load it
+    raml = loader.RAMLLoader().load(raml_file.read())
+    expected_data = lf.json_ref_absolute_expected
+    assert dict_equal(raml, expected_data)

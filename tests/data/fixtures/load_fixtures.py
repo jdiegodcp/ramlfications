@@ -422,3 +422,54 @@ json_remote_uri_expected = {
         "displayName": "foo resource"
     }
 }
+
+jsonref_relative_local_file_expected = {
+    "$schema": "http://json-schema.org/draft-03/schema",
+    "type": "object",
+    "properties": {
+        "album_type": {
+            "type": "string",
+            "description": ("The type of the album: one of 'album', 'single', "
+                            "or 'compilation'.")
+        },
+        "artists": {
+            "type": "array",
+            "description": ("The artists of the album. Each artist object "
+                            "includes a link in href to more detailed "
+                            "information about the artist."),
+            "items": [{
+                'popularity': {
+                    'type': 'integer',
+                    'description': ("The popularity of the artist. The "
+                                    "value will be between 0 and 100, "
+                                    "with 100 being the most popular. "
+                                    "The artist's popularity is "
+                                    "calculated from the popularity of "
+                                    "all the artist's tracks.")
+                },
+                'type': {
+                    'type': 'string',
+                    'description': "The object type: 'artist'"
+                },
+                'name': {
+                    'type': 'string',
+                    'description': 'The name of the artist.'
+                },
+                'uri': {
+                    'type': 'string',
+                    'description': 'The Spotify URI for the artist.'
+                }
+            }]
+        }
+    }
+}
+
+
+# For test_loader.py::test_jsonref_absolute_local_uri_file
+json_ref_absolute_jsonfile = os.path.join(JSONREF, "jsonref_example.json")
+json_ref_absolute_jsonfile_file = "file://" + json_ref_absolute_jsonfile
+
+json_ref_absolute_jsondump_file = {
+    "second_name": "bar",
+    "$ref": json_ref_absolute_jsonfile_file
+}
