@@ -32,7 +32,7 @@ def validate(ramlfile, config):
                     fg="green")
 
     except InvalidRAMLError as e:
-        msg = "Error validating file {0}: {1}".format(ramlfile, e)
+        msg = "Error validating file {0}: \n{1}".format(ramlfile, e)
         click.secho(msg, fg="red", err=True)
         raise SystemExit(1)
 

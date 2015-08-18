@@ -89,6 +89,8 @@ def validate(raml, config_file=None):
         according to RAML `specification <http://raml.org/spec.html>`_.
     :raises InvalidParameterError: Named parameter is invalid \
         according to RAML `specification <http://raml.org/spec.html>`_.
+    :raises InvalidRAMLError: RAML file is invalid according to RAML \
+        `specification <http://raml.org/spec.html>`_.
     """
     loader = load(raml)
     config = setup_config(config_file)

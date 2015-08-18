@@ -64,6 +64,7 @@ class RootNode(object):
     raml_obj         = attr.ib(repr=False)
     config           = attr.ib(repr=False,
                                validator=attr.validators.instance_of(dict))
+    errors           = attr.ib(repr=False)
 
 
 @attr.s
@@ -102,6 +103,7 @@ class BaseNode(object):
     media_type      = attr.ib(repr=False)
     desc            = attr.ib(repr=False)
     protocols       = attr.ib(repr=False)
+    errors          = attr.ib(repr=False)
 
     @property
     def description(self):
