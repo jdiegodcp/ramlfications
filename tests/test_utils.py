@@ -119,7 +119,7 @@ def test_requests_download_xml(downloaded_xml):
     with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         expected = xml.read()
         utils.requests.get.return_value.text = expected
-        results = utils.requests_download_xml()
+        results = utils.requests_download(utils.IANA_URL)
 
         assert results == expected
 
@@ -128,7 +128,7 @@ def test_urllib_download(downloaded_xml):
     utils.urllib = Mock()
     with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         utils.urllib.urlopen.return_value = xml
-        results = utils.urllib_download_xml()
+        results = utils.urllib_download(utils.IANA_URL)
 
     with open(downloaded_xml, "r", encoding="UTF-8") as xml:
         assert results == xml.read()
@@ -142,10 +142,10 @@ def test_insecure_download_urllib_flag(_a, _b, _c, mocker, monkeypatch):
     monkeypatch.setattr(utils, "URLLIB", True)
     utils.requests = Mock()
 
-    mocker.patch("ramlfications.utils.urllib_download_xml")
+    mocker.patch("ramlfications.utils.urllib_download")
 
     utils.update_mime_types()
-    utils.urllib_download_xml.assert_called_once()
+    utils.urllib_download.assert_called_once()
 
     mocker.stopall()
 
@@ -158,26 +158,26 @@ def test_secure_download_requests_flag(_a, _b_, _c, mocker, monkeypatch):
     monkeypatch.setattr(utils, "URLLIB", False)
     utils.urllib = Mock()
 
-    mocker.patch("ramlfications.utils.requests_download_xml")
+    mocker.patch("ramlfications.utils.requests_download")
 
     utils.update_mime_types()
-    utils.requests_download_xml.assert_called_once()
+    utils.requests_download.assert_called_once()
 
     mocker.stopall()
 
 
 @patch("ramlfications.utils.xml_to_dict")
 @patch("ramlfications.utils.parse_xml_data")
-@patch("ramlfications.utils.requests_download_xml")
-@patch("ramlfications.utils.urllib_download_xml")
+@patch("ramlfications.utils.requests_download")
+@patch("ramlfications.utils.urllib_download")
 @patch("ramlfications.utils.save_data")
 def test_update_mime_types(_a, _b, _c, _d, _e, downloaded_xml):
     utils.requests = Mock()
 
     with open(downloaded_xml, "r", encoding="UTF-8") as raw_data:
         utils.update_mime_types()
-        utils.requests_download_xml.assert_called_once()
-        utils.requests_download_xml.return_value = raw_data.read()
+        utils.requests_download.assert_called_once()
+        utils.requests_download.return_value = raw_data.read()
         utils.xml_to_dict.assert_called_once()
         utils.parse_xml_data.assert_called_once()
         utils.save_data.assert_called_once()

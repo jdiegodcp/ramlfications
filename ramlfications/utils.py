@@ -15,6 +15,7 @@ PYVER = sys.version_info[:3]
 
 if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):
     import six.moves.urllib.request as urllib
+    import six.moves.urllib.error as urllib_error
     URLLIB = True
     SECURE_DOWNLOAD = True
 else:
@@ -24,6 +25,7 @@ else:
         SECURE_DOWNLOAD = True
     except ImportError:
         import six.moves.urllib.request as urllib
+        import six.moves.urllib.error as urllib_error
         URLLIB = True
         SECURE_DOWNLOAD = False
 
@@ -54,22 +56,37 @@ def load_schema(data):
     return data
 
 
-def requests_download_xml():
+def requests_download(url):
     try:
-        response = requests.get(IANA_URL)
+        response = requests.get(url)
         return response.text
     except requests.exceptions.RequestException as e:
         msg = "Error downloading XML from IANA: {0}".format(e)
         raise MediaTypeError(msg)
 
 
-def urllib_download_xml():
+def urllib_download(url):
     try:
-        response = urllib.urlopen(IANA_URL)
-    except urllib.URLError as e:
+        response = urllib.urlopen(url)
+    except urllib_error.URLError as e:
         msg = "Error downloading XML from IANA: {0}".format(e)
         raise MediaTypeError(msg)
     return response.read()
+
+
+def download_url(url):
+    log = setup_logger("download")
+    if SECURE_DOWNLOAD and not URLLIB:
+        raw_data = requests_download(url)
+    elif SECURE_DOWNLOAD and URLLIB:
+        raw_data = urllib_download(url)
+    else:
+        msg = ("Downloading over HTTPS but can not verify the host's "
+               "certificate.  To avoid this in the future, `pip install"
+               " \"requests[security]\"`.")
+        log.warn(msg)
+        raw_data = urllib_download(url)
+    return raw_data
 
 
 def xml_to_dict(response_text):
@@ -118,33 +135,24 @@ def save_data(output_file, mime_types):
         json.dump(mime_types, f)
 
 
+def setup_logger(message):
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.DEBUG)
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG)
+    msg = "{message} - %(levelname)s - %(message)s".format(message=message)
+    formatter = logging.Formatter(msg)
+    console.setFormatter(formatter)
+
+    log.addHandler(console)
+    return log
+
+
 def update_mime_types():
-    def setup_logger():
-        log = logging.getLogger(__name__)
-        log.setLevel(logging.DEBUG)
-        console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG)
-        msg = "updating MIME types - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(msg)
-        console.setFormatter(formatter)
-
-        log.addHandler(console)
-        return log
-
-    log = setup_logger()
+    log = setup_logger("updating MIME types")
 
     log.debug("Getting XML data from IANA")
-    if SECURE_DOWNLOAD and not URLLIB:
-        raw_data = requests_download_xml()
-    elif SECURE_DOWNLOAD and URLLIB:
-        raw_data = urllib_download_xml()
-    else:
-        msg = ("Downloading over HTTPS but can not verify the host's "
-               "certificate.  To avoid this in the future, `pip install"
-               " \"requests[security]\"`.")
-        log.warn(msg)
-        raw_data = urllib_download_xml()
-
+    raw_data = download_url(IANA_URL)
     log.debug("Data received; parsing...")
     xml_data = xml_to_dict(raw_data)
     mime_types = parse_xml_data(xml_data)
