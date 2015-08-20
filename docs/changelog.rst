@@ -7,7 +7,7 @@ Changelog
 Added:
 
 - Support for parsing ``$ref`` s in included JSON schemas (`Issue 4`_).  Thank you `benhamill`_, `nvillalva`_, and `jhl2343`_!
-- Collect all validation errors (rather than just erroring out on the first one) (`Issue 21`_).  Thank you `nvillalva`_!
+- Collect all validation errors (rather than just erroring out on the first one) (`Issue 21`_).  Thank you `cerivera`_!
 
 
 0.1.6 (2015-08-03)
@@ -92,3 +92,4 @@ Initial alpha release of ``ramlfications``\!
 .. _`nvillalva`: https://github.com/nvillalva
 .. _`jhl2343`: https://github.com/jhl2343
 .. _`Issue 21`: https://github.com/spotify/ramlfications/issues/21
+.. _`cerivera`: https://github.com/cerivera
