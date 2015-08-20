@@ -6,7 +6,7 @@ Changelog
 
 Added:
 
-- Support for parsing ``$ref``s in included JSON schemas (`Issue 4`_).  Thank you `benhamill`_, `nvillalva`_, and `jhl2343`_!
+- Support for parsing ``$ref`` s in included JSON schemas (`Issue 4`_).  Thank you `benhamill`_, `nvillalva`_, and `jhl2343`_!
 - Collect all validation errors (rather than just erroring out on the first one) (`Issue 21`_).  Thank you `nvillalva`_!
 
 
