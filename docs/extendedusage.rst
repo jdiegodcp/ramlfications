@@ -149,6 +149,13 @@ Authentication settings (available for OAuth1, OAuth2, and any x-header that inc
 
 Check out :doc:`api` for full definition of ``SecuritySchemes``, ``Header``, ``Response`` and their associated attributes and objects.
 
+Schemas
+^^^^^^^
+
+The RAML specification allows the `ability to define schemas`_ that can be used anywhere within the API definition.  One may define a schema within the RAML file itself, or in another, separate file (local or over HTTP/S).  ``ramlfications`` supports ``json`` and ``xsd`` filetimes in addition to parsing RAML.
+
+See :ref:`nonramlparsing` for more information about how ``ramlfications`` handles ``json`` and ``xsd`` formats.
+
 
 Traits & Resource Types
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -344,6 +351,279 @@ would be ``/foo/bar/{id}``, and the absolute URI path would be
 Check out :doc:`api` for full definition of what is available for a ``resource`` object, and its associated attributes and objects.
 
 
+.. _nonramlparsing:
+
+Non-RAML Parsing
+----------------
+
+JSON
+^^^^
+
+For ``json`` filetypes, ``ramlfications`` will also parse ``$ref`` keywords and bring in the referenced objects according to both `Draft 3`_ and `Draft 4`_ JSON Schema definition.
+
+The following ``$ref`` values are supported:
+
+* :ref:`internalfrag`
+* :ref:`localfile`
+* :ref:`remotefile`
+
+.. _internalfrag:
+
+Internal fragments
+~~~~~~~~~~~~~~~~~~
+
+RAML File:
+
+.. code-block:: yaml
+
+    #%RAML 0.8
+    title: Sample API Demo - JSON Includes
+    version: v1
+    schemas:
+        - json: !include includes/ref_internal_fragment.json
+    baseUri: http://json.example.com
+    /foo:
+      displayName: foo resource
+
+``includes/ref_internal_fragment.json`` file:
+
+.. code-block:: json
+
+    {
+      "references": {
+        "internal": "yes"
+      },
+      "name": "foo",
+      "is_this_internal?": [{"$ref": "#/references/internal"}]
+    }
+
+
+``ramlfications`` would produce the following:
+
+.. code-block:: pycon
+
+    >>> RAML_FILE = "api.raml"
+    >>> api = parse(RAML_FILE)
+    >>> api.schemas
+    [{'json': {u'is_this_internal?': [u'yes'],
+    u'name': u'foo',
+    u'references': {u'internal': u'yes'}}}]
+
+.. _localfile:
+
+Local file with & without fragments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Parsing references to local files via relative or absolute filepaths work fine, as well as prepending the URI with ``file:``, e.g. ``file:local.schema.json``.
+
+
+RAML File that includes a JSON file under ``schemas``:
+
+.. code-block:: yaml
+
+    #%RAML 0.8
+    title: Sample API Demo - JSON Includes
+    version: v1
+    schemas:
+        - jsonexample: !include local.schema.json
+    baseUri: http://json.example.com
+    /foo:
+      displayName: foo resource
+
+
+The included ``local.schema.json`` file that refers to another JSON file via a relative filepath and a fragment:
+
+.. code-block:: json
+
+    {
+      "$schema":"http://json-schema.org/draft-03/schema",
+      "type": "object",
+      "properties": {
+        "album_type": {
+          "type": "string",
+          "description": "The type of the album: one of 'album', 'single', or 'compilation'."
+        },
+        "artists": {
+            "type": "array",
+            "description": "The artists of the album. Each artist object includes a link in href to more detailed information about the artist.",
+            "items": [{ "$ref": "artist.schema.json#properties" }]
+        }
+      }
+    }
+
+The referred ``artist.schema.json`` file:
+
+.. code-block:: json
+
+    {
+      "$schema": "http://json-schema.org/draft-03/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the artist."
+        },
+        "popularity": {
+          "type": "integer",
+          "description": "The popularity of the artist. The value will be between 0 and 100, with 100 being the most popular. The artist's popularity is calculated from the popularity of all the artist's tracks."
+        },
+        "type": {
+          "type": "string",
+          "description": "The object type: 'artist'"
+        },
+        "uri": {
+          "type": "string",
+          "description": "The Spotify URI for the artist."
+        }
+      }
+    }
+
+
+Finally, ``ramlfications`` would produce the following (pretty printed for readability):
+
+.. code-block:: pycon
+
+    >>> RAML_FILE = "api.raml"
+    >>> api = parse(RAML_FILE)
+    >>> api.schemas
+    [{'jsonexample': {
+      u'$schema': u'http://json-schema.org/draft-03/schema',
+      u'properties': {
+        u'album_type': {
+          u'description': u"The type of the album: one of 'album', 'single', or 'compilation'.",
+          u'type': u'string'
+        },
+        u'artists': {
+          u'description': u'The artists of the album. Each artist object includes a link in href to more detailed information about the artist.',
+          u'items': [{
+            u'popularity': {
+              u'type': u'integer',
+              u'description': u"The popularity of the artist. The value will be between 0 and 100, with 100 being the most popular. The artist's popularity is calculated from the popularity of all the artist's tracks."
+            },
+            u'type': {
+              u'type': u'string',
+              u'description': u"The object type: 'artist'"
+            },
+            u'name': {
+              u'type': u'string',
+              u'description': u'The name of the artist.'
+            },
+            u'uri': {
+              u'type': u'string',
+              u'description': u'The Spotify URI for the artist.'
+            }
+          }],
+        u'type': u'array'
+        }
+      },
+      u'type': u'object'
+      }
+    }]
+
+
+.. _remotefile:
+
+Remote file with & without fragments (over HTTP or HTTPS only)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RAML file:
+
+.. code-block:: yaml
+
+    #%RAML 0.8
+    title: Sample API Demo - JSON Includes
+    version: v1
+    schemas:
+        - json: !include local.schema.json
+    baseUri: http://json.example.com
+    /foo:
+      displayName: foo resource
+
+
+The included ``local.schema.json`` file (that's local) that refers to another JSON file remotely:
+
+.. code-block:: json
+
+    {
+        "$schema": "http://json-schema.org/draft-03/schema",
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "The name of the artist."
+            },
+            "images": {
+                "type": "array",
+                "description": "Images associated with artist",
+                "items": [{"$ref": "https://example.com/data#properties"}]
+            }
+        }
+    }
+
+The remote file found on ``https://example.com/data#properties``:
+
+.. code-block:: json
+
+    {
+      "$schema": "http://json-schema.org/draft-03/schema",
+      "type": "object",
+      "properties": {
+        "height": {
+          "type": "integer",
+          "description": "The image height in pixels. If unknown: null or not returned."
+        },
+        "url": {
+          "type": "string",
+          "description": "The source URL of the image."
+        },
+        "width": {
+          "type": "integer",
+          "description": "The image width in pixels. If unknown: null or not returned."
+        }
+      }
+    }
+
+
+Finally, ``ramlfications`` would produce the following (pretty printed for readability):
+
+.. code-block:: pycon
+
+    >>> RAML_FILE = "api.raml"
+    >>> api = parse(RAML_FILE)
+    >>> api.schemas
+    [{'jsonexample': {
+      u'$schema': u'http://json-schema.org/draft-03/schema',
+      u'properties': {
+        u'name': {
+          u'type': u'string',
+          u'description': u'The name of the artist.'
+        },
+        u'images': {
+          u'type': 'array',
+          u'description': 'Images associated with artist',
+          u'items': [{
+            u'height': {
+              u'type': u'integer',
+              u'description': u'The image height in pixels. If unknown: null or not returned.'
+            },
+            u'url': {
+              u'type': u'string',
+              u'description': u'The source URL of the image.'
+            },
+            u'width': {
+              u'type': u'integer',
+              u'description': u'The image width in pixels. If unknown: null or not returned.'
+            }
+          }]
+        }
+      }
+    }}]
+
+
+XML
+^^^
+
+Documentation (and improved functionality) coming soon!
 
 .. _`RAML Spec's Root Section`: http://raml.org/spec.html#root-section
 .. _`RAML Spec's Resource Section`: http://raml.org/spec.html#resources-and-nested-resources
@@ -351,3 +631,6 @@ Check out :doc:`api` for full definition of what is available for a ``resource``
 .. _`RAML supports`: http://raml.org/spec.html#security
 .. _`resource types and traits`: http://raml.org/spec.html#resource-types-and-traits
 .. _`RAML spec`: http://raml.org/spec.html#resource-types-and-traits
+.. _`ability to define schemas`: http://raml.org/spec.html#schemas
+.. _`Draft 3`: https://tools.ietf.org/html/draft-zyp-json-schema-03
+.. _`Draft 4`: https://tools.ietf.org/html/draft-zyp-json-schema-04

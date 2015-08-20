@@ -1,0 +1,9 @@
+{
+  "references": {
+    "internal": "yes",
+    "two": true
+  },
+  "name": "foo",
+  "is_this_internal?": {"$ref": "#/references/internal"},
+  "two_references": {"$ref": "#/references/two"}
+}
