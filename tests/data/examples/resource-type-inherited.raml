@@ -1,0 +1,180 @@
+#%RAML 0.8
+---
+title: Example API
+baseUri: http://example.com
+version: v1
+resourceTypes:
+  - inheritgetmethod:
+      description: get-method resource type example
+      usage: Some sort of usage description
+      get:
+        description: This description should be inherited when applied to resources
+        headers:
+          X-Inherited-Header:
+            description: This header should be inherited
+        body:
+          application/json:
+            schema: !include includes/inherited.schema.json
+            example: !include includes/inherited.example.json
+        responses:
+          200:
+            description: Inherited OK response
+          404:
+            description: Inherited resource not found response
+        queryParameters:
+          inherited_param:
+            displayName: inherited query parameter for a get method
+            type: string
+            description: description for inherited query param
+            example: fooBar
+            minLength: 1
+            maxLength: 50
+            required: true
+  - inheritgetoptionalmethod:
+      description: optional get-method resource type example
+      usage: Some sort of usage description
+      get?:
+        description: This description should be inherited when applied to resources with get methods
+        headers:
+          X-Optional-Inherited-Header:
+            description: This header should be inherited when resource has get method
+        queryParameters:
+          another_inherited_param:
+            displayName: another inherited query parameter for a get method
+            type: string
+            description: description for another inherited query param
+            example: barBaz
+            minLength: 2
+            maxLength: 5
+            required: true
+  - partialinherit:
+      description: Some aspects of this resource type will be overwritten
+      get:
+        description: Do not inherit this method-level description
+        headers:
+          X-Inherited-Header:
+            description: this header is inherited
+          X-Overwritten-Header:
+            description: this header description should not be inherited
+            required: false
+        queryParameters:
+          inherited:
+            description: An inherited parameter
+          overwritten:
+            description: Do not inherit this query param description
+            example: This example should be inherited
+        formParameters:
+          overwritten:
+            description: This description should be inherited
+            type: string
+            example: This example should not be inherited
+            minLength: 0
+            maxLength: 5
+        body:
+          application/json:
+            schema: |
+              {
+                "$schema": "http://json-schema.org/draft-03/schema",
+                "type": "object",
+                "properties": {
+                  "inherited": {
+                    "description": "this schema should be inherited"
+                  }
+                }
+              }
+            example: |
+              {
+                "inherited": "yes please!"
+              }
+          text/xml:
+            schema: |
+              <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:include schemaLocation="./thingy.xsd"/>
+                <xs:element name="thingies">
+                  <xs:complexType>
+                    <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                      <xs:element type="thingyType" name="thingy"/>
+                    </xs:sequence>
+                  </xs:complexType>
+                </xs:element>
+              </xs:schema>
+            example: |
+              <thingies>
+                <thingy><name>These should be overwritten!</name></thingy>
+                <thingy><name>Nothing to see here!</name></thingy>
+              </thingies>
+
+        responses:
+          200:
+            description: this 200 response description should not be inherited
+            headers:
+              X-Inherited-Success:
+                description: inherited success response header
+              X-Overwritten-Success:
+                description: this description should not be inherited
+          201:
+            description: This 201 response description should be inherited
+            body:
+              application/json:
+                example: |
+                  {
+                    "description": "I shouldn't see this example"
+                  }
+
+/a-get-resource:
+  description: Resource inherits from inheritedgetmethod
+  type: inheritgetmethod
+/a-post-resource:
+  type: inheritgetoptionalmethod
+  description: |
+    Resource is labeled to inherit from inheritedoptionalmethod but does not define a get method
+  post:
+    description: post some foobar
+/another-get-resource:
+  description: Resource inherits from inheritoptionalmethod
+  type: inheritgetoptionalmethod
+  get:
+    headers:
+      X-Non-Inherited-Header:
+        description: This is a header in addition to what is inherited
+/another-post-resource:
+  type: inheritgetmethod
+  description: This resource should also inherit the Resource Type's get method properties
+  post:
+    description: post some more foobar
+/inherit-no-overwrite:
+  type: partialinherit
+  description: Resource defines some resource type properties
+  get:
+    description: This method-level description should be used
+    headers:
+      X-Overwritten-Header:
+        description: This header description should be used
+        required: true
+    queryParameters:
+      overwritten:
+        description: This query param description should be used
+    formParameters:
+      overwritten:
+        example: This example for the overwritten form param should be used
+        minLength: 1
+    body:
+      text/xml:
+        example: |
+          <thingies>
+            <thingy><name>Successfully overwrote body XML example</name></thingy>
+          </thingies>
+
+    responses:
+      200:
+        description: overwriting the 200 response description
+        headers:
+          X-Overwritten-Success:
+            description:  overwritten success response header
+      201:
+        body:
+          application/json:
+            example: |
+              {
+                "description": "overwritten description of 201 body example"
+              }

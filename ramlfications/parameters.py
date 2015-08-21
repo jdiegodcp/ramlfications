@@ -13,6 +13,12 @@ HTTP_METHODS = [
     "head", "trace", "connect"
 ]
 
+NAMED_PARAMS = [
+    "desc", "type", "enum", "pattern", "minimum", "maximum", "example",
+    "default", "required", "repeat", "display_name", "max_length",
+    "min_length"
+]
+
 
 class Content(object):
     """
@@ -100,6 +106,16 @@ class BaseParameter(object):
         if self.desc:
             return Content(self.desc)
         return None
+
+    def _inherit_type_properties(self, inherited_param):
+        for param in inherited_param:
+            name = getattr(param, "name", getattr(param, "code", None))
+            if name == self.name:
+                for n in NAMED_PARAMS:
+                    attr = getattr(self, n, None)
+                    if attr is None:
+                        attr = getattr(param, n, None)
+                        setattr(self, n, attr)
 
 
 @attr.s
@@ -226,6 +242,15 @@ class Header(object):
             return Content(self.desc)
         return None
 
+    def _inherit_type_properties(self, inherited_param):
+        params = NAMED_PARAMS + ["method"]
+        for param in inherited_param:
+            for n in params:
+                attr = getattr(self, n, None)
+                if attr is None:
+                    attr = getattr(param, n, None)
+                    setattr(self, n, attr)
+
 
 @attr.s
 class Body(object):
@@ -256,6 +281,17 @@ class Body(object):
                           validator=attr.validators.instance_of(dict))
     errors      = attr.ib(repr=False)
 
+    def _inherit_type_properties(self, inherited_param):
+        body_params = ["schema", "example", "form_params"]
+        for param in inherited_param:
+            if param.mime_type != self.mime_type:
+                continue
+            for n in body_params:
+                attr = getattr(self, n, None)
+                if attr is None:
+                    attr = getattr(param, n, None)
+                    setattr(self, n, attr)
+
 
 @attr.s
 class Response(object):
@@ -285,6 +321,14 @@ class Response(object):
         if self.desc:
             return Content(self.desc)
         return None
+
+    def _inherit_type_properties(self, inherited_param):
+        for param in inherited_param:
+            for n in NAMED_PARAMS:
+                attr = getattr(self, n, None)
+                if attr is None:
+                    attr = getattr(param, n, None)
+                    setattr(self, n, attr)
 
 
 @attr.s

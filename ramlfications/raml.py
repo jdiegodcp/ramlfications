@@ -15,6 +15,10 @@ AVAILABLE_METHODS = [
     "trace", "connect"
 ]
 
+METHOD_PROPERTIES = [
+    "headers", "body", "responses", "query_params", "form_params"
+]
+
 
 @attr.s
 class RootNode(object):
@@ -202,3 +206,11 @@ class ResourceNode(BaseNode):
     resource_type    = attr.ib(repr=False)
     secured_by       = attr.ib(repr=False)
     security_schemes = attr.ib(repr=False)
+
+    def _inherit_type(self):
+        for p in METHOD_PROPERTIES:
+            inherited_prop = getattr(self.resource_type, p)
+            resource_prop = getattr(self, p)
+            if resource_prop and inherited_prop:
+                for r in resource_prop:
+                    r._inherit_type_properties(inherited_prop)

@@ -181,3 +181,17 @@ def update_mime_types():
     _save_updated_mime_types(output_file, mime_types)
 
     log.debug("Done! Supported IANA MIME media types have been updated.")
+
+
+def _resource_type_lookup(assigned, root):
+    """
+    Returns ``ResourceType`` object
+
+    :param str assigned: The string name of the assigned resource type
+    :param root: RAML root object
+    """
+    res_types = root.resource_types
+    if res_types:
+        res_type_obj = [r for r in res_types if r.name == assigned]
+        if res_type_obj:
+            return res_type_obj[0]
