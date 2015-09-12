@@ -18,7 +18,7 @@ from .parameters import (
     FormParameter, SecurityScheme
 )
 from .raml import RootNode, ResourceNode, ResourceTypeNode, TraitNode
-from .utils import load_schema
+from .utils import load_schema, _resource_type_lookup
 from .config import MEDIA_TYPES
 from .errors import InvalidRAMLError
 
@@ -74,7 +74,7 @@ def _get(data, item, default=None):
         return default
 
 
-def _create_base_param_obj(attribute_data, param_obj, config, errors):
+def _create_base_param_obj(attribute_data, param_obj, config, errors, **kw):
     """Helper function to create a BaseParameter object"""
     objects = []
 
@@ -83,7 +83,7 @@ def _create_base_param_obj(attribute_data, param_obj, config, errors):
             required = _get(value, "required", default=True)
         else:
             required = _get(value, "required", default=False)
-        item = param_obj(
+        kwargs = dict(
             name=key,
             raw={key: value},
             desc=_get(value, "description"),
@@ -102,6 +102,10 @@ def _create_base_param_obj(attribute_data, param_obj, config, errors):
             config=config,
             errors=errors
         )
+        if param_obj is Header:
+            kwargs["method"] = _get(kw, "method")
+
+        item = param_obj(**kwargs)
         objects.append(item)
 
     return objects or None
@@ -475,8 +479,8 @@ def create_resource_types(raml_data, root):
             if res_name == list(iterkeys(resource))[0]:
                 return resource
 
-    def get_inherited_type(root, resource, type, raml):
-        inherited = get_inherited_resource(type)
+    def get_inherited_type(root, resource, _type, raml):
+        inherited = get_inherited_resource(_type)
         res_type_objs = []
         for key, value in list(iteritems(resource)):
             for i in list(iterkeys(value)):
@@ -659,6 +663,11 @@ def create_resource_types(raml_data, root):
         return _get(v, "mediaType")
 
     def description():
+        # prefer the resourceType method description
+        if meth:
+            method_attr = _get(v, meth)
+            desc = _get(method_attr, "description")
+            return desc or _get(v, "description")
         return _get(v, "description")
 
     def type_():
@@ -812,6 +821,12 @@ def create_resources(node, resources, root, parent):
         if k.startswith("/"):
             avail = root.config.get("http_optional")
             methods = [m for m in avail if m in list(iterkeys(v))]
+            if "type" in list(iterkeys(v)):
+                assigned = _resource_type_lookup(v.get("type"), root)
+                if hasattr(assigned, "method"):
+                    if not assigned.optional:
+                        methods.append(assigned.method)
+                        methods = list(set(methods))
             if methods:
                 for m in methods:
                     child = create_node(name=k,
@@ -820,6 +835,18 @@ def create_resources(node, resources, root, parent):
                                         parent=parent,
                                         root=root)
                     resources.append(child)
+            # inherit resource type methods
+            elif "type" in list(iterkeys(v)):
+                if hasattr(assigned, "method"):
+                    method = assigned.method
+                else:
+                    method = None
+                child = create_node(name=k,
+                                    raw_data=v,
+                                    method=method,
+                                    parent=parent,
+                                    root=root)
+                resources.append(child)
             else:
                 child = create_node(name=k,
                                     raw_data=v,
@@ -862,6 +889,7 @@ def create_node(name, raw_data, method, parent, root):
         if type_() and root.resource_types:
             types = root.resource_types
             r_type = [r for r in types if r.name == type_()]
+            r_type = [r for r in r_type if r.method == method]
             if r_type:
                 if hasattr(r_type[0], attribute):
                     if getattr(r_type[0], attribute) is not None:
@@ -905,6 +933,24 @@ def create_node(name, raw_data, method, parent, root):
         trait_objects = get_trait(attribute)
         return type_objects + trait_objects
 
+    # TODO: refactor - this ain't pretty
+    def _remove_duplicates(inherit_params, resource_params):
+        ret = []
+        if isinstance(resource_params[0], Body):
+            _params = [p.mime_type for p in resource_params]
+        else:
+            _params = [p.name for p in resource_params]
+
+        for p in inherit_params:
+            if isinstance(p, Body):
+                if p.mime_type not in _params:
+                    ret.append(p)
+            else:
+                if p.name not in _params:
+                    ret.append(p)
+        ret.extend(resource_params)
+        return ret or None
+
     #####
     # Node attribute functions
     #####
@@ -945,16 +991,17 @@ def create_node(name, raw_data, method, parent, root):
         header_objs = get_inherited_attributes("headers")
 
         _headers = _create_base_param_obj(headers, Header, root.config,
-                                          root.errors)
-        if _headers:
-            header_objs.extend(_headers)
-
-        return header_objs or None
+                                          root.errors, method=method)
+        if _headers is None:
+            return header_objs or None
+        return _remove_duplicates(header_objs, _headers)
 
     def body():
         """Set resource's supported request/response body."""
         bodies = get_attribute_levels("body")
         body_objects = get_inherited_attributes("body")
+
+        _body_objs = []
         for k, v in list(iteritems(bodies)):
             if v is None:
                 continue
@@ -967,9 +1014,10 @@ def create_node(name, raw_data, method, parent, root):
                 config=root.config,
                 errors=root.errors
             )
-            body_objects.append(body)
-
-        return body_objects or None
+            _body_objs.append(body)
+        if _body_objs == []:
+            return body_objects or None
+        return _remove_duplicates(body_objects, _body_objs)
 
     def responses():
         """Set resource's expected responses."""
@@ -1063,16 +1111,18 @@ def create_node(name, raw_data, method, parent, root):
                 inherit_resp = resp_objs.pop(index)
                 headers = resp_headers(_get(v, "headers", default={}))
                 if inherit_resp.headers:
-                    if headers:
-                        headers.extend(inherit_resp.headers)
-                    else:
-                        headers = inherit_resp.headers
+                    headers = _remove_duplicates(inherit_resp.headers, headers)
+                    # if headers:
+                    #     headers.extend(inherit_resp.headers)
+                    # else:
+                    #     headers = inherit_resp.headers
                 body = resp_body(v.get("body", {}))
                 if inherit_resp.body:
-                    if body:
-                        body.extend(inherit_resp.body)
-                    else:
-                        body = inherit_resp.body
+                    body = _remove_duplicates(inherit_resp.body, body)
+                    # if body:
+                    #     body.extend(inherit_resp.body)
+                    # else:
+                    #     body = inherit_resp.body
                 resp = Response(
                     code=k,
                     raw={k: v},  # should prob get data union
@@ -1147,9 +1197,10 @@ def create_node(name, raw_data, method, parent, root):
 
         params = _create_base_param_obj(query_params, QueryParameter,
                                         root.config, root.errors)
-        if params:
-            param_objs.extend(params)
-        return param_objs or None
+
+        if params is None:
+            return param_objs or None
+        return _remove_duplicates(param_objs, params)
 
     def form_params():
         """Set resource's form parameters."""
@@ -1158,9 +1209,9 @@ def create_node(name, raw_data, method, parent, root):
 
         params = _create_base_param_obj(form_params, FormParameter,
                                         root.config, root.errors)
-        if params:
-            param_objs.extend(params)
-        return param_objs or None
+        if params is None:
+            return param_objs or None
+        return _remove_duplicates(param_objs, params)
 
     def media_type():
         """Set resource's supported media types."""
@@ -1178,10 +1229,22 @@ def create_node(name, raw_data, method, parent, root):
 
     def description():
         """Set resource's description."""
-        if raw_data.get(method, {}):
-            if raw_data.get(method, {}).get("description"):
-                return raw_data.get(method, {}).get("description")
-        return raw_data.get("description")
+        desc = raw_data.get("description")
+        try:
+            desc = raw_data.get(method).get("description")
+            if desc is None:
+                raise AttributeError
+        except AttributeError:
+            if type_():
+                assigned = _resource_type_lookup(type_(), root)
+                try:
+                    if assigned.method == method:
+                        desc = assigned.description.raw
+                except AttributeError:
+                    pass
+            else:
+                desc = raw_data.get("description")
+        return desc
 
     def is_():
         """Set resource's assigned trait names."""
@@ -1277,7 +1340,7 @@ def create_node(name, raw_data, method, parent, root):
             return secured_objs
         return None
 
-    return ResourceNode(
+    node = ResourceNode(
         name=name,
         raw=raw_data,
         method=method,
@@ -1304,3 +1367,7 @@ def create_node(name, raw_data, method, parent, root):
         security_schemes=security_schemes(),
         errors=root.errors
     )
+    if resource_type():
+        # correct inheritance (issue #23)
+        node._inherit_type()
+    return node

@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 import os
 
 import pytest
+import xmltodict
 
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
@@ -640,7 +641,7 @@ def test_resource_inherited_properties(resources):
     res = resources[9]
     assert res.base_uri_params[0] == res.resource_type.base_uri_params[0]
 
-    res = resources[-7]
+    res = resources[-6]
     assert res.form_params[0] == res.resource_type.form_params[0]
 
     res = resources[11]
@@ -735,7 +736,7 @@ def test_resource_responses(resources):
 
     res = resources[10]
     headers = [h.name for h in res.responses[0].headers]
-    assert ["X-search-header", "X-another-header"] == headers
+    assert sorted(["X-search-header", "X-another-header"]) == sorted(headers)
 
     schema = res.responses[0].body[0].schema
     assert schema == {"name": "the search body"}
@@ -744,9 +745,6 @@ def test_resource_responses(resources):
     assert schema == {}
     example = res.responses[0].body[1].example
     assert example == {}
-
-    schema = res.responses[0].body[2].schema
-    assert schema == {"name": "an schema body"}
 
     res = resources[19]
     headers = [h.name for h in res.responses[0].headers]
@@ -854,6 +852,223 @@ def test_resource_response_no_desc():
 
     assert response.code == 204
     assert response.description is None
+
+
+@pytest.fixture(scope="session")
+def inherited_resources():
+    raml_file = os.path.join(EXAMPLES, "resource-type-inherited.raml")
+    loaded_raml = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    config['validate'] = False
+    return pw.parse_raml(loaded_raml, config)
+
+
+def test_resource_inherits_type(inherited_resources):
+    assert len(inherited_resources.resources) == 6
+    res = inherited_resources.resources[0]
+    assert res.type == "inheritgetmethod"
+    assert res.method == "get"
+    assert len(res.headers) == 1
+    assert len(res.body) == 1
+    assert len(res.responses) == 2
+    assert len(res.query_params) == 1
+
+    exp_desc = ("This description should be inherited when applied to "
+                "resources")
+    assert res.description.raw == exp_desc
+
+    h = res.headers[0]
+    assert h.name == "X-Inherited-Header"
+    assert h.description.raw == "This header should be inherited"
+
+    b = res.body[0]
+    assert b.mime_type == "application/json"
+    # lazy checking
+    assert b.schema is not None
+    assert b.example is not None
+
+    q = res.query_params[0]
+    assert q.name == "inherited_param"
+    assert q.display_name == "inherited query parameter for a get method"
+    assert q.type == "string"
+    assert q.description.raw == "description for inherited query param"
+    assert q.example == "fooBar"
+    assert q.min_length == 1
+    assert q.max_length == 50
+    assert q.required is True
+
+
+def test_resource_inherits_type_optional_post(inherited_resources):
+    assert len(inherited_resources.resources) == 6
+    res = inherited_resources.resources[1]
+    assert res.type == "inheritgetoptionalmethod"
+    assert res.method == "post"
+    assert res.headers is None
+    assert res.query_params is None
+    assert res.description.raw == "post some foobar"
+
+
+def test_resource_inherits_type_optional_get(inherited_resources):
+    # make sure that optional resource type methods are not inherited if not
+    # explicitly included in resource (unless no methods defined)
+    assert len(inherited_resources.resources) == 6
+    res = inherited_resources.resources[2]
+    assert res.type == "inheritgetoptionalmethod"
+    assert res.method == "get"
+    assert len(res.headers) == 2
+    assert len(res.query_params) == 1
+
+    desc = ("This description should be inherited when applied to resources "
+            "with get methods")
+    assert res.description.raw == desc
+
+
+def test_resource_inherits_get(inherited_resources):
+    assert len(inherited_resources.resources) == 6
+    post_res = inherited_resources.resources[3]
+    get_res = inherited_resources.resources[4]
+
+    assert get_res.method == "get"
+    assert len(get_res.headers) == 1
+    assert len(get_res.body) == 1
+    assert len(get_res.responses) == 2
+    assert len(get_res.query_params) == 1
+
+    h = get_res.headers[0]
+    assert h.name == "X-Inherited-Header"
+    assert h.description.raw == "This header should be inherited"
+
+    b = get_res.body[0]
+    assert b.mime_type == "application/json"
+    # lazy checking
+    assert b.schema is not None
+    assert b.example is not None
+
+    q = get_res.query_params[0]
+    assert q.name == "inherited_param"
+    assert q.display_name == "inherited query parameter for a get method"
+    assert q.type == "string"
+    assert q.description.raw == "description for inherited query param"
+    assert q.example == "fooBar"
+    assert q.min_length == 1
+    assert q.max_length == 50
+    assert q.required is True
+
+    assert post_res.method == "post"
+    assert post_res.description.raw == "post some more foobar"
+
+
+def test_resource_inherited_no_overwrite(inherited_resources):
+    # make sure that if resource inherits a resource type, and explicitly
+    # defines properties that are defined in the resource type, the
+    # properties in the resource take preference
+    assert len(inherited_resources.resources) == 6
+    res = inherited_resources.resources[5]
+
+    assert res.method == "get"
+    assert len(res.query_params) == 2
+
+    desc = "This method-level description should be used"
+    assert res.description.raw == desc
+
+    # test query params
+    first_param = res.query_params[0]
+    second_param = res.query_params[1]
+
+    assert first_param.name == "inherited"
+    assert first_param.description.raw == "An inherited parameter"
+
+    assert second_param.name == "overwritten"
+    desc = "This query param description should be used"
+    assert second_param.description.raw == desc
+
+    # test form params
+    first_param = res.form_params[0]
+
+    desc = "This description should be inherited"
+    assert first_param.description.raw == desc
+
+    example = "This example for the overwritten form param should be used"
+    assert first_param.example == example
+
+    assert first_param.type == "string"
+    assert first_param.min_length == 1
+    assert first_param.max_length == 5
+
+    # test headers
+    first_header = res.headers[0]
+    second_header = res.headers[1]
+
+    assert first_header.name == "X-Inherited-Header"
+    assert first_header.description.raw == "this header is inherited"
+
+    assert second_header.name == "X-Overwritten-Header"
+    desc = "This header description should be used"
+    assert second_header.description.raw == desc
+    assert second_header.required
+
+    # test body
+    first_body = res.body[0]
+    second_body = res.body[1]
+
+    assert first_body.mime_type == "application/json"
+
+    schema = {
+        "$schema": "http://json-schema.org/draft-03/schema",
+        "type": "object",
+        "properties": {
+            "inherited": {
+                "description": "this schema should be inherited"
+            }
+        }
+    }
+    example = {"inherited": "yes please!"}
+    assert first_body.schema == schema
+    assert first_body.example == example
+
+    assert second_body.mime_type == "text/xml"
+
+    schema = ("<xs:schema attributeFormDefault='unqualified' "
+              "elementFormDefault='qualified' "
+              "xmlns:xs='http://www.w3.org/2001/XMLSchema'>"
+              "<xs:include schemaLocation='./thingy.xsd'/>"
+              "<xs:element name='thingies'><xs:complexType>"
+              "<xs:sequence minOccurs='0' maxOccurs='unbounded'>"
+              "<xs:element type='thingyType' name='thingy'/>"
+              "</xs:sequence></xs:complexType></xs:element></xs:schema>")
+    schema = xmltodict.parse(schema)
+
+    example = ("<thingies><thingy><name>Successfully overwrote body XML "
+               "example</name></thingy></thingies>")
+    example = xmltodict.parse(example)
+    assert second_body.schema == schema
+    assert second_body.example == example
+
+    # test responses
+    first_resp = res.responses[0]
+    second_resp = res.responses[1]
+
+    assert first_resp.code == 200
+
+    desc = "overwriting the 200 response description"
+    assert first_resp.description.raw == desc
+    assert len(first_resp.headers) == 2
+
+    first_header = first_resp.headers[0]
+    second_header = first_resp.headers[1]
+
+    assert first_header.name == "X-Inherited-Success"
+    desc = "inherited success response header"
+    assert first_header.description.raw == desc
+
+    assert second_header.name == "X-Overwritten-Success"
+    desc = "overwritten success response header"
+    assert second_header.description.raw == desc
+
+    assert second_resp.code == 201
+    assert second_resp.body[0].mime_type == "application/json"
+    example = {"description": "overwritten description of 201 body example"}
+    assert second_resp.body[0].example == example
 
 
 #####

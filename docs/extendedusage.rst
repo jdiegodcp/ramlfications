@@ -299,6 +299,241 @@ When parsed, the Python notation would look like this:
     The number of pages to return, not to exceed 10
 
 
+
+Resource types can also contain optional properties.  Currently, ``ramlfications`` only supports the ``method`` parameter to be optional, but broadening that to all properties within a defined resource type **and** trait is `coming soon`_.
+
+Below are a few examples of applying a resource type that has a require method, and an optional method.
+
+Example 1
+^^^^^^^^^
+
+A required method in a resource type with that method not explicitly defined/included in resource::
+
+
+    #%RAML 0.8
+    ---
+    title: Example API
+    baseUri: http://example.com
+    version: v1
+    resourceTypes:
+      - inheritgetmethod:
+          description: get-method resource type example
+          usage: Some sort of usage description
+          get:
+            description: This description should be inherited when applied to resources
+            headers:
+              X-Inherited-Header:
+                description: This header should be inherited
+    /a-get-resource:
+      description: Resource inherits from inheritedgetmethod
+      type: inheritgetmethod
+
+
+.. code-block:: python
+
+    >>> len(api.resources)
+    1
+    >>> res = api.resources[0]
+    >>> res.name
+    '/a-get-resource'
+    >>> res.type
+    'inheritedgetmethod'
+    >>> res.method  # inherits the required method from its resource type
+    'get'
+    >>> # also inherits all of it's other properties, if defined
+    >>> res.description.raw
+    'This description should be inherited when applied to resources'
+    >>> res.headers
+    [Header(display_name='X-Inherited-Header')]
+
+
+Example 2
+^^^^^^^^^
+
+Similar to the example above, a required method in a resource type where not explicitly defined in the resource, and the resource has another method defined (really confusing to explain, just check out the example)::
+
+    #%RAML 0.8
+    ---
+    title: Example API
+    baseUri: http://example.com
+    version: v1
+    resourceTypes:
+      - inheritgetmethod:
+          description: get-method resource type example
+          usage: Some sort of usage description
+          get:
+            description: This description should be inherited when applied to resources
+            headers:
+              X-Inherited-Header:
+                description: This header should be inherited
+    /a-resource:
+      description: Resource inherits from inheritedgetmethod
+      type: inheritgetmethod
+      post:
+        description: Post some foobar
+
+
+.. code-block:: python
+
+    >>> len(api.resources)
+    2
+    >>> first = api.resources[0]
+    >>> first.name
+    '/a-resource'
+    >>> first.type
+    'inheritedgetmethod'
+    >>> first.method  # inherits the required method from its resource type
+    'get'
+    >>> second = api.resources[1]
+    >>> second.name
+    '/a-resources'
+    >>> second.method
+    'post'
+
+
+Example 3
+^^^^^^^^^
+
+Inheriting an optional resource type method::
+
+
+    #%RAML 0.8
+    ---
+    title: Example API
+    baseUri: http://example.com
+    version: v1
+    resourceTypes:
+      - inheritgetoptionalmethod:
+          description: optional get-method resource type example
+          usage: Some sort of usage description
+          get?:
+            description: This description should be inherited when applied to resources with get methods
+            headers:
+              X-Optional-Inherited-Header:
+                description: This header should be inherited when resource has get method
+    /a-resource:
+      description: Resource inherits from inheritoptionalmethod
+      type: inheritgetoptionalmethod
+      get:
+        headers:
+          X-Explicit-Header:
+            description: This is a header in addition to what is inherited
+
+.. code-block:: python
+
+    >>> len(api.resources)
+    1
+    >>> res = api.resources[0]
+    >>> res.name
+    '/a-resource'
+    >>> res.method
+    'get'
+    >>> res.headers
+    [Header(display_name='X-Optional-Inherited-Header'), Header(display_name='X-Explicit-Header')]
+
+
+
+Example 4
+^^^^^^^^^
+
+Let's combine all permutations!::
+
+
+    #%RAML 0.8
+    ---
+    title: Example API
+    baseUri: http://example.com
+    version: v1
+    resourceTypes:
+      - inheritgetmethod:
+          description: get-method resource type example
+          usage: Some sort of usage description
+          get:
+            description: This description should be inherited when applied to resources
+            headers:
+              X-Inherited-Header:
+                description: This header should be inherited
+      - inheritgetoptionalmethod:
+          description: optional get-method resource type example
+          usage: Some sort of usage description
+          get?:
+            description: This description should be inherited when applied to resources with get methods
+            headers:
+              X-Optional-Inherited-Header:
+                description: This header should be inherited when resource has get method
+    /a-resource:
+      description: Resource inherits from inheritoptionalmethod
+      type: inheritgetoptionalmethod
+      get:
+        headers:
+          X-Explicit-Header:
+            description: This is a header in addition to what is inherited
+    /another-resource:
+      type: inheritgetmethod
+      description: This resource should also inherit the Resource Type's get method properties
+      post:
+        description: post some more foobar
+
+.. code-block:: python
+
+    >>> len(api.resources)
+    3
+    >>> first = api.resources[0]
+    >>> first.name
+    '/a-resource'
+    >>> first.method
+    'get'
+    >>> second = api.resources[1]
+    >>> second.name
+    '/another-resource'
+    >>> second.method
+    'post'
+    >>> third = api.resources[2]
+    >>> third.method
+    'get'
+
+
+Example 5
+^^^^^^^^^
+
+Last thing to note is that properties from the inherited Resource Type will *not* overwrite properties of the resource if they are explicitly defined under the resource::
+
+    #%RAML 0.8
+    ---
+    title: Example API
+    baseUri: http://example.com
+    version: v1
+    resourceTypes:
+      - inheritgetmethod:
+          description: get-method resource type example
+          usage: Some sort of usage description
+          get:
+            description: This description should *NOT* be inherited when applied to resources
+            headers:
+              X-Inherited-Header:
+                description: This header should be inherited
+    /a-get-resource:
+      description: Resource inherits from inheritedgetmethod
+      type: inheritgetmethod
+      get:
+        description: This description will actually be used
+
+
+.. code-block:: python
+
+    >>> len(api.resources)
+    1
+    >>> res = api.resources[0]
+    >>> res.name
+    '/a-get-resource'
+    >>> res.type
+    'inheritedgetmethod'
+    >>> # inherited types will not overwrite properties if explicitly defined in resource
+    >>> res.description.raw
+    'This description will actually be used'
+    >>> res.headers
+    [Header(display_name='X-Inherited-Header')]
+
 Check out :doc:`api` for full definition of ``traits`` and ``resources``, and its associated attributes and objects.
 
 
@@ -634,3 +869,4 @@ Documentation (and improved functionality) coming soon!
 .. _`ability to define schemas`: http://raml.org/spec.html#schemas
 .. _`Draft 3`: https://tools.ietf.org/html/draft-zyp-json-schema-03
 .. _`Draft 4`: https://tools.ietf.org/html/draft-zyp-json-schema-04
+.. _`coming soon`: https://github.com/spotify/ramlfications/issues/43
