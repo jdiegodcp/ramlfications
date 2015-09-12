@@ -612,9 +612,10 @@ def test_resource_properties(resources):
     assert resources[1].parent.name == "/widgets"
     assert resources[1].path == "/widgets/{id}"
 
-    abs_uri = "https://{subdomain}.example.com/v1/{communityPath}/widgets/{id}"
+    abs_uri = "http://{subdomain}.example.com/v1/{communityPath}/widgets/{id}"
     assert resources[1].absolute_uri == abs_uri
     assert resources[1].media_type == "application/xml"
+    assert resources[1].protocols == ["HTTP"]
 
     assert resources[2].is_ == ["paged"]
     assert resources[2].media_type == "application/xml"
@@ -1069,6 +1070,34 @@ def test_resource_inherited_no_overwrite(inherited_resources):
     assert second_resp.body[0].mime_type == "application/json"
     example = {"description": "overwritten description of 201 body example"}
     assert second_resp.body[0].example == example
+
+
+@pytest.fixture(scope="session")
+def resource_protocol():
+    raml_file = os.path.join(EXAMPLES, "protocols.raml")
+    loaded_raml = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    config['validate'] = False
+    return pw.parse_raml(loaded_raml, config)
+
+
+def test_overwrite_protocol(resource_protocol):
+    # if a resource explicitly defines a protocol, *that*
+    # should be reflected in the absolute URI
+    api = resource_protocol
+    assert api.protocols == ["HTTPS"]
+    assert api.base_uri == "https://api.spotify.com/v1"
+
+    res = api.resources
+    assert len(res) == 2
+
+    first = res[0]
+    second = res[1]
+
+    assert first.display_name == "several-tracks"
+    assert first.protocols == ["HTTP"]
+    assert second.display_name == "track"
+    assert second.protocols == ["HTTP"]
 
 
 #####

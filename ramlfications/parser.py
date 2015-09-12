@@ -884,6 +884,11 @@ def create_node(name, raw_data, method, parent, root):
         """Returns ``attribute`` defined at the resource level, or ``None``."""
         return raw_data.get(attribute, {})
 
+    def get_parent(attribute):
+        if parent:
+            return getattr(parent, attribute, {})
+        return {}
+
     def get_resource_type(attribute):
         """Returns ``attribute`` defined in the resource type, or ``None``."""
         if type_() and root.resource_types:
@@ -967,7 +972,23 @@ def create_node(name, raw_data, method, parent, root):
 
     def absolute_uri():
         """Set resource's absolute URI path."""
-        return root.base_uri + path()
+        uri = root.base_uri + path()
+        proto = protocols()
+        if proto:
+            uri = uri.split("://")
+            if len(uri) == 2:
+                uri = uri[1]
+            if root.protocols:
+                _proto = list(set(root.protocols) & set(proto))
+                # if resource protocols and root protocols share a protocol
+                # then use that one
+                if _proto:
+                    uri = _proto[0].lower() + "://" + uri
+                # if no shared protocols, use the first of the resource
+                # protocols
+                else:
+                    uri = proto[0].lower() + "://" + uri
+        return uri
 
     def protocols():
         """Set resource's supported protocols."""
@@ -975,6 +996,7 @@ def create_node(name, raw_data, method, parent, root):
         r_type_protocols = get_resource_type("protocols")
         m_protocols = get_method("protocols")
         r_protocols = get_resource("protocols")
+        parent = get_parent("protocols")
         if m_protocols:
             return m_protocols
         elif r_type_protocols:
@@ -983,6 +1005,8 @@ def create_node(name, raw_data, method, parent, root):
             return trait_protocols
         elif r_protocols:
             return r_protocols
+        elif parent:
+            return parent
         return [root.base_uri.split(":")[0].upper()]
 
     def headers():
