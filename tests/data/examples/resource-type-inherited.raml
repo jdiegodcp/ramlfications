@@ -1,9 +1,37 @@
 #%RAML 0.8
----
 title: Example API
 baseUri: http://example.com
 version: v1
 resourceTypes:
+  - basetype:
+      description: Base resource type from which to inherit
+      get:
+        description: Inherited description for required get method
+        headers:
+          X-BaseType-Header:
+            description: Inherited header from basetype
+        responses:
+          200:
+            description: Inherited OK response
+          404:
+            description: Inherited resource not found response
+      post?:
+        description: Inherited description for optional post method
+        body:
+          application/json:
+            schema: !include includes/inherited.schema.json
+            example: !include includes/inherited.example.json
+  - inheritbase:
+      type: basetype
+      usage: some usage description
+      get:
+        headers:
+          X-InheritBaseType-Header:
+            description: A header for inheritbase resource type
+        body:
+          application/json:
+            schema: !include includes/inherited.schema.json
+            example: !include includes/inherited.example.json
   - inheritgetmethod:
       description: get-method resource type example
       usage: Some sort of usage description
@@ -178,3 +206,5 @@ resourceTypes:
               {
                 "description": "overwritten description of 201 body example"
               }
+/restype-inherits-restype:
+  type: inheritbase

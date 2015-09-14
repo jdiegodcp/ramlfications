@@ -503,7 +503,8 @@ def test_resource_type_delete_base(resource_types):
 
 
 def test_resource_type_get_item(resource_types):
-    res = resource_types[5]
+    res = [r for r in resource_types if r.name == "item"]
+    res = [r for r in res if r.method == "get"][0]
 
     assert res.name == "item"
     assert res.type == "base"
