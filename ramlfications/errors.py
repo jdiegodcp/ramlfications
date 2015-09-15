@@ -59,3 +59,19 @@ class LoadRAMLError(Exception):
 
 class MediaTypeError(Exception):
     pass
+
+
+###
+# NodeList exceptions
+###
+
+class InvalidNodeListFilterKey(Exception):
+    """When an invalid filter key was passed in to a NodeList"""
+
+
+class MultipleNodesFound(Exception):
+    """A single node was required but more than one were found."""
+
+
+class NoNodeFound(Exception):
+    """One node was required but none was found."""

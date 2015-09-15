@@ -3,24 +3,21 @@
 
 from __future__ import absolute_import, division, print_function
 
-
 import json
 import logging
 import os
 import re
 import sys
 
-try:
-    from collections import OrderedDict
-except ImportError:  # NOCOV
-    from ordereddict import OrderedDict
-
-from six import iterkeys, iteritems
 import xmltodict
+from six import iterkeys, iteritems
 
+from .errors import MediaTypeError
+from .nodelist import NodeList
 from .parameters import (
     Body, URIParameter, Header, FormParameter, QueryParameter
 )
+from ._compat import OrderedDict
 
 PYVER = sys.version_info[:3]
 
@@ -39,8 +36,6 @@ else:
         import six.moves.urllib.error as urllib_error
         URLLIB = True
         SECURE_DOWNLOAD = False
-
-from .errors import MediaTypeError
 
 
 IANA_URL = "https://www.iana.org/assignments/media-types/media-types.xml"
@@ -493,7 +488,7 @@ def _get_inherited_attribute(attribute, root, type_, method, is_):
 
 # TODO: refactor - this ain't pretty
 def _remove_duplicates(inherit_params, resource_params):
-    ret = []
+    ret = NodeList()
     if isinstance(resource_params[0], Body):
         _params = [p.mime_type for p in resource_params]
     else:
