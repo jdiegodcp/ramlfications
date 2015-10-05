@@ -60,7 +60,7 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = None
+        self.pytest_args = ''
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -69,7 +69,7 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import pytest
-        errno = pytest.main(self.pytest_args or [] + ["tests"])
+        errno = pytest.main(self.pytest_args + ' tests')
         sys.exit(errno)
 
 setup(
