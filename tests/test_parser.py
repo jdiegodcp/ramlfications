@@ -301,19 +301,16 @@ def test_trait_body(traits):
 
 
 def test_trait_uri_params(traits):
-    trait = traits[1]
-    assert trait.uri_params[0].name == "limit"
-    assert trait.uri_params[0].type == "integer"
-    assert trait.uri_params[0].example == 10
-    assert trait.uri_params[0].minimum == 0
-    assert trait.uri_params[0].maximum == 50
-    assert trait.uri_params[0].default == 20
+    trait = traits[4]
+    assert trait.uri_params[0].name == "communityPath"
+    assert trait.uri_params[0].type == "string"
+    assert trait.uri_params[0].example == 'baz-community'
 
-    desc = "The maximum number of gizmo objects to return"
+    desc = "The community path URI params trait"
     assert trait.uri_params[0].description.raw == desc
     assert repr(trait.uri_params[0].description) == desc
 
-    desc_html = "<p>The maximum number of gizmo objects to return</p>\n"
+    desc_html = "<p>The community path URI params trait</p>\n"
     assert trait.uri_params[0].description.html == desc_html
 
 
@@ -695,8 +692,8 @@ def test_resource_assigned_trait(resources):
     assert res.traits[0].description.raw == "A description of the paged trait"
     assert res.traits[0].media_type == "application/xml"
 
-    params = [p.name for p in res.uri_params]
-    t_params = [p.name for p in res.traits[0].uri_params]
+    params = [p.name for p in res.query_params]
+    t_params = [p.name for p in res.traits[0].query_params]
 
     for t in t_params:
         assert t in params
@@ -838,7 +835,7 @@ def test_resource_security_scheme(resources):
 
 def test_resource_inherit_parent(resources):
     res = resources[2]
-    assert len(res.uri_params) == 4
+    assert len(res.uri_params) == 2
 
 
 def test_resource_response_no_desc():
