@@ -1,6 +1,17 @@
 Changelog
 =========
 
+
+0.1.8 (2015-10-07)
+------------------
+
+- Fix incorrect/incomplete behavior optional properties of Resource Types (`Issue 44`_).
+- Fix ``protocols`` inheritance (`Issue 44`_).
+- Partial fix for `Issue 23`_ - incorrect resource type inheritance
+
+    * When a resource type is defined with one method that is optional and is applied to a resource that does *not* have that method defined, the resource’s method should not inherit from the optional method
+    * When a resource inherits a resource type but explicitly defines named parameters, the named parameters in the resource should overwrite those that are inherited
+
 0.1.7 (2015-08-20)
 ------------------
 
@@ -93,3 +104,5 @@ Initial alpha release of ``ramlfications``\!
 .. _`jhl2343`: https://github.com/jhl2343
 .. _`Issue 21`: https://github.com/spotify/ramlfications/issues/21
 .. _`cerivera`: https://github.com/cerivera
+.. _`Issue 44`: https://github.com/spotify/ramlfications/issues/44
+.. _`Issue 23`: https://github.com/spotify/ramlfications/issues/23
