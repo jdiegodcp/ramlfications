@@ -196,7 +196,7 @@ def assigned_traits(inst, attr, value):
                             "ined in the root of the API.".format(v, inst.path)
                         )
                         raise InvalidResourceNodeError(msg)
-                    if not isinstance(v.keys()[0], str):  # NOCOV
+                    if not isinstance(list(iterkeys(v))[0], str):  # NOCOV
                         msg = ("'{0}' needs to be a string referring to a "
                                "trait, or a dictionary mapping parameter "
                                "values to a trait".format(v))
