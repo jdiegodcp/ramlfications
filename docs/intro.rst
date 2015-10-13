@@ -16,6 +16,9 @@ If you’ve never heard of `RAML`_, you’re missing out:
     The goal is to help our current API ecosystem by solving immediate problems and then encourage ever-better API patterns.
     RAML is built on broadly-used standards such as YAML and JSON and is a non-proprietary, vendor-neutral open spec.
 
+``ramlfications`` supports RAML_ version 0.8.
+
+
 Why ``ramlfications`` and not `pyraml-parser`_?
 -----------------------------------------------
 
