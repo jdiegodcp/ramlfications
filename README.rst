@@ -17,8 +17,8 @@ ramlfications: RAML reference implementation in Python
    :target: https://github.com/spotify/ramlfications/blob/master/LICENSE
    :alt: License
 
-.. image:: https://img.shields.io/coveralls/spotify/ramlfications/master.svg?style=flat-square
-   :target: https://coveralls.io/r/spotify/ramlfications?branch=master
+.. image:: https://codecov.io/github/spotify/ramlfications/coverage.svg?branch=master
+   :target: https://codecov.io/github/spotify/ramlfications?branch=master
    :alt: Current coverage
 
 .. image:: https://img.shields.io/pypi/pyversions/ramlfications.svg?style=flat-square
