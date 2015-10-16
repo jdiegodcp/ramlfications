@@ -9,8 +9,10 @@ env:
 - TOX_ENV=docs
 - TOX_ENV=flake8
 - TOX_ENV=manifest
+before_install:
+- pip install codecov
 install:
-- pip install tox codecov
+- pip install tox
 script:
 - tox --hashseed 0 -e $TOX_ENV
 after_success:
