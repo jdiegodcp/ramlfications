@@ -140,7 +140,7 @@ To visualize a tree output of a RAML file:
 
 .. code-block:: bash
 
-   $ ramlfications tree /path/to/my-api.raml [-c|--color light/dark] [-v|vv|vvv] [-o|--output]
+   $ ramlfications tree /path/to/my-api.raml [--color light/dark] [-v|vv|vvv] [-o|--output]
 
 The least verbose option would show something like this:
 
