@@ -50,9 +50,14 @@ class RAMLLoader(object):
             base_path = base_path + "/"
         base_path = "file://" + base_path
 
-        with open(jsonfile, "r") as f:
-            schema = jsonref.load(f, base_uri=base_path, jsonschema=True)
-        return schema
+        try:
+            with open(jsonfile, "r") as f:
+                schema = jsonref.load(f, base_uri=base_path, jsonschema=True)
+        except ValueError as err:
+            msg = "ERROR: failed to parse JSON file: {0} ({1})"
+            raise LoadRAMLError(msg.format(jsonfile, err))
+        else:
+            return schema
 
     def _ordered_load(self, stream, loader=yaml.SafeLoader):
         """
