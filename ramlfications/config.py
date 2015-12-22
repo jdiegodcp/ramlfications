@@ -84,6 +84,7 @@ def setup_config(config_file=None):
         "http_methods": HTTP_METHODS,
         "raml_versions": RAML_VERSIONS,
         "prim_types": PRIM_TYPES,
+        "validate": True,
     }
 
     if config_file:
