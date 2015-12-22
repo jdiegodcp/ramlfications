@@ -130,8 +130,9 @@ can still validate your code by passing in your config file.
    >>> validate(RAML_FILE, CONFIG_FILE)
    >>>
 
-To learn more about ``ramlfications`` configuration including default/supported configuration,
-check out :doc:`config`.
+You may also "turn off" validation when developing via the config file.  To learn more about
+``ramlfications`` configuration including turning off validation as well as
+default/supported configuration, check out :doc:`config`.
 
 Tree
 ----
