@@ -32,6 +32,7 @@ def basic_config():
         "http_methods": HTTP_METHODS,
         "raml_versions": RAML_VERSIONS,
         "prim_types": PRIM_TYPES,
+        "validate": True,
     }
     optional = [m + "?" for m in basic_conf["http_methods"]]
     basic_conf["http_optional"] = optional + basic_conf["http_methods"]

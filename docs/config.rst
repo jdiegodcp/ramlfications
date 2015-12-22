@@ -3,8 +3,20 @@ Configuration
 
 .. _supported:
 
-Supported
----------
+Main Configuration
+------------------
+
+You are able to turn on/off the validation against the RAML specification within the ``config.ini`` file::
+
+    [main]
+    validation = False  # defaults to True if not set
+
+
+This configuration is ignored when using the `validate`_ function directly (but other configurations are not ignored).
+
+
+Supported Custom Validation Configuration
+-----------------------------------------
 
 In support of the `RAML spec`_, ``ramlfications`` will automatically support
 the following:
@@ -119,3 +131,4 @@ To use via the command line:
 .. _`default media type`: http://raml.org/spec.html#default-media-type
 .. _IANA: https://www.iana.org/assignments/media-types/media-types.xml
 .. _GitHub: https://github.com/spotify/ramlfications/blob/master/ramlfications/data/supported_mime_types.json
+.. _validate: https://ramlfications.readthedocs.org/en/latest/usage.html#validate
