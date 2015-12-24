@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import json
 import logging
 import os
+import re
 import sys
 
 try:
@@ -678,3 +679,18 @@ def set_params(data, param_str, root, method, inherit=False, **kw):
 
     return __remove_duplicates(to_clean)
 # <--[query, base uri, form]-->
+
+
+# preserve order of URI and Base URI parameters
+# used for RootNode, ResourceNode
+def _preserve_uri_order(path, param_objs):
+    if not param_objs:
+        return param_objs
+    sorted_params = []
+    pattern = "\{(.*?)\}"
+    params = re.findall(pattern, path)
+    for p in params:
+        _param = [i for i in param_objs if i.name == p]
+        if _param:
+            sorted_params.append(_param[0])
+    return sorted_params

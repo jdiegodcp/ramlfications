@@ -1,0 +1,33 @@
+#%RAML 0.8
+title: Example API - Preserve URI Param order
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://{subHostName}.{bucketName}.example.com/{version}/{lang}
+baseUriParameters:
+  subHostName:
+    description: The name of the sub domain host
+  bucketName:
+    description: The name of the bucket
+uriParameters:
+  lang:
+    description: Language desired
+mediaType: application/json
+/users/{user_id}/playlists:
+  uriParameters:
+    user_id:
+      displayName: User ID
+      type: string
+      description: The user's Spotify user ID.
+      example: smedjan
+  displayName: playlists
+  get:
+    description: Get a List of a User's Playlists
+  /{playlist_id}:
+    get:
+      description: Get a Playlist's Details
+      uriParameters:
+        playlist_id:
+          displayName: Playlist Id
+          type: string
+          description: ID of playlist
+          example: 123456

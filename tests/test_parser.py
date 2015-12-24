@@ -664,7 +664,15 @@ def test_resource_assigned_type(resources):
     assert res.method == "get"
     assert res.type == "item"
 
-    assert res.uri_params[0] == res.resource_type.uri_params[0]
+    res_type_uri = [r.name for r in res.resource_type.uri_params]
+    res_uri = [r.name for r in res.uri_params]
+
+    exp_res_type_uri = ["mediaTypeExtension"]
+    exp_res_uri = ["communityPath", "user_id", "thingy_id"]
+
+    assert res_type_uri == exp_res_type_uri
+    assert res_uri == exp_res_uri
+
     assert res.headers[0] == res.resource_type.headers[0]
     assert res.body[0] == res.resource_type.body[0]
     assert res.responses[0] == res.resource_type.responses[0]
@@ -1109,6 +1117,27 @@ def test_overwrite_protocol(resource_protocol):
     assert first.protocols == ["HTTP"]
     assert second.display_name == "track"
     assert second.protocols == ["HTTP"]
+
+
+@pytest.fixture(scope="session")
+def uri_param_resources():
+    raml_file = os.path.join(EXAMPLES, "preserve-uri-order.raml")
+    loaded_raml = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    config['validate'] = False
+    return pw.parse_raml(loaded_raml, config)
+
+
+def test_uri_params_order(uri_param_resources):
+    res = uri_param_resources.resources[1]
+    expected_uri = ["lang", "user_id", "playlist_id"]
+    expected_base = ["subHostName", "bucketName"]
+
+    uri = [u.name for u in res.uri_params]
+    base = [b.name for b in res.base_uri_params]
+
+    assert uri == expected_uri
+    assert base == expected_base
 
 
 #####
