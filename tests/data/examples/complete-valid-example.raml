@@ -229,7 +229,7 @@ traits:
   - paged:
       description: A description of the paged trait
       mediaType: application/xml
-      uriParameters:
+      queryParameters:
         limit:
           displayName: Limit
           description: The maximum number of gizmo objects to return
@@ -261,6 +261,14 @@ traits:
         communityPath:
           displayName: Community Path trait
           description: The community path base URI trait
+          type: string
+          example: baz-community
+  - uriParamsTrait:
+      description: A description of a trait with URI parameters
+      uriParameters:
+        communityPath:
+          displayName: Community Path trait
+          description: The community path URI params trait
           type: string
           example: baz-community
   - protocolTrait:
