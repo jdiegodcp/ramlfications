@@ -4,23 +4,29 @@
 from __future__ import absolute_import, division, print_function
 import re
 
-try:
-    from collections import OrderedDict
-except ImportError:  # NOCOV
-    from ordereddict import OrderedDict
-
 import attr
 from six import iteritems, iterkeys, itervalues
 
 
+from .config import MEDIA_TYPES
+from .errors import InvalidRAMLError
 from .parameters import (
     Documentation, Header, Body, Response, URIParameter, QueryParameter,
     FormParameter, SecurityScheme
 )
+from .parser_utils import (
+    security_schemes
+)
 from .raml import RootNode, ResourceNode, ResourceTypeNode, TraitNode
-from .utils import load_schema, _resource_type_lookup
-from .config import MEDIA_TYPES
-from .errors import InvalidRAMLError
+from .utils import (
+    load_schema, _resource_type_lookup,
+    _get_resource_type, _get_trait, _get_attribute,
+    _get_inherited_attribute, _remove_duplicates, _create_uri_params,
+    _get, _create_base_param_obj, _get_res_type_attribute,
+    _get_inherited_type_params, _get_inherited_item, _get_attribute_dict,
+    get_inherited, set_param_object, set_params, _get_data_union
+)
+
 
 __all__ = ["parse_raml"]
 
@@ -34,7 +40,7 @@ def parse_raml(loaded_raml, config):
     :raises: :py:class:`.errors.InvalidRAMLError` when RAML file is invalid
     """
 
-    validate = str(config.get("validate")).lower() == 'true'
+    validate = str(_get(config, "validate")).lower() == 'true'
 
     # Postpone validating the root node until the end; otherwise,
     # we end up with duplicate validation exceptions.
@@ -57,60 +63,6 @@ def parse_raml(loaded_raml, config):
     return root
 
 
-def _get(data, item, default=None):
-    """
-    Helper function to catch empty mappings in RAML. If item is optional
-    but not in the data, or data is ``None``, the default value is returned.
-
-    :param data: RAML data
-    :param str item: RAML key
-    :param default: default value if item is not in dict
-    :param bool optional: If RAML item is optional or needs to be defined
-    :ret: value for RAML key
-    """
-    try:
-        return data.get(item, default)
-    except AttributeError:
-        return default
-
-
-def _create_base_param_obj(attribute_data, param_obj, config, errors, **kw):
-    """Helper function to create a BaseParameter object"""
-    objects = []
-
-    for key, value in list(iteritems(attribute_data)):
-        if param_obj is URIParameter:
-            required = _get(value, "required", default=True)
-        else:
-            required = _get(value, "required", default=False)
-        kwargs = dict(
-            name=key,
-            raw={key: value},
-            desc=_get(value, "description"),
-            display_name=_get(value, "displayName", key),
-            min_length=_get(value, "minLength"),
-            max_length=_get(value, "maxLength"),
-            minimum=_get(value, "minimum"),
-            maximum=_get(value, "maximum"),
-            default=_get(value, "default"),
-            enum=_get(value, "enum"),
-            example=_get(value, "example"),
-            required=required,
-            repeat=_get(value, "repeat", False),
-            pattern=_get(value, "pattern"),
-            type=_get(value, "type", "string"),
-            config=config,
-            errors=errors
-        )
-        if param_obj is Header:
-            kwargs["method"] = _get(kw, "method")
-
-        item = param_obj(**kwargs)
-        objects.append(item)
-
-    return objects or None
-
-
 def create_root(raml, config):
     """
     Creates a Root Node based off of the RAML's root section.
@@ -121,44 +73,36 @@ def create_root(raml, config):
 
     errors = []
 
-    def title():
-        return raml.get("title")
-
-    def version():
-        return raml.get("version")
-
     def protocols():
-        explicit_protos = raml.get("protocols")
+        explicit_protos = _get(raml, "protocols")
         implicit_protos = re.findall(r"(https|http)", base_uri())
         implicit_protos = [p.upper() for p in implicit_protos]
 
         return explicit_protos or implicit_protos or None
 
     def base_uri():
-        base_uri = raml.get("baseUri", "")
+        base_uri = _get(raml, "baseUri", "")
         if "{version}" in base_uri:
-            base_uri = base_uri.replace("{version}", str(raml.get("version")))
+            base_uri = base_uri.replace("{version}",
+                                        str(_get(raml, "version")))
         return base_uri
 
     def base_uri_params():
-        data = raml.get("baseUriParameters", {})
+        data = _get(raml, "baseUriParameters", {})
         return _create_base_param_obj(data, URIParameter, config, errors)
 
     def uri_params():
-        data = raml.get("uriParameters", {})
+        data = _get(raml, "uriParameters", {})
         return _create_base_param_obj(data, URIParameter, config, errors)
 
-    def media_type():
-        return raml.get("mediaType")
-
     def docs():
-        d = raml.get("documentation", [])
+        d = _get(raml, "documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(i.get("title"), i.get("content")) for i in d]
+        docs = [Documentation(_get(i, "title"), _get(i, "content")) for i in d]
         return docs or None
 
     def schemas():
-        _schemas = raml.get("schemas")
+        _schemas = _get(raml, "schemas")
         if not _schemas:
             return None
         schemas = []
@@ -167,23 +111,20 @@ def create_root(raml, config):
             schemas.append({list(iterkeys(schema))[0]: value})
         return schemas or None
 
-    def secured_by():
-        return raml.get("securedBy")
-
     return RootNode(
         raml_obj=raml,
         raw=raml,
-        title=title(),
-        version=version(),
+        title=_get(raml, "title"),
+        version=_get(raml, "version"),
         protocols=protocols(),
         base_uri=base_uri(),
         base_uri_params=base_uri_params(),
         uri_params=uri_params(),
-        media_type=media_type(),
+        media_type=_get(raml, "mediaType"),
         documentation=docs(),
         schemas=schemas(),
         config=config,
-        secured_by=secured_by(),
+        secured_by=_get(raml, "securedBy"),
         errors=errors
     )
 
@@ -196,7 +137,7 @@ def create_sec_schemes(raml_data, root):
     :param RootNode root: Root Node
     :returns: list of :py:class:`.parameters.SecurityScheme` objects
     """
-    def map_object_types(item):
+    def _map_object_types(item):
         return {
             "headers": headers,
             "body": body,
@@ -210,28 +151,27 @@ def create_sec_schemes(raml_data, root):
             "documentation": documentation,
         }[item]
 
-    def type_():
-        return data.get("type")
-
     def headers(header_data):
         _headers = []
-        header_data = header_data.get("headers", {})
+        header_data = _get(header_data, "headers", {})
         for k, v in list(iteritems(header_data)):
-            h = _create_base_param_obj({k: v}, Header, root.config,
+            h = _create_base_param_obj({k: v},
+                                       Header,
+                                       root.config,
                                        root.errors)
             _headers.extend(h)
         return _headers
 
     def body(body_data):
-        body_data = body_data.get("body", {})
+        body_data = _get(body_data, "body", {})
         _body = []
         for k, v in list(iteritems(body_data)):
             body = Body(
                 mime_type=k,
                 raw=v,
-                schema=load_schema(v.get("schema")),
-                example=load_schema(v.get("example")),
-                form_params=v.get("formParameters"),
+                schema=load_schema(_get(v, "schema")),
+                example=load_schema(_get(v, "example")),
+                form_params=_get(v, "formParameters"),
                 config=root.config,
                 errors=root.errors
             )
@@ -240,14 +180,14 @@ def create_sec_schemes(raml_data, root):
 
     def responses(resp_data):
         _resps = []
-        resp_data = resp_data.get("responses", {})
+        resp_data = _get(resp_data, "responses", {})
         for k, v in list(iteritems(resp_data)):
             response = Response(
                 code=k,
                 raw=v,
-                desc=v.get("description"),
-                headers=headers(v.get("headers", {})),
-                body=body(v.get("body", {})),
+                desc=_get(v, "description"),
+                headers=headers(_get(v, "headers", {})),
+                body=body(_get(v, "body", {})),
                 config=root.config,
                 errors=root.errors
             )
@@ -255,69 +195,66 @@ def create_sec_schemes(raml_data, root):
         return sorted(_resps, key=lambda x: x.code)
 
     def query_params(param_data):
-        param_data = param_data.get("queryParameters", {})
+        param_data = _get(param_data, "queryParameters", {})
         _params = []
         for k, v in list(iteritems(param_data)):
-            p = _create_base_param_obj({k: v}, QueryParameter, root.config,
+            p = _create_base_param_obj({k: v},
+                                       QueryParameter,
+                                       root.config,
                                        root.errors)
             _params.extend(p)
         return _params
 
     def uri_params(param_data):
-        param_data = param_data.get("uriParameters")
+        param_data = _get(param_data, "uriParameters")
         _params = []
         for k, v in list(iteritems(param_data)):
-            p = _create_base_param_obj({k: v}, URIParameter, root.config,
+            p = _create_base_param_obj({k: v},
+                                       URIParameter,
+                                       root.config,
                                        root.errors)
             _params.extend(p)
         return _params
 
     def form_params(param_data):
-        param_data = param_data.get("formParameters", {})
+        param_data = _get(param_data, "formParameters", {})
         _params = []
         for k, v in list(iteritems(param_data)):
-            p = _create_base_param_obj({k: v}, FormParameter, root.config,
+            p = _create_base_param_obj({k: v},
+                                       FormParameter,
+                                       root.config,
                                        root.errors)
             _params.extend(p)
         return _params
 
     def usage(desc_by_data):
-        return desc_by_data.get("usage")
+        return _get(desc_by_data, "usage")
 
     def media_type(desc_by_data):
-        return desc_by_data.get("mediaType")
+        return _get(desc_by_data, "mediaType")
 
     def protocols(desc_by_data):
-        return desc_by_data.get("protocols")
+        return _get(desc_by_data, "protocols")
 
     def documentation(desc_by_data):
-        d = desc_by_data.get("documentation", [])
+        d = _get(desc_by_data, "documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(i.get("title"), i.get("content")) for i in d]
+        docs = [Documentation(_get(i, "title"), _get(i, "content")) for i in d]
         return docs or None
 
     def set_property(node, obj, node_data):
-        func = map_object_types(obj)
+        func = _map_object_types(obj)
         item_objs = func({obj: node_data})
         setattr(node, func.__name__, item_objs)
-
-    def described_by():
-        return data.get("describedBy", {})
-
-    def description():
-        return data.get("description")
-
-    def settings():
-        return data.get("settings")
 
     def initial_wrap(key, data):
         return SecurityScheme(
             name=key,
             raw=data,
-            type=type_(),
-            described_by=described_by(),
-            desc=description(),
-            settings=settings(),
+            type=_get(data, "type"),
+            described_by=_get(data, "describedBy", {}),
+            desc=_get(data, "description"),
+            settings=_get(data, "settings"),
             config=root.config,
             errors=root.errors
         )
@@ -327,7 +264,7 @@ def create_sec_schemes(raml_data, root):
             set_property(node, obj, node_data)
         return node
 
-    schemes = raml_data.get("securitySchemes", [])
+    schemes = _get(raml_data, "securitySchemes", [])
     scheme_objs = []
     for s in schemes:
         name = list(iterkeys(s))[0]
@@ -349,39 +286,23 @@ def create_traits(raml_data, root):
     def description():
         return _get(data, "description")
 
-    def media_type():
-        return _get(data, "mediaType")
-
-    def usage():
-        return _get(data, "usage")
-
     def protocols():
         return _get(data, "protocols")
 
     def query_params():
-        params = _get(data, "queryParameters", {})
-        return _create_base_param_obj(params, QueryParameter, root.config,
-                                      root.errors)
+        return set_param_object(data, "queryParameters", root)
 
     def uri_params():
-        params = _get(data, "uriParameters", {})
-        return _create_base_param_obj(params, URIParameter, root.config,
-                                      root.errors)
+        return set_param_object(data, "uriParameters", root)
 
     def form_params():
-        params = _get(data, "formParameters", {})
-        return _create_base_param_obj(params, FormParameter, root.config,
-                                      root.errors)
+        return set_param_object(data, "formParameters", root)
 
     def base_uri_params():
-        params = _get(data, "baseUriParameters", {})
-        return _create_base_param_obj(params, URIParameter, root.config,
-                                      root.errors)
+        return set_param_object(data, "baseUriParameters", root)
 
     def headers(data):
-        headers_ = _get(data, "headers", {})
-        return _create_base_param_obj(headers_, Header, root.config,
-                                      root.errors)
+        return set_param_object(data, "headers", root)
 
     def body(data):
         body = _get(data, "body", {})
@@ -390,9 +311,9 @@ def create_traits(raml_data, root):
             body = Body(
                 mime_type=key,
                 raw=value,
-                schema=load_schema(value.get("schema")),
-                example=load_schema(value.get("example")),
-                form_params=value.get("formParameters"),
+                schema=load_schema(_get(value, "schema")),
+                example=load_schema(_get(value, "example")),
+                form_params=_get(value, "formParameters"),
                 config=root.config,
                 errors=root.errors
             )
@@ -405,7 +326,7 @@ def create_traits(raml_data, root):
             response = Response(
                 code=key,
                 raw=value,
-                desc=value.get("description"),
+                desc=_get(value, "description"),
                 headers=headers(value),
                 body=body(value),
                 config=root.config,
@@ -427,13 +348,13 @@ def create_traits(raml_data, root):
             body=body(data),
             responses=responses(),
             desc=description(),
-            media_type=media_type(),
-            usage=usage(),
+            media_type=_get(data, "mediaType"),
+            usage=_get(data, "usage"),
             protocols=protocols(),
             errors=root.errors
         )
 
-    traits = raml_data.get("traits", [])
+    traits = _get(raml_data, "traits", [])
     trait_objects = []
     for trait in traits:
         name = list(iterkeys(trait))[0]
@@ -451,124 +372,22 @@ def create_resource_types(raml_data, root):
     :returns: list of :py:class:`.raml.ResourceTypeNode` objects
     """
     # TODO: move this outside somewhere - config?
-    accepted_methods = root.config.get("http_optional")
-
-    #####
-    # Helper functions
-    #####
-
-    def get_union(resource, method, inherited):
-        union = {}
-        for key, value in list(iteritems(inherited)):
-            if resource.get(method) is not None:
-                if key not in list(iterkeys(resource.get(method, {}))):
-                    union[key] = value
-                else:
-                    resource_values = resource.get(method, {}).get(key)
-                    inherited_values = inherited.get(key, {})
-                    union[key] = dict(list(iteritems(resource_values)) +
-                                      list(iteritems(inherited_values)))
-        if resource.get(method) is not None:
-            for key, value in list(iteritems(resource.get(method, {}))):
-                if key not in list(iterkeys(inherited)):
-                    union[key] = value
-        return union
-
-    def get_inherited_resource(res_name):
-        for resource in resource_types:
-            if res_name == list(iterkeys(resource))[0]:
-                return resource
-
-    def get_inherited_type(root, resource, _type, raml):
-        inherited = get_inherited_resource(_type)
-        res_type_objs = []
-        for key, value in list(iteritems(resource)):
-            for i in list(iterkeys(value)):
-                if i in accepted_methods:
-                    data_union = get_union(
-                        value, i, list(itervalues(inherited))[0].get(i, {})
-                    )
-                    # res = wrap(key, data_union, i)
-                    res = ResourceTypeNode(
-                        name=key,
-                        raw=data_union,
-                        root=root,
-                        headers=headers(data_union.get("headers", {})),
-                        body=body(data_union.get("body", {})),
-                        responses=responses(data_union),
-                        uri_params=uri_params(data_union),
-                        base_uri_params=base_uri_params(data_union),
-                        query_params=query_params(data_union),
-                        form_params=form_params(data_union),
-                        media_type=media_type(),
-                        desc=description(),
-                        type=type_(),
-                        method=method(i),
-                        usage=usage(),
-                        optional=optional(),
-                        is_=is_(data_union),
-                        traits=traits(data_union),
-                        secured_by=secured_by(data_union),
-                        security_schemes=security_schemes(data_union),
-                        display_name=display_name(data_union, key),
-                        protocols=protocols(data_union),
-                        errors=root.errors
-                    )
-                    res_type_objs.append(res)
-        return res_type_objs
-
-    def get_scheme(item):
-        schemes = raml_data.get("securitySchemes", [])
-        for s in schemes:
-            if item == list(iterkeys(s))[0]:
-                return s
-
-    def get_inherited_type_params(data, attribute, params):
-        inherited = get_inherited_resource(data.get("type"))
-        inherited = inherited.get(data.get("type"))
-        inherited_params = inherited.get(attribute, {})
-
-        return dict(list(iteritems(params)) +
-                    list(iteritems(inherited_params)))
-
-    def get_attribute(res_data, method_data, item, default={}):
-        method_level = _get(method_data, item, default)
-        resource_level = _get(res_data, item, default)
-        return method_level, resource_level
-
-    def get_inherited_item(items, item_name):
-        inherited = get_inherited_resource(v.get("type"))
-        resource = inherited.get(v.get("type"))
-        res_level = resource.get(meth, {}).get(item_name, {})
-
-        method = resource.get(meth, {})
-        method_level = method.get(item_name, {})
-        items = dict(
-            list(iteritems(items)) +
-            list(iteritems(res_level)) +
-            list(iteritems(method_level))
-        )
-        return items
-
-    def get_attribute_dict(data, item):
-        resource_level = _get(v, item, {})
-        method_level = _get(data, item, {})
-        return dict(list(iteritems(resource_level)) +
-                    list(iteritems(method_level)))
+    accepted_methods = _get(root.config, "http_optional")
 
     #####
     # Set ResourceTypeNode attributes
     #####
 
-    def display_name(data, name):
-        return data.get("displayName", name)
-
     def headers(data):
         _headers = _get(data, "headers", {})
         if _get(v, "type"):
-            _headers = get_inherited_item(_headers, "headers")
+            _headers = _get_inherited_item(_headers, "headers",
+                                           resource_types,
+                                           meth, v)
 
-        header_objs = _create_base_param_obj(_headers, Header, root.config,
+        header_objs = _create_base_param_obj(_headers,
+                                             Header,
+                                             root.config,
                                              root.errors)
         if header_objs:
             for h in header_objs:
@@ -579,16 +398,17 @@ def create_resource_types(raml_data, root):
     def body(data):
         _body = _get(data, "body", default={})
         if _get(v, "type"):
-            _body = get_inherited_item(_body, "body")
+            _body = _get_inherited_item(_body, "body", resource_types,
+                                        meth, v)
 
         body_objects = []
         for key, value in list(iteritems(_body)):
             body = Body(
                 mime_type=key,
                 raw=value,
-                schema=load_schema(value.get("schema")),
-                example=load_schema(value.get("example")),
-                form_params=value.get("formParameters"),
+                schema=load_schema(_get(value, "schema")),
+                example=load_schema(_get(value, "example")),
+                form_params=_get(value, "formParameters"),
                 config=root.config,
                 errors=root.errors
             )
@@ -599,10 +419,11 @@ def create_resource_types(raml_data, root):
         response_objects = []
         _responses = _get(data, "responses", {})
         if _get(v, "type"):
-            _responses = get_inherited_item(_responses, "responses")
+            _responses = _get_inherited_item(_responses, "responses",
+                                             resource_types, meth, v)
 
         for key, value in list(iteritems(_responses)):
-            _headers = data.get("responses", {}).get(key, {})
+            _headers = _get(_get(data, "responses", {}), key, {})
             _headers = _get(_headers, "headers", {})
             header_objs = _create_base_param_obj(_headers, Header,
                                                  root.config, root.errors)
@@ -625,42 +446,49 @@ def create_resource_types(raml_data, root):
         return None
 
     def uri_params(data):
-        uri_params = get_attribute_dict(data, "uriParameters")
+        uri_params = _get_attribute_dict(data, "uriParameters", v)
 
         if _get(v, "type"):
-            uri_params = get_inherited_type_params(v, "uriParameters",
-                                                   uri_params)
-        return _create_base_param_obj(uri_params, URIParameter, root.config,
+            uri_params = _get_inherited_type_params(v, "uriParameters",
+                                                    uri_params, resource_types)
+        return _create_base_param_obj(uri_params,
+                                      URIParameter,
+                                      root.config,
                                       root.errors)
 
     def base_uri_params(data):
-        uri_params = get_attribute_dict(data, "baseUriParameters")
+        uri_params = _get_attribute_dict(data, "baseUriParameters", v)
 
-        return _create_base_param_obj(uri_params, URIParameter, root.config,
+        return _create_base_param_obj(uri_params,
+                                      URIParameter,
+                                      root.config,
                                       root.errors)
 
     def query_params(data):
-        query_params = get_attribute_dict(data, "queryParameters")
+        query_params = _get_attribute_dict(data, "queryParameters", v)
 
         if _get(v, "type"):
-            query_params = get_inherited_type_params(v, "queryParameters",
-                                                     query_params)
+            query_params = _get_inherited_type_params(v, "queryParameters",
+                                                      query_params,
+                                                      resource_types)
 
-        return _create_base_param_obj(query_params, QueryParameter,
-                                      root.config, root.errors)
-
-    def form_params(data):
-        form_params = get_attribute_dict(data, "formParameters")
-
-        if _get(v, "type"):
-            form_params = get_inherited_type_params(v, "formParameters",
-                                                    form_params)
-
-        return _create_base_param_obj(form_params, FormParameter, root.config,
+        return _create_base_param_obj(query_params,
+                                      QueryParameter,
+                                      root.config,
                                       root.errors)
 
-    def media_type():
-        return _get(v, "mediaType")
+    def form_params(data):
+        form_params = _get_attribute_dict(data, "formParameters", v)
+
+        if _get(v, "type"):
+            form_params = _get_inherited_type_params(v, "formParameters",
+                                                     form_params,
+                                                     resource_types)
+
+        return _create_base_param_obj(form_params,
+                                      FormParameter,
+                                      root.config,
+                                      root.errors)
 
     def description():
         # prefer the resourceType method description
@@ -680,84 +508,38 @@ def create_resource_types(raml_data, root):
             return meth[:-1]
         return meth
 
-    def usage():
-        return _get(v, "usage")
-
     def optional():
         if meth:
             return "?" in meth
 
     def protocols(data):
-        m, r = get_attribute(v, data, "protocols", None)
-        if m:
-            return m
-        return r
+        m, r = _get_res_type_attribute(v, data, "protocols", None)
+        return m or r or root.protocols
 
     def is_(data):
-        m, r = get_attribute(v, data, "is", default=[])
+        m, r = _get_res_type_attribute(v, data, "is", default=[])
         return m + r or None
 
-    def get_trait(item):
-        traits = raml_data.get("traits", [])
-        for t in traits:
-            if item == list(iterkeys(t))[0]:
-                return t
-
-    # TODO: clean up
     def traits(data):
         assigned = is_(data)
         if assigned:
-            trait_objs = []
-            for item in assigned:
-                assigned_trait = get_trait(item)
-                raw_data = list(itervalues(assigned_trait))[0]
-                trait = TraitNode(
-                    name=list(iterkeys(assigned_trait))[0],
-                    raw=raw_data,
-                    root=root,
-                    errors=root.errors,
-                    headers=headers(raw_data),
-                    body=body(raw_data),
-                    responses=responses(raw_data),
-                    uri_params=uri_params(raw_data),
-                    base_uri_params=base_uri_params(raw_data),
-                    query_params=query_params(raw_data),
-                    form_params=form_params(raw_data),
-                    media_type=media_type(),
-                    desc=description(),
-                    usage=usage(),
-                    protocols=protocols(raw_data)
-                )
-                trait_objs.append(trait)
-            return trait_objs
-        return None
+            if root.traits:
+                trait_objs = []
+                for trait in assigned:
+                    obj = [t for t in root.traits if t.name == trait]
+                    if obj:
+                        trait_objs.append(obj[0])
+                return trait_objs or None
 
     def secured_by(data):
-        m, r = get_attribute(v, data, "securedBy", [])
+        m, r = _get_res_type_attribute(v, data, "securedBy", [])
         return m + r or None
 
-    def security_schemes(data):
+    def security_schemes_(data):
         secured = secured_by(data)
-        if secured:
-            secured_objs = []
-            for item in secured:
-                assigned_scheme = get_scheme(item)
-                raw_data = list(itervalues(assigned_scheme))[0]
-                scheme = SecurityScheme(
-                    name=list(iterkeys(assigned_scheme))[0],
-                    raw=raw_data,
-                    type=raw_data.get("type"),
-                    described_by=raw_data.get("describedBy"),
-                    desc=raw_data.get("description"),
-                    settings=raw_data.get("settings"),
-                    config=root.config,
-                    errors=root.errors
-                )
-                secured_objs.append(scheme)
-            return secured_objs
-        return None
+        return security_schemes(secured, root)
 
-    def wrap(key, data, meth, v):
+    def wrap(key, data, meth, _v):
         return ResourceTypeNode(
             name=key,
             raw=data,
@@ -769,40 +551,85 @@ def create_resource_types(raml_data, root):
             base_uri_params=base_uri_params(data),
             query_params=query_params(data),
             form_params=form_params(data),
-            media_type=media_type(),
+            media_type=_get(v, "mediaType"),
             desc=description(),
             type=type_(),
             method=method(meth),
-            usage=usage(),
+            usage=_get(v, "usage"),
             optional=optional(),
             is_=is_(data),
             traits=traits(data),
             secured_by=secured_by(data),
-            security_schemes=security_schemes(data),
-            display_name=display_name(data, key),
+            security_schemes=security_schemes_(data),
+            display_name=_get(data, "displayName", key),
             protocols=protocols(data),
             errors=root.errors
         )
 
-    resource_types = raml_data.get("resourceTypes", [])
+    resource_types = _get(raml_data, "resourceTypes", [])
     resource_type_objects = []
+    child_res_type_objects = []
+    child_res_type_names = []
 
     for res in resource_types:
         for k, v in list(iteritems(res)):
             if isinstance(v, dict):
                 if "type" in list(iterkeys(v)):
-                    r = get_inherited_type(root, res, v.get("type"), raml_data)
-                    resource_type_objects.extend(r)
+                    child_res_type_objects.append({k: v})
+                    child_res_type_names.append(k)
+
                 else:
                     for meth in list(iterkeys(v)):
                         if meth in accepted_methods:
-                            method_data = v.get(meth, {})
+                            method_data = _get(v, meth, {})
                             resource = wrap(k, method_data, meth, v)
                             resource_type_objects.append(resource)
             else:
                 meth = None
                 resource = wrap(k, {}, meth, v)
                 resource_type_objects.append(resource)
+
+    while child_res_type_objects:
+        child = child_res_type_objects.pop()
+        name = list(iterkeys(child))[0]
+        data = list(itervalues(child))[0]
+        parent = data.get("type")
+        if parent in child_res_type_names:
+            continue
+        p_data = [r for r in resource_types if list(iterkeys(r))[0] == parent]
+        p_data = p_data[0].get(parent)
+        res_data = _get_data_union(data, p_data)
+
+        for meth in list(iterkeys(res_data)):
+            if meth in accepted_methods:
+                method_data = _get(res_data, meth, {})
+                resource = ResourceTypeNode(
+                    name=name,
+                    raw=res_data,
+                    root=root,
+                    headers=headers(method_data),
+                    body=body(method_data),
+                    responses=responses(method_data),
+                    uri_params=uri_params(res_data),
+                    base_uri_params=base_uri_params(res_data),
+                    query_params=query_params(res_data),
+                    form_params=form_params(res_data),
+                    media_type=_get(v, "mediaType"),
+                    desc=description(),
+                    type=_get(res_data, "type"),
+                    method=method(meth),
+                    usage=_get(res_data, "usage"),
+                    optional=optional(),
+                    is_=is_(res_data),
+                    traits=traits(res_data),
+                    secured_by=secured_by(res_data),
+                    security_schemes=security_schemes_(res_data),
+                    display_name=_get(method_data, "displayName", name),
+                    protocols=protocols(res_data),
+                    errors=root.errors
+                )
+                resource_type_objects.append(resource)
+
     return resource_type_objects or None
 
 
@@ -819,10 +646,10 @@ def create_resources(node, resources, root, parent):
     """
     for k, v in list(iteritems(node)):
         if k.startswith("/"):
-            avail = root.config.get("http_optional")
+            avail = _get(root.config, "http_optional")
             methods = [m for m in avail if m in list(iterkeys(v))]
             if "type" in list(iterkeys(v)):
-                assigned = _resource_type_lookup(v.get("type"), root)
+                assigned = _resource_type_lookup(_get(v, "type"), root)
                 if hasattr(assigned, "method"):
                     if not assigned.optional:
                         methods.append(assigned.method)
@@ -870,99 +697,8 @@ def create_node(name, raw_data, method, parent, root):
     :returns: :py:class:`.raml.ResourceNode` object
     """
     #####
-    # Helper functions
-    #####
-    def get_method(attribute):
-        """Returns ``attribute`` defined at the method level, or ``None``."""
-        if method is not None:  # must explicitly say `not None`
-            get_attribute = raw_data.get(method, {})
-            if get_attribute is not None:
-                return get_attribute.get(attribute, {})
-        return {}
-
-    def get_resource(attribute):
-        """Returns ``attribute`` defined at the resource level, or ``None``."""
-        return raw_data.get(attribute, {})
-
-    def get_parent(attribute):
-        if parent:
-            return getattr(parent, attribute, {})
-        return {}
-
-    def get_resource_type(attribute):
-        """Returns ``attribute`` defined in the resource type, or ``None``."""
-        if type_() and root.resource_types:
-            types = root.resource_types
-            r_type = [r for r in types if r.name == type_()]
-            r_type = [r for r in r_type if r.method == method]
-            if r_type:
-                if hasattr(r_type[0], attribute):
-                    if getattr(r_type[0], attribute) is not None:
-                        return getattr(r_type[0], attribute)
-        return []
-
-    def get_trait(attribute):
-        """Returns ``attribute`` defined in a trait, or ``None``."""
-
-        if is_():
-            traits = root.traits
-            if traits:
-                trait_objs = []
-                for i in is_():
-                    trait = [t for t in traits if t.name == i]
-                    if trait:
-                        if hasattr(trait[0], attribute):
-                            if getattr(trait[0], attribute) is not None:
-                                trait_objs.extend(getattr(trait[0], attribute))
-                return trait_objs
-        return []
-
-    def get_scheme(item):
-        schemes = root.raw.get("securitySchemes", [])
-        for s in schemes:
-            if isinstance(item, str):
-                if item == list(iterkeys(s))[0]:
-                    return s
-            elif isinstance(item, dict):
-                if list(iterkeys(item))[0] == list(iterkeys(s))[0]:
-                    return s
-
-    def get_attribute_levels(attribute):
-        method_level = get_method(attribute)
-        resource_level = get_resource(attribute)
-        return OrderedDict(list(iteritems(method_level)) +
-                           list(iteritems(resource_level)))
-
-    def get_inherited_attributes(attribute):
-        type_objects = get_resource_type(attribute)
-        trait_objects = get_trait(attribute)
-        return type_objects + trait_objects
-
-    # TODO: refactor - this ain't pretty
-    def _remove_duplicates(inherit_params, resource_params):
-        ret = []
-        if isinstance(resource_params[0], Body):
-            _params = [p.mime_type for p in resource_params]
-        else:
-            _params = [p.name for p in resource_params]
-
-        for p in inherit_params:
-            if isinstance(p, Body):
-                if p.mime_type not in _params:
-                    ret.append(p)
-            else:
-                if p.name not in _params:
-                    ret.append(p)
-        ret.extend(resource_params)
-        return ret or None
-
-    #####
     # Node attribute functions
     #####
-    def display_name():
-        """Set resource's ``displayName``."""
-        return raw_data.get("displayName", name)
-
     def path():
         """Set resource's relative URI path."""
         parent_path = ""
@@ -992,38 +728,46 @@ def create_node(name, raw_data, method, parent, root):
 
     def protocols():
         """Set resource's supported protocols."""
-        trait_protocols = get_trait("protocols")
-        r_type_protocols = get_resource_type("protocols")
-        m_protocols = get_method("protocols")
-        r_protocols = get_resource("protocols")
-        parent = get_parent("protocols")
-        if m_protocols:
-            return m_protocols
-        elif r_type_protocols:
-            return r_type_protocols
-        elif trait_protocols:
-            return trait_protocols
-        elif r_protocols:
-            return r_protocols
-        elif parent:
-            return parent
-        return [root.base_uri.split(":")[0].upper()]
+        # trait = _get_trait("protocols", root, is_())
+        kwargs = dict(root=root,
+                      is_=is_(),
+                      type_=type_(),
+                      method=method,
+                      data=raw_data,
+                      parent=parent)
+        objects_to_inherit = [
+            "traits", "types", "method", "resource", "parent"
+        ]
+        inherited = get_inherited("protocols", objects_to_inherit, **kwargs)
+        trait = inherited["traits"]
+        r_type = inherited["types"]
+        meth = inherited["method"]
+        res = inherited["resource"]
+        parent_ = inherited["parent"]
+        default = [root.base_uri.split("://")[0].upper()]
+
+        return meth or r_type or trait or res or parent_ or default
 
     def headers():
         """Set resource's supported headers."""
-        headers = get_attribute_levels("headers")
-        header_objs = get_inherited_attributes("headers")
+        headers = _get_attribute("headers", method, raw_data)
+        header_objs = _get_inherited_attribute("headers", root, type_(),
+                                               method, is_())
 
-        _headers = _create_base_param_obj(headers, Header, root.config,
-                                          root.errors, method=method)
+        _headers = _create_base_param_obj(headers,
+                                          Header,
+                                          root.config,
+                                          root.errors,
+                                          method=method)
         if _headers is None:
             return header_objs or None
         return _remove_duplicates(header_objs, _headers)
 
     def body():
         """Set resource's supported request/response body."""
-        bodies = get_attribute_levels("body")
-        body_objects = get_inherited_attributes("body")
+        bodies = _get_attribute("body", method, raw_data)
+        body_objects = _get_inherited_attribute("body", root, type_(),
+                                                method, is_())
 
         _body_objs = []
         for k, v in list(iteritems(bodies)):
@@ -1032,9 +776,9 @@ def create_node(name, raw_data, method, parent, root):
             body = Body(
                 mime_type=k,
                 raw={k: v},
-                schema=load_schema(v.get("schema")),
-                example=load_schema(v.get("example")),
-                form_params=v.get("formParameters"),
+                schema=load_schema(_get(v, "schema")),
+                example=load_schema(_get(v, "example")),
+                form_params=_get(v, "formParameters"),
                 config=root.config,
                 errors=root.errors
             )
@@ -1079,43 +823,36 @@ def create_node(name, raw_data, method, parent, root):
                 if key not in MEDIA_TYPES:
                     # if a root mediaType was defined, the response body
                     # may omit the mime_type definition
-                    if key == 'schema':
-                        schema = load_schema(spec) if spec else {}
-                        default_body['schema'] = schema
-                    if key == 'example':
-                        example = load_schema(spec) if spec else {}
-                        default_body['example'] = example
+                    if key in ('schema', 'example'):
+                        default_body[key] = load_schema(spec) if spec else {}
                 else:
                     mime_type = key
-                    if spec is None:
-                        # spec might be '!!null'
-                        body_list.append(Body(
-                            mime_type=mime_type,
-                            raw=body,
-                            schema={},
-                            example={},
-                            form_params=None,
-                            config=root.config,
-                            errors=root.errors
-                        ))
-                    else:
-                        schema = spec.get('schema', '')
-                        example = spec.get('example', '')
-                        body_list.append(Body(
-                            mime_type=mime_type,
-                            raw=spec,
-                            schema=load_schema(schema) if schema else {},
-                            example=load_schema(example) if example else {},
-                            form_params=None,
-                            config=root.config,
-                            errors=root.errors
-                        ))
+                    # spec might be '!!null'
+                    raw = spec or body
+                    _schema = {}
+                    _example = {}
+                    if spec:
+                        _schema_spec = _get(spec, 'schema', '')
+                        _example_spec = _get(spec, 'example', '')
+                        if _schema_spec:
+                            _schema = load_schema(_schema_spec)
+                        if _example_spec:
+                            _example = load_schema(_example_spec)
+                    body_list.append(Body(
+                        mime_type=mime_type,
+                        raw=raw,
+                        schema=_schema,
+                        example=_example,
+                        form_params=None,
+                        config=root.config,
+                        errors=root.errors
+                    ))
             if default_body:
                 body_list.append(Body(
                     mime_type=root.media_type,
                     raw=body,
-                    schema=default_body['schema'],
-                    example=default_body['example'],
+                    schema=_get(default_body, 'schema'),
+                    example=_get(default_body, 'example'),
                     form_params=None,
                     config=root.config,
                     errors=root.errors
@@ -1123,9 +860,9 @@ def create_node(name, raw_data, method, parent, root):
 
             return body_list or None
 
-        resps = get_attribute_levels("responses")
-        type_resp = get_resource_type("responses")
-        trait_resp = get_trait("responses")
+        resps = _get_attribute("responses", method, raw_data)
+        type_resp = _get_resource_type("responses", root, type_(), method)
+        trait_resp = _get_trait("responses", root, is_())
         resp_objs = type_resp + trait_resp
         resp_codes = [r.code for r in resp_objs]
         for k, v in list(iteritems(resps)):
@@ -1140,7 +877,7 @@ def create_node(name, raw_data, method, parent, root):
                     #     headers.extend(inherit_resp.headers)
                     # else:
                     #     headers = inherit_resp.headers
-                body = resp_body(v.get("body", {}))
+                body = resp_body(_get(v, "body", {}))
                 if inherit_resp.body:
                     body = _remove_duplicates(inherit_resp.body, body)
                     # if body:
@@ -1151,7 +888,7 @@ def create_node(name, raw_data, method, parent, root):
                     code=k,
                     raw={k: v},  # should prob get data union
                     method=method,
-                    desc=v.get("description") or inherit_resp.desc,
+                    desc=_get(v, "description") or inherit_resp.desc,
                     headers=headers,
                     body=body,
                     config=root.config,
@@ -1177,85 +914,64 @@ def create_node(name, raw_data, method, parent, root):
 
     def uri_params():
         """Set resource's URI parameters."""
-        uri_params = get_attribute_levels("uriParameters")
-        param_objs = get_inherited_attributes("uri_params")
+        unparsed_attr = "uriParameters"
+        parsed_attr = "uri_params"
+        root_params = root.uri_params
+        return _create_uri_params(unparsed_attr, parsed_attr, root_params,
+                                  root, type_(), is_(), method, raw_data,
+                                  parent)
 
-        params = _create_base_param_obj(uri_params, URIParameter, root.config,
-                                        root.errors)
-        if params:
-            param_objs.extend(params)
-        if parent and parent.uri_params:
-            param_objs.extend(parent.uri_params)
-        if root.uri_params:
-            root_params = root.uri_params
-            param_names = [p.name for p in param_objs]
-            _params = [p for p in root_params if p.name not in param_names]
-            param_objs.extend(_params)
-
-        return param_objs or None
+        # TODO: for some reason this doesn't work for uri
+        # kw = dict(type=type_(),
+        #           is_=is_(),
+        #           root_params=root_params,
+        #           parent=parent)
+        # return set_params(raw_data, "uri_params", root, method,
+        #                   inherit=True, **kw)
 
     def base_uri_params():
         """Set resource's base URI parameters."""
-        uri_params = get_attribute_levels("baseUriParameters")
-        param_objs = get_inherited_attributes("base_uri_params")
-
-        params = _create_base_param_obj(uri_params, URIParameter, root.config,
-                                        root.errors)
-        if params:
-            param_objs.extend(params)
-
-        # if parent and parent.base_uri_params:
-            # param_objs.extend(parent.base_uri_params)
-
-        if root.base_uri_params:
-            root_params = root.base_uri_params
-            param_names = [p.name for p in param_objs]
-            _params = [p for p in root_params if p.name not in param_names]
-            param_objs.extend(_params)
-        return param_objs or None
+        root_params = root.base_uri_params
+        kw = dict(type=type_(), is_=is_(), root_params=root_params)
+        return set_params(raw_data, "base_uri_params", root, method,
+                          inherit=True, **kw)
 
     def query_params():
-        """Set resource's query parameters."""
-        query_params = get_attribute_levels("queryParameters")
-        param_objs = get_inherited_attributes("query_params")
-
-        params = _create_base_param_obj(query_params, QueryParameter,
-                                        root.config, root.errors)
-
-        if params is None:
-            return param_objs or None
-        return _remove_duplicates(param_objs, params)
+        kw = dict(type_=type_(), is_=is_())
+        return set_params(raw_data, "query_params", root, method,
+                          inherit=True, **kw)
 
     def form_params():
         """Set resource's form parameters."""
-        form_params = get_attribute_levels("formParameters")
-        param_objs = get_inherited_attributes("form_params")
+        kw = dict(type_=type_(), is_=is_())
+        return set_params(raw_data, "form_params", root, method,
+                          inherit=True, **kw)
 
-        params = _create_base_param_obj(form_params, FormParameter,
-                                        root.config, root.errors)
-        if params is None:
-            return param_objs or None
-        return _remove_duplicates(param_objs, params)
-
-    def media_type():
+    def media_type_():
         """Set resource's supported media types."""
-        if raw_data.get(method, {}):
-            if raw_data.get(method, {}).get("mediaType"):
-                return raw_data.get(method, {}).get("mediaType")
-        if get_trait("media_type"):
-            return "".join(get_trait("media_type"))
-        if get_resource_type("media_type"):
-            return get_resource_type("media_type")
-        if raw_data.get("mediaType"):
-            return raw_data.get("mediaType")
-        if root.media_type:
-            return root.media_type
+        if method is None:
+            return None
+        kwargs = dict(root=root,
+                      is_=is_(),
+                      type_=type_(),
+                      method=method,
+                      data=raw_data)
+        objects_to_inherit = [
+            "method", "traits", "types", "resource", "root"
+        ]
+        inherited = get_inherited("mediaType", objects_to_inherit, **kwargs)
+        meth = inherited.get("method")
+        trait = inherited.get("trait")
+        r_type = inherited.get("types")
+        res = inherited.get("resource")
+        root_ = inherited.get("root")
+        return meth or trait or r_type or res or root_
 
     def description():
         """Set resource's description."""
-        desc = raw_data.get("description")
+        desc = _get(raw_data, "description")
         try:
-            desc = raw_data.get(method).get("description")
+            desc = _get(_get(raw_data, method), "description")
             if desc is None:
                 raise AttributeError
         except AttributeError:
@@ -1267,19 +983,19 @@ def create_node(name, raw_data, method, parent, root):
                 except AttributeError:
                     pass
             else:
-                desc = raw_data.get("description")
+                desc = _get(raw_data, "description")
         return desc
 
     def is_():
         """Set resource's assigned trait names."""
         is_list = []
-        res_level = raw_data.get("is")
+        res_level = _get(raw_data, "is")
         if res_level:
             assert isinstance(res_level, list), "Error parsing trait"
             is_list.extend(res_level)
-        method_level = raw_data.get(method, {})
+        method_level = _get(raw_data, method, {})
         if method_level:
-            method_level = method_level.get("is")
+            method_level = _get(method_level, "is")
             if method_level:
                 assert isinstance(method_level, list), "Error parsing trait"
                 is_list.extend(method_level)
@@ -1300,17 +1016,14 @@ def create_node(name, raw_data, method, parent, root):
     # TODO: wow this function sucks.
     def type_():
         """Set resource's assigned resource type name."""
-        if method is not None:
-            get_method = raw_data.get(method, {})
-            if get_method:
-                assigned_type = get_method.get("type")
-                if assigned_type:
-                    if isinstance(assigned_type, dict):
-                        return list(iterkeys(assigned_type))[0]  # NOCOV
-                    else:
-                        return assigned_type
+        __get_method = _get(raw_data, method, {})
+        assigned_type = _get(__get_method, "type")
+        if assigned_type:
+            if not isinstance(assigned_type, dict):
+                return assigned_type
+            return list(iterkeys(assigned_type))[0]  # NOCOV
 
-        assigned_type = raw_data.get("type")
+        assigned_type = _get(raw_data, "type")
         if isinstance(assigned_type, dict):
             return list(iterkeys(assigned_type))[0]  # NOCOV
         return assigned_type
@@ -1329,40 +1042,22 @@ def create_node(name, raw_data, method, parent, root):
         Set resource's assigned security scheme names and related paramters.
         """
         if method is not None:
-            method_level = raw_data.get(method, {})
+            method_level = _get(raw_data, method, {})
             if method_level:
-                secured_by = method_level.get("securedBy")
+                secured_by = _get(method_level, "securedBy")
                 if secured_by:
                     return secured_by
-        resource_level = raw_data.get("securedBy")
+        resource_level = _get(raw_data, "securedBy")
         if resource_level:
             return resource_level
         root_level = root.secured_by
         if root_level:
             return root_level
 
-    def security_schemes():
+    def security_schemes_():
         """Set resource's assigned security scheme objects."""
         secured = secured_by()
-        if secured:
-            secured_objs = []
-            for item in secured:
-                assigned_scheme = get_scheme(item)
-                if assigned_scheme:
-                    raw_data = list(itervalues(assigned_scheme))[0]
-                    scheme = SecurityScheme(
-                        name=list(iterkeys(assigned_scheme))[0],
-                        raw=raw_data,
-                        type=raw_data.get("type"),
-                        described_by=raw_data.get("describedBy"),
-                        desc=raw_data.get("description"),
-                        settings=raw_data.get("settings"),
-                        config=root.config,
-                        errors=root.errors
-                    )
-                    secured_objs.append(scheme)
-            return secured_objs
-        return None
+        return security_schemes(secured, root)
 
     node = ResourceNode(
         name=name,
@@ -1370,7 +1065,7 @@ def create_node(name, raw_data, method, parent, root):
         method=method,
         parent=parent,
         root=root,
-        display_name=display_name(),
+        display_name=_get(raw_data, "displayName", name),
         path=path(),
         absolute_uri=absolute_uri(),
         protocols=protocols(),
@@ -1381,14 +1076,14 @@ def create_node(name, raw_data, method, parent, root):
         base_uri_params=base_uri_params(),
         query_params=query_params(),
         form_params=form_params(),
-        media_type=media_type(),
+        media_type=media_type_(),
         desc=description(),
         is_=is_(),
         traits=traits(),
         type=type_(),
         resource_type=resource_type(),
         secured_by=secured_by(),
-        security_schemes=security_schemes(),
+        security_schemes=security_schemes_(),
         errors=root.errors
     )
     if resource_type():
