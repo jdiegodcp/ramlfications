@@ -28,9 +28,12 @@ class RootNode(object):
     :param dict raw: dict of loaded RAML data
     :param str version: API version
     :param str base_uri: API's base URI
-    :param list base_uri_params: parameters for base URI, or ``None``
+    :param list base_uri_params: parameters for base URI, or ``None``. \
+        The order of ``base_uri_params`` will follow the order \
+        defined in the :py:obj:`.RootNode.base_uri`.
     :param list uri_params: URI parameters that can apply to all resources, \
-        or ``None``
+        or ``None``. The order of ``uri_params`` will follow the order \
+        defined in the :py:obj:`.RootNode.base_uri`.
     :param list protocols: API-supported protocols, defaults to protocol \
         in ``base_uri``
     :param str title: API Title
@@ -83,11 +86,15 @@ class BaseNode(object):
     :param list responses: List of node's :py:class:`parameters.Response`\
         objects, or ``None``
     :param list uri_params: List of node's :py:class:`parameters.URIParameter`\
-        objects, or ``None``
+        objects, or ``None``. The order of ``uri_params`` will follow the \
+        order defined in the \
+        :py:obj:`.ResourceNode.absolute_uri`.
     :param list base_uri_params: List of node's base \
-        :py:obj:`parameters.URIParameter` objects, or ``None``
+        :py:obj:`parameters.URIParameter` objects, or ``None``. The order of \
+        ``base_uri_params`` will follow the order defined in the \
+        :py:attribute:`.ResourceNode.absolute_uri`.
     :param list query_params: List of node's \
-        :py:class:`parameters.QueryParameter` objects, or ``None``
+        :py:obj:`parameters.QueryParameter` objects, or ``None``
     :param list form_params: List of node's \
         :py:class:`parameters.FormParameter` objects, or ``None``
     :param str media_type: Supported request MIME media type. Defaults to \

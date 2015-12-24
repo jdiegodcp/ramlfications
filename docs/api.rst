@@ -63,12 +63,14 @@ raml
     .. py:attribute:: base_uri_params
 
         ``list`` of base :py:class:`.URIParameter` s for the base URI, or
-        ``None``.
+        ``None``. The order of ``base_uri_params`` will follow the order \
+        defined in the :py:obj:`.RootNode.base_uri`.
 
     .. py:attribute:: uri_params
 
         ``list`` of :py:class:`.URIParameter` s that can apply to all
-        resources, or ``None``.
+        resources, or ``None``. The order of ``uri_params`` will follow the \
+        order defined in the :py:obj:`.RootNode.base_uri`.
 
     .. py:attribute:: protocols
 
@@ -145,11 +147,15 @@ raml
 
     .. py:attribute:: uri_params
 
-        ``list`` of ``Node``’s :py:class:`.URIParameter` objects, or ``None``
+        ``list`` of ``Node``’s :py:class:`.URIParameter` objects, or ``None``. \
+        The order of ``uri_params`` will follow the order defined in the \
+        :py:obj:`.ResourceNode.absolute_uri`.
 
     .. py:attribute:: base_uri_params
 
-        ``list`` of ``Node``’s base :py:class:`.URIParameter` objects, or ``None``
+        ``list`` of ``Node``’s base :py:class:`.URIParameter` objects, or ``None``. \
+        The order of ``base_uri_params`` will follow the order defined in the \
+        :py:obj:`.ResourceNode.absolute_uri`.
 
     .. py:attribute:: query_params
 

@@ -583,6 +583,11 @@ would be ``/foo/bar/{id}``, and the absolute URI path would be
    >>> foo_bar.parent
    <Resource(method='GET', path='/foo/bar/')>
 
+.. note::
+
+  The ``uri_params`` and ``base_uri_params`` on the ``api`` object (``RootNode``) and a resource object (``ResourceNode``) will **always** preserve order according to the absolute URI.
+
+
 Check out :doc:`api` for full definition of what is available for a ``resource`` object, and its associated attributes and objects.
 
 

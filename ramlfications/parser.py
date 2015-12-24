@@ -24,7 +24,8 @@ from .utils import (
     _get_inherited_attribute, _remove_duplicates, _create_uri_params,
     _get, _create_base_param_obj, _get_res_type_attribute,
     _get_inherited_type_params, _get_inherited_item, _get_attribute_dict,
-    get_inherited, set_param_object, set_params, _get_data_union
+    get_inherited, set_param_object, set_params, _get_data_union,
+    _preserve_uri_order
 )
 
 
@@ -89,11 +90,15 @@ def create_root(raml, config):
 
     def base_uri_params():
         data = _get(raml, "baseUriParameters", {})
-        return _create_base_param_obj(data, URIParameter, config, errors)
+        params = _create_base_param_obj(data, URIParameter, config, errors)
+        uri = _get(raml, "baseUri", "")
+        return _preserve_uri_order(uri, params)
 
     def uri_params():
         data = _get(raml, "uriParameters", {})
-        return _create_base_param_obj(data, URIParameter, config, errors)
+        params = _create_base_param_obj(data, URIParameter, config, errors)
+        uri = _get(raml, "baseUri", "")
+        return _preserve_uri_order(uri, params)
 
     def docs():
         d = _get(raml, "documentation", [])
@@ -917,24 +922,18 @@ def create_node(name, raw_data, method, parent, root):
         unparsed_attr = "uriParameters"
         parsed_attr = "uri_params"
         root_params = root.uri_params
-        return _create_uri_params(unparsed_attr, parsed_attr, root_params,
-                                  root, type_(), is_(), method, raw_data,
-                                  parent)
-
-        # TODO: for some reason this doesn't work for uri
-        # kw = dict(type=type_(),
-        #           is_=is_(),
-        #           root_params=root_params,
-        #           parent=parent)
-        # return set_params(raw_data, "uri_params", root, method,
-        #                   inherit=True, **kw)
+        params = _create_uri_params(unparsed_attr, parsed_attr, root_params,
+                                    root, type_(), is_(), method, raw_data,
+                                    parent)
+        return _preserve_uri_order(absolute_uri(), params)
 
     def base_uri_params():
         """Set resource's base URI parameters."""
         root_params = root.base_uri_params
         kw = dict(type=type_(), is_=is_(), root_params=root_params)
-        return set_params(raw_data, "base_uri_params", root, method,
-                          inherit=True, **kw)
+        params = set_params(raw_data, "base_uri_params", root, method,
+                            inherit=True, **kw)
+        return _preserve_uri_order(absolute_uri(), params)
 
     def query_params():
         kw = dict(type_=type_(), is_=is_())
