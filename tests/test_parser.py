@@ -918,6 +918,22 @@ def test_resource_inherits_type(inherited_resources):
     assert q.required is True
 
 
+def test_res_type_inheritance(inherited_resources):
+    res = inherited_resources.resource_types[0]
+    assert res.name == "basetype"
+    assert len(res.query_params) == 1
+    assert len(res.form_params) == 1
+    assert len(res.uri_params) == 1
+    assert len(res.base_uri_params) == 1
+
+    res = inherited_resources.resource_types[-1]
+    assert res.name == "inheritbase"
+    assert len(res.query_params) == 2
+    assert len(res.form_params) == 2
+    assert len(res.uri_params) == 2
+    assert len(res.base_uri_params) == 2
+
+
 def test_resource_inherits_type_optional_post(inherited_resources):
     assert len(inherited_resources.resources) == 7
     res = inherited_resources.resources[1]
