@@ -615,6 +615,8 @@ def create_resource_types(raml_data, root):
         for meth in list(iterkeys(res_data)):
             if meth in accepted_methods:
                 method_data = _get(res_data, meth, {})
+                comb_data = dict(list(iteritems(method_data)) +
+                                 list(iteritems(res_data)))
                 resource = ResourceTypeNode(
                     name=name,
                     raw=res_data,
@@ -622,10 +624,10 @@ def create_resource_types(raml_data, root):
                     headers=headers(method_data),
                     body=body(method_data),
                     responses=responses(method_data),
-                    uri_params=uri_params(res_data),
-                    base_uri_params=base_uri_params(res_data),
-                    query_params=query_params(res_data),
-                    form_params=form_params(res_data),
+                    uri_params=uri_params(comb_data),
+                    base_uri_params=base_uri_params(comb_data),
+                    query_params=query_params(method_data),
+                    form_params=form_params(method_data),
                     media_type=_get(v, "mediaType"),
                     desc=description(),
                     type=_get(res_data, "type"),

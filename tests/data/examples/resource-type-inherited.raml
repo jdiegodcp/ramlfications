@@ -10,6 +10,18 @@ resourceTypes:
         headers:
           X-BaseType-Header:
             description: Inherited header from basetype
+        queryParameters:
+          inheritedParam:
+            description: query parameter that should be inherited
+        formParameters:
+          inheritedFormParam:
+            description: form parameter that should be inherited
+        uriParameters:
+          inheritedUriParam:
+            description: uri parameter that should be inherited
+        baseUriParameters:
+          inheritedBaseUriParam:
+            description: base uri parameter that should be inherited
         responses:
           200:
             description: Inherited OK response
@@ -28,6 +40,22 @@ resourceTypes:
         headers:
           X-InheritBaseType-Header:
             description: A header for inheritbase resource type
+        queryParameters:
+          aNewParam:
+            description: another parameter added from base type
+            example: a new param
+        formParameters:
+          aNewFormParam:
+            description: another form parameter added from base type
+            example: a new param
+        uriParameters:
+          aNewUriParam:
+            description: another uri parameter added from base type
+            example: a new param
+        baseUriParameters:
+          aNewBaseUriParam:
+            description: another base uri parameter added from base type
+            example: a new param
         body:
           application/json:
             schema: !include includes/inherited.schema.json
