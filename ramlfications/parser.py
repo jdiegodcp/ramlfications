@@ -92,13 +92,20 @@ def create_root(raml, config):
         data = _get(raml, "baseUriParameters", {})
         params = _create_base_param_obj(data, URIParameter, config, errors)
         uri = _get(raml, "baseUri", "")
-        return _preserve_uri_order(uri, params)
+        declared = _get(raml, "uriParameters", {})
+        declared = list(iterkeys(declared))
+        return _preserve_uri_order(uri, params, config, errors, declared)
 
     def uri_params():
         data = _get(raml, "uriParameters", {})
         params = _create_base_param_obj(data, URIParameter, config, errors)
         uri = _get(raml, "baseUri", "")
-        return _preserve_uri_order(uri, params)
+
+        declared = []
+        base = base_uri_params()
+        if base:
+            declared = [p.name for p in base]
+        return _preserve_uri_order(uri, params, config, errors, declared)
 
     def docs():
         d = _get(raml, "documentation", [])
@@ -925,7 +932,13 @@ def create_node(name, raw_data, method, parent, root):
         params = _create_uri_params(unparsed_attr, parsed_attr, root_params,
                                     root, type_(), is_(), method, raw_data,
                                     parent)
-        return _preserve_uri_order(absolute_uri(), params)
+        declared = []
+        base = base_uri_params()
+        if base:
+            declared = [p.name for p in base]
+
+        return _preserve_uri_order(absolute_uri(), params, root.config,
+                                   root.errors, declared)
 
     def base_uri_params():
         """Set resource's base URI parameters."""
@@ -933,7 +946,15 @@ def create_node(name, raw_data, method, parent, root):
         kw = dict(type=type_(), is_=is_(), root_params=root_params)
         params = set_params(raw_data, "base_uri_params", root, method,
                             inherit=True, **kw)
-        return _preserve_uri_order(absolute_uri(), params)
+        declared = []
+        uri = root.uri_params
+        base = root.base_uri_params
+        if uri:
+            declared = [p.name for p in uri]
+        if base:
+            declared.extend([p.name for p in base])
+        return _preserve_uri_order(root.base_uri, params, root.config,
+                                   root.errors, declared)
 
     def query_params():
         kw = dict(type_=type_(), is_=is_())
