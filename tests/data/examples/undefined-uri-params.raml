@@ -1,0 +1,16 @@
+#%RAML 0.8
+title: Example API - Preserve URI Param order
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+/widgets:
+  displayName: several-widgets
+  get:
+    mediaType: application/xml
+    description: Get Several Widgets
+  /{id}:
+    displayName: widget
+    mediaType: application/xml
+    get:
+      description: Get a Widget

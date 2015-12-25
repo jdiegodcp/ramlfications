@@ -683,14 +683,52 @@ def set_params(data, param_str, root, method, inherit=False, **kw):
 
 # preserve order of URI and Base URI parameters
 # used for RootNode, ResourceNode
-def _preserve_uri_order(path, param_objs):
-    if not param_objs:
-        return param_objs
+def _preserve_uri_order(path, param_objs, config, errors, declared=[]):
+    # if this is hit, RAML shouldn't be valid anyways.
+    if isinstance(path, list):
+        path = path[0]
+
     sorted_params = []
     pattern = "\{(.*?)\}"
     params = re.findall(pattern, path)
+    if not param_objs:
+        param_objs = []
+    # if there are URI parameters in the path but were not declared
+    # inline, we should create them.
+    # TODO: Probably shouldn't do it in this function, though...
+    if len(params) > len(param_objs):
+        if len(param_objs) > 0:
+            param_names = [p.name for p in param_objs]
+            missing = [p for p in params if p not in param_names]
+        else:
+            missing = params[::]
+        # exclude any (base)uri params if already declared
+        missing = [p for p in missing if p not in declared]
+        for m in missing:
+            # no need to create a URI param for version
+            if m == "version":
+                continue
+            data = {"type": "string"}
+            _param = URIParameter(name=m,
+                                  raw={m: data},
+                                  required=True,
+                                  display_name=m,
+                                  desc=_get(data, "description"),
+                                  min_length=_get(data, "minLength"),
+                                  max_length=_get(data, "maxLength"),
+                                  minimum=_get(data, "minimum"),
+                                  maximum=_get(data, "maximum"),
+                                  default=_get(data, "default"),
+                                  enum=_get(data, "enum"),
+                                  example=_get(data, "example"),
+                                  repeat=_get(data, "repeat", False),
+                                  pattern=_get(data, "pattern"),
+                                  type=_get(data, "type", "string"),
+                                  config=config,
+                                  errors=errors)
+            param_objs.append(_param)
     for p in params:
         _param = [i for i in param_objs if i.name == p]
         if _param:
             sorted_params.append(_param[0])
-    return sorted_params
+    return sorted_params or None

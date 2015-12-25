@@ -1140,6 +1140,22 @@ def test_uri_params_order(uri_param_resources):
     assert base == expected_base
 
 
+@pytest.fixture(scope="session")
+def undef_uri_params_resources():
+    raml_file = os.path.join(EXAMPLES, "undefined-uri-params.raml")
+    loaded_raml = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    config['validate'] = False
+    return pw.parse_raml(loaded_raml, config)
+
+
+def test_undefined_uri_params(undef_uri_params_resources):
+    res = undef_uri_params_resources.resources[1]
+
+    assert len(res.uri_params) == 1
+    assert res.uri_params[0].name == "id"
+
+
 #####
 # Test Includes parsing
 #####
