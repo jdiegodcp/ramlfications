@@ -1,6 +1,16 @@
 Changelog
 =========
 
+0.1.9 (2015-12-24)
+------------------
+
+Happy holidays!
+
+- Fix resource type inheritance (`Issue 23`_ & `Issue 47`_)
+- Preserve order of ``baseUriParameters`` and ``uriParameters`` in API root and resource nodes (`Issue 37`_)
+- Fix missing URI parameters if not defined/declared inline (`Issue 56`_)
+- Fix how arguments are passed into pytest in ``setup.py`` (`PR 55`_ - thank you `matiasb`_!)
+
 
 0.1.8 (2015-10-07)
 ------------------
@@ -106,3 +116,8 @@ Initial alpha release of ``ramlfications``\!
 .. _`cerivera`: https://github.com/cerivera
 .. _`Issue 44`: https://github.com/spotify/ramlfications/issues/44
 .. _`Issue 23`: https://github.com/spotify/ramlfications/issues/23
+.. _`matiasb`: https://github.com/matiasb
+.. _`PR 55`: https://github.com/spotify/ramlfications/pull/55
+.. _`Issue 47`: https://github.com/spotify/ramlfications/issues/47
+.. _`Issue 37`: https://github.com/spotify/ramlfications/issues/37
+.. _`Issue 56`: https://github.com/spotify/ramlfications/issues/56
