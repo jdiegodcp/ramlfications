@@ -344,6 +344,250 @@ def test_trait_base_uri_params(traits):
     assert trait.description.raw == trait_desc
 
 
+@pytest.fixture(scope="session")
+def trait_parameters():
+    raml_file = os.path.join(EXAMPLES + "resource-type-trait-parameters.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    api = pw.parse_raml(loaded_raml_file, config)
+    return api
+
+
+def test_inherited_assigned_trait_params_books(trait_parameters):
+    res = trait_parameters.resources[0]
+
+    assert res.name == "/books"
+    assert res.method == "get"
+    assert len(res.traits) == 2
+    assert len(res.query_params) == 4
+    assert len(res.headers) == 1
+    assert len(res.body) == 1
+    assert len(res.responses) == 1
+
+    q_param = res.query_params[2]
+    assert q_param.name == "access_token"
+    assert q_param.description.raw == "A valid access_token is required"
+
+    q_param = res.query_params[3]
+    assert q_param.name == "numPages"
+    desc = "The number of pages to return, not to exceed 10"
+    assert q_param.description.raw == desc
+
+    header = res.headers[0]
+    assert header.name == "x-some-header"
+    assert header.description.raw == "x-some-header is required here"
+
+    body = res.body[0]
+    assert body.mime_type == "application/json"
+    assert body.schema == "foo-schema"
+
+    resp = res.responses[0]
+    assert resp.code == 200
+    assert resp.description.raw == "No more than 10 pages returned"
+    assert len(resp.headers) == 1
+
+    resp_headers = resp.headers[0]
+    assert resp_headers.name == "x-another-header"
+    desc = "some description for x-another-header"
+    assert resp_headers.description.raw == desc
+
+
+def test_inherited_assigned_trait_params_articles(trait_parameters):
+    res = trait_parameters.resources[1]
+
+    assert res.name == "/articles"
+    assert res.method == "get"
+    assert len(res.traits) == 2
+    assert len(res.query_params) == 4
+    assert len(res.headers) == 1
+    assert len(res.body) == 1
+    assert len(res.responses) == 1
+
+    q_param = res.query_params[2]
+    assert q_param.name == "foo_token"
+    assert q_param.description.raw == "A valid foo_token is required"
+
+    q_param = res.query_params[3]
+    assert q_param.name == "numPages"
+    desc = "The number of pages to return, not to exceed 20"
+    assert q_param.description.raw == desc
+
+    header = res.headers[0]
+    assert header.name == "x-foo-header"
+    assert header.description.raw == "x-foo-header is required here"
+
+    body = res.body[0]
+    assert body.mime_type == "application/json"
+    assert body.schema == "bar-schema"
+
+    resp = res.responses[0]
+    assert resp.code == 200
+    assert resp.description.raw == "No more than 20 pages returned"
+    assert len(resp.headers) == 1
+
+    resp_headers = resp.headers[0]
+    assert resp_headers.name == "x-another-foo-header"
+    desc = "some description for x-another-foo-header"
+    assert resp_headers.description.raw == desc
+
+
+def test_assigned_trait_params(trait_parameters):
+    res = trait_parameters.resources[0]
+    assert len(res.traits) == 2
+
+    secured = res.traits[0]
+    assert secured.name == "secured"
+    assert len(secured.query_params) == 1
+    assert len(secured.headers) == 1
+    assert len(secured.body) == 1
+    assert not secured.responses
+    assert not secured.uri_params
+
+    q_param = secured.query_params[0]
+    assert q_param.name == "access_token"
+    assert q_param.description.raw == "A valid access_token is required"
+
+    header = secured.headers[0]
+    assert header.name == "x-some-header"
+    assert header.description.raw == "x-some-header is required here"
+
+    body = secured.body[0]
+    assert body.mime_type == "application/json"
+    assert body.schema == "foo-schema"
+
+    paged = res.traits[1]
+    assert paged.name == "paged"
+    assert len(paged.query_params) == 1
+    assert len(paged.responses) == 1
+    assert not paged.headers
+    assert not paged.uri_params
+
+    q_param = paged.query_params[0]
+    assert q_param.name == "numPages"
+    desc = "The number of pages to return, not to exceed 10"
+    assert q_param.description.raw == desc
+
+    resp = paged.responses[0]
+    assert resp.code == 200
+    assert resp.description.raw == "No more than 10 pages returned"
+    assert len(resp.headers) == 1
+
+    assert resp.headers[0].name == "x-another-header"
+    desc = "some description for x-another-header"
+    assert resp.headers[0].description.raw == desc
+
+
+# make sure root trait params are not changed after processing
+# all the `<< parameter >>` substitution
+def test_root_trait_params(trait_parameters):
+    traits = trait_parameters.traits
+    assert len(traits) == 2
+
+    secured = traits[0]
+    assert secured.name == "secured"
+    assert len(secured.query_params) == 1
+    assert len(secured.headers) == 1
+    assert len(secured.body) == 1
+    assert not secured.responses
+    assert not secured.uri_params
+
+    q_param = secured.query_params[0]
+    assert q_param.name == "<<tokenName>>"
+    assert q_param.description.raw == "A valid <<tokenName>> is required"
+
+    header = secured.headers[0]
+    assert header.name == "<<aHeaderName>>"
+    assert header.description.raw == "<<aHeaderName>> is required here"
+
+    body = secured.body[0]
+    assert body.mime_type == "application/json"
+    assert body.schema == "<<schemaName>>"
+
+    paged = traits[1]
+    assert paged.name == "paged"
+    assert len(paged.query_params) == 1
+    assert len(paged.responses) == 1
+    assert not paged.headers
+    assert not paged.uri_params
+
+    q_param = paged.query_params[0]
+    assert q_param.name == "numPages"
+    desc = "The number of pages to return, not to exceed <<maxPages>>"
+    assert q_param.description.raw == desc
+
+    resp = paged.responses[0]
+    assert resp.code == 200
+    assert resp.description.raw == "No more than <<maxPages>> pages returned"
+    assert len(resp.headers) == 1
+
+    assert resp.headers[0].name == "<<anotherHeader>>"
+    desc = "some description for <<anotherHeader>>"
+    assert resp.headers[0].description.raw == desc
+
+
+# Test `<< parameter | !function >>` handling
+@pytest.fixture(scope="session")
+def param_functions():
+    raml_file = os.path.join(EXAMPLES, "parameter-tag-functions.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    api = pw.parse_raml(loaded_raml_file, config)
+    return api
+
+
+def test_trait_pluralize(param_functions):
+    paged = param_functions.traits[0]
+    assert paged.name == 'paged'
+    assert len(paged.query_params) == 2
+
+    assert paged.query_params[0].name == "<<item>>"
+    desc = ("The number of <<item | !pluralize>> to return, not to "
+            "exceed <<maxPages>>")
+    assert paged.query_params[0].description.raw == desc
+
+    assert paged.query_params[1].name == "<<spacedItem >>"
+    desc = ("The number of << spacedItem | !pluralize >> to return, not "
+            "to exceed << maxPages >>")
+    assert paged.query_params[1].description.raw == desc
+
+    assert len(param_functions.resources) == 5
+    res = param_functions.resources[3]
+    assert res.name == "/user"
+    assert res.method == "get"
+    assert len(res.traits) == 1
+    assert len(res.query_params) == 2
+
+    item = res.query_params[0]
+    assert item.name == "user"
+    desc = ("The number of users to return, not to exceed 10")
+    assert item.description.raw == desc
+
+    spaced_item = res.query_params[1]
+    assert item.name == "user"
+    assert item.description.raw == desc
+
+    foo_trait = param_functions.traits[1]
+    assert foo_trait.name == "fooTrait"
+    assert len(foo_trait.headers) == 1
+    assert len(foo_trait.body) == 1
+    assert len(foo_trait.responses) == 1
+
+    foo = param_functions.resources[4]
+    assert len(foo.headers) == 1
+    header = foo.headers[0]
+    assert header.name == "aPluralHeader"
+    desc = "This header should be pluralized- cats"
+    assert header.description.raw == desc
+
+    assert len(foo.body) == 1
+    assert foo.body[0].mime_type == "application/json"
+    assert foo.body[0].example == "foos"
+
+    assert len(foo.responses) == 1
+    assert foo.responses[0].code == 200
+    desc = "A plural response - bars"
+    assert foo.responses[0].description.raw == desc
+
 #####
 # Test Resource Types
 #####
@@ -572,7 +816,7 @@ def test_resource_type_empty_mapping():
     config['validate'] = False
     api = pw.parse_raml(loaded_raml_file, config)
 
-    assert len(api.resource_types) == 1
+    assert len(api.resource_types) == 3
 
     res = api.resource_types[0]
 
@@ -591,6 +835,111 @@ def test_resource_type_empty_mapping_headers():
 
     assert len(base_res_type.headers) == 3
     assert base_res_type.headers[-1].description is None
+
+
+@pytest.fixture(scope="session")
+def resource_type_parameters():
+    raml_file = os.path.join(EXAMPLES + "resource-type-trait-parameters.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    api = pw.parse_raml(loaded_raml_file, config)
+    return api
+
+
+def test_inherit_resource_type_params(resource_type_parameters):
+    res = resource_type_parameters.resources[0]
+
+    assert res.name == "/books"
+    assert res.method == "get"
+    assert len(res.query_params) == 4
+
+    q_param = res.query_params[0]
+    assert q_param.name == "title"
+    desc = ("Return books that have their title matching "
+            "the given value")
+    assert q_param.description.raw == desc
+
+    q_param = res.query_params[1]
+    assert q_param.name == "digest_all_fields"
+    desc = ("If no values match the value given for title, use "
+            "digest_all_fields instead")
+    assert q_param.description.raw == desc
+
+
+def test_assigned_resource_type_params(resource_type_parameters):
+    res = resource_type_parameters.resources[0]
+
+    assert res.resource_type.name == "searchableCollection"
+    assert res.resource_type.method == "get"
+
+    q_params = res.resource_type.query_params
+    assert len(q_params) == 2
+
+    assert q_params[0].name == "title"
+    desc = ("Return books that have their title matching "
+            "the given value")
+    assert q_params[0].description.raw == desc
+
+    assert q_params[1].name == "digest_all_fields"
+    desc = ("If no values match the value given for title, use "
+            "digest_all_fields instead")
+    assert q_params[1].description.raw == desc
+
+
+def test_root_resource_type_params(resource_type_parameters):
+    res_types = resource_type_parameters.resource_types
+    assert len(res_types) == 1
+    res = res_types[0]
+
+    assert res.name == "searchableCollection"
+    assert res.method == "get"
+
+    q_params = res.query_params
+    assert len(q_params) == 2
+
+    assert q_params[0].name == "<<queryParamName>>"
+    desc = ("Return <<resourcePathName>> that have their <<queryParamName>> "
+            "matching the given value")
+    assert q_params[0].description.raw == desc
+
+    assert q_params[1].name == "<<fallbackParamName>>"
+    desc = ("If no values match the value given for <<queryParamName>>, use "
+            "<<fallbackParamName>> instead")
+    assert q_params[1].description.raw == desc
+
+
+# Test `<< parameter | !function >>` handling
+def test_resource_type_pluralize(param_functions):
+    assert len(param_functions.resource_types) == 4
+
+    coll = param_functions.resource_types[0]
+    assert coll.name == 'collection_single'
+    assert coll.method == "get"
+    assert coll.description.raw == "Get <<resourcePathName>>"
+
+    res = param_functions.resources[0]
+    assert res.name == "/users"
+    assert res.method == "post"
+    assert res.type == "collection_single"
+    # assert res.description.raw == "Post user"
+
+    res = param_functions.resources[1]
+    assert res.name == "/users"
+    assert res.method == "get"
+    assert res.type == "collection_single"
+    # assert res.description.raw == "Get users"
+
+    res = param_functions.resources[2]
+    assert res.name == "/user"
+    assert res.method == "post"
+    assert res.type == "collection_plural"
+    # assert res.description.raw == "Post user"
+
+    res = param_functions.resources[3]
+    assert res.name == "/user"
+    assert res.method == "get"
+    assert res.type == "collection_plural"
+    assert res.description.raw == "Get users"
 
 
 #####
@@ -1170,6 +1519,24 @@ def test_undefined_uri_params(undef_uri_params_resources):
 
     assert len(res.uri_params) == 1
     assert res.uri_params[0].name == "id"
+
+
+@pytest.fixture(scope="session")
+def root_secured_by():
+    raml_file = os.path.join(EXAMPLES, "root-api-secured-by.raml")
+    loaded_raml = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    config['validate'] = False
+    return pw.parse_raml(loaded_raml, config)
+
+
+def test_root_level_secured_by(root_secured_by):
+    assert len(root_secured_by.resources) == 5
+
+    exp = ['oauth_2_0']
+
+    for res in root_secured_by.resources:
+        assert res.secured_by == exp
 
 
 #####
