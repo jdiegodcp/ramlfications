@@ -11,6 +11,8 @@ __all__ = ["pluralize", "singularize"]
 #####
 # Tag functions to manipulate <<parameters>> from
 # traits & resource types
+#
+# Add your function here, and add to the __all__ statement above^
 #####
 
 p = inflect.engine()

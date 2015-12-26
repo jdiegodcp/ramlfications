@@ -585,7 +585,7 @@ def test_trait_pluralize(param_functions):
 
     assert len(foo.responses) == 1
     assert foo.responses[0].code == 200
-    desc = "A plural response - bars"
+    desc = "A singular response - bar"
     assert foo.responses[0].description.raw == desc
 
 #####

@@ -30,7 +30,7 @@ traits:
           example: << pluralBody | !pluralize >>
       responses:
         200:
-          description: A plural response - << pluralResponse | !pluralize >>
+          description: A singular response - << singleResponse | !singularize >>
 /users:
   type: collection_single
   get:
@@ -42,4 +42,4 @@ traits:
   post:
 /foo-trait:
   get:
-    is: [ fooTrait: { pluralHeader: cat, pluralBody: foo, pluralResponse: bar}]
+    is: [ fooTrait: { pluralHeader: cat, pluralBody: foo, singleResponse: bars}]

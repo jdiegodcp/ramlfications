@@ -8,13 +8,10 @@ import re
 import attr
 import markdown2 as md
 
-from . import _parameter_tags
+from ._utils import parameter_utils as pu
 from .validate import *  # NOQA
 
-HTTP_METHODS = [
-    "get", "post", "put", "delete", "patch", "options",
-    "head", "trace", "connect"
-]
+
 
 NAMED_PARAMS = [
     "desc", "type", "enum", "pattern", "minimum", "maximum", "example",
@@ -111,42 +108,11 @@ class BaseParameter(object):
         return None
 
     def _inherit_type_properties(self, inherited_param):
-        for param in inherited_param:
-            name = getattr(param, "name", getattr(param, "code", None))
-            if name == self.name:
-                for n in NAMED_PARAMS:
-                    attr = getattr(self, n, None)
-                    if attr is None:
-                        attr = getattr(param, n, None)
-                        setattr(self, n, attr)
-
-    def __replace_str_attr(self, param, new_value, current_str):
-        pattern = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'
-        p = re.compile(pattern.format(param))
-        ret = re.findall(p, current_str)
-        if not ret:
-            return current_str
-        for item in ret:
-            to_replace = "".join(item[0:3]) + item[-1]
-            tag_func = item[3]
-            if tag_func:
-                tag_func = tag_func.strip("!")
-                tag_func = tag_func.strip()
-                func = getattr(_parameter_tags, tag_func)
-                if func:
-                    new_value = func(new_value)
-            current_str = current_str.replace(to_replace, str(new_value), 1)
-
-        return current_str
+        pu._inherit_type_properties(self, inherited_param, NAMED_PARAMS)
 
     def _substitute_parameters(self, obj, name, value):
-        substitutable_params = ["name", "raw"] + NAMED_PARAMS
-        for s in substitutable_params:
-            current_value = getattr(self, s)
-            if current_value:
-                if isinstance(current_value, str):
-                    new_value = self.__replace_str_attr(name, value, current_value)
-                    setattr(obj, s, new_value)
+        params = ["name", "raw"] + NAMED_PARAMS
+        pu._substitute_parameters(obj, name, value, params)
 
 
 @attr.s
@@ -274,41 +240,12 @@ class Header(object):
         return None
 
     def _inherit_type_properties(self, inherited_param):
-        params = NAMED_PARAMS + ["method"]
-        for param in inherited_param:
-            for n in params:
-                attr = getattr(self, n, None)
-                if attr is None:
-                    attr = getattr(param, n, None)
-                    setattr(self, n, attr)
-
-    def __replace_str_attr(self, param, new_value, current_str):
-        pattern = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'
-        p = re.compile(pattern.format(param))
-        ret = re.findall(p, current_str)
-        if not ret:
-            return current_str
-        for item in ret:
-            to_replace = "".join(item[0:3]) + item[-1]
-            tag_func = item[3]
-            if tag_func:
-                tag_func = tag_func.strip("!")
-                tag_func = tag_func.strip()
-                func = getattr(_parameter_tags, tag_func)
-                if func:
-                    new_value = func(new_value)
-            current_str = current_str.replace(to_replace, str(new_value), 1)
-
-        return current_str
+        params = ["method"] + NAMED_PARAMS
+        pu._inherit_type_properties(self, inherited_param, params)
 
     def _substitute_parameters(self, obj, name, value):
-        substitutable_params = ["name", "raw", "method"] + NAMED_PARAMS
-        for s in substitutable_params:
-            current_value = getattr(self, s)
-            if current_value:
-                if isinstance(current_value, str):
-                    new_value = self.__replace_str_attr(name, value, current_value)
-                    setattr(obj, s, new_value)
+        params = ["name", "raw", "method"] + NAMED_PARAMS
+        pu._substitute_parameters(obj, name, value, params)
 
 
 @attr.s
@@ -341,46 +278,12 @@ class Body(object):
     errors      = attr.ib(repr=False)
 
     def _inherit_type_properties(self, inherited_param):
-        body_params = ["schema", "example", "form_params"]
-        for param in inherited_param:
-            if param.mime_type != self.mime_type:
-                continue
-            for n in body_params:
-                attr = getattr(self, n, None)
-                if attr is None:
-                    attr = getattr(param, n, None)
-                    setattr(self, n, attr)
-
-    def __replace_str_attr(self, param, new_value, current_str):
-        pattern = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'
-        p = re.compile(pattern.format(param))
-        ret = re.findall(p, current_str)
-        if not ret:
-            return current_str
-        for item in ret:
-            to_replace = "".join(item[0:3]) + item[-1]
-            tag_func = item[3]
-            if tag_func:
-                tag_func = tag_func.strip("!")
-                tag_func = tag_func.strip()
-                func = getattr(_parameter_tags, tag_func)
-                if func:
-                    new_value = func(new_value)
-            current_str = current_str.replace(to_replace, str(new_value), 1)
-
-        return current_str
+        named_params = ["schema", "example", "form_params"]
+        pu._inherit_type_properties(self, inherited_param, named_params)
 
     def _substitute_parameters(self, obj, name, value):
-        substitutable_params = [
-            "mime_type", "raw", "schema", "example", "form_params"
-        ]
-        for s in substitutable_params:
-            current_value = getattr(self, s)
-            if current_value:
-                if isinstance(current_value, str):
-                    new_value = self.__replace_str_attr(name, value, current_value)
-                    setattr(obj, s, new_value)
-
+        params = ["mime_type", "raw", "schema", "example", "form_params"]
+        pu._substitute_parameters(obj, name, value, params)
 
 
 @attr.s
@@ -413,48 +316,21 @@ class Response(object):
         return None
 
     def _inherit_type_properties(self, inherited_param):
-        for param in inherited_param:
-            for n in NAMED_PARAMS:
-                attr = getattr(self, n, None)
-                if attr is None:
-                    attr = getattr(param, n, None)
-                    setattr(self, n, attr)
-
-    def __replace_str_attr(self, param, new_value, current_str):
-        pattern = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'
-        p = re.compile(pattern.format(param))
-        ret = re.findall(p, current_str)
-        if not ret:
-            return current_str
-        for item in ret:
-            to_replace = "".join(item[0:3]) + item[-1]
-            tag_func = item[3]
-            if tag_func:
-                tag_func = tag_func.strip("!")
-                tag_func = tag_func.strip()
-                func = getattr(_parameter_tags, tag_func)
-                if func:
-                    new_value = func(new_value)
-            current_str = current_str.replace(to_replace, str(new_value), 1)
-
-        return current_str
-
-    def _simple_subs_parameters(self, s, obj, name, value):
-        current_value = getattr(self, s)
-        if current_value:
-            if isinstance(current_value, str):
-                new_value = self.__replace_str_attr(name, value, current_value)
-                setattr(obj, s, new_value)
-
-
-    def _substitute_parameters(self, obj, name, value):
-        substitutable_params = ["code", "raw", "desc", "method"]
-        for s in substitutable_params:
-            self._simple_subs_parameters(s, obj, name, value)
+        pu._inherit_type_properties(self, inherited_param, NAMED_PARAMS)
         recurse_objs = ["headers", "body"]
         for r in recurse_objs:
-            if getattr(self, r):
-                r_objs = getattr(self, r)
+            r_objs = getattr(self, r)
+            if r_objs:
+                for o in r_objs:
+                    o._inherit_type_properties(inherited_param)
+
+    def _substitute_parameters(self, obj, name, value):
+        params = ["code", "raw", "desc", "method"]
+        pu._substitute_parameters(obj, name, value, params)
+        recurse_objs = ["headers", "body"]
+        for r in recurse_objs:
+            r_objs = getattr(self, r)
+            if r_objs:
                 for o in r_objs:
                     o._substitute_parameters(o, name, value)
 
