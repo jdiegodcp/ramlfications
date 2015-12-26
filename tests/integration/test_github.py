@@ -11,7 +11,7 @@ from ramlfications import parse
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
 from ramlfications.raml import RootNode, ResourceTypeNode, TraitNode
-from ramlfications._helpers import load_file
+from ramlfications.utils import load_file
 
 from tests.base import EXAMPLES
 
@@ -365,7 +365,7 @@ def test_resource_type_post_base(resource_types):
 
 
 def test_resource_type_patch_base(resource_types):
-    res = resource_types[2]
+    res = resource_types[4]
 
     assert res.method == "patch"
     assert len(res.headers) == 6
@@ -411,7 +411,7 @@ def test_resource_type_patch_base(resource_types):
 
 
 def test_resource_type_put_base(resource_types):
-    res = resource_types[3]
+    res = resource_types[2]
 
     assert res.method == "put"
     assert len(res.headers) == 6
@@ -457,7 +457,7 @@ def test_resource_type_put_base(resource_types):
 
 
 def test_resource_type_delete_base(resource_types):
-    res = resource_types[4]
+    res = resource_types[3]
 
     assert res.method == "delete"
     assert len(res.headers) == 6

@@ -1,0 +1,18 @@
+#%RAML 0.8
+title: Spotify Web API
+version: v1
+baseUri: https://api.spotify.com/{version}
+mediaType: application/json
+documentation:
+  - title: Spotify Web API Docs
+    content: |
+      Welcome to the _Spotify Web API_ specification. For more information about
+      how to use the API, check out the [Spotify's developer site](https://developer.spotify.com/web-api/).
+resourceTypes:
+  - protocolMethodType:
+      description: this resource type defines a protocol at the method level
+      get?:
+        protocols: [HTTP]
+/me:
+  displayName: current-user
+

@@ -9,6 +9,7 @@ from six.moves import BaseHTTPServer as httpserver  # NOQA
 from .parameters import Content
 from .validate import *  # NOQA
 
+
 HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
 AVAILABLE_METHODS = [
     "get", "post", "put", "delete", "patch", "head", "options",
@@ -18,6 +19,8 @@ AVAILABLE_METHODS = [
 METHOD_PROPERTIES = [
     "headers", "body", "responses", "query_params", "form_params"
 ]
+
+RESOURCE_PROPERTIES = METHOD_PROPERTIES + ["base_uri_params", "uri_params"]
 
 
 @attr.s
@@ -213,11 +216,3 @@ class ResourceNode(BaseNode):
     resource_type    = attr.ib(repr=False)
     secured_by       = attr.ib(repr=False)
     security_schemes = attr.ib(repr=False)
-
-    def _inherit_type(self):
-        for p in METHOD_PROPERTIES:
-            inherited_prop = getattr(self.resource_type, p)
-            resource_prop = getattr(self, p)
-            if resource_prop and inherited_prop:
-                for r in resource_prop:
-                    r._inherit_type_properties(inherited_prop)

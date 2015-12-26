@@ -8,7 +8,7 @@ import pytest
 
 from ramlfications import tree, parser
 from ramlfications.config import setup_config
-from ramlfications._helpers import load_file
+from ramlfications.utils import load_file
 
 from .base import EXAMPLES
 from .data.fixtures import tree_fixtures
@@ -61,8 +61,6 @@ def test_print_tree_light_v(api, capsys):
     print_tree(api, "light", 1)
 
     out, err = capsys.readouterr()
-    print(out)
-    print(expected_result)
     assert out == expected_result
 
 

@@ -4,7 +4,7 @@
 from __future__ import absolute_import, division, print_function
 
 __author__ = "Lynn Root"
-__version__ = "0.1.9"
+__version__ = "0.2.0.dev0"
 __license__ = "Apache 2.0"
 
 __email__ = "lynn@spotify.com"
@@ -15,7 +15,7 @@ __description__ = "A Python RAML parser"
 from ramlfications.config import setup_config
 from ramlfications.parser import parse_raml
 
-from ramlfications._helpers import load_file, load_string
+from ramlfications.utils import load_file, load_string
 
 
 def load(raml_file):

@@ -7,7 +7,7 @@ import re
 
 from six import iterkeys
 
-from ._decorators import collecterrors
+from .utils._decorators import collecterrors
 
 from .errors import *  # NOQA
 
@@ -187,6 +187,11 @@ def assigned_traits(inst, attr, value):
                    "in the root of the API.")
             raise InvalidResourceNodeError(msg)
         trait_names = [list(iterkeys(i))[0] for i in traits]
+        if not isinstance(value, list):
+            msg = ("The assigned traits, '{0}', needs to be either an array "
+                   "of strings or dictionaries mapping parameter values to "
+                   "the trait".format(value))
+            raise InvalidResourceNodeError(msg)
         if isinstance(value, list):
             for v in value:
                 if isinstance(v, dict):

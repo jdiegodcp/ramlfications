@@ -1,0 +1,120 @@
+#%RAML 0.8
+title: Example Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+documentation:
+  - title: Example Web API Docs
+    content: |
+      Welcome to the _Example Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Example API supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+          X-Foo-Header:
+            description: a foo header
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.example.com/authorize
+        accessTokenUri: https://accounts.example.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "user-public-profile"
+          - "user-email"
+          - "user-activity"
+          - "nsa-level-privacy"
+  - oauth_1_0:
+      description: Example API support OAuth 1.0
+      type: OAuth 1.0
+      describedBy:
+        headers:
+          Authorization:
+            description: Used to send a valid OAuth 1 auth info
+            type: string
+        responses:
+          200:
+            description: yay authenticated!
+            headers:
+              WWW-Authenticate:
+                description: Authentication protocols that the server supports
+      settings:
+        requestTokenUri: https://accounts.example.com/request
+        authorizationUri: https://accounts.example.com/auth
+        tokenCredentialsUri: https://accounts.example.com/token
+  - basic:
+      description: Example API supports Basic Authentication
+      type: Basic Authentication
+      describedBy:
+        headers:
+          Authorization:
+            description: Used to send base64-encoded credentials
+  - digest:
+      description: Example API supports Digest Authentication
+      type: Digest Authentication
+      describedBy:
+        headers:
+          Authorization:
+            description: Used to send digest authentication
+  - custom_auth:
+      description: custom auth for testing
+      type: X-custom-auth
+      describedBy:
+        documentation:
+          - title: foo docs
+            content: foo content
+        mediaType: application/x-www-form-urlencode
+        usage: Some usage description
+        protocols: [HTTPS]
+        queryParameters:
+          fooQParam:
+            description: A foo Query parameter
+            type: string
+        uriParameters:
+          subDomain:
+            description: subdomain of auth
+            default: fooauth
+        formParameters:
+          fooFormParam:
+            description: A foo form parameter
+            type: string
+        body:
+          application/x-www-form-urlencoded:
+            formParameters:
+              anotherFormParam:
+                description: another form parameter
+      settings:
+        foo: bar
+/widgets:
+  displayName: several-widgets
+  type: inheritBase
+  get:
+    description: |
+      [Get Several Widgets](https://developer.example.com/widgets/)
+    headers:
+      X-Widgets-Header:
+        description: just an extra header for funsies
+    queryParameters:
+      ids:
+        displayName: Example Widget IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: "widget1,widget2,widget3"

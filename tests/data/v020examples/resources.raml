@@ -1,0 +1,168 @@
+#%RAML 0.8
+title: Example Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://{subDomain}.example.com/{version}/{external_party}
+baseUriParameters:
+  subDomain:
+    description: subdomain of API server
+    example: sjc
+uriParameters:
+  external_party:
+    description: code of third-party partner
+    example: gizmo_co
+mediaType: application/json
+documentation:
+  - title: Example Web API Docs
+    content: |
+      Welcome to the _Example Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+resourceTypes:
+  - headerType:
+      description: This is the header type description
+      get?:
+        headers:
+          Accept:
+            description: An Acceptable header for get method
+            type: string
+      post?:
+        headers:
+          Accept:
+            description: An Acceptable header for post method
+            type: string
+traits:
+  - filterable:
+      usage: Some description about using filterable
+      queryParameters:
+        fields:
+          description: A comma-separated list of fields to filter query
+          type: string
+          example: gizmos.items(added_by.id,gizmo(name,href,widget(name,href)))
+          displayName: Fields
+      headers:
+        X-example-header:
+          description: An example of a trait header
+      body:
+        application/json:
+          schema: {"name": "string"}
+          example: {"name": "example body for trait"}
+      responses:
+        200:
+          description: Yay filterable!
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Example API supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+          X-Foo-Header:
+            description: a foo header
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.example.com/authorize
+        accessTokenUri: https://accounts.example.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "user-public-profile"
+          - "user-email"
+          - "user-activity"
+          - "nsa-level-privacy"
+/widgets:
+  displayName: several-widgets
+  type: headerType
+  get:
+    description: |
+      [Get Several Widgets](https://developer.example.com/widgets/)
+    headers:
+      X-Widgets-Header:
+        description: just an extra header for funsies
+    queryParameters:
+      ids:
+        displayName: Example Widget IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: "widget1,widget2,widget3"
+/gizmos:
+  displayName: several-gizmos
+  securedBy: [ oauth_2_0 ]
+  post:
+    description: Post several gizmos
+    formParameters:
+      ids:
+        displayName: Example Gizmo IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: "gizmo1,gizmo2,gizmo3"
+/thingys:
+  displayName: several-thingys
+  post:
+    description: Post several thingys
+    body:
+      application/json:
+        schema: {"name": "string"}
+        example: {"name": "Example Name"}
+      application/xml:
+        schema: |
+          <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="thingy" type="thingyType" />
+            <xs:complexType name="thingyType">
+              <xs:sequence>
+                <xs:element type="xs:string" name="name" minOccurs="1" maxOccurs="1"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:schema>
+      application/x-www-form-urlencoded:
+        formParameters:
+          foo:
+            displayName: Foo
+            description: The Foo Form Field
+            type: string
+            minLength: 5
+            maxLength: 50
+            default: foobar
+/thingy-gizmos:
+  displayName: several-thingy-gizmos
+  put:
+    description: Put several thingy gizmos
+    responses:
+      200:
+        description: A 200 response
+        headers:
+          X-Success-Response-Header:
+            description: A 200 header
+            type: string
+            required: true
+            example: f00bAr
+        body:
+          application/json:
+            schema: {"name": "a schema body"}
+            example: {"name": "an example body"}
+  /{id}:
+    displayName: thingy-gizmo
+    get:
+      description: Get a single thingy gizmo
+      uriParameters:
+        id:
+          description: The thingy gizmo id
+          example: thingygizmo123
+/widget-thingys:
+  displayName: several-widget-thingys
+  get:
+    is: [ filterable ]
+    description: Get several filterable widget thingys

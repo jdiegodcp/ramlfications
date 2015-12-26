@@ -1,0 +1,120 @@
+#%RAML 0.8
+title: Example Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+documentation:
+  - title: Example Web API Docs
+    content: |
+      Welcome to the _Example Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+resourceTypes:
+  - base:
+      description: This is the base type description
+      uriParameters:
+        mediaTypeExtension:
+          enum: [ .json ]
+          description: Use .json to specify application/json media type.
+      get?:
+        queryParameters:
+          stringParam:
+            displayName: String Parameter
+            type: string
+            description: A description of the string query parameter
+            required: true
+            maxLength: 255
+            minLength: 1
+            default: foobar
+            pattern: ^[a-zA-Z0-9][-a-zA-Z0-9]*$
+            repeat: true
+        headers:
+          Accept:
+            description: An Acceptable header
+            type: string
+        body:
+          application/json:
+            schema: {"name": "string"}
+            example: {"name": "Foo Bar"}
+        responses:
+          403:
+            description: |
+              API rate limit exceeded.
+            headers:
+              X-waiting-period:
+                description: |
+                  The number of seconds to wait before you can attempt to make a request again.
+                type: integer
+                required: true
+                minimum: 1
+                maximum: 3600
+                example: 34
+            body:
+              application/json:
+                schema: {"name": "string"}
+                example: {"name": "a response body"}
+  - inheritBase:
+      type: base
+      usage: Some sort of usage text
+      get?:
+        description: This should overwrite the base type description
+        displayName: inherited example
+        formParameters:
+          intParam:
+            displayName: Integer Parameter
+            type: integer
+            description: A description of the integer form parameter
+            required: false
+            maximum: 1000
+            minimum: 0
+            example: 5
+            default: 10
+        body:
+          application/x-www-form-urlencoded:
+            formParameters:
+              foo:
+                displayName: Foo
+                description: some foo bar
+        responses:
+          200:
+            description: A 200 response
+            headers:
+              X-InheritBase-Success-Response-Header:
+                description: A 200 header
+                type: string
+                required: true
+                example: f00bAr
+            body:
+              application/json:
+                schema: {"name": "a schema body"}
+                example: {"name": "an example body"}
+          500:
+            description: A 500 response
+            headers:
+              X-InheritBase-ServerError-Response-Header:
+                description: A 500 error
+                type: string
+                required: true
+                example: fuuuuuu
+/widgets:
+  displayName: several-widgets
+  type: inheritBase
+  get:
+    description: |
+      [Get Several Widgets](https://developer.example.com/widgets/)
+    headers:
+      X-Widgets-Header:
+        description: just an extra header for funsies
+    queryParameters:
+      ids:
+        displayName: Example Widget IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: "widget1,widget2,widget3"
+    responses:
+      500:
+        description: This should overwrite inheritBase's description
+        headers:
+          X-Another-500-header:
+            description: another header for 500 response

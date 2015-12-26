@@ -5,7 +5,7 @@ import os
 import pytest
 
 from ramlfications.errors import LoadRAMLError
-from ramlfications._helpers import _get_raml_object
+from ramlfications.utils import _get_raml_object
 
 from .base import EXAMPLES
 

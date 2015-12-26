@@ -1,4 +1,4 @@
-from .errors import BaseRAMLError
+from ramlfications.errors import BaseRAMLError
 
 
 def collecterrors(func):

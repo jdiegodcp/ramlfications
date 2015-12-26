@@ -12,7 +12,7 @@ from ramlfications.config import setup_config
 from ramlfications.raml import (
     RootNode, ResourceTypeNode, TraitNode, ResourceNode
 )
-from ramlfications._helpers import load_file
+from ramlfications.utils import load_file
 
 from tests.base import EXAMPLES
 

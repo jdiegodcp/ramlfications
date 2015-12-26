@@ -1,0 +1,308 @@
+#%RAML 0.8
+title: Example Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+documentation:
+  - title: Example Web API Docs
+    content: |
+      Welcome to the _Example Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+resourceTypes:
+  - base:
+      description: This is the base type description
+      uriParameters:
+        mediaTypeExtension:
+          enum: [ .json ]
+          description: Use .json to specify application/json media type.
+      get?: &common
+        headers:
+          Accept:
+            description: An Acceptable header
+            type: string
+        body:
+          application/json:
+            schema: {"name": "string"}
+            example: {"name": "Foo Bar"}
+        responses:
+          403:
+            description: |
+              API rate limit exceeded.
+            headers:
+              X-waiting-period:
+                description: |
+                  The number of seconds to wait before you can attempt to make a request again.
+                type: integer
+                required: true
+                minimum: 1
+                maximum: 3600
+                example: 34
+            body:
+              application/json:
+                schema: {"name": "string"}
+                example: {"name": "Foo Bar"}
+      post?: *common
+  - inheritBase:
+      type: base
+      usage: Some sort of usage text
+      get?:
+        description: This should overwrite the base type description
+        displayName: inherited example
+        body:
+          application/x-www-form-urlencoded:
+            formParameters:
+              foo:
+                displayName: Foo
+                description: some foo bar
+        responses:
+          200:
+            description: A 200 response
+            headers:
+              X-InheritBase-Success-Response-Header:
+                description: A 200 header
+                type: string
+                required: true
+                example: f00bAr
+            body:
+              application/json:
+                schema: {"name": "a schema body"}
+                example: {"name": "an example body"}
+          500:
+            description: A 500 response
+            headers:
+              X-InheritBase-ServerError-Response-Header:
+                description: A 500 error
+                type: string
+                required: true
+                example: fuuuuuu
+  - queryParamType:
+      get?:
+        displayName: query param type
+        description: A resource type with query parameters
+        queryParameters:
+          stringParam:
+            displayName: String Parameter
+            type: string
+            description: A description of the string query parameter
+            required: true
+            maxLength: 255
+            minLength: 1
+            default: foobar
+            pattern: ^[a-zA-Z0-9][-a-zA-Z0-9]*$
+            repeat: true
+          intParam:
+            displayName: Integer Parameter
+            type: integer
+            description: A description of the integer query parameter
+            required: false
+            maximum: 1000
+            minimum: 0
+            example: 5
+            default: 10
+          enumParam:
+            displayName: Enum Parameter
+            type: string
+            description: A description of the enum query parameter
+            required: true
+            enum: [ foo, bar, baz ]
+            default: foo
+          dateParam:
+            displayName: Date Parameter
+            description: A description of the date query parameter
+            type: date
+            required: false
+            repeat: false
+          boolParam:
+            displayName: Boolean Parameter
+            description: A description of the bool query parameter
+            type: boolean
+            required: true
+            repeat: false
+          fileParam:
+            displayName: File Parameter
+            description: A description of the file query parameter
+            type: file
+            required: false
+            repeat: true
+  - formParamType:
+      post?:
+        displayName: form param type
+        description: A resource type with form parameters
+        formParameters:
+          stringParam:
+            displayName: String Parameter
+            type: string
+            description: A description of the string form parameter
+            required: true
+            maxLength: 255
+            minLength: 1
+            default: foobar
+            pattern: ^[a-zA-Z0-9][-a-zA-Z0-9]*$
+            repeat: true
+          intParam:
+            displayName: Integer Parameter
+            type: integer
+            description: A description of the integer form parameter
+            required: false
+            maximum: 1000
+            minimum: 0
+            example: 5
+            default: 10
+          enumParam:
+            displayName: Enum Parameter
+            type: string
+            description: A description of the enum form parameter
+            required: true
+            enum: [ foo, bar, baz ]
+            default: foo
+          dateParam:
+            displayName: Date Parameter
+            description: A description of the date form parameter
+            type: date
+            required: false
+            repeat: false
+          boolParam:
+            displayName: Boolean Parameter
+            description: A description of the bool form parameter
+            type: boolean
+            required: true
+            repeat: false
+          fileParam:
+            displayName: File Parameter
+            description: A description of the file form parameter
+            type: file
+            required: false
+            repeat: true
+  - typeWithTrait:
+      get:
+        displayName: Resource Type with Trait
+        is: [ aResourceTypeTrait ]
+  - protocolsType:
+      put:
+        displayName: Protocols Type
+        description: Resource Type with different protocols than root
+        protocols: [ HTTP ]
+  - securedByType:
+      post:
+        displayName: Secured Type
+        description: Resource Type is secured
+        securedBy: [ oauth_2_0 ]
+  - parameterType:
+      get:
+        description: A resource type with substitutable parameters
+        queryParameters:
+          <<queryParamName>>:
+            description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+          <<fallbackParamName>>:
+            description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+  - inheritParameterTypeResourceAssigned:
+      type: { parameterType: { queryParamName: foo, fallbackParamName: bar } }
+      get:
+        description: Inherits parameterType resource type
+  - inheritParameterTypeMethodAssigned:
+      get:
+        type: { parameterType: { queryParamName: foo, fallbackParamName: bar } }
+        description: Inherits parameterType resource type
+  - typeWithParameterTrait:
+      get:
+        displayName: Resource Type with Parameter Trait
+        is: [ aParameterResourceTypeTrait: { maxPages: 10, aHeader: X-foo-header } ]
+  - noMethodType:
+      description: This type has no methods defined
+      uriParameters:
+        id:
+          description: some random ID
+traits:
+  - aResourceTypeTrait:
+      description: A trait to be assigned to a Resource Type
+      queryParameters:
+        stringParam:
+          displayName: String Parameter
+          type: string
+          description: A description of the string query parameter
+          required: true
+          maxLength: 255
+          minLength: 1
+          default: foobar
+          pattern: ^[a-zA-Z0-9][-a-zA-Z0-9]*$
+          repeat: true
+  - aParameterResourceTypeTrait:
+      description: A trait to be assigned to a Resource Type with substitutable parameters
+      queryParameters:
+        numPages:
+          description: The number of pages to return, not to exceed <<maxPages>>
+      responses:
+        200:
+          description: No more than <<maxPages>> pages returned
+          headers:
+            <<aHeader>>:
+              description: some description for <<aHeader>>
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Example API supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.example.com/authorize
+        accessTokenUri: https://accounts.example.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "user-public-profile"
+          - "user-email"
+          - "user-activity"
+          - "nsa-level-privacy"
+
+/widgets:
+  displayName: several-widgets
+  type: inheritBase
+  get:
+    description: |
+      [Get Several Widgets](https://developer.example.com/widgets/)
+    headers:
+      X-Widgets-Header:
+        description: just an extra header for funsies
+    queryParameters:
+      ids:
+        displayName: Example Widget IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: "widget1,widget2,widget3"
+  /{id}:
+    displayName: widget
+    uriParameters:
+      id:
+        displayName: Example Widget ID
+        type: string
+        description: The Example ID for the widget
+        example: widget2
+    get:
+      description: |
+        [Get a Widget](https://developer.example.com/widgets/)
+    /gizmos:
+      displayName: widget-gizmos
+      get:
+        description: |
+          [Get a Widget's Gizmos](https://developer.example.com/widget-gizmos/)
+/gizmos:
+  displayName: parent resource
+  /{id}:
+    type: noMethodType
+    get:
+      description: get a gizmo ID
