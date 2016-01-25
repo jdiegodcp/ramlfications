@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 from six import itervalues, iterkeys
 
+from .nodelist import NodeList
 from .parameters import SecurityScheme
 from .utils import _get_scheme
 # functions used to parse the same shit in parser.py
@@ -15,7 +16,7 @@ from .utils import _get_scheme
 def security_schemes(secured, root):
     """Set resource's assigned security scheme objects."""
     if secured:
-        secured_objs = []
+        secured_objs = NodeList()
         for item in secured:
             assigned_scheme = _get_scheme(item, root)
             if assigned_scheme:

@@ -10,6 +10,7 @@ from six import iteritems, iterkeys, itervalues
 
 from .config import MEDIA_TYPES
 from .errors import InvalidRAMLError
+from .nodelist import NodeList
 from .parameters import (
     Documentation, Header, Body, Response, URIParameter, QueryParameter,
     FormParameter, SecurityScheme
@@ -27,7 +28,6 @@ from .utils import (
     get_inherited, set_param_object, set_params, _get_data_union,
     _preserve_uri_order
 )
-
 
 __all__ = ["parse_raml"]
 
@@ -52,7 +52,7 @@ def parse_raml(loaded_raml, config):
     root.security_schemes = create_sec_schemes(root.raml_obj, root)
     root.traits = create_traits(root.raml_obj, root)
     root.resource_types = create_resource_types(root.raml_obj, root)
-    root.resources = create_resources(root.raml_obj, [], root,
+    root.resources = create_resources(root.raml_obj, NodeList(), root,
                                       parent=None)
 
     if validate:
@@ -72,12 +72,12 @@ def create_root(raml, config):
     :returns: :py:class:`.raml.RootNode` object with API root attributes set
     """
 
-    errors = []
+    errors = NodeList()
 
     def protocols():
         explicit_protos = _get(raml, "protocols")
         implicit_protos = re.findall(r"(https|http)", base_uri())
-        implicit_protos = [p.upper() for p in implicit_protos]
+        implicit_protos = NodeList([p.upper() for p in implicit_protos])
 
         return explicit_protos or implicit_protos or None
 
@@ -108,16 +108,18 @@ def create_root(raml, config):
         return _preserve_uri_order(uri, params, config, errors, declared)
 
     def docs():
-        d = _get(raml, "documentation", [])
+        d = _get(raml, "documentation", NodeList())
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(_get(i, "title"), _get(i, "content")) for i in d]
+        docs = NodeList([
+            Documentation(_get(i, "title"), _get(i, "content")) for i in d
+        ])
         return docs or None
 
     def schemas():
         _schemas = _get(raml, "schemas")
         if not _schemas:
             return None
-        schemas = []
+        schemas = NodeList()
         for schema in _schemas:
             value = load_schema(list(itervalues(schema))[0])
             schemas.append({list(iterkeys(schema))[0]: value})
@@ -164,7 +166,7 @@ def create_sec_schemes(raml_data, root):
         }[item]
 
     def headers(header_data):
-        _headers = []
+        _headers = NodeList()
         header_data = _get(header_data, "headers", {})
         for k, v in list(iteritems(header_data)):
             h = _create_base_param_obj({k: v},
@@ -176,7 +178,7 @@ def create_sec_schemes(raml_data, root):
 
     def body(body_data):
         body_data = _get(body_data, "body", {})
-        _body = []
+        _body = NodeList()
         for k, v in list(iteritems(body_data)):
             body = Body(
                 mime_type=k,
@@ -191,7 +193,7 @@ def create_sec_schemes(raml_data, root):
         return _body
 
     def responses(resp_data):
-        _resps = []
+        _resps = NodeList()
         resp_data = _get(resp_data, "responses", {})
         for k, v in list(iteritems(resp_data)):
             response = Response(
@@ -204,11 +206,11 @@ def create_sec_schemes(raml_data, root):
                 errors=root.errors
             )
             _resps.append(response)
-        return sorted(_resps, key=lambda x: x.code)
+        return NodeList(sorted(_resps, key=lambda x: x.code))
 
     def query_params(param_data):
         param_data = _get(param_data, "queryParameters", {})
-        _params = []
+        _params = NodeList()
         for k, v in list(iteritems(param_data)):
             p = _create_base_param_obj({k: v},
                                        QueryParameter,
@@ -219,7 +221,7 @@ def create_sec_schemes(raml_data, root):
 
     def uri_params(param_data):
         param_data = _get(param_data, "uriParameters")
-        _params = []
+        _params = NodeList()
         for k, v in list(iteritems(param_data)):
             p = _create_base_param_obj({k: v},
                                        URIParameter,
@@ -230,7 +232,7 @@ def create_sec_schemes(raml_data, root):
 
     def form_params(param_data):
         param_data = _get(param_data, "formParameters", {})
-        _params = []
+        _params = NodeList()
         for k, v in list(iteritems(param_data)):
             p = _create_base_param_obj({k: v},
                                        FormParameter,
@@ -249,9 +251,11 @@ def create_sec_schemes(raml_data, root):
         return _get(desc_by_data, "protocols")
 
     def documentation(desc_by_data):
-        d = _get(desc_by_data, "documentation", [])
+        d = _get(desc_by_data, "documentation", NodeList())
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(_get(i, "title"), _get(i, "content")) for i in d]
+        docs = NodeList([
+            Documentation(_get(i, "title"), _get(i, "content")) for i in d
+        ])
         return docs or None
 
     def set_property(node, obj, node_data):
@@ -276,8 +280,8 @@ def create_sec_schemes(raml_data, root):
             set_property(node, obj, node_data)
         return node
 
-    schemes = _get(raml_data, "securitySchemes", [])
-    scheme_objs = []
+    schemes = _get(raml_data, "securitySchemes", NodeList())
+    scheme_objs = NodeList()
     for s in schemes:
         name = list(iterkeys(s))[0]
         data = list(itervalues(s))[0]
@@ -318,7 +322,7 @@ def create_traits(raml_data, root):
 
     def body(data):
         body = _get(data, "body", {})
-        body_objects = []
+        body_objects = NodeList()
         for key, value in list(iteritems(body)):
             body = Body(
                 mime_type=key,
@@ -333,7 +337,7 @@ def create_traits(raml_data, root):
         return body_objects or None
 
     def responses():
-        response_objects = []
+        response_objects = NodeList()
         for key, value in list(iteritems(_get(data, "responses", {}))):
             response = Response(
                 code=key,
@@ -345,7 +349,7 @@ def create_traits(raml_data, root):
                 errors=root.errors
             )
             response_objects.append(response)
-        return sorted(response_objects, key=lambda x: x.code) or None
+        return NodeList(sorted(response_objects, key=lambda x: x.code)) or None
 
     def wrap(key, data):
         return TraitNode(
@@ -366,8 +370,8 @@ def create_traits(raml_data, root):
             errors=root.errors
         )
 
-    traits = _get(raml_data, "traits", [])
-    trait_objects = []
+    traits = _get(raml_data, "traits", NodeList())
+    trait_objects = NodeList()
     for trait in traits:
         name = list(iterkeys(trait))[0]
         data = list(itervalues(trait))[0]
@@ -413,7 +417,7 @@ def create_resource_types(raml_data, root):
             _body = _get_inherited_item(_body, "body", resource_types,
                                         meth, v)
 
-        body_objects = []
+        body_objects = NodeList()
         for key, value in list(iteritems(_body)):
             body = Body(
                 mime_type=key,
@@ -428,7 +432,7 @@ def create_resource_types(raml_data, root):
         return body_objects or None
 
     def responses(data):
-        response_objects = []
+        response_objects = NodeList()
         _responses = _get(data, "responses", {})
         if _get(v, "type"):
             _responses = _get_inherited_item(_responses, "responses",
@@ -454,7 +458,7 @@ def create_resource_types(raml_data, root):
             )
             response_objects.append(response)
         if response_objects:
-            return sorted(response_objects, key=lambda x: x.code)
+            return NodeList(sorted(response_objects, key=lambda x: x.code))
         return None
 
     def uri_params(data):
@@ -529,14 +533,14 @@ def create_resource_types(raml_data, root):
         return m or r or root.protocols
 
     def is_(data):
-        m, r = _get_res_type_attribute(v, data, "is", default=[])
+        m, r = _get_res_type_attribute(v, data, "is", default=NodeList())
         return m + r or None
 
     def traits(data):
         assigned = is_(data)
         if assigned:
             if root.traits:
-                trait_objs = []
+                trait_objs = NodeList()
                 for trait in assigned:
                     obj = [t for t in root.traits if t.name == trait]
                     if obj:
@@ -544,7 +548,7 @@ def create_resource_types(raml_data, root):
                 return trait_objs or None
 
     def secured_by(data):
-        m, r = _get_res_type_attribute(v, data, "securedBy", [])
+        m, r = _get_res_type_attribute(v, data, "securedBy", NodeList())
         return m + r or None
 
     def security_schemes_(data):
@@ -578,10 +582,10 @@ def create_resource_types(raml_data, root):
             errors=root.errors
         )
 
-    resource_types = _get(raml_data, "resourceTypes", [])
-    resource_type_objects = []
-    child_res_type_objects = []
-    child_res_type_names = []
+    resource_types = _get(raml_data, "resourceTypes", NodeList())
+    resource_type_objects = NodeList()
+    child_res_type_objects = NodeList()
+    child_res_type_names = NodeList()
 
     for res in resource_types:
         for k, v in list(iteritems(res)):
@@ -661,7 +665,7 @@ def create_resources(node, resources, root, parent):
     for k, v in list(iteritems(node)):
         if k.startswith("/"):
             avail = _get(root.config, "http_optional")
-            methods = [m for m in avail if m in list(iterkeys(v))]
+            methods = NodeList([m for m in avail if m in list(iterkeys(v))])
             if "type" in list(iterkeys(v)):
                 assigned = _resource_type_lookup(_get(v, "type"), root)
                 if hasattr(assigned, "method"):
@@ -711,6 +715,7 @@ def create_node(name, raw_data, method, parent, root):
     :returns: :py:class:`.raml.ResourceNode` object
     """
     #####
+
     # Node attribute functions
     #####
     def path():
@@ -758,7 +763,7 @@ def create_node(name, raw_data, method, parent, root):
         meth = inherited["method"]
         res = inherited["resource"]
         parent_ = inherited["parent"]
-        default = [root.base_uri.split("://")[0].upper()]
+        default = NodeList([root.base_uri.split("://")[0].upper()])
 
         return meth or r_type or trait or res or parent_ or default
 
@@ -780,10 +785,11 @@ def create_node(name, raw_data, method, parent, root):
     def body():
         """Set resource's supported request/response body."""
         bodies = _get_attribute("body", method, raw_data)
-        body_objects = _get_inherited_attribute("body", root, type_(),
-                                                method, is_())
+        body_objects = NodeList(
+            _get_inherited_attribute("body", root, type_(), method, is_())
+        )
 
-        _body_objs = []
+        _body_objs = NodeList()
         for k, v in list(iteritems(bodies)):
             if v is None:
                 continue
@@ -797,7 +803,7 @@ def create_node(name, raw_data, method, parent, root):
                 errors=root.errors
             )
             _body_objs.append(body)
-        if _body_objs == []:
+        if _body_objs == NodeList():
             return body_objects or None
         return _remove_duplicates(body_objects, _body_objs)
 
@@ -805,7 +811,7 @@ def create_node(name, raw_data, method, parent, root):
         """Set resource's expected responses."""
         def resp_headers(headers):
             """Set response headers."""
-            header_objs = []
+            header_objs = NodeList()
             for k, v in list(iteritems(headers)):
                 header = Header(
                     name=k,
@@ -831,7 +837,7 @@ def create_node(name, raw_data, method, parent, root):
 
         def resp_body(body):
             """Set response body."""
-            body_list = []
+            body_list = NodeList()
             default_body = {}
             for (key, spec) in body.items():
                 if key not in MEDIA_TYPES:
@@ -877,7 +883,7 @@ def create_node(name, raw_data, method, parent, root):
         resps = _get_attribute("responses", method, raw_data)
         type_resp = _get_resource_type("responses", root, type_(), method)
         trait_resp = _get_trait("responses", root, is_())
-        resp_objs = type_resp + trait_resp
+        resp_objs = NodeList(type_resp + trait_resp)
         resp_codes = [r.code for r in resp_objs]
         for k, v in list(iteritems(resps)):
             if k in resp_codes:
@@ -1010,7 +1016,7 @@ def create_node(name, raw_data, method, parent, root):
 
     def is_():
         """Set resource's assigned trait names."""
-        is_list = []
+        is_list = NodeList()
         res_level = _get(raw_data, "is")
         if res_level:
             assert isinstance(res_level, list), "Error parsing trait"
@@ -1028,9 +1034,9 @@ def create_node(name, raw_data, method, parent, root):
         assigned = is_()
         if assigned:
             if root.traits:
-                trait_objs = []
+                trait_objs = NodeList()
                 for trait in assigned:
-                    obj = [t for t in root.traits if t.name == trait]
+                    obj = NodeList([t for t in root.traits if t.name == trait])
                     if obj:
                         trait_objs.append(obj[0])
                 return trait_objs or None
