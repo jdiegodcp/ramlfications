@@ -7,6 +7,7 @@ import os
 import json
 import pytest
 from six import iteritems
+import StringIO
 
 from ramlfications import loader
 from ramlfications.errors import LoadRAMLError
@@ -56,15 +57,13 @@ def test_load_file_with_nonyaml_include():
 
 
 def test_load_string():
-    raml_str = ("""
-                - foo
-                - bar
-                - baz
+    raml_str = ("""#%RAML 0.8
+                name: foo
                 """)
     raml = loader.RAMLLoader().load(raml_str)
 
-    expected_data = ["foo", "bar", "baz"]
-    assert raml.sort() == expected_data.sort()
+    expected_data = {"name": "foo"}
+    assert raml == expected_data
 
 
 def test_yaml_parser_error():
@@ -265,3 +264,25 @@ def test_jsonref_absolute_local_uri_file(tmpdir):
     raml = loader.RAMLLoader().load(raml_file.read())
     expected_data = lf.json_ref_absolute_expected
     assert dict_equal(raml, expected_data)
+
+
+def test_parse_version():
+    f = StringIO.StringIO("#%RAML 0.8")
+    raml = loader.RAMLLoader().load(f)
+    assert raml._raml_version == "0.8"
+
+
+def test_parse_badversion():
+    f = StringIO.StringIO("#%ssRAML 0.8")
+    with pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
+    msg = "Error raml file shall start with #%RAML"
+    assert msg in e.value.args[0]
+
+
+def test_parse_noversion():
+    f = StringIO.StringIO("{}")
+    with pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
+    msg = "Error raml file shall start with #%RAML"
+    assert msg in e.value.args[0]

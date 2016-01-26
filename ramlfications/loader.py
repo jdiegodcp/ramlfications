@@ -13,8 +13,11 @@ import os
 import jsonref
 import yaml
 
+from six import string_types
+
 from .errors import LoadRAMLError
 
+RAMLHEADER = "#%RAML "
 
 class RAMLLoader(object):
     """
@@ -72,6 +75,19 @@ class RAMLLoader(object):
 
         return yaml.load(stream, OrderedLoader)
 
+    def _parse_raml_header(self, raml):
+        if isinstance(raml, string_types):
+            header = raml.split('\n', 1)[0]
+        else:
+            header = raml.readline().strip()
+        if not header.startswith(RAMLHEADER):
+            msg = "Error raml file shall start with {0} but got {1}".format(
+                RAMLHEADER, header)
+            raise LoadRAMLError(msg)
+        version_string = header[len(RAMLHEADER):]
+        version = version_string.split(" ")[0]  # skip file type for now
+        return version
+
     def load(self, raml):
         """
         Loads the desired RAML file and returns data.
@@ -83,12 +99,17 @@ class RAMLLoader(object):
         :rtype: ``dict``
 
         """
-
+        raml_version = self._parse_raml_header(raml)
         try:
-            return self._ordered_load(raml, yaml.SafeLoader)
+            ret = self._ordered_load(raml, yaml.SafeLoader)
         except yaml.parser.ParserError as e:
             msg = "Error parsing RAML: {0}".format(e)
             raise LoadRAMLError(msg)
         except yaml.constructor.ConstructorError as e:
             msg = "Error parsing RAML: {0}".format(e)
             raise LoadRAMLError(msg)
+
+        if ret is None:
+            ret = OrderedDict()
+        ret._raml_version = raml_version
+        return ret

@@ -6,6 +6,6 @@ contributors:
 
 - `Hynek Schlawack <https://github.com/hynek>`_
 - `Matt Montag <https://github.com/mmontag>`_
-
+- `Pierre Tardy  <https://github.com/tardyp>`_
 
 .. _`Lynn Root`: https://github.com/econchick
