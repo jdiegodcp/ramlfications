@@ -49,6 +49,7 @@ def install_requires():
     ]
     if sys.version_info[:2] == (2, 6):
         install_requires.append("ordereddict")
+        install_requires.append("simplejson")
     return install_requires
 
 

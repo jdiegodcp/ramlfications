@@ -20,7 +20,7 @@ from ramlfications.utils import load_schema
 # Private utility functions
 from ramlfications.utils.common import _get
 from ramlfications.utils.parser import (
-    resolve_scalar, parse_assigned_dicts, resolve_inherited_scalar
+    parse_assigned_dicts, resolve_inherited_scalar
 )
 
 from .parameters import create_param_objs
@@ -255,7 +255,6 @@ def _create_trait_node(name, data, root):
     )
     resolve_from = ["method"]
     node = _create_base_node(name, root, "trait", kwargs, resolve_from)
-    node["protocols"] = _get(data, "protocols")
     node["usage"] = _get(data, "usage")
     node["media_type"] = _get(data, "mediaType")
     return TraitNode(**node)
@@ -327,11 +326,6 @@ def _create_resource_type_node(name, method_data, method, resource_data, root):
         if method:
             return "?" in method
 
-    def protocols():
-        m, r = resolve_scalar(method_data, resource_data, "protocols",
-                              default=None)
-        return m or r or root.protocols
-
     def create_node_dict():
         resolve_from = ["method", "resource", "types", "traits", "root"]
         node = _create_base_node(name, root, "resource_type",
@@ -340,14 +334,12 @@ def _create_resource_type_node(name, method_data, method, resource_data, root):
         node["optional"] = optional()
         node["method"] = _get(kwargs, "method")
         node["usage"] = _get(resource_data, "usage")
-        node["protocols"] = protocols()
         return node
 
     kwargs = dict(
         data=method_data,
         resource_data=resource_data,
         method=method_(),
-        root_=root,
         root=root,
         errs=root.errors,
         conf=root.config
@@ -465,7 +457,6 @@ def _create_resource_node(name, raw_data, method, parent, root):
         data=method_data,
         method=method,
         resource_data=raw_data,
-        root_=root,
         parent_data=parent_data,
         root=root,
         resource_path=resource_path,
@@ -490,23 +481,27 @@ def _create_base_node(name, root, node_type, kwargs, resolve_from=[]):
     :returns: dictionary of :py:class:`.raml.BaseNode` data
     """
     def display_name():
-        method_data = _get(kwargs, "data", {})
-        resource_data = _get(kwargs, "resource_data", {})
-        m, r = resolve_scalar(method_data, resource_data, "displayName", None)
-        return m or r or name
+        # only care about method and resource-level data
+        resolve_from = ["method", "resource"]
+        ret = resolve_inherited_scalar("displayName", resolve_from, **kwargs)
+        return ret or name
 
     def description():
         return resolve_inherited_scalar("description", resolve_from, **kwargs)
 
     def protocols():
         if _get(kwargs, "parent_data"):
-            # parent should be last
-            resolve_from.append("parent")
-        method_data = _get(kwargs, "data", {})
-        resource_data = _get(kwargs, "resource_data", {})
-        m, r = resolve_scalar(method_data, resource_data, "protocols",
-                              default=None)
-        return m or r or root.protocols
+            # should go before "root"
+            if "root" in resolve_from:
+                index = resolve_from.index("root")
+                resolve_from.insert(index, "parent")
+            else:
+                resolve_from.append("parent")
+        ret = resolve_inherited_scalar("protocols", resolve_from, **kwargs)
+
+        if not ret:
+            return [root.base_uri.split("://")[0].upper()]
+        return ret
 
     def headers():
         return create_param_objs("headers", resolve_from, **kwargs)
@@ -533,18 +528,10 @@ def _create_base_node(name, root, node_type, kwargs, resolve_from=[]):
         return create_param_objs("formParameters", resolve_from, **kwargs)
 
     def is_():
-        m, r = resolve_scalar(_get(kwargs, "data"),
-                              _get(kwargs, "resource_data"),
-                              "is", default=[])
-        if isinstance(m, list) and isinstance(r, list):
-            return m + r or None
-        return m or r or None
+        return resolve_inherited_scalar("is", resolve_from, **kwargs)
 
     def type_():
-        m, r = resolve_scalar(_get(kwargs, "data"),
-                              _get(kwargs, "resource_data"),
-                              "type", {})
-        return m or r or None
+        return resolve_inherited_scalar("type", resolve_from, **kwargs)
 
     def traits_():
         trait_objs = []

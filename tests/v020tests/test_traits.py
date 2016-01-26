@@ -14,6 +14,8 @@ from ramlfications.utils import load_file
 from tests.base import V020EXAMPLES, assert_not_set
 
 
+# TODO: add asserts for expected protocols
+
 @pytest.fixture(scope="session")
 def api():
     ramlfile = os.path.join(V020EXAMPLES, "traits.raml")
@@ -101,8 +103,8 @@ def test_query_params_trait(api):
     assert len(t.query_params) == 2
 
     not_set = [
-        "uri_params", "form_params", "base_uri_params", "protocols",
-        "body", "headers", "responses", "usage"
+        "uri_params", "form_params", "base_uri_params", "body",
+        "headers", "responses", "usage"
     ]
     assert_not_set(t, not_set)
 
@@ -148,7 +150,7 @@ def test_form_param_trait(api):
 
     not_set = [
         "query_params", "uri_params", "base_uri_params", "body", "headers",
-        "responses", "protocols", "usage"
+        "responses", "usage"
     ]
     assert_not_set(t, not_set)
 
@@ -178,7 +180,7 @@ def test_base_uri_trait(api):
 
     not_set = [
         "uri_params", "form_params", "query_params", "usage", "headers",
-        "body", "responses", "media_type", "protocols"
+        "body", "responses", "media_type"
     ]
     assert_not_set(t, not_set)
 
@@ -207,7 +209,7 @@ def test_uri_trait(api):
 
     not_set = [
         "base_uri_params", "form_params", "query_params", "headers",
-        "body", "responses", "usage", "media_type", "protocols"
+        "body", "responses", "usage", "media_type"
     ]
     assert_not_set(t, not_set)
 
@@ -249,7 +251,7 @@ def test_parameter_trait(api):
 
     not_set = [
         "desc", "uri_params", "base_uri_params", "form_params", "body",
-        "responses", "media_type", "usage", "protocols"
+        "responses", "media_type", "usage"
     ]
     assert_not_set(t, not_set)
 

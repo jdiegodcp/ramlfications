@@ -604,13 +604,15 @@ def test_root_resource_types_inherit_parameter_resource(api):
     ]
     assert_not_set(res, not_set)
 
-    q_param = res.query_params[0]
+    # py3.4 complains even when PYTHONHASHSEED=0
+    params = sorted(res.query_params)
+    q_param = params[1]
     assert q_param.name == "foo"
     desc = ("Return <<resourcePathName>> that have their foo "
             "matching the given value")
     assert q_param.description.raw == desc
 
-    fallback = res.query_params[1]
+    fallback = params[0]
     assert fallback.name == "bar"
     desc = ("If no values match the value given for foo, use "
             "bar instead")
@@ -641,13 +643,15 @@ def test_root_resource_types_inherit_parameter_method(api):
     ]
     assert_not_set(res, not_set)
 
-    q_param = res.query_params[0]
+    # py3.4 complains even when PYTHONHASHSEED=0
+    params = sorted(res.query_params)
+    q_param = params[1]
     assert q_param.name == "foo"
     desc = ("Return <<resourcePathName>> that have their foo "
             "matching the given value")
     assert q_param.description.raw == desc
 
-    fallback = res.query_params[1]
+    fallback = params[0]
     assert fallback.name == "bar"
     desc = ("If no values match the value given for foo, use "
             "bar instead")

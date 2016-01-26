@@ -13,6 +13,9 @@ import sys
 import six
 import xmltodict
 
+from ramlfications.errors import MediaTypeError, LoadRAMLError
+from ramlfications.loader import RAMLLoader
+
 
 PYVER = sys.version_info[:3]
 
@@ -31,9 +34,6 @@ else:
         import six.moves.urllib.error as urllib_error
         URLLIB = True
         SECURE_DOWNLOAD = False
-
-from ramlfications.errors import MediaTypeError, LoadRAMLError
-from ramlfications.loader import RAMLLoader
 
 
 IANA_URL = "https://www.iana.org/assignments/media-types/media-types.xml"
@@ -167,7 +167,7 @@ def _save_updated_mime_types(output_file, mime_types):
     # str -> unicode
     data = json.dumps(mime_types)
     with open(output_file, "w", encoding="UTF-8") as f:
-        f.write(unicode(data))
+        f.write(six.text_type(data))
 
 
 def update_mime_types():

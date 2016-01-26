@@ -6,8 +6,7 @@ import os
 
 import json
 import pytest
-from six import iteritems
-import StringIO
+from six import iteritems, StringIO
 
 from ramlfications import loader
 from ramlfications.errors import LoadRAMLError
@@ -267,13 +266,13 @@ def test_jsonref_absolute_local_uri_file(tmpdir):
 
 
 def test_parse_version():
-    f = StringIO.StringIO("#%RAML 0.8")
+    f = StringIO("#%RAML 0.8")
     raml = loader.RAMLLoader().load(f)
     assert raml._raml_version == "0.8"
 
 
 def test_parse_badversion():
-    f = StringIO.StringIO("#%ssRAML 0.8")
+    f = StringIO("#%ssRAML 0.8")
     with pytest.raises(LoadRAMLError) as e:
         loader.RAMLLoader().load(f)
     msg = "Error raml file shall start with #%RAML"
@@ -281,7 +280,7 @@ def test_parse_badversion():
 
 
 def test_parse_noversion():
-    f = StringIO.StringIO("{}")
+    f = StringIO("{}")
     with pytest.raises(LoadRAMLError) as e:
         loader.RAMLLoader().load(f)
     msg = "Error raml file shall start with #%RAML"

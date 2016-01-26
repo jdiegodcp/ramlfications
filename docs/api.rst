@@ -38,8 +38,6 @@ parser
 
 .. autofunction:: ramlfications.parser.create_resources
 
-.. autofunction:: ramlfications.parser.create_node
-
 
 raml
 ^^^^

@@ -418,7 +418,10 @@ def test_resources_statuses_mention_timeline(resources):
 
     assert len(res.query_params) == 6
 
-    param = res.query_params[0]
+    # py3.4 complains even when PYTHONHASHSEED=0
+    params = sorted(res.query_params)
+
+    param = params[1]
     assert param.name == "count"
     assert param.type == "integer"
     assert param.maximum == 200
@@ -431,7 +434,7 @@ def test_resources_statuses_mention_timeline(resources):
             "when using this API method.\n")
     assert param.description.raw == desc
 
-    param = res.query_params[1]
+    param = params[4]
     assert param.name == "since_id"
     assert param.type == "integer"
     desc = ("Returns results with an ID greater than (that is, more recent "
@@ -441,14 +444,14 @@ def test_resources_statuses_mention_timeline(resources):
             "forced to the oldest ID available.\n")
     assert param.description.raw == desc
 
-    param = res.query_params[2]
+    param = params[3]
     assert param.name == "max_id"
     assert param.type == "integer"
     desc = ("Returns results with an ID less than (that is, older than) or "
             "equal to\nthe specified ID.\n")
     assert param.description.raw == desc
 
-    param = res.query_params[3]
+    param = params[0]
     assert param.name == "contributor_details"
     assert param.type == "string"
     desc = ("This parameter enhances the contributors element of the status "
@@ -456,13 +459,13 @@ def test_resources_statuses_mention_timeline(resources):
             "default only the user_id\nof the contributor is included.\n")
     assert param.description.raw == desc
 
-    param = res.query_params[4]
+    param = params[2]
     assert param.name == "include_entities"
     assert param.enum == [0, 1, True, False, None, "f"]
     desc = "The entities node will not be included when set to false."
     assert param.description.raw == desc
 
-    param = res.query_params[5]
+    param = params[5]
     assert param.name == "trim_user"
     assert param.enum == [0, 1, True, False, None, "f"]
     desc = ("When set to either true, t or 1, each tweet returned in a "

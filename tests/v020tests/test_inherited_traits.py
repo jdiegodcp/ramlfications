@@ -37,7 +37,6 @@ def test_traits(api):
 
     not_set = [
         "uri_params", "form_params", "base_uri_params", "media_type",
-        "protocols"
     ]
     assert_not_set(t, not_set)
 

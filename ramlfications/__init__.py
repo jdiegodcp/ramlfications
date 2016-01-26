@@ -3,6 +3,11 @@
 
 from __future__ import absolute_import, division, print_function
 
+from ramlfications.config import setup_config
+from ramlfications.parser import parse_raml
+from ramlfications.utils import load_file, load_string
+
+
 __author__ = "Lynn Root"
 __version__ = "0.2.0.dev0"
 __license__ = "Apache 2.0"
@@ -10,12 +15,6 @@ __license__ = "Apache 2.0"
 __email__ = "lynn@spotify.com"
 __uri__ = "https://ramlfications.readthedocs.org"
 __description__ = "A Python RAML parser"
-
-
-from ramlfications.config import setup_config
-from ramlfications.parser import parse_raml
-
-from ramlfications.utils import load_file, load_string
 
 
 def load(raml_file):

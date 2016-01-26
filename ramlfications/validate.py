@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 import re
 
-from six import iterkeys
+from six import iterkeys, string_types
 
 from .utils._decorators import collecterrors
 
@@ -206,7 +206,7 @@ def assigned_traits(inst, attr, value):
                                "trait, or a dictionary mapping parameter "
                                "values to a trait".format(v))
                         raise InvalidResourceNodeError(msg)
-                elif isinstance(v, str):
+                elif isinstance(v, string_types):
                     if v not in trait_names:
                         msg = (
                             "Trait '{0}' is assigned to '{1}' but is not "
