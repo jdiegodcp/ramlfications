@@ -59,3 +59,7 @@ class LoadRAMLError(Exception):
 
 class MediaTypeError(Exception):
     pass
+
+
+class InvalidVersionError(Exception):
+    pass

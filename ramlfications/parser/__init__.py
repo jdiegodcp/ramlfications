@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 import attr
 
 from ramlfications.errors import InvalidRAMLError
+from ramlfications.errors import InvalidVersionError
 from ramlfications.utils.common import _get
 
 from .main import (
@@ -29,7 +30,12 @@ def parse_raml(loaded_raml, config):
     # Postpone validating the root node until the end; otherwise,
     # we end up with duplicate validation exceptions.
     attr.set_run_validators(False)
-
+    raml_versions = config['raml_versions']
+    if loaded_raml._raml_version not in raml_versions:
+        raise InvalidVersionError(
+            "RAML version not allowed in config {0}: allowed: {1}".format(
+                loaded_raml._raml_version, ", ".join(raml_versions)
+            ))
     root = create_root(loaded_raml, config)
     attr.set_run_validators(validate)
 

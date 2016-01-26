@@ -376,3 +376,13 @@ def test_empty_mapping_sec_scheme_settings():
            "definition.",)
     assert _error_exists(e.value.errors, errors.InvalidSecuritySchemeError,
                          msg)
+
+
+def test_invalid_raml_version():
+    _raml = "invalid-version.raml"
+    raml = load_raml(_raml)
+    config = load_config("valid-config.ini")
+    with pytest.raises(errors.InvalidVersionError) as e:
+        validate(raml, config)
+    msg = "RAML version not allowed in config 0.9: allowed: 0.8"
+    assert msg in e.value.args
