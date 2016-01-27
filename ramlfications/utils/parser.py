@@ -111,3 +111,16 @@ def __trait(item, **kwargs):
 def __map_inheritance(obj_type):
     INH_FUNC_MAPPING["traits"] = __trait
     return INH_FUNC_MAPPING[obj_type]
+
+
+def convert_camel_case(name):
+    """convert CamlCase to under_score names to better match pep8 style
+
+    :param string name: camlCase name of a raml Property
+    :returns string: under_score version of the raml Property
+
+    implementation courtesy of:
+    http://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-camel-case
+    """
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
