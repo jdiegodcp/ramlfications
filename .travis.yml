@@ -1,5 +1,9 @@
 language: python
 python: 2.7
+branches:
+  only:
+  - master
+  - v0.2.0-dev
 env:
 - TOX_ENV=py26
 - TOX_ENV=py27
@@ -21,7 +25,7 @@ notifications:
   email: false
   irc: "chat.freenode.net#ramlfications"
   slack:
-    secure: "G1bX3FdqzbQb/f5CNwatSdPTbxKBo4HT5/wodDNtFyoj9ePd+Xh/h+d97QGB+6Swn7Gnp3r9bqmJrkffogc+N8RzhOJiFfVfOtXWqUa1Y5r/rxO0xZz7Q8PVRAIW0N6YYnq8t4bp9R3yYOdQYtgfUOmKq2TlnEEtZA4MeH7jYwc="
+    secure: TWn+jseoa8McZptuY7Zr/2AkrWKd9tSmvCoCszYkGHyHp+PAdnxH96Wxweq4pL1A1QoMtsgYM5dhPEPUfV9xCRN1FU6OMPtchMjgC740vqNsLE0+cjz6We3COw9+BHoLk7Nh2SgAzjxS9X+0Bv6tDBf1CvA7SIyM1ssLQifnX+M=
 deploy:
   provider: pypi
   user: roguelynn
