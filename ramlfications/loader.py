@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-__all__ = ["RAMLLoader"]
-
 try:
     from collections import OrderedDict
 except ImportError:  # pragma: no cover
@@ -14,6 +12,9 @@ import jsonref
 import yaml
 
 from .errors import LoadRAMLError
+
+
+__all__ = ["RAMLLoader"]
 
 
 class RAMLLoader(object):

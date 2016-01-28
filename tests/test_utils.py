@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
-import sys
-
-if sys.version_info[0] == 2:
-    from io import open
 
 import json
 import os
+import sys
 import tempfile
 
 from mock import Mock, patch
@@ -16,6 +13,9 @@ import xmltodict
 from ramlfications import utils
 
 from .base import UPDATE
+
+if sys.version_info[0] == 2:
+    from io import open
 
 
 @pytest.fixture(scope="session")
