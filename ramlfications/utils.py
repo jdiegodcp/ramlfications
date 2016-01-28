@@ -18,6 +18,7 @@ except ImportError:  # NOCOV
 from six import iterkeys, iteritems
 import xmltodict
 
+from .errors import MediaTypeError
 from .parameters import (
     Body, URIParameter, Header, FormParameter, QueryParameter
 )
@@ -39,8 +40,6 @@ else:
         import six.moves.urllib.error as urllib_error
         URLLIB = True
         SECURE_DOWNLOAD = False
-
-from .errors import MediaTypeError
 
 
 IANA_URL = "https://www.iana.org/assignments/media-types/media-types.xml"

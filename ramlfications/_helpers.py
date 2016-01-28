@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
-import sys
-
-if sys.version_info[0] == 2:
-    from io import open
 
 import os
+import sys
 
 import six
 
 from .errors import LoadRAMLError
 from .loader import RAMLLoader
+
+if sys.version_info[0] == 2:
+    from io import open
 
 
 def load_file(raml_file):
