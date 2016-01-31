@@ -9,7 +9,9 @@ from ramlfications.config import MEDIA_TYPES
 from ramlfications.parameters import Response, Header, Body, URIParameter
 from ramlfications.utils import load_schema
 from ramlfications.utils.common import _get, substitute_parameters
-from ramlfications.utils.parameter import map_object, resolve_scalar_data
+from ramlfications.utils.parameter import (
+    map_object, resolve_scalar_data, add_missing_uri_data
+)
 
 
 #####
@@ -33,6 +35,12 @@ def create_param_objs(param_type, resolve=[], **kwargs):
     resolved = resolve_scalar_data(param_type, resolve, **kwargs)
     resolved = _substitute_params(resolved, **kwargs)
 
+    path = _get(kwargs, "resource_path")
+    if param_type == "uriParameters":
+        # only for resource node objects
+        if path:
+            resolved = add_missing_uri_data(path, resolved)
+
     # create parameter objects based off of the resolved data
     object_name = map_object(param_type)
     if param_type == "body":
@@ -44,9 +52,13 @@ def create_param_objs(param_type, resolve=[], **kwargs):
     params = __create_base_param_obj(resolved, object_name, conf, errs,
                                      method=method)
 
-    # TODO: if param type is URI/Base Uri, then preserve order according
+    # If param type is URI/Base Uri, then preserve order according
     # to how they are represented in absolute_uri, as well as create any
     # undeclared uri params that are in the path
+    # if param_type in ("uriParameters", "baseUriParameters"):
+    #     if isinstance(params, list) and path:
+    #         # this may not be true in all cases, but I'm not sure when
+    #         params = params[::-1]
     return params or None
 
 

@@ -20,7 +20,7 @@ from ramlfications.utils import load_schema
 # Private utility functions
 from ramlfications.utils.common import _get
 from ramlfications.utils.parser import (
-    parse_assigned_dicts, resolve_inherited_scalar
+    parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params
 )
 
 from .parameters import create_param_objs
@@ -446,6 +446,10 @@ def _create_resource_node(name, raw_data, method, parent, root):
         node["media_type"] = media_type()
         node["method"] = method
         node["raw"] = raw_data
+        node["uri_params"] = sort_uri_params(node["uri_params"],
+                                             node["absolute_uri"])
+        node["base_uri_params"] = sort_uri_params(node["base_uri_params"],
+                                                  node["absolute_uri"])
         return node
 
     # Avoiding repeated function calls by calling them once here

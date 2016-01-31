@@ -351,7 +351,7 @@ def test_uri_params(api):
     # get /thingy-gizmos/{id}
     res = api.resources[4]
 
-    u = res.uri_params[1]
+    u = res.uri_params[0]
     assert u.name == "external_party"
     assert u.display_name == "external_party"
     assert u.description.raw == "code of third-party partner"
@@ -364,7 +364,7 @@ def test_uri_params(api):
     ]
     assert_not_set(u, not_set)
 
-    u = res.uri_params[0]
+    u = res.uri_params[1]
     assert u.name == "id"
     assert u.display_name == "id"
     assert u.description.raw == "The thingy gizmo id"
