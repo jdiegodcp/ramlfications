@@ -52,13 +52,6 @@ def create_param_objs(param_type, resolve=[], **kwargs):
     params = __create_base_param_obj(resolved, object_name, conf, errs,
                                      method=method)
 
-    # If param type is URI/Base Uri, then preserve order according
-    # to how they are represented in absolute_uri, as well as create any
-    # undeclared uri params that are in the path
-    # if param_type in ("uriParameters", "baseUriParameters"):
-    #     if isinstance(params, list) and path:
-    #         # this may not be true in all cases, but I'm not sure when
-    #         params = params[::-1]
     return params or None
 
 
