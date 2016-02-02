@@ -564,9 +564,7 @@ def test_root_trait_params(trait_parameters):
 
     resp = paged.responses[0]
     assert resp.code == 200
-    # TODO: FIXME - should be none, but getting copied when assigned to
-    #               resources
-    # assert not resp.method
+    assert not resp.method
     assert resp.description.raw == "No more than <<maxPages>> pages returned"
     assert len(resp.headers) == 1
 
@@ -1127,11 +1125,10 @@ def test_resource_assigned_type(resources):
 
     exp_res_type_uri = ["mediaTypeExtension", "communityPath"]
     exp_res_uri = [
-        "mediaTypeExtension", "communityPath", "user_id", "thingy_id"
+        "communityPath", "user_id", "thingy_id", "mediaTypeExtension",
     ]
-    # TODO: uri parameter order isn't preserved...I don't think...
-    assert sorted(res_type_uri) == sorted(exp_res_type_uri)
-    assert sorted(res_uri) == sorted(exp_res_uri)
+    assert res_type_uri == exp_res_type_uri
+    assert res_uri == exp_res_uri
 
     # TODO: add more attributes to test with parameter objects
     # e.g. h1.desc
@@ -1647,17 +1644,16 @@ def uri_param_resources():
 
 
 def test_uri_params_order(uri_param_resources):
-    # res = uri_param_resources.resources[1]
-    # expected_uri = ["lang", "user_id", "playlist_id"]
-    # expected_base = ["subHostName", "bucketName"]
+    res = uri_param_resources.resources[1]
+    expected_uri = ["lang", "user_id", "playlist_id"]
+    expected_base = ["subHostName", "bucketName"]
 
-    # uri = [u.name for u in res.uri_params]
-    # base = [b.name for b in res.base_uri_params]
+    uri = [u.name for u in res.uri_params]
+    base = [b.name for b in res.base_uri_params]
 
     # TODO: implement/fix uri param order
-    # assert uri == expected_uri
-    # assert base == expected_base
-    pass
+    assert uri == expected_uri
+    assert base == expected_base
 
 
 @pytest.fixture(scope="session")
@@ -1670,12 +1666,10 @@ def undef_uri_params_resources():
 
 
 def test_undefined_uri_params(undef_uri_params_resources):
-    # res = undef_uri_params_resources.resources[1]
+    res = undef_uri_params_resources.resources[1]
 
-    # TODO: Fix undeclared uri params
-    # assert len(res.uri_params) == 1
-    # assert res.uri_params[0].name == "id"
-    pass
+    assert len(res.uri_params) == 1
+    assert res.uri_params[0].name == "id"
 
 
 @pytest.fixture(scope="session")

@@ -3,6 +3,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import re
+
 from six import iterkeys, string_types
 
 from .common import (
@@ -55,6 +57,42 @@ def resolve_inherited_scalar(item, inherit_from=[], **kwargs):
             param["resourcePathName"] = path_name
             return substitute_parameters(inh, param)
     return None
+
+
+def sort_uri_params(params, path):
+    if not params:
+        return params
+    # if this is hit, RAML shouldn't be valid anyways.
+    if isinstance(path, list):
+        path = path[0]
+
+    pattern = re.compile(r'\{(.*?)\}')
+    param_order = re.findall(pattern, path)
+
+    media_type = None
+    media_type_param = None
+    for p in params:
+        if p.name == "mediaTypeExtension":
+            media_type = params.index(p)
+            break
+
+    if media_type is not None:
+        media_type_param = params.pop(media_type)
+
+    to_sort = []
+
+    for p in params:
+        if p.name == "version":
+            continue
+        index = param_order.index(p.name)
+        to_sort.append((index, p))
+
+    params = [p[1] for p in sorted(to_sort, key=lambda item: item[0])]
+
+    if media_type_param:
+        params.append(media_type_param)
+
+    return params
 
 
 #####
