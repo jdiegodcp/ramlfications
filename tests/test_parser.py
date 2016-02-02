@@ -1283,10 +1283,9 @@ def test_resource_base_uri_params(resources):
     assert res.display_name == "widget-gizmos"
     assert res.base_uri_params[0].name == "subdomain"
 
-    # TODO: figure out what this issue is
-    # desc = "subdomain for the baseUriType resource type"
-    # assert res.base_uri_params[0].description.raw == desc
-    # assert res.base_uri_params[0].default == "fooBar"
+    desc = "subdomain for the baseUriType resource type"
+    assert res.base_uri_params[0].description.raw == desc
+    assert res.base_uri_params[0].default == "fooBar"
 
     res = resources[-12]
     assert len(res.base_uri_params) == 1
@@ -1651,7 +1650,6 @@ def test_uri_params_order(uri_param_resources):
     uri = [u.name for u in res.uri_params]
     base = [b.name for b in res.base_uri_params]
 
-    # TODO: implement/fix uri param order
     assert uri == expected_uri
     assert base == expected_base
 
