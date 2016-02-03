@@ -11,6 +11,7 @@ from ramlfications.utils.common import _get
 
 from .parser import RAMLParser
 from .types import create_root_data_type
+from .parser import RootParser
 
 __all__ = ["parse_raml"]
 
@@ -34,6 +35,9 @@ def parse_raml(loaded_raml, config):
             "RAML version not allowed in config {0}: allowed: {1}".format(
                 loaded_raml._raml_version, ", ".join(raml_versions)
             ))
+    root_parser = RootParser(loaded_raml, config)
+    root = root_parser.create_node()
+    attr.set_run_validators(validate)
 
     if loaded_raml._raml_fragment_type == 'Root':
         parser = RAMLParser(loaded_raml, config)
