@@ -10,7 +10,7 @@ import pytest
 from ramlfications import parse
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
-from ramlfications.raml import RootNode, ResourceTypeNode, TraitNode
+from ramlfications.raml import RootNodeAPI08, ResourceTypeNode, TraitNode
 from ramlfications.utils import load_file
 
 from tests.base import EXAMPLES
@@ -26,7 +26,7 @@ def test_parse_raml(github_raml):
     config_file = os.path.join(EXAMPLES, "github-config.ini")
     config = setup_config(config_file)
     root = pw.parse_raml(github_raml, config)
-    assert isinstance(root, RootNode)
+    assert isinstance(root, RootNodeAPI08)
 
 
 @pytest.fixture(scope="session")

@@ -24,19 +24,32 @@ RESOURCE_PROPERTIES = METHOD_PROPERTIES + ["base_uri_params", "uri_params"]
 
 
 @attr.s
-class RootNode(object):
+class RootNodeBase(object):
     """
     API Root Node
 
+    This is the base node for api raml, or fragments
+
     :param dict raw: dict of loaded RAML data
+    :param str raml_version: RAML spec version
+    """
+    raw              = attr.ib(repr=False)
+    raml_version     = attr.ib(repr=False)
+
+
+@attr.s
+class RootNodeAPIBase(RootNodeBase):
+    """
+    API Root Node base for API files
+
     :param str version: API version
     :param str base_uri: API's base URI
     :param list base_uri_params: parameters for base URI, or ``None``. \
         The order of ``base_uri_params`` will follow the order \
-        defined in the :py:obj:`.RootNode.base_uri`.
+        defined in the :py:obj:`.RootNodeAPI08.base_uri`.
     :param list uri_params: URI parameters that can apply to all resources, \
         or ``None``. The order of ``uri_params`` will follow the order \
-        defined in the :py:obj:`.RootNode.base_uri`.
+        defined in the :py:obj:`.RootNodeAPI08.base_uri`.
     :param list protocols: API-supported protocols, defaults to protocol \
         in ``base_uri``
     :param str title: API Title
@@ -54,7 +67,6 @@ class RootNode(object):
         or ``None``
     :param raml_obj: loaded :py:class:`raml.RAMLDict` object
     """
-    raw              = attr.ib(repr=False)
     version          = attr.ib(repr=False, validator=root_version)
     base_uri         = attr.ib(repr=False, validator=root_base_uri)
     base_uri_params  = attr.ib(repr=False,
@@ -78,10 +90,31 @@ class RootNode(object):
 
 
 @attr.s
+class RootNodeAPI08(RootNodeAPIBase):
+    """
+    API Root Node for 0.8 raml files
+    """
+
+
+@attr.s
+class RootNodeAPI10(RootNodeAPIBase):
+    """
+    API Root Node for 1.0 raml files
+    """
+    types            = attr.ib(repr=False)
+
+
+@attr.s
+class RootNodeDataType(RootNodeBase):
+    """
+    API Root Node for 1.0 DataType fragment files
+    """
+
+
+@attr.s
 class BaseNode(object):
     """
-    :param dict raw: The raw data parsed from the RAML file
-    :param RootNode root: Back reference to the node's API root
+    :param RootNodeAPI08 root: Back reference to the node's API root
     :param list headers: List of node's :py:class:`parameters.Header` \
         objects, or ``None``
     :param list body: List of node's :py:class:`parameters.Body` objects, \
@@ -101,10 +134,10 @@ class BaseNode(object):
     :param list form_params: List of node's \
         :py:class:`parameters.FormParameter` objects, or ``None``
     :param str media_type: Supported request MIME media type. Defaults to \
-        :py:class:`RootNode`'s ``media_type``.
+        :py:class:`RootNodeAPI08`'s ``media_type``.
     :param str description: Description of node.
     :param list protocols: List of ``str`` 's of supported protocols. \
-        Defaults to :py:class:`RootNode`'s ``protocols``.
+        Defaults to :py:class:`RootNodeAPI08`'s ``protocols``.
     """
     root            = attr.ib(repr=False)
     headers         = attr.ib(repr=False)
@@ -188,7 +221,7 @@ class ResourceNode(BaseNode):
         defaults to ``name``
     :param str path: relative path of resource
     :param str absolute_uri: Absolute URI of resource: \
-        :py:class:`RootNode`'s ``base_uri`` + ``path``
+        :py:class:`RootNodeAPI08`'s ``base_uri`` + ``path``
     :param list is\_: A list of ``str`` s or ``dict`` s of resource-assigned \
         traits, or ``None``
     :param list traits: A list of assigned :py:class:`TraitNode` objects, \

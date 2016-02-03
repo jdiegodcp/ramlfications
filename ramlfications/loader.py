@@ -1,25 +1,21 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-try:
-    from collections import OrderedDict
-except ImportError:  # pragma: no cover
-    from ordereddict import OrderedDict
-
 import os
-
 import jsonref
 import yaml
 
 from six import string_types
 
 from .errors import LoadRAMLError
+from .utils.common import OrderedDict
 
 
 __all__ = ["RAMLLoader"]
 
 
 RAMLHEADER = "#%RAML "
+SUPPORTED_FRAGMENT_TYPES = ("DataType",)
 
 
 class RAMLLoader(object):
@@ -88,8 +84,23 @@ class RAMLLoader(object):
                 RAMLHEADER, header)
             raise LoadRAMLError(msg)
         version_string = header[len(RAMLHEADER):]
-        version = version_string.split(" ")[0]  # skip file type for now
-        return version
+        split_version_string = version_string.split(" ", 2)
+        version = split_version_string[0]
+        if len(split_version_string) == 2:
+            version, fragment = split_version_string
+            if version != "1.0":
+                msg = "Error raml fragment is only possible with version 1.0"
+                raise LoadRAMLError(msg)
+            if fragment not in SUPPORTED_FRAGMENT_TYPES:
+                msg = ("Error raml fragment is not supported yet: {0}"
+                       ", supported:{1}".format(
+                           fragment, repr(SUPPORTED_FRAGMENT_TYPES))
+                       )
+                raise LoadRAMLError(msg)
+        else:
+            version = split_version_string[0]
+            fragment = "Root"
+        return version, fragment
 
     def load(self, raml):
         """
@@ -102,7 +113,7 @@ class RAMLLoader(object):
         :rtype: ``dict``
 
         """
-        raml_version = self._parse_raml_header(raml)
+        raml_version, _raml_fragment_type = self._parse_raml_header(raml)
         try:
             ret = self._ordered_load(raml, yaml.SafeLoader)
         except yaml.parser.ParserError as e:
@@ -115,4 +126,5 @@ class RAMLLoader(object):
         if ret is None:
             ret = OrderedDict()
         ret._raml_version = raml_version
+        ret._raml_fragment_type = _raml_fragment_type
         return ret
