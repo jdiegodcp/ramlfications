@@ -293,7 +293,7 @@ class IntegerType(NumberType):
 
 @type_class("boolean")
 @attr.s
-class BooleanType(NumberType):
+class BooleanType(ScalarType):
     """
     Type class for boolean types
 
