@@ -288,3 +288,19 @@ class IntegerType(NumberType):
                 position_hint, s,
                 "requires an integer")
         super(IntegerType, self).validate(s, position_hint)
+
+
+
+@type_class("boolean")
+@attr.s
+class BooleanType(NumberType):
+    """
+    Type class for boolean types
+
+    """
+    def validate(self, s, position_hint):
+        if not isinstance(s, bool):
+            raise DataTypeValidationError(
+                position_hint, s,
+                "requires a boolean")
+        super(BooleanType, self).validate(s, position_hint)

@@ -9,7 +9,7 @@ from ramlfications.parser import parse_raml
 from ramlfications.config import setup_config
 from ramlfications.utils import load_file
 from ramlfications.types import (ObjectType, StringType, Property, IntegerType,
-                                 NumberType)
+                                 NumberType, BooleanType)
 from ramlfications.errors import DataTypeValidationError
 
 from tests.base import RAML10EXAMPLES
@@ -119,4 +119,18 @@ def test_number_with_validation():
     with pytest.raises(DataTypeValidationError) as e:
         datatype.validate('xx2.1', "n")
     msg = ('n: requires a number, but got: xx2.1')
+    assert msg in e.value.args[0]
+
+
+def test_bool_with_validation():
+    datatype = loadapi("type-bool.raml").type
+    assert type(datatype) == BooleanType
+
+    # correct value does not raise
+    datatype.validate(True, "b")
+
+    # not part of enum
+    with pytest.raises(DataTypeValidationError) as e:
+        datatype.validate(-19, "b")
+    msg = ('b: requires a boolean, but got: -19')
     assert msg in e.value.args[0]
