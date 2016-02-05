@@ -139,6 +139,27 @@ class ObjectType(BaseType):
             p.data_type.validate(v, position_hint + [k])
 
 
+@attr.s
+class ScalarType(BaseType):
+    """
+    Type class for scalar types
+
+    :param dictionary facets: optional facet description
+    :param list enum: optional list of values that this scalar can take
+    """
+    facets   = attr.ib(repr=False, default=None)
+    enum     = attr.ib(repr=False, default=None)
+
+    def validate(self, s, position_hint):
+        super(ScalarType, self).validate(s, position_hint)
+        if self.enum is not None:
+            if s not in self.enum:
+                raise DataTypeValidationError(
+                    position_hint, s,
+                    "should be one of " + ", ".join(
+                        [repr(x) for x in self.enum]))
+
+
 ###
 #   helpers for StringType
 ###
@@ -150,7 +171,7 @@ def maybe_create_re(pattern):
 
 @type_class("string")
 @attr.s
-class StringType(BaseType):
+class StringType(ScalarType):
     """
     Type class for string types
 
@@ -164,6 +185,7 @@ class StringType(BaseType):
     max_length   = attr.ib(repr=False, default=MAXSIZE)
 
     def validate(self, s, position_hint):
+        super(StringType, self).validate(s, position_hint)
         if not isinstance(s, string_types):
             raise DataTypeValidationError(
                 "requires a string, but got {0}".format(s))
@@ -186,3 +208,83 @@ class StringType(BaseType):
                 position_hint, s,
                 "requires a string with length smaller than {0}"
                 .format(self.max_length))
+
+
+@type_class("number")
+@attr.s
+class NumberType(ScalarType):
+    """
+    Type class for number types (JSON number)
+
+    :param number minimum: (Optional, applicable only for parameters\
+        of type number or integer) The minimum attribute specifies the\
+        parameter's minimum value.
+    :param number maximum: (Optional, applicable only for parameters\
+        of type number or integer) The maximum attribute specifies the\
+        parameter's maximum value.
+    :param string format: StringType one of: int32, int64, int, long, \
+        float, double, int16, int8
+    :param number multiple_of: A numeric instance is valid against\
+        "multiple_of" if the result of the division of the instance\
+        by this keyword's value is an integer.
+    """
+    format       = attr.ib(repr=False, default="double")
+    minimum      = attr.ib(repr=False, default=None)
+    maximum      = attr.ib(repr=False, default=None)
+    multiple_of  = attr.ib(repr=False, default=None)
+
+    def validate(self, s, position_hint):
+        super(NumberType, self).validate(s, position_hint)
+
+        if not isinstance(s, (int, float, long)):
+            raise DataTypeValidationError(
+                position_hint, s,
+                "requires a number")
+        if self.format.startswith("int"):
+            if not isinstance(s, (int, long)):
+                raise DataTypeValidationError(
+                    position_hint, s,
+                    "requires an integer")
+            numbits = int(self.format[3:])
+            if s & (1 << numbits) - 1  != s:
+                raise DataTypeValidationError(
+                    position_hint, s,
+                    "does not fit in {0}".format(self.format))
+
+        if self.minimum is not None:
+            if self.minimum > s:
+                raise DataTypeValidationError(
+                    position_hint, s,
+                    "requires to be minimum {0}".format(self.minimum))
+
+        if self.maximum is not None:
+            if self.maximum < s:
+                raise DataTypeValidationError(
+                    position_hint, s,
+                    "requires to be maximum {0}".format(self.maximum))
+
+        if self.multiple_of is not None:
+            if not isinstance(s, (int, long)):
+                raise DataTypeValidationError(
+                    position_hint, s,
+                    "requires a integer for multiple_of")
+
+            if (s % self.multiple_of) != 0:
+                raise DataTypeValidationError(
+                    position_hint, s,
+                    "requires to be multiple of {0}".format(self.multiple_of))
+
+
+@type_class("integer")
+@attr.s
+class IntegerType(NumberType):
+    """
+    Type class for integer types
+
+    """
+    def validate(self, s, position_hint):
+        if not isinstance(s, (int, long)):
+            raise DataTypeValidationError(
+                position_hint, s,
+                "requires an integer")
+        super(IntegerType, self).validate(s, position_hint)

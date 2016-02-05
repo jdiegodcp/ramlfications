@@ -8,7 +8,8 @@ import pytest
 from ramlfications.parser import parse_raml
 from ramlfications.config import setup_config
 from ramlfications.utils import load_file
-from ramlfications.types import (ObjectType, StringType, Property)
+from ramlfications.types import (ObjectType, StringType, Property, IntegerType,
+                                 NumberType)
 from ramlfications.errors import DataTypeValidationError
 
 from tests.base import RAML10EXAMPLES
@@ -69,4 +70,53 @@ def test_string_with_validation():
 
     msg = ("object.name: requires a string with length smaller than 5,"
            " but got: OoOoOoOoOoOoOoOoOoOo")
+    assert msg in e.value.args[0]
+
+
+def test_number_with_validation():
+    datatype = loadapi("type-int.raml").type
+    assert type(datatype) == IntegerType
+
+    # correct value does not raise
+    datatype.validate(4, "n")
+
+    # not part of enum
+    with pytest.raises(DataTypeValidationError) as e:
+        datatype.validate(-19, "n")
+    msg = ('n: should be one of 1, 3, 4, -4, 40, but got: -19')
+    assert msg in e.value.args[0]
+
+    # minimum
+    with pytest.raises(DataTypeValidationError) as e:
+        datatype.validate(-4, "n")
+    msg = ('n: requires to be minimum -2, but got: -4')
+    assert msg in e.value.args[0]
+
+    # maximum
+    with pytest.raises(DataTypeValidationError) as e:
+        datatype.validate(40, "n")
+    msg = ('n: requires to be maximum 9, but got: 40')
+    assert msg in e.value.args[0]
+
+    # multiple_of
+    datatype = IntegerType("n", multiple_of=2)
+    datatype.validate(4, "n")
+    with pytest.raises(DataTypeValidationError) as e:
+        datatype.validate(3, "n")
+    msg = ('n: requires to be multiple of 2, but got: 3')
+    assert msg in e.value.args[0]
+
+    # not int
+    datatype = IntegerType("n")
+    with pytest.raises(DataTypeValidationError) as e:
+        datatype.validate(2.1, "n")
+    msg = ('n: requires an integer, but got: 2.1')
+    assert msg in e.value.args[0]
+
+    # not int
+    datatype = NumberType("n")
+    datatype.validate(2.1, "n")
+    with pytest.raises(DataTypeValidationError) as e:
+        datatype.validate('xx2.1', "n")
+    msg = ('n: requires a number, but got: xx2.1')
     assert msg in e.value.args[0]
