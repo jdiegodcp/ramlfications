@@ -4,7 +4,8 @@
 from __future__ import absolute_import, division, print_function
 import attr
 import copy
-from six import MAXSIZE, iteritems, string_types
+from six import MAXSIZE, iteritems, string_types, integer_types
+
 
 from ramlfications.errors import UnknownDataTypeError, DataTypeValidationError
 from ramlfications.parameters import Content
@@ -236,12 +237,12 @@ class NumberType(ScalarType):
     def validate(self, s, position_hint):
         super(NumberType, self).validate(s, position_hint)
 
-        if not isinstance(s, (int, float, long)):
+        if not isinstance(s, integer_types + (float,)):
             raise DataTypeValidationError(
                 position_hint, s,
                 "requires a number")
         if self.format.startswith("int"):
-            if not isinstance(s, (int, long)):
+            if not isinstance(s, integer_types):
                 raise DataTypeValidationError(
                     position_hint, s,
                     "requires an integer")
@@ -264,7 +265,7 @@ class NumberType(ScalarType):
                     "requires to be maximum {0}".format(self.maximum))
 
         if self.multiple_of is not None:
-            if not isinstance(s, (int, long)):
+            if not isinstance(s, integer_types):
                 raise DataTypeValidationError(
                     position_hint, s,
                     "requires a integer for multiple_of")
@@ -283,12 +284,11 @@ class IntegerType(NumberType):
 
     """
     def validate(self, s, position_hint):
-        if not isinstance(s, (int, long)):
+        if not isinstance(s, integer_types):
             raise DataTypeValidationError(
                 position_hint, s,
                 "requires an integer")
         super(IntegerType, self).validate(s, position_hint)
-
 
 
 @type_class("boolean")
