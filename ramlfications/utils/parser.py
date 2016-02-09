@@ -114,9 +114,9 @@ def __map_inheritance(obj_type):
 
 
 def convert_camel_case(name):
-    """convert CamlCase to under_score names to better match pep8 style
+    """convert CamelCase to under_score names to better match pep8 style
 
-    :param string name: camlCase name of a raml Property
+    :param string name: camelCase name of a raml Property
     :returns string: under_score version of the raml Property
 
     implementation courtesy of:
