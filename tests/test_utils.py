@@ -145,7 +145,8 @@ def test_insecure_download_urllib_flag(_a, _b, _c, mocker, monkeypatch):
     mocker.patch("ramlfications.utils._urllib_download")
 
     utils.update_mime_types()
-    utils._urllib_download.assert_called_once()
+    utils._urllib_download.assert_called_once_with(
+        'https://www.iana.org/assignments/media-types/media-types.xml')
 
     mocker.stopall()
 
@@ -161,26 +162,34 @@ def test_secure_download_requests_flag(_a, _b_, _c, mocker, monkeypatch):
     mocker.patch("ramlfications.utils._requests_download")
 
     utils.update_mime_types()
-    utils._requests_download.assert_called_once()
+    utils._requests_download.assert_called_once_with(
+        'https://www.iana.org/assignments/media-types/media-types.xml')
 
     mocker.stopall()
 
 
-@patch("ramlfications.utils._xml_to_dict")
-@patch("ramlfications.utils._parse_xml_data")
-@patch("ramlfications.utils._requests_download")
-@patch("ramlfications.utils._urllib_download")
+@patch("ramlfications.utils.download_url")
 @patch("ramlfications.utils._save_updated_mime_types")
-def test_update_mime_types(_a, _b, _c, _d, _e, downloaded_xml):
-    utils.requests = Mock()
+def test_update_mime_types(
+        mock_save_updated_mime_types,
+        mock_downloaded_url,
+        downloaded_xml,
+        expected_data):
 
-    with open(downloaded_xml, "r", encoding="UTF-8") as raw_data:
-        utils.update_mime_types()
-        utils._requests_download.assert_called_once()
-        utils._requests_download.return_value = raw_data.read()
-        utils._xml_to_dict.assert_called_once()
-        utils._parse_xml_data.assert_called_once()
-        utils._save_updated_mime_types.assert_called_once()
+    with open(downloaded_xml, encoding="UTF-8") as f:
+        mock_downloaded_url.return_value = f.read()
+
+    utils.update_mime_types()
+
+    mock_downloaded_url.assert_called_once_with(
+        'https://www.iana.org/assignments/media-types/media-types.xml')
+
+    expected_save_path = os.path.realpath(os.path.join(
+        os.path.dirname(utils.__file__),
+        'data/supported_mime_types.json'))
+    mock_save_updated_mime_types.assert_called_once_with(
+        expected_save_path,
+        expected_data)
 
 
 def test_save_updated_mime_types():
