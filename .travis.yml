@@ -45,7 +45,7 @@ before_script:
   - pip install tox codecov
 
 script:
-- tox --hashseed 0
+- tox
 
 after_success:
 - codecov
