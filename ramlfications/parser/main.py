@@ -13,7 +13,7 @@ from ramlfications.parameters import (
     Documentation, SecurityScheme
 )
 from ramlfications.raml import (
-    RootNodeAPI08, ResourceTypeNode, TraitNode, ResourceNode
+    RootNodeAPI08, RootNodeAPI10, ResourceTypeNode, TraitNode, ResourceNode
 )
 from ramlfications.utils import load_schema
 
@@ -22,6 +22,7 @@ from ramlfications.utils.common import _get
 from ramlfications.utils.parser import (
     parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params
 )
+from ramlfications.types import create_type
 
 from .parameters import create_param_objs
 
@@ -74,6 +75,13 @@ def create_root(raml, config):
             schemas.append({list(iterkeys(schema))[0]: value})
         return schemas or None
 
+    def types():
+        _types = _get(raml, "types")
+        if not _types:
+            return None
+        return [
+            create_type(k, v) for k, v in iteritems(_types)]
+
     uri = _get(raml, "baseUri", "")
     kwargs = dict(data=raml,
                   uri=uri,
@@ -81,24 +89,43 @@ def create_root(raml, config):
                   errs=errors,
                   conf=config)
     base = base_uri_params(kwargs)
-
-    return RootNodeAPI08(
-        raml_obj=raml,
-        raw=raml,
-        raml_version=raml._raml_version,
-        title=_get(raml, "title"),
-        version=_get(raml, "version"),
-        protocols=protocols(),
-        base_uri=base_uri(),
-        base_uri_params=base_uri_params(kwargs),
-        uri_params=uri_params(kwargs),
-        media_type=_get(raml, "mediaType"),
-        documentation=docs(),
-        schemas=schemas(),
-        config=config,
-        secured_by=_get(raml, "securedBy"),
-        errors=errors
-    )
+    if raml._raml_version == "0.8":
+        return RootNodeAPI08(
+            raml_obj=raml,
+            raw=raml,
+            raml_version=raml._raml_version,
+            title=_get(raml, "title"),
+            version=_get(raml, "version"),
+            protocols=protocols(),
+            base_uri=base_uri(),
+            base_uri_params=base_uri_params(kwargs),
+            uri_params=uri_params(kwargs),
+            media_type=_get(raml, "mediaType"),
+            documentation=docs(),
+            schemas=schemas(),
+            config=config,
+            secured_by=_get(raml, "securedBy"),
+            errors=errors,
+        )
+    elif raml._raml_version == "1.0":
+        return RootNodeAPI10(
+            raml_obj=raml,
+            raw=raml,
+            raml_version=raml._raml_version,
+            title=_get(raml, "title"),
+            version=_get(raml, "version"),
+            protocols=protocols(),
+            base_uri=base_uri(),
+            base_uri_params=base_uri_params(kwargs),
+            uri_params=uri_params(kwargs),
+            media_type=_get(raml, "mediaType"),
+            documentation=docs(),
+            schemas=schemas(),
+            config=config,
+            secured_by=_get(raml, "securedBy"),
+            errors=errors,
+            types=types(),
+        )
 
 
 def create_sec_schemes(raml_data, root):

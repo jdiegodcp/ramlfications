@@ -27,21 +27,25 @@ class BaseRAMLError(Exception):
     pass
 
 
-class InvalidRootNodeError(BaseRAMLError):
+class BaseRAMLParserError(BaseRAMLError):
     pass
 
 
-class InvalidResourceNodeError(BaseRAMLError):
+class InvalidRootNodeError(BaseRAMLParserError):
     pass
 
 
-class InvalidParameterError(BaseRAMLError):
+class InvalidResourceNodeError(BaseRAMLParserError):
+    pass
+
+
+class InvalidParameterError(BaseRAMLParserError):
     def __init__(self, message, parameter):
         super(InvalidParameterError, self).__init__(message)
         self.parameter = parameter
 
 
-class InvalidSecuritySchemeError(BaseRAMLError):
+class InvalidSecuritySchemeError(BaseRAMLParserError):
     pass
 
 
@@ -49,7 +53,7 @@ class InvalidSecuritySchemeError(BaseRAMLError):
 # Loader Exceptions
 #####
 
-class LoadRAMLError(Exception):
+class LoadRAMLError(BaseRAMLError):
     pass
 
 
@@ -57,9 +61,33 @@ class LoadRAMLError(Exception):
 # Update MIME Media Type Exception
 #####
 
-class MediaTypeError(Exception):
+class MediaTypeError(BaseRAMLError):
     pass
 
 
-class InvalidVersionError(Exception):
+class InvalidVersionError(BaseRAMLError):
     pass
+
+
+class UnknownDataTypeError(BaseRAMLError):
+    pass
+
+
+class DataTypeValidationError(BaseRAMLError):
+    """A common validator type for data type validation errors
+
+    :param list position_hint: path in the validated object where the
+        error happens. can be None.
+    :param <any> value: value of the object which had a problem:
+        repl of this object will be present in the message
+    :param <any> message: message to provide to the user
+    """
+    def __init__(self, position_hint, value, message):
+        self.position_hint = position_hint
+        self.value = value
+        if position_hint is None:
+            position_hint = []
+        super(DataTypeValidationError, self).__init__(
+            "{0}: {1}, but got: {2}".format(
+                ".".join(position_hint), message, value
+            ))

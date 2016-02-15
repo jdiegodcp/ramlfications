@@ -352,6 +352,16 @@ def string_type_parameter(inst, attr, value):
 
 
 #####
+# RAML1.0 validators
+#####
+
+# TODO: finish
+@collecterrors
+def root_types(inst, attr, value):
+    pass
+
+
+#####
 # Util/common functions
 #####
 

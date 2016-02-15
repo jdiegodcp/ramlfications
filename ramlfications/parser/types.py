@@ -2,6 +2,7 @@
 # Copyright (c) 2015 The Ramlfications developers
 
 from ramlfications.raml import RootNodeDataType
+from ramlfications.types import create_type
 
 
 def create_root_data_type(raml):
@@ -15,6 +16,7 @@ def create_root_data_type(raml):
     """
 
     return RootNodeDataType(
-        raml_obj=raml,
-        raw=raml
+        raw=raml,
+        raml_version=raml._raml_version,
+        type=create_type(None, raml)
     )

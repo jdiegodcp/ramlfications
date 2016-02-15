@@ -109,6 +109,7 @@ class RootNodeDataType(RootNodeBase):
     """
     API Root Node for 1.0 DataType fragment files
     """
+    type            = attr.ib()
 
 
 @attr.s

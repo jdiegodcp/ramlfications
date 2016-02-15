@@ -3,11 +3,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-try:
-    from collections import OrderedDict
-except ImportError:  # pragma: no cover
-    from ordereddict import OrderedDict  # pragma: no cover
-
+from ramlfications.utils.common import OrderedDict
 import sys
 
 from six import iteritems, itervalues
