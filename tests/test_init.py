@@ -6,7 +6,7 @@ import os
 import pytest
 
 from ramlfications import parse, load, loads, validate
-from ramlfications.raml import RootNode
+from ramlfications.raml import RootNodeAPI08
 from ramlfications.errors import LoadRAMLError
 
 from .base import EXAMPLES
@@ -31,7 +31,7 @@ def test_parse(raml):
     config = os.path.join(EXAMPLES + "test-config.ini")
     result = parse(raml, config)
     assert result
-    assert isinstance(result, RootNode)
+    assert isinstance(result, RootNodeAPI08)
 
 
 def test_parse_nonexistant_file():

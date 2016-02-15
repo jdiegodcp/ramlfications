@@ -10,7 +10,7 @@ import pytest
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
 from ramlfications.raml import (
-    RootNode, ResourceTypeNode, TraitNode, ResourceNode
+    RootNodeAPI08, ResourceTypeNode, TraitNode, ResourceNode
 )
 from ramlfications.utils import load_file
 
@@ -27,7 +27,7 @@ def test_parse_raml(raml):
     config_file = os.path.join(EXAMPLES, "twitter-config.ini")
     config = setup_config(config_file)
     root = pw.parse_raml(raml, config)
-    assert isinstance(root, RootNode)
+    assert isinstance(root, RootNodeAPI08)
 
 
 @pytest.fixture(scope="session")

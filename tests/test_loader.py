@@ -285,3 +285,26 @@ def test_parse_noversion():
         loader.RAMLLoader().load(f)
     msg = "Error raml file shall start with #%RAML"
     assert msg in e.value.args[0]
+
+
+def test_parse_ramlfragment():
+    f = StringIO("#%RAML 1.0 DataType")
+    raml = loader.RAMLLoader().load(f)
+    assert raml._raml_version == "1.0"
+    assert raml._raml_fragment_type == "DataType"
+
+
+def test_parse_ramlfragment08():
+    f = StringIO("#%RAML 0.8 DataType")
+    with pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
+    msg = "Error raml fragment is only possible with version 1.0"
+    assert msg in e.value.args[0]
+
+
+def test_parse_ramlfragment_unknown_type():
+    f = StringIO("#%RAML 0.8 garbage")
+    with pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
+    msg = "Error raml fragment is only possible with version 1.0"
+    assert msg in e.value.args[0]
