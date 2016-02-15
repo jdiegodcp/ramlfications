@@ -78,7 +78,7 @@ To run all tests::
 
     (env) $ tox
 
-To run a specific test setup (options include: ``py26``, ``py27``, ``py33``, ``py34``, ``pypy``,
+To run a specific test setup (options include: ``py26``, ``py27``, ``py33``, ``py34``, ``py35``, ``pypy``,
 ``flake8``, ``verbose``, ``manifest``, ``docs``, ``setup``, ``setupcov``)::
 
     (env) $ tox -e py26
