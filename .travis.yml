@@ -36,16 +36,13 @@ matrix:
     - python: '2.7'
       env: TOXENV=manifest
 
-before_install:
-- pip install codecov
-
 # Avoid overriding the default install step,
 # so that automatic pip caching works.
 #
 # See: https://github.com/travis-ci/travis-ci/issues/3239
 #
 before_script:
-  - pip install tox
+  - pip install tox codecov
 
 script:
 - tox --hashseed 0
