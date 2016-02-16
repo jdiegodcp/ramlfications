@@ -84,8 +84,9 @@ def sort_uri_params(params, path):
     for p in params:
         if p.name == "version":
             continue
-        index = param_order.index(p.name)
-        to_sort.append((index, p))
+        if p.name in param_order:
+            index = param_order.index(p.name)
+            to_sort.append((index, p))
 
     params = [p[1] for p in sorted(to_sort, key=lambda item: item[0])]
 
