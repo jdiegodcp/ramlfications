@@ -95,6 +95,25 @@ def sort_uri_params(params, path):
     return params
 
 
+def get_resource_types_by_name(root, name):
+    """
+    Return all the resource types with the given 'name' in the
+    document 'root'.
+
+    :param RootNode root: The ``.raml.RootNode`` of the API
+    :param str name: The name of the resource types to be
+                     returned
+    :returns: List of :py:class:`.raml.ResourceTypeNode` objects.
+    """
+    retval = []
+    allowed_methods = _get(root.config, "http_optional")
+    for resource_type in root.resource_types or []:
+        method_allowed = resource_type.method in allowed_methods
+        if (resource_type.name == name) and method_allowed:
+            retval.append(resource_type)
+    return retval
+
+
 #####
 # Private module-level helper functions
 #####
