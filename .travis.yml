@@ -1,4 +1,5 @@
 language: python
+cache: pip
 
 branches:
   only:
@@ -37,10 +38,18 @@ matrix:
 
 before_install:
 - pip install codecov
-install:
-- pip install tox
+
+# Avoid overriding the default install step,
+# so that automatic pip caching works.
+#
+# See: https://github.com/travis-ci/travis-ci/issues/3239
+#
+before_script:
+  - pip install tox
+
 script:
 - tox --hashseed 0
+
 after_success:
 - codecov
 notifications:
