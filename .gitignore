@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 *.so
+.eggs/
 .Python
 env/
 bin/

@@ -13,6 +13,8 @@ from ramlfications.utils.parameter import (
     map_object, resolve_scalar_data, add_missing_uri_data
 )
 
+from ..utils import NodeList
+
 
 #####
 # Public functions
@@ -222,7 +224,7 @@ def __create_base_param_obj(attribute_data, param_obj, config, errors, **kw):
     Helper function to create a child of a
     :py:class:`.parameters.BaseParameter` object
     """
-    objects = []
+    objects = NodeList()
 
     for key, value in list(iteritems(attribute_data)):
         if param_obj is URIParameter:
