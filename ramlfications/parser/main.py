@@ -623,7 +623,10 @@ def _create_base_node(name, root, node_type, kwargs, resolve_from=[]):
         if _get(kwargs, "parent_data"):
             # parent should be after resource
             resolve_from.insert(2, "parent")
-        return create_param_objs("uriParameters", resolve_from, **kwargs)
+        ret = create_param_objs("uriParameters", resolve_from, **kwargs)
+        if name == 'item':
+            print("res kwargs: {0}".format(kwargs.get("resource_data")))
+        return ret
 
     def base_uri_params():
         return create_param_objs("baseUriParameters", resolve_from, **kwargs)

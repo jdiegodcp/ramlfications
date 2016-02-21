@@ -554,6 +554,7 @@ def test_root_resource_types_parameter(api):
     assert res.name == "parameterType"
     assert res.display_name == "parameterType"
     assert res.method == "get"
+    assert res.media_type == "application/json"
     assert not res.optional
     assert res.protocols == ["HTTPS"]
     desc = "A resource type with substitutable parameters"
@@ -561,9 +562,8 @@ def test_root_resource_types_parameter(api):
     assert len(res.query_params) == 2
 
     not_set = [
-        "form_params", "headers", "is_", "media_type", "responses",
-        "secured_by", "security_schemes", "traits", "type", "uri_params",
-        "usage"
+        "form_params", "headers", "is_", "responses", "secured_by",
+        "security_schemes", "traits", "type", "uri_params", "usage"
     ]
     assert_not_set(res, not_set)
 
@@ -593,14 +593,15 @@ def test_root_resource_types_inherit_parameter_resource(api):
     assert res.name == "inheritParameterTypeResourceAssigned"
     assert res.display_name == "inheritParameterTypeResourceAssigned"
     assert res.method == "get"
+    assert res.media_type == "application/json"
     assert not res.optional
     desc = "Inherits parameterType resource type"
     assert res.description.raw == desc
     assert len(res.query_params) == 2
 
     not_set = [
-        "form_params", "headers", "is_", "media_type", "responses",
-        "secured_by", "security_schemes", "traits", "uri_params", "usage"
+        "form_params", "headers", "is_", "responses", "secured_by",
+        "security_schemes", "traits", "uri_params", "usage"
     ]
     assert_not_set(res, not_set)
 
@@ -632,14 +633,15 @@ def test_root_resource_types_inherit_parameter_method(api):
     assert res.name == "inheritParameterTypeMethodAssigned"
     assert res.display_name == "inheritParameterTypeMethodAssigned"
     assert res.method == "get"
+    assert res.media_type == "application/json"
     assert not res.optional
     desc = "Inherits parameterType resource type"
     assert res.description.raw == desc
     assert len(res.query_params) == 2
 
     not_set = [
-        "form_params", "headers", "is_", "media_type", "responses",
-        "secured_by", "security_schemes", "traits", "uri_params", "usage"
+        "form_params", "headers", "is_", "responses", "secured_by",
+        "security_schemes", "traits", "uri_params", "usage"
     ]
     assert_not_set(res, not_set)
 
@@ -671,6 +673,7 @@ def test_root_resource_types_inherit_parameter_trait(api):
     assert res.name == "typeWithParameterTrait"
     assert res.display_name == "Resource Type with Parameter Trait"
     assert res.method == "get"
+    assert res.media_type == "application/json"
     assert res.protocols == ["HTTPS"]
     assert len(res.is_) == 1
     assert len(res.traits) == 1
@@ -679,8 +682,8 @@ def test_root_resource_types_inherit_parameter_trait(api):
     assert len(res.responses[0].headers) == 1
 
     not_set = [
-        "form_params", "headers", "type", "media_type", "secured_by",
-        "security_schemes", "uri_params", "usage", "body"
+        "form_params", "headers", "type", "secured_by", "security_schemes",
+        "uri_params", "usage", "body"
     ]
     assert_not_set(res, not_set)
 
@@ -713,13 +716,14 @@ def test_resource_type_no_method(api):
 
     assert res.name == "noMethodType"
     assert res.display_name == "noMethodType"
+    assert res.media_type == "application/json"
     assert res.protocols == ["HTTPS"]
     assert res.description.raw == "This type has no methods defined"
     assert len(res.uri_params) == 1
 
     not_set = [
-        "form_params", "headers", "type", "media_type", "secured_by",
-        "security_schemes", "usage", "body", "method", "is_", "type"
+        "form_params", "headers", "type", "secured_by", "security_schemes",
+        "usage", "body", "method", "is_", "type"
     ]
     assert_not_set(res, not_set)
 

@@ -4,74 +4,76 @@
 from __future__ import absolute_import, division, print_function
 
 
-from abc import ABCMeta, abstractmethod
-
 import re
 
 from six import iterkeys, itervalues, iteritems
 
 from ramlfications.parameters import Documentation
-from ramlfications.raml import RootNode, ResourceNode
-from ramlfications.utils import load_schema
-from ramlfications.utils.parser import (
-    parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params
+from ramlfications.raml import (
+    ResourceNode, RAML_ROOT_LOOKUP, TraitNode, ResourceTypeNode,
+    SecuritySchemeNode
 )
+from ramlfications.utils import load_schema
+from ramlfications.utils.common import _map_attr
+from ramlfications.utils.parser import sort_uri_params
 
-from .parameters import create_param_objs
+
+from .base import BaseParser, BaseNodeParser
+from .mixins import HelperMixin
 
 
-class AbstractBaseParser(object):
+parsers = []
+
+
+def collectparser(kls):
+    def klass():
+        if kls not in parsers:
+            parsers.append(kls)
+    klass()
+    return kls
+
+
+class RAMLParser(object):
     """
-    Base parser for Python-RAML objects to inherit from
-    """
-    __metaclass__ = ABCMeta
+    Main RAML Parser
 
+    :param dict data: raw RAML data
+    :param dict config: parser configuration
+
+    :ret: A `RootNodeAPI` object
+    """
     def __init__(self, data, config):
         self.data = data
         self.config = config
 
-    @abstractmethod
-    def create_node(self):
-        pass
+    def parse(self):
+        root_parser = RootParser(self.data, self.config)
+        root = root_parser.create_node()
+        for p in parsers:
+            parser = p(self.data, root, self.config)
+            nodes = parser.create_nodes()
+            setattr(root, p.root_property, nodes)
+
+        resource_parser = ResourceParser(self.data, root, self.config)
+        root.resources = resource_parser.create_nodes(nodes=[])
+        return root
 
 
-# TODO: this probably needs a better name as it wouldn't be used for
-# objects like DataTypes etc
-class RAMLParser(AbstractBaseParser):
+class RootParser(BaseParser):
     """
-    Base parser for RAML objects
-    """
-    def __init__(self, data, config):
-        super(RAMLParser, self).__init__(data, config)
+    Parses raw RAML data into a RootNodeAPI object.
 
-    @abstractmethod
-    def protocols(self):
-        pass
+    :param dict data: raw RAML data
+    :param dict config: parser configuration
 
-    @abstractmethod
-    def base_uri_params(self):
-        pass
-
-    @abstractmethod
-    def uri_params(self):
-        pass
-
-    @abstractmethod
-    def media_type(self):
-        pass
-
-
-class RootParser(RAMLParser):
-    """
-    Parses raw RAML data to create :py:class:`ramlfications.raml.RootNode` \
-    object.
+    :ret: :py:class:`ramlfications.raml.RootNodeAPI` object
     """
     def __init__(self, data, config):
         super(RootParser, self).__init__(data, config)
-        self.errors = []
         self.uri = data.get("baseUri", "")
-        self.kwargs = {}
+        self.errors = []
         self.base = None
+        self.raml_version = None
 
     def protocols(self):
         explicit_protos = self.data.get("protocols")
@@ -90,13 +92,6 @@ class RootParser(RAMLParser):
             base_uri = base_uri.replace("{version}", version)
         return base_uri
 
-    def base_uri_params(self):
-        return create_param_objs("baseUriParameters", **self.kwargs)
-
-    def uri_params(self):
-        self.kwargs["base"] = self.base
-        return create_param_objs("uriParameters", **self.kwargs)
-
     def docs(self):
         d = self.data.get("documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
@@ -113,135 +108,316 @@ class RootParser(RAMLParser):
             schemas.append({list(iterkeys(s))[0]: value})
         return schemas or None
 
+    def create_node_dict(self):
+        self.node["raml_obj"] = self.data
+        self.node["raw"] = self.data
+        self.node["raml_version"] = self.data._raml_version
+        self.node["title"] = self.data.get("title", "")
+        self.node["version"] = self.data.get("version")
+        self.node["protocols"] = self.protocols()
+        self.node["base_uri"] = self.base_uri()
+        self.node["base_uri_params"] = self.base
+        self.node["uri_params"] = self.create_param_objects("uriParameters")
+        self.node["media_type"] = self.media_type()
+        self.node["documentation"] = self.docs()
+        self.node["schemas"] = self.schemas()
+        self.node["secured_by"] = self.data.get("securedBy")
+        self.node["config"] = self.config
+        self.node["errors"] = self.errors
+
     def create_node(self):
-        self.kwargs = dict(
-            data=self.data,
-            uri=self.uri,
-            method=None,
-            errs=self.errors,
-            conf=self.config,
-        )
-        self.base = self.base_uri_params()
-        node = dict(
-            raml_obj=self.data,
-            raw=self.data,
-            title=self.data.get("title", ""),
-            version=self.data.get("version"),
-            protocols=self.protocols(),
-            base_uri=self.base_uri(),
-            base_uri_params=self.base,
-            uri_params=self.uri_params(),
-            media_type=self.media_type(),
-            documentation=self.docs(),
-            schemas=self.schemas(),
-            secured_by=self.data.get("securedBy"),
-            config=self.config,
-            errors=self.errors,
-        )
-        return RootNode(**node)
+        self.kw["data"] = self.data
+        self.kw["uri"] = self.uri
+        self.kw["method"] = None
+        self.kw["errs"] = self.errors
+        self.kw["conf"] = self.config
+
+        self.base = self.create_param_objects("baseUriParameters")
+        self.kw["base"] = self.base
+
+        self.create_node_dict()
+
+        return RAML_ROOT_LOOKUP[self.data._raml_version](**self.node)
 
 
-class BaseNodeParser(RAMLParser):
+@collectparser
+class SecuritySchemeParser(BaseNodeParser):
+    """
+    Parse raw RAML data to create `SecurityScheme` objects, if any.
+    """
+    raml_property = "securitySchemes"
+    root_property = "security_schemes"
+
     def __init__(self, data, root, config):
-        super(BaseNodeParser, self).__init__(data, config)
-        self.root = root
-        self.name = None
-        self.kwargs = {}
-        self.resolve_from = []  # Q: what should the default be?
+        super(SecuritySchemeParser, self).__init__(data, root, config)
+        self.resolve_from = ["method"]
 
-    def create_base_node(self):
-        node = dict(
-            name=self.name,
-            root=self.root,
-            raw=self.kwargs.get("data", {}),
-            desc=self.description(),
-            protocols=self.protocols(),
-            headers=self.headers(),
-            body=self.body(),
-            responses=self.responses(),
-            base_uri_params=self.base_uri_params(),
-            uri_params=self.uri_params(),
-            query_params=self.query_params(),
-            form_params=self.form_params(),
-            errors=self.root.errors,
-        )
+    def _map_object_types(self, item):
+        return {
+            "usage": self.usage,
+            "mediaType": self.media_type,
+            "protocols": self.protocols,
+            "documentation": self.documentation,
+        }[item]
+
+    def _set_property(self, node, obj, node_data):
+        data = {obj: node_data}
+        self.kw["data"] = data
+        try:
+            item_objs = self._map_object_types(obj)()
+        except KeyError:
+            item_objs = self.create_param_objects(obj)
+
+        attr = _map_attr(obj)
+        setattr(node, attr, item_objs)
+
+    def _described_by_properties(self, node):
+        for obj, node_data in list(iteritems(self.node.get("described_by"))):
+            self._set_property(node, obj, node_data)
         return node
 
-    def create_param_objects(self, item):
-        return create_param_objs(item, self.resolve_from, **self.kwargs)
+    def usage(self):
+        return self.get_data_from_kwargs("usage")
 
-    def resolve_inherited(self, item):
-        return resolve_inherited_scalar(item, self.resolve_from, **self.kwargs)
-
-    def display_name(self):
-        # only care about method and resource-level data
-        self.resolve_from = ["method", "resource"]
-        ret = self.resolve_inherited("displayName")
-        return ret or self.name
-
-    def description(self):
-        return self.resolve_inherited("description")
+    def media_type(self):
+        return self.get_data_from_kwargs("mediaType")
 
     def protocols(self):
-        ret = self.resolve_inherited("protocols")
+        return self.get_data_from_kwargs("protocols")
 
-        if not ret:
-            return [self.root.base_uri.split("://")[0].upper()]
-        return ret
+    def documentation(self):
+        d = self.get_data_from_kwargs("documentation", {}, [])
+        assert isinstance(d, list), "Error parsing documentation"
+        docs = [Documentation(i.get("title"), i.get("content")) for i in d]
+        return docs or None
 
-    def headers(self):
-        return self.create_param_objects("headers")
+    def create_node_dict(self):
+        self.node = super(SecuritySchemeParser, self).create_node_dict()
 
-    def body(self):
-        return self.create_param_objects("body")
+        self.node["type"] = self.data.get("type")
+        self.node["config"] = self.root.config
+        self.node["settings"] = self.data.get("settings")
+        self.node["described_by"] = self.data.get("describedBy", {})
 
-    def responses(self):
-        return self.create_param_objects("responses")
+    def create_node(self):
+        self.kw["data"] = self.data
+        self.kw["method"] = self.method
+        self.kw["root"] = self.root
 
-    def uri_params(self):
-        return self.create_param_objects("uriParameters")
+        self.create_node_dict()
 
-    def base_uri_params(self):
-        return self.create_param_objects("baseUriParameters")
-
-    def query_params(self):
-        return self.create_param_objects("queryParameters")
-
-    def form_params(self):
-        return self.create_param_objects("formParameters")
-
-    def is_(self):
-        return self.resolve_inherited("is")
-
-    def type_(self):
-        return self.resolve_inherited("type")
+        node = SecuritySchemeNode(**self.node)
+        return self._described_by_properties(node)
 
 
-class TraitTypeMixin(object):
-    pass
+@collectparser
+class TraitParser(BaseNodeParser):
+    """
+    Parse raw RAML data to create `TraitNode` objects, if any.
+    """
+    raml_property = "traits"
+    root_property = "traits"
+
+    def __init__(self, data, root, config):
+        super(TraitParser, self).__init__(data, root, config)
+        self.resolve_from = ["method"]
+
+    def create_node_dict(self):
+        self.node = super(TraitParser, self).create_node_dict()
+        self.node["usage"] = self.data.get("usage")
+
+    def create_node(self):
+        self.kw = dict(
+            data=self.data,
+            resource_data=self.data,
+            root=self.root,
+            conf=self.root.config,
+            errs=self.root.errors,
+        )
+
+        self.create_node_dict()
+
+        return TraitNode(**self.node)
 
 
-class ResourceParser(BaseNodeParser, TraitTypeMixin):
+@collectparser
+class ResourceTypeParser(BaseNodeParser, HelperMixin):
+    """
+    Parses raw RAML data to create `ResourceTypeNode` objects, if any.
+    """
+    raml_property = "resourceTypes"
+    root_property = "resource_types"
+
+    def __init__(self, data, root, config):
+        super(ResourceTypeParser, self).__init__(data, root, config)
+        self.resolve_from = ["method", "resource", "types", "traits", "root"]
+
+    def optional(self):
+        if self.method:
+            return "?" in self.method
+
+    def method_(self):
+        if not self.method:
+            return None
+        if "?" in self.method:
+            return self.method[:-1]
+        return self.method
+
+    def create_node_dict(self):
+        self.node = super(ResourceTypeParser, self).create_node_dict()
+
+        self.node["is_"] = self.is_()
+        self.node["type"] = self.type_()
+        self.node["usage"] = self.data.get("usage")
+        self.node["method"] = self.method_()
+        self.node["traits"] = self.traits()
+        self.node["optional"] = self.optional()
+        self.node["secured_by"] = self.secured_by()
+        self.node["display_name"] = self.display_name()
+        self.node["security_schemes"] = self.security_schemes()
+
+    def create_node(self):
+        self.kw["data"] = self.method_data
+        self.kw["root"] = self.root
+        self.kw["method"] = self.method_()
+        self.kw["resource_data"] = self.data
+
+        self.is__ = self.is_()
+        self.type__ = self.type_()
+        self.kw["is_"] = self.is__
+        self.kw["type_"] = self.type__
+
+        self.create_node_dict()
+
+        return ResourceTypeNode(**self.node)
+
+    def create_nodes(self):
+        resource_types = self.data.get(self.raml_property, [])
+        resource_type_objects = []
+
+        for res in resource_types:
+            for k, v in list(iteritems(res)):
+                self.name = k
+                self.data = v
+                self.method = None
+                self.method_data = {}
+                if isinstance(v, dict):
+                    values = list(iterkeys(v))
+                    methods = [m for m in self.avail if m in values]
+                    # it's possible for resource types to not define methods
+                    if len(methods) == 0:
+                        node = self.create_node()
+                        resource_type_objects.append(node)
+                    else:
+                        for meth in methods:
+                            self.method = meth
+                            self.method_data = self.data.get(self.method, {})
+                            node = self.create_node()
+                            resource_type_objects.append(node)
+                # is it ever not a dictionary?
+                # yes, if there's an empty mapping
+                else:
+                    self.data = {}
+                    node = self.create_node()
+                    resource_type_objects.append(node)
+        return resource_type_objects
+
+
+class ResourceParser(BaseNodeParser, HelperMixin):
+    """
+    Parses raw RAML data to create `ResourceTypeNode` objects, if any.
+    """
     def __init__(self, data, root, config):
         super(ResourceParser, self).__init__(data, root, config)
-        self.avail = root.config.get("http_optional")
-        self.nodes = []
+        self.resolve_from = [
+            "method", "resource", "types", "traits", "parent", "root"
+        ]
         self.parent = None
-        self.method = None
         self.child_data = {}
-        self.method_data = None
-        self.resolve_from = ["method", "resource", "types", "traits", "root"]
-        self.node = {}
-        self.path = None
+        self.method_data = {}
         self.protos = None
         self.uri = None
-        self.assigned_type = None
+        self.path = None
 
-    def create_nodes(self, nodes):
+    def absolute_uri(self):
+        self.uri = self.root.base_uri + self.path
+        if self.protos:
+            self.uri = self.uri.split("://")
+            if len(self.uri) == 2:
+                self.uri = self.uri[1]
+            if self.root.protocols:
+                _protos = list(set(self.root.protocols) & set(self.protos))
+                if _protos:
+                    self.uri = _protos[0].lower() + "://" + self.uri
+        return self.uri
+
+    def resource_path(self):
+        parent_path = ""
+        if self.parent:
+            parent_path = self.parent.path
+        return parent_path + self.name
+
+    def create_node_dict(self):
+        self.node = super(ResourceParser, self).create_node_dict()
+
+        abs_uri = self.absolute_uri()
+        uri_params = self.node.get("uri_params")
+        base_uri_params = self.node.get("base_uri_params")
+
+        self.node["raw"] = self.child_data
+        self.node["path"] = self.path
+        self.node["method"] = self.method
+        self.node["parent"] = self.parent
+
+        self.node["display_name"] = self.display_name()
+        self.node["absolute_uri"] = abs_uri
+        if uri_params:
+            self.node["uri_params"] = sort_uri_params(
+                uri_params, abs_uri
+            )
+        if base_uri_params:
+            self.node["base_uri_params"] = sort_uri_params(
+                base_uri_params, abs_uri
+            )
+        self.node["is_"] = self.is__
+        self.node["type"] = self.type__
+        self.node["traits"] = self.traits()
+        self.node["secured_by"] = self.secured_by()
+        self.node["resource_type"] = self.resource_type()
+        self.node["security_schemes"] = self.security_schemes()
+
+    def create_node(self):
+        if self.method is not None:
+            self.method_data = self.child_data.get(self.method, {})
+
+        self.path = self.resource_path()
+
+        self.kw["data"] = self.method_data
+        self.kw["root"] = self.root
+        self.kw["method"] = self.method
+        self.kw["parent_data"] = getattr(self.parent, "raw", {})
+        self.kw["resource_path"] = self.path
+        self.kw["resource_data"] = self.child_data
+
+        self.is__ = self.is_()
+        self.type__ = self.type_()
+        self.kw["is_"] = self.is__
+        self.kw["type_"] = self.type__
+
+        self.protos = self.protocols()
+
+        self.create_node_dict()
+
+        return ResourceNode(**self.node)
+
+    def create_nodes(self, nodes, parent=None):
         for k, v in list(iteritems(self.data)):
             if k.startswith("/"):
+                self.parent = parent
+
                 self.name = k
                 self.child_data = v
+                self.data = self.child_data
                 methods = [m for m in self.avail if m in list(iterkeys(v))]
                 if methods:
                     for m in methods:
@@ -252,77 +428,6 @@ class ResourceParser(BaseNodeParser, TraitTypeMixin):
                     self.method = None
                     child = self.create_node()
                     nodes.append(child)
-                self.parent = child
-                nodes = self.create_nodes()
+                nodes = self.create_nodes(nodes, child)
 
         return nodes
-
-    def absolute_uri(self):
-        self.uri = self.root.base_uri + self.path
-        if self.protos:
-            self.uri = self.uri.split("://")
-            if len(self.uri) == 2:
-                self.uri = self.uri[1]
-            if self.root.protocols:
-                self.uri = self.protos[0].lower() + "://" + self.uri
-                _protos = list(set(self.root.protocols) & set(self.protos))
-                if _protos:
-                    self.uri = _protos[0].lower() + "://" + self.uri
-        return self.uri
-
-    def protocols(self):
-        if self.kwargs.get("parent_data"):
-            self.resolve_from.insert(-1, "parent")
-        # hmm does this work as intended?
-        protos = super(ResourceParser, self).protocols()
-        if self.kwargs.get("parent_data"):
-            self.resolve_from.remove(-1, "parent")
-        return protos
-
-    def uri_params(self):
-        if self.kwargs.get("parent_data"):
-            self.resolve_from.insert(2, "parent")
-        # hmm does this work as intended?
-        params = super(ResourceParser, self).uri_params()
-        if self.kwargs.get("parent_data"):
-            self.resolve_from.remove(2, "parent")
-        return params
-
-    def create_node_dict(self):
-        self.node = self.create_base_node()
-        self.assigned_type = parse_assigned_dicts(self.node["type"])
-
-        self.node["absolute_uri"] = self.absolute_uri()
-        self.node["parent"] = self.parent
-        self.node["path"] = self.path
-        self.node["resource_type"] = self.resource_type(self.assigned_type)
-        self.node["media_type"] = self.media_type()
-        self.node["method"] = self.method
-        self.node["raw"] = self.data
-        self.node["uri_params"] = sort_uri_params(
-            self.node["uri_params"], self.node["absolute_uri"]
-        )
-        self.node["base_uri_params"] = sort_uri_params(
-            self.node["base_uri_params"], self.node["absolute_uri"]
-        )
-
-    def create_node(self):
-        self.method_data = {}
-        if self.method is not None:
-            self.method_data = self.data.get(self.method, {})
-        self.path = self.resource_path()
-        self.protos = self.protocols()
-        self.kwargs = dict(
-            data=self.method_data,
-            method=self.method,
-            resource_data=self.data,
-            parent_data=getattr(self.parent, "raw", {}),
-            root=self.root,
-            resource_path=self.path,
-            conf=self.root.config,
-            errs=self.root.errors,
-        )
-
-        self.create_node_dict()
-
-        return ResourceNode(**self.node)

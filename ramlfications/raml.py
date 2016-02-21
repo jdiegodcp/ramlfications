@@ -10,17 +10,15 @@ from .parameters import Content
 from .validate import *  # NOQA
 
 
-HTTP_RESP_CODES = httpserver.BaseHTTPRequestHandler.responses.keys()
-AVAILABLE_METHODS = [
-    "get", "post", "put", "delete", "patch", "head", "options",
-    "trace", "connect"
-]
+RAML_ROOT_LOOKUP = {}
 
-METHOD_PROPERTIES = [
-    "headers", "body", "responses", "query_params", "form_params"
-]
 
-RESOURCE_PROPERTIES = METHOD_PROPERTIES + ["base_uri_params", "uri_params"]
+def collectramlroots(kls):
+    def klass():
+        if kls.raml_version not in list(iterkeys(RAML_ROOT_LOOKUP)):
+            RAML_ROOT_LOOKUP[kls.raml_version] = kls
+    klass()
+    return kls
 
 
 @attr.s
@@ -89,19 +87,23 @@ class RootNodeAPIBase(RootNodeBase):
     errors           = attr.ib(repr=False)
 
 
+@collectramlroots
 @attr.s
 class RootNodeAPI08(RootNodeAPIBase):
     """
     API Root Node for 0.8 raml files
     """
+    raml_version = "0.8"
 
 
+@collectramlroots
 @attr.s
 class RootNodeAPI10(RootNodeAPIBase):
     """
     API Root Node for 1.0 raml files
     """
     types            = attr.ib(repr=False)
+    raml_version = "1.0"
 
 
 @attr.s
@@ -141,6 +143,7 @@ class BaseNode(object):
         Defaults to :py:class:`RootNodeAPI08`'s ``protocols``.
     """
     root            = attr.ib(repr=False)
+    raw             = attr.ib(repr=False)  # TODO: abstract validator
     headers         = attr.ib(repr=False)
     body            = attr.ib(repr=False)
     responses       = attr.ib(repr=False)
@@ -167,7 +170,8 @@ class TraitNode(BaseNode):
     :param str usage: Usage of trait
     """
     name  = attr.ib()
-    raw   = attr.ib(repr=False, validator=defined_trait)
+    # TODO: abstract validator in BaseNode
+    # raw   = attr.ib(repr=False, validator=defined_trait)
     usage = attr.ib(repr=False)
 
 
@@ -198,7 +202,8 @@ class ResourceTypeNode(BaseNode):
 
     """
     name             = attr.ib()
-    raw              = attr.ib(repr=False, validator=defined_resource_type)
+    # TODO: abstract validator in BaseNode
+    # raw              = attr.ib(repr=False, validator=defined_resource_type)
     type             = attr.ib(repr=False, validator=assigned_res_type)
     method           = attr.ib(repr=False)
     usage            = attr.ib(repr=False)
@@ -238,7 +243,6 @@ class ResourceNode(BaseNode):
         :py:class:`parameters.SecurityScheme` objects, or ``None``.
     """
     name             = attr.ib(repr=False)
-    raw              = attr.ib(repr=False)
     parent           = attr.ib(repr=False)
     method           = attr.ib()
     display_name     = attr.ib(repr=False)
@@ -250,3 +254,30 @@ class ResourceNode(BaseNode):
     resource_type    = attr.ib(repr=False)
     secured_by       = attr.ib(repr=False)
     security_schemes = attr.ib(repr=False)
+
+
+@attr.s
+class SecuritySchemeNode(BaseNode):
+    """
+    Security scheme definition.
+
+    :param str name: Name of security scheme
+    :param dict raw: All defined data of item
+    :param str type: Type of authentication
+    :param dict described_by: :py:class:`.Header` s, :py:class:`.Response` s, \
+        :py:class:`.QueryParameter` s, etc that is needed/can be expected \
+        when using security scheme.
+    :param str description: Description of security scheme
+    :param dict settings: Security schema-specific information
+    """
+    name          = attr.ib()
+    type          = attr.ib(repr=False)
+    described_by  = attr.ib(repr=False)
+    settings      = attr.ib(repr=False, validator=defined_sec_scheme_settings)
+    config        = attr.ib(repr=False)
+
+    @property
+    def description(self):
+        if self.desc:
+            return Content(self.desc)
+        return None

@@ -47,8 +47,14 @@ def create_param_objs(param_type, resolve=[], **kwargs):
         return create_bodies(resolved, kwargs)
     if param_type == "responses":
         return create_responses(resolved, kwargs)
+
     conf = _get(kwargs, "conf", None)
     errs = _get(kwargs, "errs", None)
+    root = _get(kwargs, "root")
+    if root:
+        conf = root.config
+        errs = root.errors
+
     params = __create_base_param_obj(resolved, object_name, conf, errs,
                                      method=method)
 

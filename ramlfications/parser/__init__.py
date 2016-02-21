@@ -7,13 +7,9 @@ import attr
 
 from ramlfications.errors import InvalidRAMLError
 from ramlfications.errors import InvalidVersionError
-from ramlfications.utils import NodeList
 from ramlfications.utils.common import _get
 
-from .main import (
-    create_root, create_sec_schemes, create_traits, create_resource_types,
-    create_resources
-)
+from .parser import RAMLParser
 from .types import create_root_data_type
 
 __all__ = ["parse_raml"]
@@ -40,18 +36,9 @@ def parse_raml(loaded_raml, config):
             ))
 
     if loaded_raml._raml_fragment_type == 'Root':
-        root = create_root(loaded_raml, config)
+        parser = RAMLParser(loaded_raml, config)
+        root = parser.parse()
         attr.set_run_validators(validate)
-
-        root.security_schemes = create_sec_schemes(root.raml_obj, root)
-        root.traits = create_traits(root.raml_obj, root)
-        root.resource_types = create_resource_types(root.raml_obj, root)
-        root.resources = create_resources(
-            root.raml_obj,
-            NodeList(),
-            root,
-            parent=None
-        )
 
         if validate:
             attr.validate(root)  # need to validate again for root node
