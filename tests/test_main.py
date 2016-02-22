@@ -20,7 +20,7 @@ MAIN_HELP = MAIN_USAGE + """\
   Yet Another RAML Parser
 
 Options:
-  --help  Show this message and exit.
+  -h, --help  Show this message and exit.
 
 Commands:
   tree      Visualize the RAML file as a tree.
@@ -37,14 +37,14 @@ Options:
   -v, --verbose             Include methods for each endpoint
   -V, --validate            Validate RAML file
   -c, --config PATH         Additionally supported items beyond RAML spec.
-  --help                    Show this message and exit.
+  -h, --help                Show this message and exit.
 """
 
 UPDATE_HELP = UPDATE_USAGE + """\
   Update RAMLfications' supported MIME types from IANA.
 
 Options:
-  --help  Show this message and exit.
+  -h, --help  Show this message and exit.
 """
 
 VALIDATE_HELP = VALIDATE_USAGE + """\
@@ -52,7 +52,7 @@ VALIDATE_HELP = VALIDATE_USAGE + """\
 
 Options:
   -c, --config PATH  Additionally supported items beyond RAML spec.
-  --help             Show this message and exit.
+  -h, --help         Show this message and exit.
 """
 
 
@@ -98,7 +98,7 @@ def _handles_file_extra_arg(runner, usage_prefix, cli):
     check_result(2, expected, result)
 
 
-@pytest.mark.parametrize('args', [[], ['--help']])
+@pytest.mark.parametrize('args', [[], ['-h'], ['--help']])
 def test_main_help(runner, args):
     """
     Show the main usage help.
@@ -107,7 +107,7 @@ def test_main_help(runner, args):
     check_result(0, MAIN_HELP, result)
 
 
-@pytest.mark.parametrize('args', [['--help']])
+@pytest.mark.parametrize('args', [['-h'], ['--help']])
 def test_validate_help(runner, args):
     """
     Show the validate command usage help.
@@ -154,7 +154,7 @@ def test_validate_fail(runner):
     assert exp_msg_3 in result.output
 
 
-@pytest.mark.parametrize('args', [['--help']])
+@pytest.mark.parametrize('args', [['-h'], ['--help']])
 def test_tree_help(runner, args):
     """
     Show the tree command usage help.
@@ -200,7 +200,7 @@ def test_tree_invalid(runner):
     check_result(exp_code, exp_msg, result)
 
 
-@pytest.mark.parametrize('args', [['--help']])
+@pytest.mark.parametrize('args', [['-h'], ['--help']])
 def test_update_help(runner, args):
     """
     Show the update command usage help.
