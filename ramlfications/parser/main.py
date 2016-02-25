@@ -20,7 +20,8 @@ from ramlfications.utils import load_schema
 # Private utility functions
 from ramlfications.utils.common import _get
 from ramlfications.utils.parser import (
-    parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params
+    parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params,
+    get_resource_types_by_name
 )
 from ramlfications.types import create_type
 
@@ -401,9 +402,47 @@ def create_resources(node, resources, root, parent):
             else:
                 child = _create_resource_node(name=k, raw_data=v, method=None,
                                               parent=parent, root=root)
-                resources.append(child)
+                if _get(v, "type"):
+                    # There may be some more methods defined on the resource
+                    # type this one inherits from
+                    resources = _create_supertype_resources(
+                        root, k, parent, _get(v, "type"), resources)
+                else:
+                    resources.append(child)
             resources = create_resources(child.raw, resources, root, child)
 
+    return resources
+
+
+def _create_supertype_resources(root, type_name, types, supertype, resources):
+    """
+    Recursively traverses the inheritance tree for a resource via DFS to
+    find the resource endpoints associated with it.
+
+    :param RootNode root: The ``.raml.RootNode`` of the API
+    :param str type_name: The name of the resource type currently being
+                          inspected.
+    :param ResourceNode types: parent node that inherited resource endpoints
+                               are to be attached to.
+    :param str supertype: The name of the supertype for the current node.
+    :param list resources: List of collected ``.raml.ResourceNode`` s
+    :returns: List of :py:class:`.raml.ResourceNode` objects.
+    """
+    resource_types = get_resource_types_by_name(root, supertype)
+    for resource_type in resource_types:
+        resource_supertype = getattr(resource_type, "type", None)
+        if resource_supertype is not None:
+            resources = _create_supertype_resources(
+                root, type_name, types, resource_supertype, resources)
+        resource = _create_resource_node(
+            name=type_name,
+            raw_data=resource_type.raw,
+            method=resource_type.method,
+            parent=types,
+            root=root
+        )
+        resource.type = supertype
+        resources.append(resource)
     return resources
 
 
