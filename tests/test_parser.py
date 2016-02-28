@@ -9,7 +9,7 @@ import pytest
 
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
-from ramlfications.raml import RootNode, ResourceTypeNode, TraitNode
+from ramlfications.raml import RootNodeAPI08, ResourceTypeNode, TraitNode
 from ramlfications.utils import load_file
 
 from .base import EXAMPLES
@@ -32,11 +32,11 @@ def root():
 def test_parse_raml(loaded_raml):
     config = setup_config(EXAMPLES + "test-config.ini")
     root = pw.parse_raml(loaded_raml, config)
-    assert isinstance(root, RootNode)
+    assert isinstance(root, RootNodeAPI08)
 
 
 def test_create_root(root):
-    assert isinstance(root, RootNode)
+    assert isinstance(root, RootNodeAPI08)
 
 
 def test_base_uri(root):
@@ -1779,6 +1779,23 @@ meatball salami beef cow venison tail ball tip pork belly.</p>
     assert api.documentation[0].content.html == markdown_html
 
 
+#####
+# Test multiple methods in included external resource
+#####
+@pytest.fixture(scope="session")
+def external_resource_with_multiple_methods():
+    raml_file = os.path.join(
+        EXAMPLES + "external_resource_with_multiple_methods.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_resourcePathName_with_multilevel_resource(multilevel_api):
+    for resource in multilevel_api.resources:
+        assert resource.desc == resource.path.split("/")[-1]
+
+
 @pytest.fixture(scope="session")
 def multilevel_api():
     raml_file = os.path.join(
@@ -1788,6 +1805,44 @@ def multilevel_api():
     return pw.parse_raml(loaded_raml_file, config)
 
 
-def test_resourcePathName_with_multilevel_resource(multilevel_api):
-    for resource in multilevel_api.resources:
-        assert resource.desc == resource.path.split("/")[-1]
+def test_external_resource_with_multiple_methods(
+        external_resource_with_multiple_methods):
+    api = external_resource_with_multiple_methods
+    assert len(api.resources) == 6
+    external_resource_methods = [
+        r.method for r in api.resources if r.path == "/external"]
+    internal_resource_methods = [
+        r.method for r in api.resources if r.path == "/internal"]
+    # Make sure the methods of the external resource were detected
+    for method in "get", "patch", "post":
+        assert method in external_resource_methods
+    # Make sure the change didn't break existing functionality
+    for method in "get", "patch", "post":
+        assert method in internal_resource_methods
+
+
+@pytest.fixture(scope="session")
+def extended_external_resource_with_multiple_methods():
+    raml_file = os.path.join(
+        EXAMPLES + "extended_external_resource_with_multiple_methods.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_extended_external_resource_with_multiple_methods(
+        extended_external_resource_with_multiple_methods):
+    api = extended_external_resource_with_multiple_methods
+    assert len(api.resources) == 7
+    external_resource_methods = [
+        r.method for r in api.resources if r.path == "/external"]
+    internal_resource_methods = [
+        r.method for r in api.resources if r.path == "/internal"]
+    # The extended-external type adds a 'put' method to the base external
+    # resource. We need to make sure that both the base type's methods and
+    # the extended type's methods appear on the resource
+    for method in "get", "post", "patch", "put":
+        assert method in external_resource_methods
+    # Make sure the change didn't break existing functionality
+    for method in "get", "patch", "post":
+        assert method in internal_resource_methods

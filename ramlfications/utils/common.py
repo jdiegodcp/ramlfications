@@ -6,10 +6,10 @@ from __future__ import absolute_import, division, print_function
 import re
 
 try:
-    from collections import OrderedDict
+    from collections import OrderedDict as PythonOrderedDict
     import json
 except ImportError:  # pragma: no cover
-    from ordereddict import OrderedDict
+    from ordereddict import OrderedDict as PythonOrderedDict
     # implies running python 2.6, and therefore needs simplejson
     # to maintain dict order when loading json
     import simplejson as json
@@ -17,6 +17,21 @@ except ImportError:  # pragma: no cover
 from six import iterkeys, iteritems
 
 from . import tags
+
+
+class OrderedDict(PythonOrderedDict):
+    """An OrderedDict subclass which displays OrderedDicts like dicts.
+    As ramlfication is designed to have nice repr, OrderedDict original repr
+    looks very bloated compared to the canonical dict representation.
+
+    """
+    def __repr__(self):
+        ret = "o{"
+        ret += ", ".join([
+            "{0}: {1}".format(repr(k), repr(v))
+            for k, v in iteritems(self)])
+        ret += "}"
+        return ret
 
 # pattern for `<<parameter>>` substitution
 PATTERN = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'

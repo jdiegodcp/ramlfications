@@ -15,7 +15,7 @@ To parse a RAML file, include ramlfications in your project and call the parse f
    >>> RAML_FILE = "/path/to/my-api.raml"
    >>> api = ramlfications.parse(RAML_FILE)
    >>> api
-   RootNode(title='Example Web API')
+   RootNodeAPI08(title='Example Web API')
    >>> api.title
    'My Foo API'
    >>> api.version

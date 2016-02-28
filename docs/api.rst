@@ -42,7 +42,7 @@ parser
 raml
 ^^^^
 
-.. py:class:: ramlfications.raml.RootNode
+.. py:class:: ramlfications.raml.RootNodeAPI08
 
     API Root Node
 
@@ -62,18 +62,18 @@ raml
 
         ``list`` of base :py:class:`.URIParameter` s for the base URI, or
         ``None``. The order of ``base_uri_params`` will follow the order \
-        defined in the :py:obj:`.RootNode.base_uri`.
+        defined in the :py:obj:`.RootNodeAPI08.base_uri`.
 
     .. py:attribute:: uri_params
 
         ``list`` of :py:class:`.URIParameter` s that can apply to all
         resources, or ``None``. The order of ``uri_params`` will follow the \
-        order defined in the :py:obj:`.RootNode.base_uri`.
+        order defined in the :py:obj:`.RootNodeAPI08.base_uri`.
 
     .. py:attribute:: protocols
 
         ``list`` of ``str`` s of API-supported protocols.  If not defined, is
-        inferred by protocol from :py:obj:`.RootNode.base_uri`.
+        inferred by protocol from :py:obj:`.RootNodeAPI08.base_uri`.
 
     .. py:attribute:: title
 
@@ -129,7 +129,7 @@ raml
 
     .. py:attribute:: root
 
-        Back reference to the ``Node``’s API :py:class:`.RootNode` object.
+        Back reference to the ``Node``’s API :py:class:`.RootNodeAPI08` object.
 
     .. py:attribute:: headers
 
@@ -166,7 +166,7 @@ raml
     .. py:attribute:: media_type
 
         ``str`` of supported request MIME media type. Defaults to \
-        :py:class:`.RootNode`’s ``media_type``.
+        :py:class:`.RootNodeAPI08`’s ``media_type``.
 
     .. py:attribute:: description
 
@@ -175,7 +175,7 @@ raml
     .. py:attribute:: protocols
 
         ``list`` of ``str`` s of supported protocols.  Defaults to \
-        :py:obj:`.RootNode.protocols`.
+        :py:obj:`.RootNodeAPI08.protocols`.
 
 
 .. py:class:: ramlfications.raml.TraitNode
@@ -266,7 +266,7 @@ raml
     .. py:attribute:: absolute_uri
 
         ``str`` concatenation of absolute URI of resource:
-        :py:obj:`.RootNode.base_uri` + :py:attr:`path`.
+        :py:obj:`.RootNodeAPI08.base_uri` + :py:attr:`path`.
 
     .. py:attribute:: is_
 

@@ -13,25 +13,29 @@ from ramlfications.parameters import (
     Documentation, SecurityScheme
 )
 from ramlfications.raml import (
-    RootNode, ResourceTypeNode, TraitNode, ResourceNode
+    RootNodeAPI08, RootNodeAPI10, ResourceTypeNode, TraitNode, ResourceNode
 )
 from ramlfications.utils import load_schema
 
 # Private utility functions
+from ramlfications.utils import NodeList
 from ramlfications.utils.common import _get
 from ramlfications.utils.parser import (
-    parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params
+    parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params,
+    get_resource_types_by_name
 )
+from ramlfications.types import create_type
 
 from .parameters import create_param_objs
 
 
 def create_root(raml, config):
     """
-    Creates a :py:class:`.raml.RootNode` based off of the RAML's root section.
+    Creates a :py:class:`.raml.RootNodeAPI08` based off of the RAML's root
+    section.
 
     :param RAMLDict raml: loaded RAML file
-    :returns: :py:class:`.raml.RootNode` object with API root attributes set
+    :returns: :py:class:`.raml.RootNodeAPI08` object with API root attributes.
     """
 
     errors = []
@@ -60,18 +64,27 @@ def create_root(raml, config):
     def docs():
         d = _get(raml, "documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(_get(i, "title"), _get(i, "content")) for i in d]
+        docs = NodeList(
+            Documentation(_get(i, "title"), _get(i, "content")) for i in d
+        )
         return docs or None
 
     def schemas():
         _schemas = _get(raml, "schemas")
         if not _schemas:
             return None
-        schemas = []
+        schemas = NodeList()
         for schema in _schemas:
             value = load_schema(list(itervalues(schema))[0])
             schemas.append({list(iterkeys(schema))[0]: value})
         return schemas or None
+
+    def types():
+        _types = _get(raml, "types")
+        if not _types:
+            return None
+        return [
+            create_type(k, v) for k, v in iteritems(_types)]
 
     uri = _get(raml, "baseUri", "")
     kwargs = dict(data=raml,
@@ -80,23 +93,43 @@ def create_root(raml, config):
                   errs=errors,
                   conf=config)
     base = base_uri_params(kwargs)
-
-    return RootNode(
-        raml_obj=raml,
-        raw=raml,
-        title=_get(raml, "title"),
-        version=_get(raml, "version"),
-        protocols=protocols(),
-        base_uri=base_uri(),
-        base_uri_params=base_uri_params(kwargs),
-        uri_params=uri_params(kwargs),
-        media_type=_get(raml, "mediaType"),
-        documentation=docs(),
-        schemas=schemas(),
-        config=config,
-        secured_by=_get(raml, "securedBy"),
-        errors=errors
-    )
+    if raml._raml_version == "0.8":
+        return RootNodeAPI08(
+            raml_obj=raml,
+            raw=raml,
+            raml_version=raml._raml_version,
+            title=_get(raml, "title"),
+            version=_get(raml, "version"),
+            protocols=protocols(),
+            base_uri=base_uri(),
+            base_uri_params=base_uri_params(kwargs),
+            uri_params=uri_params(kwargs),
+            media_type=_get(raml, "mediaType"),
+            documentation=docs(),
+            schemas=schemas(),
+            config=config,
+            secured_by=_get(raml, "securedBy"),
+            errors=errors,
+        )
+    elif raml._raml_version == "1.0":
+        return RootNodeAPI10(
+            raml_obj=raml,
+            raw=raml,
+            raml_version=raml._raml_version,
+            title=_get(raml, "title"),
+            version=_get(raml, "version"),
+            protocols=protocols(),
+            base_uri=base_uri(),
+            base_uri_params=base_uri_params(kwargs),
+            uri_params=uri_params(kwargs),
+            media_type=_get(raml, "mediaType"),
+            documentation=docs(),
+            schemas=schemas(),
+            config=config,
+            secured_by=_get(raml, "securedBy"),
+            errors=errors,
+            types=types(),
+        )
 
 
 def create_sec_schemes(raml_data, root):
@@ -104,11 +137,11 @@ def create_sec_schemes(raml_data, root):
     Parse security schemes into :py:class:.raml.SecurityScheme` objects
 
     :param dict raml_data: Raw RAML data
-    :param RootNode root: Root Node
+    :param RootNodeAPI08 root: Root Node
     :returns: list of :py:class:`.parameters.SecurityScheme` objects
     """
     schemes = _get(raml_data, "securitySchemes", [])
-    scheme_objs = []
+    scheme_objs = NodeList()
     for s in schemes:
         name = list(iterkeys(s))[0]
         data = list(itervalues(s))[0]
@@ -124,7 +157,7 @@ def _create_sec_scheme_node(name, data, root):
     :param str name: Name of the security scheme
     :param dict data: Raw method-level RAML data associated with \
         security scheme
-    :param RootNode root: API ``RootNode`` that the security scheme is \
+    :param RootNodeAPI08 root: API ``RootNodeAPI08`` that the security scheme \
         attached to
     :returns: :py:class:`.raml.SecurityScheme` object
     """
@@ -176,7 +209,9 @@ def _create_sec_scheme_node(name, data, root):
         d = _get(kwargs, "data", {})
         d = _get(d, "documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(_get(i, "title"), _get(i, "content")) for i in d]
+        docs = NodeList(
+            Documentation(_get(i, "title"), _get(i, "content")) for i in d
+        )
         return docs or None
 
     def set_property(node, obj, node_data):
@@ -220,11 +255,11 @@ def create_traits(raml_data, root):
     Parse traits into :py:class:`.raml.TraitNode` objects.
 
     :param dict raml_data: Raw RAML data
-    :param RootNode root: Root Node
+    :param RootNodeAPI08 root: Root Node
     :returns: list of :py:class:`.raml.TraitNode` objects
     """
     traits = _get(raml_data, "traits", [])
-    trait_objects = []
+    trait_objects = NodeList()
 
     for trait in traits:
         name = list(iterkeys(trait))[0]
@@ -241,7 +276,7 @@ def _create_trait_node(name, data, root):
     :param dict data: Raw method-level RAML data associated with \
         trait node
     :param str method: HTTP method associated with resource type node
-    :param RootNode root: API ``RootNode`` that the trait node is \
+    :param RootNodeAPI08 root: API ``RootNodeAPI08`` that the trait node is \
         attached to
     :returns: :py:class:`.raml.TraitNode` object
     """
@@ -265,13 +300,13 @@ def create_resource_types(raml_data, root):
     Parse resourceTypes into :py:class:`.raml.ResourceTypeNode` objects.
 
     :param dict raml_data: Raw RAML data
-    :param RootNode root: Root Node
+    :param RootNodeAPI08 root: Root Node
     :returns: list of :py:class:`.raml.ResourceTypeNode` objects
     """
     accepted_methods = _get(root.config, "http_optional")
 
     resource_types = _get(raml_data, "resourceTypes", [])
-    resource_type_objects = []
+    resource_type_objects = NodeList()
 
     for res in resource_types:
         for k, v in list(iteritems(res)):
@@ -309,8 +344,8 @@ def _create_resource_type_node(name, method_data, method, resource_data, root):
     :param str method: HTTP method associated with resource type node
     :param dict resource_data: Raw resource-level RAML data associated with \
         resource type node
-    :param RootNode root: API ``RootNode`` that the resource type node is \
-        attached to
+    :param RootNodeAPI08 root: API ``RootNodeAPI08`` that the resource type\
+        node is attached to
     :returns: :py:class:`.raml.ResourceTypeNode` object
     """
     #####
@@ -355,7 +390,7 @@ def create_resources(node, resources, root, parent):
 
     :param dict node: Dictionary of node to traverse
     :param list resources: List of collected ``.raml.ResourceNode`` s
-    :param RootNode root: The ``.raml.RootNode`` of the API
+    :param RootNodeAPI08 root: The ``.raml.RootNodeAPI08`` of the API
     :param ResourceNode parent: Parent ``.raml.ResourceNode`` of current \
         ``node``
     :returns: List of :py:class:`.raml.ResourceNode` objects.
@@ -372,9 +407,47 @@ def create_resources(node, resources, root, parent):
             else:
                 child = _create_resource_node(name=k, raw_data=v, method=None,
                                               parent=parent, root=root)
-                resources.append(child)
+                if _get(v, "type"):
+                    # There may be some more methods defined on the resource
+                    # type this one inherits from
+                    resources = _create_supertype_resources(
+                        root, k, parent, _get(v, "type"), resources)
+                else:
+                    resources.append(child)
             resources = create_resources(child.raw, resources, root, child)
 
+    return resources
+
+
+def _create_supertype_resources(root, type_name, types, supertype, resources):
+    """
+    Recursively traverses the inheritance tree for a resource via DFS to
+    find the resource endpoints associated with it.
+
+    :param RootNode root: The ``.raml.RootNode`` of the API
+    :param str type_name: The name of the resource type currently being
+                          inspected.
+    :param ResourceNode types: parent node that inherited resource endpoints
+                               are to be attached to.
+    :param str supertype: The name of the supertype for the current node.
+    :param list resources: List of collected ``.raml.ResourceNode`` s
+    :returns: List of :py:class:`.raml.ResourceNode` objects.
+    """
+    resource_types = get_resource_types_by_name(root, supertype)
+    for resource_type in resource_types:
+        resource_supertype = getattr(resource_type, "type", None)
+        if resource_supertype is not None:
+            resources = _create_supertype_resources(
+                root, type_name, types, resource_supertype, resources)
+        resource = _create_resource_node(
+            name=type_name,
+            raw_data=resource_type.raw,
+            method=resource_type.method,
+            parent=types,
+            root=root
+        )
+        resource.type = supertype
+        resources.append(resource)
     return resources
 
 
@@ -386,7 +459,8 @@ def _create_resource_node(name, raw_data, method, parent, root):
     :param dict raw_data: Raw RAML data associated with resource node
     :param str method: HTTP method associated with resource node
     :param ResourceNode parent: Parent node object of resource node, if any
-    :param RootNode api: API ``RootNode`` that the resource node is attached to
+    :param RootNodeAPI08 api: API ``RootNodeAPI08`` that the resource node\
+        is attached to
     :returns: :py:class:`.raml.ResourceNode` object
     """
     #####
@@ -477,7 +551,8 @@ def _create_base_node(name, root, node_type, kwargs, resolve_from=[]):
     Create a dictionary of :py:class:`.raml.BaseNode` data.
 
     :param str name: Name of resource node
-    :param RootNode api: API ``RootNode`` that the resource node is attached to
+    :param RootNodeAPI08 api: API ``RootNodeAPI08`` that the resource node is\
+        attached to
     :param str node_type: type of node, e.g. ``resource``, ``resource_type``
     :param dict kwargs: relevant node data to parse out
     :param list resolve_from: order of objects from which the node to \
