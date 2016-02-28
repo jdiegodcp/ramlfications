@@ -18,13 +18,13 @@ from ramlfications.raml import (
 from ramlfications.utils import load_schema
 
 # Private utility functions
+from ramlfications.utils import NodeList
 from ramlfications.utils.common import _get
 from ramlfications.utils.parser import (
     parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params
 )
 from ramlfications.types import create_type
 
-from ..utils import NodeList
 from .parameters import create_param_objs
 
 

@@ -7,13 +7,11 @@ from six import iteritems, itervalues, iterkeys, string_types
 
 from ramlfications.config import MEDIA_TYPES
 from ramlfications.parameters import Response, Header, Body, URIParameter
-from ramlfications.utils import load_schema
+from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _get, substitute_parameters
 from ramlfications.utils.parameter import (
     map_object, resolve_scalar_data, add_missing_uri_data
 )
-
-from ..utils import NodeList
 
 
 #####

@@ -7,9 +7,9 @@ import attr
 
 from ramlfications.errors import InvalidRAMLError
 from ramlfications.errors import InvalidVersionError
+from ramlfications.utils import NodeList
 from ramlfications.utils.common import _get
 
-from ..utils import NodeList
 from .main import (
     create_root, create_sec_schemes, create_traits, create_resource_types,
     create_resources
