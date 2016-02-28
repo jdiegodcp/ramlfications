@@ -18,6 +18,7 @@ from ramlfications.raml import (
 from ramlfications.utils import load_schema
 
 # Private utility functions
+from ramlfications.utils import NodeList
 from ramlfications.utils.common import _get
 from ramlfications.utils.parser import (
     parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params,
@@ -63,14 +64,16 @@ def create_root(raml, config):
     def docs():
         d = _get(raml, "documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(_get(i, "title"), _get(i, "content")) for i in d]
+        docs = NodeList(
+            Documentation(_get(i, "title"), _get(i, "content")) for i in d
+        )
         return docs or None
 
     def schemas():
         _schemas = _get(raml, "schemas")
         if not _schemas:
             return None
-        schemas = []
+        schemas = NodeList()
         for schema in _schemas:
             value = load_schema(list(itervalues(schema))[0])
             schemas.append({list(iterkeys(schema))[0]: value})
@@ -138,7 +141,7 @@ def create_sec_schemes(raml_data, root):
     :returns: list of :py:class:`.parameters.SecurityScheme` objects
     """
     schemes = _get(raml_data, "securitySchemes", [])
-    scheme_objs = []
+    scheme_objs = NodeList()
     for s in schemes:
         name = list(iterkeys(s))[0]
         data = list(itervalues(s))[0]
@@ -206,7 +209,9 @@ def _create_sec_scheme_node(name, data, root):
         d = _get(kwargs, "data", {})
         d = _get(d, "documentation", [])
         assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(_get(i, "title"), _get(i, "content")) for i in d]
+        docs = NodeList(
+            Documentation(_get(i, "title"), _get(i, "content")) for i in d
+        )
         return docs or None
 
     def set_property(node, obj, node_data):
@@ -254,7 +259,7 @@ def create_traits(raml_data, root):
     :returns: list of :py:class:`.raml.TraitNode` objects
     """
     traits = _get(raml_data, "traits", [])
-    trait_objects = []
+    trait_objects = NodeList()
 
     for trait in traits:
         name = list(iterkeys(trait))[0]
@@ -301,7 +306,7 @@ def create_resource_types(raml_data, root):
     accepted_methods = _get(root.config, "http_optional")
 
     resource_types = _get(raml_data, "resourceTypes", [])
-    resource_type_objects = []
+    resource_type_objects = NodeList()
 
     for res in resource_types:
         for k, v in list(iteritems(res)):

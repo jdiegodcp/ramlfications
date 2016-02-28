@@ -7,7 +7,7 @@ from six import iteritems, itervalues, iterkeys, string_types
 
 from ramlfications.config import MEDIA_TYPES
 from ramlfications.parameters import Response, Header, Body, URIParameter
-from ramlfications.utils import load_schema
+from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _get, substitute_parameters
 from ramlfications.utils.parameter import (
     map_object, resolve_scalar_data, add_missing_uri_data
@@ -222,7 +222,7 @@ def __create_base_param_obj(attribute_data, param_obj, config, errors, **kw):
     Helper function to create a child of a
     :py:class:`.parameters.BaseParameter` object
     """
-    objects = []
+    objects = NodeList()
 
     for key, value in list(iteritems(attribute_data)):
         if param_obj is URIParameter:

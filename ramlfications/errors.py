@@ -91,3 +91,19 @@ class DataTypeValidationError(BaseRAMLError):
             "{0}: {1}, but got: {2}".format(
                 ".".join(position_hint), message, value
             ))
+
+
+###
+# NodeList exceptions
+###
+
+class InvalidNodeListFilterKey(Exception):
+    """When an invalid filter key was passed in to a NodeList"""
+
+
+class MultipleNodesFound(Exception):
+    """A single node was required but more than one were found."""
+
+
+class NoNodeFound(Exception):
+    """One node was required but none was found."""

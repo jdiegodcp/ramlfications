@@ -15,6 +15,7 @@ import xmltodict
 
 from ramlfications.errors import MediaTypeError, LoadRAMLError
 from ramlfications.loader import RAMLLoader
+from ramlfications.utils.nodelist import NodeList  # noqa
 
 
 PYVER = sys.version_info[:3]
