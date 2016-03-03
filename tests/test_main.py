@@ -2,6 +2,7 @@
 # Copyright (c) 2015 Spotify AB
 
 import os
+from textwrap import dedent
 
 from click.testing import CliRunner
 import pytest
@@ -229,14 +230,43 @@ def test_update(runner, mocker):
 
     start_mtime = os.path.getmtime(json_path)
 
+    # Minimal parseable registry document, with two dummy MIME types
+    dummy_xml = dedent("""\
+        <?xml version='1.0' encoding='UTF-8'?>
+        <registry xmlns="http://www.iana.org/assignments" id="media-types">
+
+          <registry id="examples">
+            <title>examples</title>
+            <record>
+              <name>dummy1</name>
+            </record>
+            <record>
+              <file type="template">examples/dummy2</file>
+            </record>
+          </registry>
+
+          <registry id="audio"><title>audio</title></registry>
+          <registry id="application"><title>application</title></registry>
+          <registry id="image"><title>image</title></registry>
+          <registry id="message"><title>message</title></registry>
+          <registry id="model"><title>model</title></registry>
+          <registry id="multipart"><title>multipart</title></registry>
+          <registry id="text"><title>text</title></registry>
+          <registry id="video"><title>video</title></registry>
+        </registry>
+    """)
+
     from ramlfications import utils
-    mocker.patch("ramlfications.utils.update_mime_types")
+    mocker.patch("ramlfications.utils.download_url", return_value=dummy_xml)
     mocker.patch("ramlfications.utils._save_updated_mime_types")
 
-    runner.invoke(main.update)
+    runner.invoke(main.update, catch_exceptions=False)
 
-    utils.update_mime_types.assert_called_once()
-    utils._save_updated_mime_types.assert_called_once()
+    utils.download_url.assert_called_once_with(
+        'https://www.iana.org/assignments/media-types/media-types.xml')
+    utils._save_updated_mime_types.assert_called_once_with(
+        os.path.realpath(json_path),
+        ['examples/dummy1', 'examples/dummy2'])
 
     end_mtime = os.path.getmtime(json_path)
 
