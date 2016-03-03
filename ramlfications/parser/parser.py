@@ -13,10 +13,10 @@ from ramlfications.raml import (
     ResourceNode, RAML_ROOT_LOOKUP, TraitNode, ResourceTypeNode,
     SecuritySchemeNode
 )
-from ramlfications.utils import load_schema
+from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _map_attr
 from ramlfications.utils.parser import sort_uri_params
-
+from ramlfications.types import create_type
 
 from .base import BaseParser, BaseNodeParser
 from .mixins import HelperMixin
@@ -55,7 +55,7 @@ class RAMLParser(object):
             setattr(root, p.root_property, nodes)
 
         resource_parser = ResourceParser(self.data, root, self.config)
-        root.resources = resource_parser.create_nodes(nodes=[])
+        root.resources = resource_parser.create_nodes(nodes=NodeList())
         return root
 
 
@@ -293,7 +293,7 @@ class ResourceTypeParser(BaseNodeParser, HelperMixin):
 
     def create_nodes(self):
         resource_types = self.data.get(self.raml_property, [])
-        resource_type_objects = []
+        resource_type_objects = NodeList()
 
         for res in resource_types:
             for k, v in list(iteritems(res)):

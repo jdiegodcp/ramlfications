@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 from six import iterkeys, itervalues
 
+from ramlfications.utils import NodeList
 from ramlfications.utils.parser import resolve_inherited_scalar
 from .parameters import create_param_objs
 
@@ -49,7 +50,7 @@ class BaseNodeParser(BaseParser):
 
     def create_nodes(self):
         data = self.data.get(self.raml_property, [])
-        node_objects = []
+        node_objects = NodeList()
 
         for d in data:
             self.name = list(iterkeys(d))[0]
