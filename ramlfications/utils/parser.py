@@ -45,7 +45,7 @@ def resolve_inherited_scalar(item, inherit_from=[], **kwargs):
     path = _get(kwargs, "resource_path")
     path_name = "<<resourcePathName>>"
     if path:
-        path_name = path.lstrip("/")
+        path_name = path.split("/")[-1]
     else:
         path = "<<resourcePath>>"
     for obj_type in inherit_from:

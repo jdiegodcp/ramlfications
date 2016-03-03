@@ -1791,6 +1791,20 @@ def external_resource_with_multiple_methods():
     return pw.parse_raml(loaded_raml_file, config)
 
 
+def test_resourcePathName_with_multilevel_resource(multilevel_api):
+    for resource in multilevel_api.resources:
+        assert resource.desc == resource.path.split("/")[-1]
+
+
+@pytest.fixture(scope="session")
+def multilevel_api():
+    raml_file = os.path.join(
+        EXAMPLES + "resourcePathName_multilevel_resource.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
 def test_external_resource_with_multiple_methods(
         external_resource_with_multiple_methods):
     api = external_resource_with_multiple_methods
