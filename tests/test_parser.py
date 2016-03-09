@@ -1846,3 +1846,21 @@ def test_extended_external_resource_with_multiple_methods(
     # Make sure the change didn't break existing functionality
     for method in "get", "patch", "post":
         assert method in internal_resource_methods
+
+
+@pytest.fixture(scope="session")
+def repeated_parameter_transformation():
+    raml_file = os.path.join(
+        EXAMPLES + "repeated-parameter-transformation.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_repeated_parameter_transformation(
+        repeated_parameter_transformation):
+    api = repeated_parameter_transformation
+    assert len(api.resources) == 2
+    get_resources = [r for r in api.resources if r.method == "get"]
+    for r in get_resources:
+        assert r.desc == "job job"

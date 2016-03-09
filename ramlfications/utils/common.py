@@ -134,13 +134,15 @@ def __replace_str_attr(param, new_value, current_str):
     for item in ret:
         to_replace = "".join(item[0:3]) + item[-1]
         tag_func = item[3]
+        transformed_value = new_value
         if tag_func:
             tag_func = tag_func.strip("!")
             tag_func = tag_func.strip()
             func = getattr(tags, tag_func)
             if func:
-                new_value = func(new_value)
-        current_str = current_str.replace(to_replace, str(new_value), 1)
+                transformed_value = func(new_value)
+        current_str = current_str.replace(
+            to_replace, str(transformed_value), 1)
     return current_str
 
 
