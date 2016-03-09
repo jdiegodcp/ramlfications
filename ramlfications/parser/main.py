@@ -3,8 +3,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import json
-
 import re
 
 from six import iteritems, iterkeys, itervalues
@@ -420,7 +418,8 @@ def create_resources(node, resources, root, parent):
     return resources
 
 
-def _create_supertype_resources(root, type_name, types, supertype, resources, resource_parameters=None):
+def _create_supertype_resources(root, type_name, types, supertype, resources,
+                                resource_parameters=None):
     """
     Recursively traverses the inheritance tree for a resource via DFS to
     find the resource endpoints associated with it.
@@ -470,7 +469,8 @@ def _create_supertype_resources(root, type_name, types, supertype, resources, re
     return resources
 
 
-def _create_resource_node(name, raw_data, method, parent, root, parameters=None):
+def _create_resource_node(name, raw_data, method, parent, root,
+                          parameters=None):
     """
     Create a :py:class:`.raml.ResourceNode` object.
 
@@ -486,9 +486,11 @@ def _create_resource_node(name, raw_data, method, parent, root, parameters=None)
     """
     if parameters is not None:
         raw_data = substitute_parameters(raw_data, parameters)
+
     #####
     # Node attribute functions
     #####
+
     def path():
         parent_path = ""
         if parent:

@@ -1860,10 +1860,7 @@ def parameterised_internal_resource():
 def test_parameterised_internal_resource(parameterised_internal_resource):
     api = parameterised_internal_resource
     assert len(api.resources), 12
-    job_resources = [r for r in api.resources if r.path == "/jobs"]
-    unit_resources = [r for r in api.resources if r.path == "/units"]
-    user_resources = [r for r in api.resources if r.path == "/users"]
-    for r in job_resources:
+    for r in api.resources:
         if r.path == "/jobs":
             if r.method == "get":
                 assert r.desc == "Get all the jobs"
