@@ -1846,3 +1846,49 @@ def test_extended_external_resource_with_multiple_methods(
     # Make sure the change didn't break existing functionality
     for method in "get", "patch", "post":
         assert method in internal_resource_methods
+
+
+@pytest.fixture(scope="session")
+def parameterised_internal_resource():
+    raml_file = os.path.join(
+        EXAMPLES + "parameterised-internal-resource.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_parameterised_internal_resource(parameterised_internal_resource):
+    api = parameterised_internal_resource
+    assert len(api.resources), 12
+    job_resources = [r for r in api.resources if r.path == "/jobs"]
+    unit_resources = [r for r in api.resources if r.path == "/units"]
+    user_resources = [r for r in api.resources if r.path == "/users"]
+    for r in job_resources:
+        if r.path == "/jobs":
+            if r.method == "get":
+                assert r.desc == "Get all the jobs"
+            if r.method == "put":
+                assert r.desc == "Create a new job"
+            if r.method == "patch":
+                assert r.desc == "Update an existing job"
+            if r.method == "delete":
+                assert r.desc == "Delete an existing job"
+        if r.path == "/units":
+            if r.method == "get":
+                assert r.desc == "Get all the units"
+            if r.method == "put":
+                assert r.desc == "Create a new unit"
+            if r.method == "patch":
+                assert r.desc == "Update an existing unit"
+            if r.method == "delete":
+                assert r.desc == "Delete an existing unit"
+        if r.path == "/users":
+            if r.method == "get":
+                assert r.desc == "Get all the users"
+            if r.method == "put":
+                assert r.desc == "Create a new user"
+            if r.method == "patch":
+                assert r.desc == "Update an existing user"
+            if r.method == "delete":
+                assert r.desc == "Delete an existing user"
+    assert False
