@@ -478,22 +478,26 @@ def _create_resource_node(name, raw_data, method, parent, root, parameters=None)
     :param dict raw_data: Raw RAML data associated with resource node
     :param str method: HTTP method associated with resource node
     :param ResourceNode parent: Parent node object of resource node, if any
-    :param RootNodeAPI08 api: API ``RootNodeAPI08`` that the resource node\
+    :param RootNodeAPI08 root: API ``RootNodeAPI08`` that the resource node\
         is attached to
+    :param parameters: Dictionary of parameters to be substituted into
+                       raw resource data.
     :returns: :py:class:`.raml.ResourceNode` object
     """
-    #####
-    # Node attribute functions
-    #####
     if parameters is None:
         parameters = {}
 
-    # Should this be using ramlfications.parser.parameters._substitute_params somehow?
+    # Should this be using ramlfications.parser.parameters._substitute_params
+    # somehow?
     raw_data_str = json.dumps(raw_data)
     for parameter_name, parameter_value in parameters.items():
         raw_data_str = raw_data_str.replace(
             "<<%s>>" % parameter_name, parameter_value)
     raw_data = json.loads(raw_data_str)
+
+    #####
+    # Node attribute functions
+    #####
     def path():
         parent_path = ""
         if parent:
