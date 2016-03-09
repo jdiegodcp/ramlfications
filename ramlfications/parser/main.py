@@ -20,7 +20,7 @@ from ramlfications.utils import load_schema
 
 # Private utility functions
 from ramlfications.utils import NodeList
-from ramlfications.utils.common import _get
+from ramlfications.utils.common import _get, substitute_parameters
 from ramlfications.utils.parser import (
     parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params,
     get_resource_types_by_name
@@ -484,17 +484,8 @@ def _create_resource_node(name, raw_data, method, parent, root, parameters=None)
                        raw resource data.
     :returns: :py:class:`.raml.ResourceNode` object
     """
-    if parameters is None:
-        parameters = {}
-
-    # Should this be using ramlfications.parser.parameters._substitute_params
-    # somehow?
-    raw_data_str = json.dumps(raw_data)
-    for parameter_name, parameter_value in parameters.items():
-        raw_data_str = raw_data_str.replace(
-            "<<%s>>" % parameter_name, parameter_value)
-    raw_data = json.loads(raw_data_str)
-
+    if parameters is not None:
+        raw_data = substitute_parameters(raw_data, parameters)
     #####
     # Node attribute functions
     #####

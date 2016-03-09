@@ -1891,4 +1891,3 @@ def test_parameterised_internal_resource(parameterised_internal_resource):
                 assert r.desc == "Update an existing user"
             if r.method == "delete":
                 assert r.desc == "Delete an existing user"
-    assert False
