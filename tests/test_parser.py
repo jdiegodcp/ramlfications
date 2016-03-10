@@ -1888,3 +1888,31 @@ def test_parameterised_internal_resource(parameterised_internal_resource):
                 assert r.desc == "Update an existing user"
             if r.method == "delete":
                 assert r.desc == "Delete an existing user"
+
+
+@pytest.fixture(scope="session")
+def parameterised_request_and_response_bodies():
+    raml_file = os.path.join(
+        EXAMPLES, "using-parameters-in-request-and-response-body.raml")
+    config = setup_config(EXAMPLES + "test-config.ini")
+    loaded_raml_file = load_file(raml_file)
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_parameterised_request_and_response_bodies(
+        parameterised_request_and_response_bodies):
+    api = parameterised_request_and_response_bodies
+    # 11 = two methods * five resources (widget-a, widget-b, widget-c,
+    # widget-d, and widget-e), plus one 'parent' resource for the
+    # '/root' path
+    assert len(api.resources) == 11
+    # Exclude the 'parent' resource from the following tests
+    resources = [r for r in api.resources if r.method is not None]
+    for resource in resources:
+        resource_name = resource.display_name.lstrip("/")
+        if resource.method == "patch":
+            assert len(resource.body) == 1
+            assert resource.body[0].schema == resource_name
+        assert len(resource.responses) == 1
+        assert len(resource.responses[0].body) == 1
+        assert resource.responses[0].body[0].schema == resource_name

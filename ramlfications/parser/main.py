@@ -484,8 +484,6 @@ def _create_resource_node(name, raw_data, method, parent, root,
                        raw resource data.
     :returns: :py:class:`.raml.ResourceNode` object
     """
-    if parameters is not None:
-        raw_data = substitute_parameters(raw_data, parameters)
 
     #####
     # Node attribute functions
@@ -550,6 +548,11 @@ def _create_resource_node(name, raw_data, method, parent, root,
         node["base_uri_params"] = sort_uri_params(node["base_uri_params"],
                                                   node["absolute_uri"])
         return node
+
+    if parameters is not None:
+        parameters["resourcePath"] = name
+        parameters["resourcePathName"] = path().split("/")[-1]
+        raw_data = substitute_parameters(raw_data, parameters)
 
     # Avoiding repeated function calls by calling them once here
     method_data = _get(raw_data, method, {})
