@@ -725,9 +725,9 @@ def create_node(name, raw_data, method, parent, root):
         uri = root.base_uri + path()
         proto = protocols()
         if proto:
-            uri = uri.split("://")
-            if len(uri) == 2:
-                uri = uri[1]
+            uri = uri.split("://", 1)
+            uri = uri[-1]
+
             if root.protocols:
                 _proto = list(set(root.protocols) & set(proto))
                 # if resource protocols and root protocols share a protocol
