@@ -724,7 +724,7 @@ def create_node(name, raw_data, method, parent, root):
         """Set resource's absolute URI path."""
         uri = root.base_uri + path()
         proto = protocols()
-        if proto:
+        if proto and '://' in uri:
             uri = uri.split("://", 1)
             uri = uri[-1]
 
@@ -750,7 +750,7 @@ def create_node(name, raw_data, method, parent, root):
                       data=raw_data,
                       parent=parent)
         objects_to_inherit = [
-            "traits", "types", "method", "resource", "parent"
+            "traits", "types", "method", "resource", "parent", "root"
         ]
         inherited = get_inherited("protocols", objects_to_inherit, **kwargs)
         trait = inherited["traits"]
@@ -758,7 +758,10 @@ def create_node(name, raw_data, method, parent, root):
         meth = inherited["method"]
         res = inherited["resource"]
         parent_ = inherited["parent"]
-        default = [root.base_uri.split("://")[0].upper()]
+        if '://' in root.base_uri:
+            default = [root.base_uri.split("://")[0].upper()]
+        else:
+            default = inherited["root"]
 
         return meth or r_type or trait or res or parent_ or default
 
