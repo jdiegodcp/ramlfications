@@ -72,6 +72,7 @@ class RootNode(object):
     config           = attr.ib(repr=False,
                                validator=attr.validators.instance_of(dict))
     errors           = attr.ib(repr=False)
+    children         = attr.ib(repr=False, default=attr.Factory(list))
 
 
 @attr.s
@@ -213,6 +214,7 @@ class ResourceNode(BaseNode):
     resource_type    = attr.ib(repr=False)
     secured_by       = attr.ib(repr=False)
     security_schemes = attr.ib(repr=False)
+    children         = attr.ib(repr=False, default=attr.Factory(list))
 
     def _inherit_type(self):
         for p in METHOD_PROPERTIES:
