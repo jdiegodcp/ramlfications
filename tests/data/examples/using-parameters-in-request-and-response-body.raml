@@ -1,0 +1,72 @@
+#%RAML 0.8
+title: Parameterised request and response body example
+version: v1
+baseUri: http://localhost:8080
+resourceTypes:
+  - collection-item:
+      get:
+        responses:
+          200:
+            body:
+              application/json:
+                schema: <<resourcePathName>>
+      patch:
+        body:
+          application/json:
+            schema: <<resourcePathName>>
+        responses:
+          200:
+            body:
+              application/json:
+                schema: <<resourcePathName>>
+  - collection-item-custom-parameter:
+      get:
+        responses:
+          200:
+            body:
+              application/json:
+                schema: <<resourceTypeName>>
+      patch:
+        body:
+          application/json:
+            schema: <<resourceTypeName>>
+        responses:
+          200:
+            body:
+              application/json:
+                schema: <<resourceTypeName>>
+schemas:
+  - widget-a: {}
+  - widget-b: {}
+  - widget-c: {}
+  - widget-d: {}
+  - widget-e: {}
+/widget-a:
+  type: collection-item
+/widget-b:
+  type:
+    collection-item-custom-parameter:
+      resourceTypeName: widget-b
+/widget-c:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            schema: widget-c
+  patch:
+    body:
+      application/json:
+        schema: widget-c
+    responses:
+      200:
+        body:
+          application/json:
+            schema: widget-c
+/root:
+  /widget-d:
+    type: collection-item
+  /widget-e:
+    type:
+      collection-item-custom-parameter:
+        resourceTypeName: widget-e

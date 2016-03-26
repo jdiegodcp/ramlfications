@@ -1846,3 +1846,73 @@ def test_extended_external_resource_with_multiple_methods(
     # Make sure the change didn't break existing functionality
     for method in "get", "patch", "post":
         assert method in internal_resource_methods
+
+
+@pytest.fixture(scope="session")
+def parameterised_internal_resource():
+    raml_file = os.path.join(
+        EXAMPLES + "parameterised-internal-resource.raml")
+    loaded_raml_file = load_file(raml_file)
+    config = setup_config(EXAMPLES + "test-config.ini")
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_parameterised_internal_resource(parameterised_internal_resource):
+    api = parameterised_internal_resource
+    assert len(api.resources), 12
+    for r in api.resources:
+        if r.path == "/jobs":
+            if r.method == "get":
+                assert r.desc == "Get all the jobs"
+            if r.method == "put":
+                assert r.desc == "Create a new job"
+            if r.method == "patch":
+                assert r.desc == "Update an existing job"
+            if r.method == "delete":
+                assert r.desc == "Delete an existing job"
+        if r.path == "/units":
+            if r.method == "get":
+                assert r.desc == "Get all the units"
+            if r.method == "put":
+                assert r.desc == "Create a new unit"
+            if r.method == "patch":
+                assert r.desc == "Update an existing unit"
+            if r.method == "delete":
+                assert r.desc == "Delete an existing unit"
+        if r.path == "/users":
+            if r.method == "get":
+                assert r.desc == "Get all the users"
+            if r.method == "put":
+                assert r.desc == "Create a new user"
+            if r.method == "patch":
+                assert r.desc == "Update an existing user"
+            if r.method == "delete":
+                assert r.desc == "Delete an existing user"
+
+
+@pytest.fixture(scope="session")
+def parameterised_request_and_response_bodies():
+    raml_file = os.path.join(
+        EXAMPLES, "using-parameters-in-request-and-response-body.raml")
+    config = setup_config(EXAMPLES + "test-config.ini")
+    loaded_raml_file = load_file(raml_file)
+    return pw.parse_raml(loaded_raml_file, config)
+
+
+def test_parameterised_request_and_response_bodies(
+        parameterised_request_and_response_bodies):
+    api = parameterised_request_and_response_bodies
+    # 11 = two methods * five resources (widget-a, widget-b, widget-c,
+    # widget-d, and widget-e), plus one 'parent' resource for the
+    # '/root' path
+    assert len(api.resources) == 11
+    # Exclude the 'parent' resource from the following tests
+    resources = [r for r in api.resources if r.method is not None]
+    for resource in resources:
+        resource_name = resource.display_name.lstrip("/")
+        if resource.method == "patch":
+            assert len(resource.body) == 1
+            assert resource.body[0].schema == resource_name
+        assert len(resource.responses) == 1
+        assert len(resource.responses[0].body) == 1
+        assert resource.responses[0].body[0].schema == resource_name

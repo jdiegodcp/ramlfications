@@ -3,7 +3,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-
 import re
 
 from six import iteritems, iterkeys, itervalues
@@ -19,7 +18,7 @@ from ramlfications.utils import load_schema
 
 # Private utility functions
 from ramlfications.utils import NodeList
-from ramlfications.utils.common import _get
+from ramlfications.utils.common import _get, substitute_parameters
 from ramlfications.utils.parser import (
     parse_assigned_dicts, resolve_inherited_scalar, sort_uri_params,
     get_resource_types_by_name
@@ -419,7 +418,8 @@ def create_resources(node, resources, root, parent):
     return resources
 
 
-def _create_supertype_resources(root, type_name, types, supertype, resources):
+def _create_supertype_resources(root, type_name, types, supertype, resources,
+                                resource_parameters=None):
     """
     Recursively traverses the inheritance tree for a resource via DFS to
     find the resource endpoints associated with it.
@@ -431,27 +431,46 @@ def _create_supertype_resources(root, type_name, types, supertype, resources):
                                are to be attached to.
     :param str supertype: The name of the supertype for the current node.
     :param list resources: List of collected ``.raml.ResourceNode`` s
+    :param dict resource_parameters: Dictionary of parameters to be
+                                     substituted into raw resource data.
+
     :returns: List of :py:class:`.raml.ResourceNode` objects.
     """
-    resource_types = get_resource_types_by_name(root, supertype)
+    if resource_parameters is None:
+        resource_parameters = {}
+    if hasattr(supertype, "keys"):
+        # Handle the case where supertype is a parameterised resource
+        # definition (i.e. a dict of resource definition name and
+        # parameters) rather than just a resource definition name.
+        # On Python 3.x the 'keys' method of an ordereddict does not return a
+        # list, so the result has to be converted to a list before we can
+        # index into it - see http://stackoverflow.com/a/22611078
+        resource_types = get_resource_types_by_name(
+            root, list(supertype.keys())[0])
+        resource_parameters.update(list(supertype.values())[0])
+    else:
+        resource_types = get_resource_types_by_name(root, supertype)
     for resource_type in resource_types:
         resource_supertype = getattr(resource_type, "type", None)
         if resource_supertype is not None:
             resources = _create_supertype_resources(
-                root, type_name, types, resource_supertype, resources)
+                root, type_name, types, resource_supertype, resources,
+                resource_parameters)
         resource = _create_resource_node(
             name=type_name,
             raw_data=resource_type.raw,
             method=resource_type.method,
             parent=types,
-            root=root
+            root=root,
+            parameters=resource_parameters
         )
         resource.type = supertype
         resources.append(resource)
     return resources
 
 
-def _create_resource_node(name, raw_data, method, parent, root):
+def _create_resource_node(name, raw_data, method, parent, root,
+                          parameters=None):
     """
     Create a :py:class:`.raml.ResourceNode` object.
 
@@ -459,13 +478,17 @@ def _create_resource_node(name, raw_data, method, parent, root):
     :param dict raw_data: Raw RAML data associated with resource node
     :param str method: HTTP method associated with resource node
     :param ResourceNode parent: Parent node object of resource node, if any
-    :param RootNodeAPI08 api: API ``RootNodeAPI08`` that the resource node\
+    :param RootNodeAPI08 root: API ``RootNodeAPI08`` that the resource node\
         is attached to
+    :param parameters: Dictionary of parameters to be substituted into
+                       raw resource data.
     :returns: :py:class:`.raml.ResourceNode` object
     """
+
     #####
     # Node attribute functions
     #####
+
     def path():
         parent_path = ""
         if parent:
@@ -525,6 +548,11 @@ def _create_resource_node(name, raw_data, method, parent, root):
         node["base_uri_params"] = sort_uri_params(node["base_uri_params"],
                                                   node["absolute_uri"])
         return node
+
+    if parameters is not None:
+        parameters["resourcePath"] = name
+        parameters["resourcePathName"] = path().split("/")[-1]
+        raw_data = substitute_parameters(raw_data, parameters)
 
     # Avoiding repeated function calls by calling them once here
     method_data = _get(raw_data, method, {})
