@@ -10,8 +10,8 @@ from ramlfications import tree, parser
 from ramlfications.config import setup_config
 from ramlfications.utils import load_file
 
-from .base import EXAMPLES
-from .data.fixtures import tree_fixtures
+from tests.base import EXAMPLES
+from tests.data.fixtures import tree_fixtures
 
 
 @pytest.fixture(scope="session")
