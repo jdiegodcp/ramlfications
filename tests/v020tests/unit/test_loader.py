@@ -11,8 +11,8 @@ from six import iteritems, StringIO
 from ramlfications import loader
 from ramlfications.errors import LoadRAMLError
 
-from .base import EXAMPLES, JSONREF
-from .data.fixtures import load_fixtures as lf
+from tests.base import EXAMPLES, JSONREF
+from tests.data.fixtures import load_fixtures as lf
 
 
 def dict_equal(dict1, dict2):
@@ -294,11 +294,21 @@ def test_parse_ramlfragment():
     assert raml._raml_fragment_type == "DataType"
 
 
+def test_parse_ramlfragment10_unknown():
+    f = StringIO("#%RAML 1.0 FooType")
+    with pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
+    msg = ("Error parsing RAML fragment: FooType is not (yet) supported. "
+           "Currently supported: DataType")
+    assert msg in e.value.args[0]
+
+
 def test_parse_ramlfragment08():
     f = StringIO("#%RAML 0.8 DataType")
     with pytest.raises(LoadRAMLError) as e:
         loader.RAMLLoader().load(f)
-    msg = "Error raml fragment is only possible with version 1.0"
+    msg = ("Error parsing RAML fragment: DataType is only possible with "
+           "version 1.0")
     assert msg in e.value.args[0]
 
 
@@ -306,5 +316,6 @@ def test_parse_ramlfragment_unknown_type():
     f = StringIO("#%RAML 0.8 garbage")
     with pytest.raises(LoadRAMLError) as e:
         loader.RAMLLoader().load(f)
-    msg = "Error raml fragment is only possible with version 1.0"
+    msg = ("Error parsing RAML fragment: garbage is not (yet) supported. "
+           "Currently supported: DataType")
     assert msg in e.value.args[0]
