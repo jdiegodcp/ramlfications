@@ -9,7 +9,7 @@ from ramlfications import parse, load, loads, validate
 from ramlfications.raml import RootNodeAPI08
 from ramlfications.errors import LoadRAMLError
 
-from .base import EXAMPLES
+from tests.base import EXAMPLES
 
 
 @pytest.fixture(scope="session")
