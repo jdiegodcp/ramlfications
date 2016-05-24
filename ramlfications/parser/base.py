@@ -8,7 +8,7 @@ from six import iterkeys, itervalues
 
 from ramlfications.utils import NodeList
 from ramlfications.utils.parser import resolve_inherited_scalar
-from .parameters import create_param_objs
+from .parameters import ParameterParser
 
 
 class BaseParser(object):
@@ -35,7 +35,8 @@ class BaseParser(object):
         :param str param: RAML parameter name to parse (e.g. uriParameters)
         :ret: :py:class:`ramlfications.parameters` object
         """
-        return create_param_objs(param, self.resolve_from, **self.kw)
+        param_parser = ParameterParser(param, self.kw, self.resolve_from)
+        return param_parser.parse()
 
 
 class BaseNodeParser(BaseParser):
