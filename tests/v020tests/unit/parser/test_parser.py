@@ -10,7 +10,8 @@ import pytest
 from ramlfications import parser as pw
 from ramlfications.parser.parser import RootParser
 from ramlfications.config import setup_config
-from ramlfications.raml import RootNodeAPI08, ResourceTypeNode, TraitNode
+from ramlfications.models import TraitNode, ResourceTypeNode
+from ramlfications.models.root import RootNodeAPI08
 from ramlfications.utils import load_file
 
 from tests.base import EXAMPLES

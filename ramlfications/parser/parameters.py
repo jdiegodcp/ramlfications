@@ -6,7 +6,9 @@ from __future__ import absolute_import, division, print_function
 from six import iteritems, itervalues, iterkeys, string_types
 
 from ramlfications.config import MEDIA_TYPES
-from ramlfications.parameters import Response, Header, Body, URIParameter
+from ramlfications.models.parameters import (
+    Body, Header, Response, URIParameter
+)
 from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _get, substitute_parameters
 from ramlfications.utils.parameter import (

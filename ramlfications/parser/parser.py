@@ -8,11 +8,12 @@ import re
 
 from six import iterkeys, itervalues, iteritems
 
-from ramlfications.parameters import Documentation
-from ramlfications.raml import (
-    ResourceNode, RAML_ROOT_LOOKUP, TraitNode, ResourceTypeNode,
-    SecuritySchemeNode
+from ramlfications.models import (
+    RAML_ROOT_LOOKUP, ResourceTypeNode, ResourceNode, SecuritySchemeNode,
+    TraitNode
 )
+from ramlfications.parameters import Documentation
+
 from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _map_attr
 from ramlfications.utils.parser import sort_uri_params

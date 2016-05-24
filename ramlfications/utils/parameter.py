@@ -11,8 +11,8 @@ from .common import (
     _get, get_inherited_trait_data, merge_dicts, INH_FUNC_MAPPING
 )
 
-from ramlfications.parameters import (
-    Body, Response, Header, QueryParameter, URIParameter, FormParameter,
+from ramlfications.models.parameters import (
+    QueryParameter, URIParameter, FormParameter, Body, Response, Header
 )
 
 

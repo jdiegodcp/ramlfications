@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 The Ramlfications developers
 
-from ramlfications.raml import RootNodeDataType
+from ramlfications.models import RootNodeDataType
 from ramlfications.types import create_type
 
 

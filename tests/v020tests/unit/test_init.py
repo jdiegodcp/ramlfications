@@ -6,7 +6,7 @@ import os
 import pytest
 
 from ramlfications import parse, load, loads, validate
-from ramlfications.raml import RootNodeAPI08
+from ramlfications.models.root import RootNodeAPI08
 from ramlfications.errors import LoadRAMLError
 
 from tests.base import EXAMPLES
