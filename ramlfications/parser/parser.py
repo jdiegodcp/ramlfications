@@ -16,7 +16,6 @@ from ramlfications.raml import (
 from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _map_attr
 from ramlfications.utils.parser import sort_uri_params
-from ramlfications.types import create_type
 
 from .base import BaseParser, BaseNodeParser
 from .mixins import HelperMixin
