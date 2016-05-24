@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Ramlfications contributors
+# Copyright (c) 2016 Spotify AB
 
 from __future__ import absolute_import, division, print_function
+
 import attr
 import copy
+import re
+
 from six import MAXSIZE, iteritems, string_types, integer_types
 
-
 from ramlfications.errors import UnknownDataTypeError, DataTypeValidationError
-from ramlfications.parameters import Content
 from ramlfications.utils.common import OrderedDict
 from ramlfications.utils.parser import convert_camel_case
-import re
+
+from .root import BaseContent
+
 
 __type_registry = {}
 
@@ -59,9 +62,9 @@ class BaseType(object):
         description.html
     :type string base type for this type
     """
-    name            = attr.ib()
-    description     = attr.ib(default="", repr=False, convert=Content)
-    type            = attr.ib(default="string", repr=False)
+    name        = attr.ib()
+    description = attr.ib(default="", repr=False, convert=BaseContent)
+    type        = attr.ib(default="string", repr=False)
 
     def validate(self, validated_objet, position_hint=None):
         """Basic default validator which does not check anything

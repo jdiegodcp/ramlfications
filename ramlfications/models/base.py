@@ -44,7 +44,6 @@ class BaseContent(object):
 #####
 # base object for RAML nodes (e.g. resources, data types, etc)
 #####
-
 @attr.s
 class BaseNode(object):
     """
@@ -90,6 +89,10 @@ class BaseNode(object):
     @property
     def description(self):
         return BaseContent(self.desc)
+
+
+class BaseNodeList(object):
+    pass
 
 
 #####

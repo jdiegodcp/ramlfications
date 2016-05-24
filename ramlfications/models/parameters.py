@@ -106,3 +106,23 @@ class Response(BaseParameterAttrs):
     headers  = attr.ib(repr=False)
     body     = attr.ib(repr=False)
     method   = attr.ib(default=None)
+
+
+# FIXME: this currently isn't used... probably will need to use it though
+@attr.s
+class SecurityScheme(BaseParameterAttrs):
+    """
+    Security scheme definition.
+
+    :param str name: Name of security scheme
+    :param str type: Type of authentication
+    :param dict described_by: :py:class:`.Header` s, :py:class:`.Response` s, \
+        :py:class:`.QueryParameter` s, etc that is needed/can be expected \
+        when using security scheme.
+    :param dict settings: Security schema-specific information
+    """
+    name          = attr.ib()
+    type          = attr.ib(repr=False)
+    described_by  = attr.ib(repr=False)
+    desc          = attr.ib(repr=False)
+    settings      = attr.ib(repr=False, validator=defined_sec_scheme_settings)

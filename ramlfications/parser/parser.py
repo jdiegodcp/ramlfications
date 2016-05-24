@@ -9,11 +9,11 @@ import re
 from six import iterkeys, itervalues, iteritems
 
 from ramlfications.models import (
-    RAML_ROOT_LOOKUP, ResourceTypeNode, ResourceNode, SecuritySchemeNode,
-    TraitNode
+    RAML_VERSION_LOOKUP, ResourceTypeNode, ResourceNode, SecuritySchemeNode,
+    TraitNode, DataTypeNode
 )
-from ramlfications.parameters import Documentation
-
+from ramlfications.models.root import Documentation
+from ramlfications.models.data_types import create_type
 from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _map_attr
 from ramlfications.utils.parser import sort_uri_params
@@ -136,7 +136,7 @@ class RootParser(BaseParser):
 
         self.create_node_dict()
 
-        return RAML_ROOT_LOOKUP[self.data._raml_version](**self.node)
+        return RAML_VERSION_LOOKUP[self.data._raml_version](**self.node)
 
 
 @collectparser
@@ -430,3 +430,33 @@ class ResourceParser(BaseNodeParser, NodeMixin):
                 nodes = self.create_nodes(nodes, child)
 
         return nodes
+
+
+@collectparser
+class DataTypeParser(BaseNodeParser):
+    """
+    Parses raw RAML data to create `DataTypeNode` objects, if any.
+    """
+    raml_property = "types"
+    root_property = "types"
+
+    def __init__(self, data, root, config):
+        super(DataTypeParser, self).__init__(data, root, config)
+        # TODO: Think, is this needed?
+        self.resolve_from = ["method", "resource", "types", "traits", "root"]
+
+    def create_node(self):
+        self.node["raw"] = self.data
+        self.node["raml_version"] = self.root.raml_version
+        self.node["type"] = create_type(self.name, self.data)
+        return DataTypeNode(**self.node)
+
+    def create_nodes(self):
+        data = self.data.get(self.raml_property, {})
+        node_objects = NodeList()
+
+        for k, v in list(iteritems(data)):
+            self.name = k
+            self.data = v
+            node_objects.append(self.create_node())
+        return node_objects

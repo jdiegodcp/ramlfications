@@ -8,8 +8,10 @@ import pytest
 from ramlfications.parser import parse_raml
 from ramlfications.config import setup_config
 from ramlfications.utils import load_file
-from ramlfications.types import (ObjectType, StringType, Property, IntegerType,
-                                 NumberType, BooleanType)
+from ramlfications.models.data_types import (
+    ObjectType, StringType, Property, IntegerType, NumberType,
+    BooleanType
+)
 from ramlfications.errors import DataTypeValidationError
 
 from tests.base import RAML10EXAMPLES
