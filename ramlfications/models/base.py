@@ -10,6 +10,10 @@ import markdown2 as md
 from ramlfications.validate import *  # NOQA
 
 
+#####
+# common base objects
+#####
+
 class BaseContent(object):
     """
     Returns documentable content from the RAML file (e.g. Documentation
@@ -36,6 +40,10 @@ class BaseContent(object):
     def __repr__(self):
         return self.raw
 
+
+#####
+# base object for RAML nodes (e.g. resources, data types, etc)
+#####
 
 @attr.s
 class BaseNode(object):
@@ -83,6 +91,10 @@ class BaseNode(object):
     def description(self):
         return BaseContent(self.desc)
 
+
+#####
+# base objects for .parameters.py
+#####
 
 @attr.s
 class BaseNamedParameter(object):
