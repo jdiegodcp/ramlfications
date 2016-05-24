@@ -86,8 +86,7 @@ class SecurityMixin(object):
         return sec_objs or None
 
 
-# TODO: what's a better name...
-class HelperMixin(TraitsMixin, ResourceTypeMixin, SecurityMixin):
+class NodeMixin(TraitsMixin, ResourceTypeMixin, SecurityMixin):
     """
     Helper class to combine the above three defined mixins.
 

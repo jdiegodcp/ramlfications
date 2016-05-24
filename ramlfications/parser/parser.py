@@ -19,8 +19,7 @@ from ramlfications.utils.common import _map_attr
 from ramlfications.utils.parser import sort_uri_params
 
 from .base import BaseParser, BaseNodeParser
-from .mixins import HelperMixin
-
+from .mixins import NodeMixin
 
 parsers = []
 
@@ -241,7 +240,7 @@ class TraitParser(BaseNodeParser):
 
 
 @collectparser
-class ResourceTypeParser(BaseNodeParser, HelperMixin):
+class ResourceTypeParser(BaseNodeParser, NodeMixin):
     """
     Parses raw RAML data to create `ResourceTypeNode` objects, if any.
     """
@@ -323,7 +322,7 @@ class ResourceTypeParser(BaseNodeParser, HelperMixin):
         return resource_type_objects
 
 
-class ResourceParser(BaseNodeParser, HelperMixin):
+class ResourceParser(BaseNodeParser, NodeMixin):
     """
     Parses raw RAML data to create `ResourceTypeNode` objects, if any.
     """
