@@ -30,13 +30,18 @@ parser
 
 .. autofunction:: ramlfications.parser.parse_raml
 
-.. autofunction:: ramlfications.parser.create_root
+.. autofunction:: ramlfications.parser.parser.RAMLParser
 
-.. autofunction:: ramlfications.parser.create_traits
+.. autofunction:: ramlfications.parser.parser.RootParser
 
-.. autofunction:: ramlfications.parser.create_resource_types
+.. autofunction:: ramlfications.parser.parser.SecuritySchemeParser
 
-.. autofunction:: ramlfications.parser.create_resources
+.. autofunction:: ramlfications.parser.parser.TraitParser
+
+.. autofunction:: ramlfications.parser.parser.ResourceTypeParser
+
+.. autofunction:: ramlfications.parser.parser.ResourceParser
+
 
 
 raml
