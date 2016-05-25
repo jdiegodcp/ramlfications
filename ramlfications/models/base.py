@@ -158,8 +158,10 @@ class BaseParameterAttrs(object):
         ``ramlfications`` library.
     :param list errors: List of RAML validation errors.
     """
-    raw    = attr.ib(repr=False, validator=attr.validators.instance_of(dict))
-    config = attr.ib(repr=False, validator=attr.validators.instance_of(dict))
+    raw    = attr.ib(repr=False, cmp=False,
+                     validator=attr.validators.instance_of(dict))
+    config = attr.ib(repr=False, cmp=False,
+                     validator=attr.validators.instance_of(dict))
     errors = attr.ib(repr=False)
 
     @property

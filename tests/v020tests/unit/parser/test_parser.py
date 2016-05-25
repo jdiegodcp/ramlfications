@@ -367,7 +367,6 @@ def test_inherited_assigned_trait_params_books(trait_parameters):
     assert len(res.body) == 1
     assert len(res.responses) == 1
 
-    # py3.4 complains even when PYTHONHASHSEED=0
     params = sorted(res.query_params)
 
     q_param = params[0]
@@ -410,7 +409,6 @@ def test_inherited_assigned_trait_params_articles(trait_parameters):
     assert len(res.body) == 1
     assert len(res.responses) == 1
 
-    # py3.4 complains even when PYTHONHASHSEED=0
     params = sorted(res.query_params)
     q_param = params[1]
     assert q_param.name == "foo_token"
@@ -719,7 +717,7 @@ def test_resource_type_method_protocol(resource_types):
 
 
 def test_resource_type_uri_params(resource_types):
-    uri_param = resource_types[0].uri_params[0]
+    uri_param = sorted(resource_types[0].uri_params)[1]
     assert uri_param.name == "mediaTypeExtension"
 
     desc = "Use .json to specify application/json media type."
@@ -949,7 +947,6 @@ def test_inherit_resource_type_params(resource_type_parameters):
     assert res.method == "get"
     assert len(res.query_params) == 4
 
-    # py3.4 complains even when PYTHONHASHSEED=0
     params = sorted(res.query_params)
     q_param = params[3]
     assert q_param.name == "title"
@@ -1127,17 +1124,17 @@ def test_resource_assigned_type(resources):
     res_type_uri = [r.name for r in res.resource_type.uri_params]
     res_uri = [r.name for r in res.uri_params]
 
-    exp_res_type_uri = ["mediaTypeExtension", "communityPath"]
+    exp_res_type_uri = ["communityPath", "mediaTypeExtension"]
     exp_res_uri = [
         "communityPath", "user_id", "thingy_id", "mediaTypeExtension",
     ]
-    assert res_type_uri == exp_res_type_uri
+    assert sorted(res_type_uri) == exp_res_type_uri
     assert res_uri == exp_res_uri
 
     # TODO: add more attributes to test with parameter objects
     # e.g. h1.desc
-    h1 = res.headers[0]
-    h2 = res.resource_type.headers[0]
+    h1 = sorted(res.headers)[0]
+    h2 = sorted(res.resource_type.headers)[0]
     assert h1.name == h2.name
 
     b1 = res.body[0]
@@ -1149,7 +1146,6 @@ def test_resource_assigned_type(resources):
     assert r1.code == r2.code
     assert len(res.headers) == 3
 
-    # py3.4 complains even when PYTHONHASHSEED=0
     headers = sorted(res.headers)
     assert headers[0].name == "Accept"
     assert headers[1].name == "X-another-header"
