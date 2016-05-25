@@ -548,7 +548,7 @@ Parameters
         ``dict`` of security schema-specific information
 
 
-.. autoclass:: ramlfications.parameters.Content
+.. autoclass:: ramlfications.models.base.BaseContent
     :members:
 
 
