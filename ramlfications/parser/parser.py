@@ -9,14 +9,14 @@ import re
 from six import iterkeys, itervalues, iteritems
 
 from ramlfications.models import (
-    RAML_VERSION_LOOKUP, ResourceTypeNode, ResourceNode, SecuritySchemeNode,
-    TraitNode, DataTypeNode
+    RAML_VERSION_LOOKUP, ResourceTypeNode, ResourceNode,
+    SecuritySchemeNode, TraitNode
 )
 from ramlfications.models.root import Documentation
-from ramlfications.models.data_types import create_type
 from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _map_attr
 from ramlfications.utils.parser import sort_uri_params
+from ramlfications.utils.types import parse_type
 
 from .base import BaseParser, BaseNodeParser
 from .mixins import NodeMixin
@@ -445,18 +445,17 @@ class DataTypeParser(BaseNodeParser):
         # TODO: Think, is this needed?
         self.resolve_from = ["method", "resource", "types", "traits", "root"]
 
-    def create_node(self):
-        self.node["raw"] = self.data
-        self.node["raml_version"] = self.root.raml_version
-        self.node["type"] = create_type(self.name, self.data)
-        return DataTypeNode(**self.node)
+    def create_node(self, name, raw):
+        raw["errors"] = self.root.errors
+        raw["config"] = self.root.config
+        return parse_type(name, raw, self.root)
 
     def create_nodes(self):
         data = self.data.get(self.raml_property, {})
         node_objects = NodeList()
 
         for k, v in list(iteritems(data)):
-            self.name = k
-            self.data = v
-            node_objects.append(self.create_node())
+            # node = self.create_node(k, v)
+            node = self.create_node(k, v)
+            node_objects.append(node)
         return node_objects

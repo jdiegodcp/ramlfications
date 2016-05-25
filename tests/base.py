@@ -13,6 +13,7 @@ JSONREF = os.path.join(PAR_DIR + '/data/jsonref/')
 
 V020EXAMPLES = os.path.join(PAR_DIR + '/data/v020examples/')
 RAML10EXAMPLES = os.path.join(PAR_DIR + '/data/raml10examples/')
+V020VALIDATE = os.path.join(PAR_DIR + '/data/v020examples/validate/')
 
 
 class AssertNotSetError(Exception):

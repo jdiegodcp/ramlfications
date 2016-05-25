@@ -91,10 +91,6 @@ class BaseNode(object):
         return BaseContent(self.desc)
 
 
-class BaseNodeList(object):
-    pass
-
-
 #####
 # base objects for .parameters.py
 #####

@@ -52,4 +52,4 @@ def parse_raml(loaded_raml, config):
         return root
 
     if loaded_raml._raml_fragment_type == 'DataType':
-        return create_root_data_type(loaded_raml)
+        return create_root_data_type(loaded_raml, root)

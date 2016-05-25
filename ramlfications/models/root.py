@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 from ramlfications.validate import *  # NOQA
 
-from .base import BaseContent, BaseNodeList
+from .base import BaseContent
 
 
 ####
@@ -34,35 +34,3 @@ class Documentation(object):
 
     def __repr__(self):  # NOCOV
         return "Documentation(title='{0}')".format(self.title)
-
-
-class Annotations(BaseNodeList):
-    pass
-
-
-class DataTypes(BaseNodeList):
-    pass
-
-
-class Resources(BaseNodeList):
-    pass
-
-
-class ResourceTypes(BaseNodeList):
-    pass
-
-
-class Schemas(BaseNodeList):
-    pass
-
-
-class SecuredBy(BaseNodeList):
-    pass
-
-
-class SecuritySchemes(BaseNodeList):
-    pass
-
-
-class Traits(BaseNodeList):
-    pass
