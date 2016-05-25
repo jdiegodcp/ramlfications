@@ -10,7 +10,9 @@ from ramlfications.parser import parse_raml
 from ramlfications.config import setup_config
 from ramlfications.utils import load_file
 
-from tests.base import V020EXAMPLES, assert_not_set, assert_not_set_raises
+from tests.base import (
+    V020EXAMPLES, assert_not_set, assert_not_set_raises, assert_set_none
+)
 
 
 @pytest.fixture(scope="session")
@@ -501,9 +503,14 @@ def test_security_schemes(api):
     assert len(s.headers) == 2
     assert len(s.responses) == 2
 
+    set_none = [
+        "body", "form_params", "uri_params", "query_params", "protocols",
+        "media_type"
+    ]
+    assert_set_none(s, set_none)
+
     not_set = [
-        "usage", "body", "form_params", "uri_params", "query_params",
-        "media_type", "protocols", "documentation"
+        "usage", "documentation"
     ]
 
     assert_not_set_raises(s, not_set)

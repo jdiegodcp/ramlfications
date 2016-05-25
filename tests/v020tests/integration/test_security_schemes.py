@@ -11,7 +11,9 @@ from ramlfications.config import setup_config
 from ramlfications.utils import load_file
 
 
-from tests.base import V020EXAMPLES, assert_not_set, assert_not_set_raises
+from tests.base import (
+    V020EXAMPLES, assert_not_set, assert_not_set_raises, assert_set_none
+)
 
 
 # Security scheme properties:
@@ -50,9 +52,14 @@ def test_oauth_2_0_scheme(api):
     assert len(s.headers) == 2
     assert len(s.responses) == 2
 
+    set_none = [
+        "body", "form_params", "uri_params", "query_params", "media_type",
+        "protocols"
+    ]
+    assert_set_none(s, set_none)
+
     not_set = [
-        "usage", "body", "form_params", "uri_params", "query_params",
-        "media_type", "protocols", "documentation"
+        "usage", "documentation"
     ]
 
     assert_not_set_raises(s, not_set)
@@ -150,9 +157,14 @@ def test_oauth_1_0_scheme(api):
     assert isinstance(s.described_by, dict)
     assert isinstance(s.settings, dict)
 
+    set_none = [
+        "body", "form_params", "uri_params", "query_params", "media_type",
+        "protocols"
+    ]
+    assert_set_none(s, set_none)
+
     not_set = [
-        "usage", "body", "form_params", "uri_params", "query_params",
-        "media_type", "protocols", "documentation"
+        "usage", "documentation"
     ]
 
     assert_not_set_raises(s, not_set)
@@ -201,12 +213,16 @@ def test_basic(api):
     assert s.name == "basic"
     assert s.type == "Basic Authentication"
     assert isinstance(s.described_by, dict)
-    assert not s.settings
     assert len(s.headers) == 1
 
+    set_none = [
+        "body", "form_params", "settings", "uri_params", "query_params",
+        "media_type", "protocols", "responses"
+    ]
+    assert_set_none(s, set_none)
+
     not_set = [
-        "usage", "body", "form_params", "uri_params", "query_params",
-        "media_type", "protocols", "documentation", "responses"
+        "usage", "documentation"
     ]
 
     assert_not_set_raises(s, not_set)
@@ -230,14 +246,17 @@ def test_digest(api):
     assert s.name == "digest"
     assert s.type == "Digest Authentication"
     assert isinstance(s.described_by, dict)
-    assert not s.settings
     assert len(s.headers) == 1
 
-    not_set = [
-        "usage", "body", "form_params", "uri_params", "query_params",
-        "media_type", "protocols", "documentation", "responses"
+    set_none = [
+        "body", "form_params", "uri_params", "query_params", "media_type",
+        "protocols", "responses", "settings"
     ]
+    assert_set_none(s, set_none)
 
+    not_set = [
+        "usage", "documentation"
+    ]
     assert_not_set_raises(s, not_set)
 
     h = s.headers[0]
@@ -269,8 +288,7 @@ def test_custom(api):
     assert len(s.body) == 1
     assert isinstance(s.settings, dict)
     assert isinstance(s.described_by, dict)
-
-    assert_not_set_raises(s, ["responses"])
+    assert_set_none(s, ["responses"])
 
     d = s.documentation[0]
     assert d.title.raw == "foo docs"

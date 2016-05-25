@@ -249,4 +249,6 @@ def _map_attr(attribute):
         "securedBy": "secured_by",
         "is": "is_",
         "type": "type",
+        "documentation": "documentation",
+        "usage": "usage",
     }[attribute]

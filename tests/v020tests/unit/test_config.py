@@ -14,7 +14,7 @@ from ramlfications.config import (
     RAML_VERSIONS, PRIM_TYPES
 )
 
-from .base import EXAMPLES
+from tests.base import EXAMPLES
 
 
 @pytest.fixture

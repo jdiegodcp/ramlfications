@@ -39,3 +39,8 @@ def assert_not_set_raises(obj, properties):
         # this check _should_ throw an attr error
         except AttributeError:
             continue
+
+
+def assert_set_none(obj, properties):
+    for p in properties:
+        assert not getattr(obj, p)

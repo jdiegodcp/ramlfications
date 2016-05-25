@@ -1,17 +1,24 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Spotify AB
-import sys
+# Copyright (c) 2016 Spotify AB
+from __future__ import absolute_import, division, print_function
 
 import json
 import os
+import sys
 import tempfile
 from mock import Mock, patch
 import pytest
+
 import xmltodict
 
+from ramlfications.errors import LoadRAMLError
 from ramlfications import utils
 
-from .base import UPDATE
+from tests.base import EXAMPLES, UPDATE
+
+#####
+# TODO: write tests, and associated error/failure tests
+#####
 
 
 if sys.version_info[0] == 2:
@@ -195,12 +202,29 @@ def test_save_updated_mime_types():
     os.remove(temp_output)
 
 
-def test_convert_camel_case():
-    convert = utils.parser.convert_camel_case
-    assert convert('CamelCase') == 'camel_case'
-    assert convert('CamelCamelCase') == 'camel_camel_case'
-    assert convert('Camel2Camel2Case') == 'camel2_camel2_case'
-    assert convert('getHTTPResponseCode') == 'get_http_response_code'
-    assert convert('get2HTTPResponseCode') == 'get2_http_response_code'
-    assert convert('HTTPResponseCode') == 'http_response_code'
-    assert convert('HTTPResponseCodeXYZ') == 'http_response_code_xyz'
+@pytest.fixture(scope="session")
+def raml_file():
+    return os.path.join(EXAMPLES + "complete-valid-example.raml")
+
+
+def test_raml_file_is_none():
+    raml_file = None
+    with pytest.raises(LoadRAMLError) as e:
+        utils._get_raml_object(raml_file)
+    msg = ("RAML file can not be 'None'.",)
+    assert e.value.args == msg
+
+
+def test_raml_file_object(raml_file):
+    with open(raml_file) as f:
+        raml_obj = utils._get_raml_object(f)
+        assert raml_obj == f
+
+
+def test_not_valid_raml_obj():
+    invalid_obj = 1234
+    with pytest.raises(LoadRAMLError) as e:
+        utils._get_raml_object(invalid_obj)
+    msg = (("Can not load object '{0}': Not a basestring type or "
+           "file object".format(invalid_obj)),)
+    assert e.value.args == msg

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
+from __future__ import absolute_import, division, print_function
+
 import os
 import jsonref
 import yaml
@@ -16,6 +18,7 @@ __all__ = ["RAMLLoader"]
 
 RAMLHEADER = "#%RAML "
 SUPPORTED_FRAGMENT_TYPES = ("DataType",)
+RAML10_FRAGMENT_TYPES = ("DataType", "AnnotationType")
 
 
 class RAMLLoader(object):
@@ -88,13 +91,14 @@ class RAMLLoader(object):
         version = split_version_string[0]
         if len(split_version_string) == 2:
             version, fragment = split_version_string
-            if version != "1.0":
-                msg = "Error raml fragment is only possible with version 1.0"
+            if version != "1.0" and fragment in RAML10_FRAGMENT_TYPES:
+                msg = ("Error parsing RAML fragment: {0} is only possible with"
+                       " version 1.0".format(fragment))
                 raise LoadRAMLError(msg)
             if fragment not in SUPPORTED_FRAGMENT_TYPES:
-                msg = ("Error raml fragment is not supported yet: {0}"
-                       ", supported:{1}".format(
-                           fragment, repr(SUPPORTED_FRAGMENT_TYPES))
+                msg = ("Error parsing RAML fragment: {0} is not (yet) "
+                       "supported. Currently supported: {1}".format(
+                           fragment, ", ".join(SUPPORTED_FRAGMENT_TYPES))
                        )
                 raise LoadRAMLError(msg)
         else:
