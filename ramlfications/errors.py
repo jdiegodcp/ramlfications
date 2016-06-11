@@ -73,24 +73,27 @@ class UnknownDataTypeError(BaseRAMLError):
     pass
 
 
-class DataTypeValidationError(BaseRAMLError):
-    """A common validator type for data type validation errors
+# class DataTypeValidationError(BaseRAMLError):
+#     """A common validator type for data type validation errors
 
-    :param list position_hint: path in the validated object where the
-        error happens. can be None.
-    :param <any> value: value of the object which had a problem:
-        repl of this object will be present in the message
-    :param <any> message: message to provide to the user
-    """
-    def __init__(self, position_hint, value, message):
-        self.position_hint = position_hint
-        self.value = value
-        if position_hint is None:
-            position_hint = []
-        super(DataTypeValidationError, self).__init__(
-            "{0}: {1}, but got: {2}".format(
-                ".".join(position_hint), message, value
-            ))
+#     :param list position_hint: path in the validated object where the
+#         error happens. can be None.
+#     :param <any> value: value of the object which had a problem:
+#         repl of this object will be present in the message
+#     :param <any> message: message to provide to the user
+#     """
+#     def __init__(self, position_hint, value, message):
+#         self.position_hint = position_hint
+#         self.value = value
+#         if position_hint is None:
+#             position_hint = []
+#         super(DataTypeValidationError, self).__init__(
+#             "{0}: {1}, but got: {2}".format(
+#                 ".".join(position_hint), message, value
+#             ))
+
+class DataTypeValidationError(BaseRAMLError):
+    pass
 
 
 ###

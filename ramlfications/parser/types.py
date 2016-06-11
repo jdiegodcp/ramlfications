@@ -2,10 +2,11 @@
 # Copyright (c) 2015 The Ramlfications developers
 
 from ramlfications.models import DataTypeNode
-from ramlfications.models.data_types import create_type
+
+from ramlfications.utils.types import parse_type
 
 
-def create_root_data_type(raml, name=None):
+def create_root_data_type(raml, root, name=None):
     """
     Creates a :py:class:`.raml.RootNodeDataType` based off of the RAML's root\
         section.
@@ -18,5 +19,5 @@ def create_root_data_type(raml, name=None):
     return DataTypeNode(
         raw=raml,
         raml_version=raml._raml_version,
-        type=create_type(name, raml)
+        type=parse_type(name, raml, root)
     )

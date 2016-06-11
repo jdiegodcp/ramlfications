@@ -9,7 +9,7 @@ from ramlfications.utils import load_file, load_string
 
 
 __author__ = "Lynn Root"
-__version__ = "0.2.0.dev1"
+__version__ = "0.2.0.dev2"
 __license__ = "Apache 2.0"
 
 __email__ = "lynn@spotify.com"
