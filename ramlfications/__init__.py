@@ -14,7 +14,7 @@ __version__ = "0.1.9"
 __license__ = "Apache 2.0"
 
 __email__ = "lynn@spotify.com"
-__uri__ = "https://ramlfications.readthedocs.org"
+__uri__ = "https://ramlfications.readthedocs.io"
 __description__ = "A Python RAML parser"
 
 
