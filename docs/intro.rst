@@ -36,7 +36,7 @@ It’s tested on Python 2.6, 2.7, 3.3+, and PyPy. Both Linux and OS X are suppor
 
 
 .. _`Documentation Set`: http://raml.org/
-.. _`Read the Docs`: https://ramlfications.readthedocs.org/
+.. _`Read the Docs`: https://ramlfications.readthedocs.io/
 .. _`GitHub`:  https://github.com/spotify/ramlfications/
 .. _`pyraml-parser`: https://github.com/an2deg/pyraml-parser
 .. _`uriParameters`: https://github.com/an2deg/pyraml-parser/issues/6
