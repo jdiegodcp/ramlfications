@@ -6,8 +6,16 @@ from __future__ import absolute_import, division, print_function
 from six import iteritems
 
 from ramlfications.errors import UnknownDataTypeError
-from ramlfications.models import RAML_DATA_TYPES
+from ramlfications.models import RAML_DATA_TYPES, STANDARD_RAML_TYPES
+from .common import merge_dicts
 from .parser import convert_camel_case
+
+
+def _resolve_type(declared_type, raw, root):
+    raw_data = root.raw
+    raw_types = raw_data.get("types", {})
+    inherited = [{t: v} for t, v in iteritems(raw_types) if t == declared_type]
+    return merge_dicts(raw, inherited[0].get(declared_type))
 
 
 def parse_type(name, raw, root):
@@ -19,6 +27,12 @@ def parse_type(name, raw, root):
         msg = ("'{0}' is not a supported or defined RAML Data "
                "Type.".format(declared_type))
         raise UnknownDataTypeError(msg)
+
+    # update the RAML_DATA_TYPES so we can inherit it if needed
+    if name not in RAML_DATA_TYPES:
+        RAML_DATA_TYPES[name] = data_type_cls
+    if declared_type not in STANDARD_RAML_TYPES:
+        raw = _resolve_type(declared_type, raw, root)
 
     data = dict([(convert_camel_case(k), v) for k, v in iteritems(raw)])
     data["raw"] = raw

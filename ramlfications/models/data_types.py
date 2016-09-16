@@ -20,12 +20,15 @@ RAML_MAX_INT = 2147483647
 ####
 # TO CLEAN ->
 RAML_DATA_TYPES = {}
+STANDARD_RAML_TYPES = {}
 
 
 def type_class(type_name):
     def func(klass):
         if type_name not in RAML_DATA_TYPES:
             RAML_DATA_TYPES[type_name] = klass
+        if type_name not in STANDARD_RAML_TYPES:
+            STANDARD_RAML_TYPES[type_name] = klass
         return klass
     return func
 
