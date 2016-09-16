@@ -5,7 +5,6 @@ branches:
   - master
   - v0.2.0-dev
 env:
-- TOX_ENV=py26
 - TOX_ENV=py27
 - TOX_ENV=py33
 - TOX_ENV=py34
