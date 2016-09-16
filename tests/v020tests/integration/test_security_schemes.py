@@ -20,9 +20,11 @@ from tests.base import (
 # name, raw, type, described_by, desc, settings, config, errors
 
 
-@pytest.fixture(scope="session")
-def api():
-    ramlfile = os.path.join(V020EXAMPLES, "security_schemes.raml")
+@pytest.fixture(scope="session",
+                params=["security_schemes_0.8.raml",
+                        "security_schemes_1.0.raml"])
+def api(request):
+    ramlfile = os.path.join(V020EXAMPLES, request.param)
     loaded_raml = load_file(ramlfile)
     conffile = os.path.join(V020EXAMPLES, "test_config.ini")
     config = setup_config(conffile)
