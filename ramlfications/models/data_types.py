@@ -3,7 +3,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
 import re
 
 import attr
@@ -48,10 +47,18 @@ class Property(object):
 def create_property(property_def):
     # we remove the attributes for the property in order to keep
     # only attributes needed for the type definition
-    type_def = copy.copy(property_def)
-    return Property(default=type_def.pop('default', None),
-                    required=type_def.pop('required', False),
-                    type=type_def.pop('type', 'string'))
+    if isinstance(property_def, dict):
+        default = property_def.get('default', None)
+        required = property_def.get('required', False)
+        type_ = property_def.get('type', 'string')
+    elif isinstance(property_def, str):
+        default = None
+        required = False
+        type_ = property_def
+
+    return Property(default=default,
+                    required=required,
+                    type=type_)
 
 
 def parse_properties(properties):

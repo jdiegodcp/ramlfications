@@ -14,6 +14,8 @@ JSONREF = os.path.join(PAR_DIR + '/data/jsonref/')
 V020EXAMPLES = os.path.join(PAR_DIR + '/data/v020examples/')
 RAML10EXAMPLES = os.path.join(PAR_DIR + '/data/raml10examples/')
 V020VALIDATE = os.path.join(PAR_DIR + '/data/v020examples/validate/')
+# examples from github.com/raml-org/raml-examples
+RAMLEXAMPLES = os.path.join(PAR_DIR + '/v020tests/raml_examples/')
 
 
 class AssertNotSetError(Exception):

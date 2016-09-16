@@ -87,6 +87,8 @@ class Body(BaseParameterAttrs):
     schema      = attr.ib(repr=False, validator=body_schema)
     example     = attr.ib(repr=False, validator=body_example)
     form_params = attr.ib(repr=False, validator=body_form)
+    # TODO: add validator
+    data_type   = attr.ib(repr=False)
 
 
 @attr.s

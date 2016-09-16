@@ -1,0 +1,16 @@
+#%RAML 1.0
+title: API with Types
+types: # global type definitions that can be reused throughout this API
+  User: # define type named `User`
+    type: object
+    properties:
+      firstName: string
+      lastName:  string
+      age:       number
+/users/{id}:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: User # reference to global type definition

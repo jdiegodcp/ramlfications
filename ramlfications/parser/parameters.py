@@ -14,6 +14,7 @@ from ramlfications.utils.common import _get, substitute_parameters
 from ramlfications.utils.parameter import (
     map_object, resolve_scalar_data, add_missing_uri_data
 )
+from ramlfications.utils.parser import get_data_type_obj_by_name
 
 
 class BaseParameterParser(object):
@@ -73,12 +74,15 @@ class BodyParserMixin(object):
         )
         form_param_parser = ParameterParser("formParameters", kwargs)
         form_params = form_param_parser.parse()
+        data_type_name = _get(data, "type")
+        data_type = get_data_type_obj_by_name(data_type_name, root)
         return Body(
             mime_type=mime_type,
             raw=raw,
             schema=load_schema(_get(data, "schema")),
             example=load_schema(_get(data, "example")),
             form_params=form_params,
+            data_type=data_type,
             config=root.config,
             errors=root.errors
         )
