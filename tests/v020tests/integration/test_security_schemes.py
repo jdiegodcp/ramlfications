@@ -22,7 +22,7 @@ from tests.base import (
 
 @pytest.fixture(scope="session")
 def api():
-    ramlfile = os.path.join(V020EXAMPLES, "security_schemes.raml")
+    ramlfile = os.path.join(V020EXAMPLES, "security_schemes_0.8.raml")
     loaded_raml = load_file(ramlfile)
     conffile = os.path.join(V020EXAMPLES, "test_config.ini")
     config = setup_config(conffile)
