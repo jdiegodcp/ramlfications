@@ -20,6 +20,11 @@ def _resolve_type(declared_type, raw, root):
 
 def parse_type(name, raw, root):
     declared_type = raw.get("type", "string")
+
+    # TODO: prob want better logic than just grabbing the first one
+    if isinstance(declared_type, list):
+        declared_type = declared_type[0]
+
     # TODO: maybe move this error checking into validation
     try:
         data_type_cls = RAML_DATA_TYPES[declared_type]
@@ -32,7 +37,14 @@ def parse_type(name, raw, root):
     if name not in RAML_DATA_TYPES:
         RAML_DATA_TYPES[name] = data_type_cls
     if declared_type not in STANDARD_RAML_TYPES:
-        raw = _resolve_type(declared_type, raw, root)
+        # TODO: clean up - need more graceful logic other than
+        # grabbing types again and iterating
+        declared_type = raw.get("type", "string")
+        if isinstance(declared_type, list):
+            for d in declared_type:
+                raw = _resolve_type(d, raw, root)
+        else:
+            raw = _resolve_type(declared_type, raw, root)
 
     data = dict([(convert_camel_case(k), v) for k, v in iteritems(raw)])
     data["raw"] = raw

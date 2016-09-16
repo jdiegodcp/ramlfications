@@ -23,10 +23,18 @@ types:
         id:
           required: true
           type: string
+    Staff:
+      type: object
+      properties:
+        id:
+          required: true
+          type: string
+    Teacher:
+      type: [ Staff, Person ]
 /users/{id}:
   get:
     responses:
       200:
         body:
           application/json:
-            type: User # reference to global type definition
+            type: User

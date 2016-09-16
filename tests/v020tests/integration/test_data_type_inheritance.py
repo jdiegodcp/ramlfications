@@ -63,17 +63,24 @@ def api():
     return parse_raml(loaded_raml, config)
 
 
+def test_inheritance_basic(api):
+    assert len(api.types) == 5
+
+
 def test_inherit_name(api):
-    person = api.types[0]
+    person = api.types[1]
     props = person.properties
-    first_name = props.get('firstName')
-    assert first_name.required
-    assert first_name.type == 'string'
+    name = props.get('name')
+    assert name.type == 'Name'
 
-    last_name = props.get('lastName')
-    assert last_name.required
-    assert last_name.type == 'string'
 
-    middle_name = props.get('middleName')
-    assert not middle_name.required
-    assert middle_name.type == 'string'
+def test_teacher_inherits(api):
+    teacher = api.types[4]
+    props = teacher.properties
+    assert len(props) == 2
+
+    name = props.get('name')
+    assert name.type == 'Name'
+    id_ = props.get('id')
+    assert id_.type == 'string'
+    assert id_.required
