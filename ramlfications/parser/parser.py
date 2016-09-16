@@ -208,6 +208,22 @@ class SecuritySchemeParser(BaseNodeParser):
         node = SecuritySchemeNode(**self.node)
         return self._described_by_properties(node)
 
+    def create_nodes(self):
+        data = self.data.get(self.raml_property, [])
+        node_objects = NodeList()
+
+        for d in data:
+            # RAML 0.8 uses a list of maps; RAML 1.0+ uses a simple map.
+            if self.root.raml_version == "0.8":
+                self.name = list(iterkeys(d))[0]
+                self.data = list(itervalues(d))[0]
+            else:
+                self.name = d
+                self.data = data[d]
+            node_objects.append(self.create_node())
+
+        return node_objects
+
 
 @collectparser
 class TraitParser(BaseNodeParser):
