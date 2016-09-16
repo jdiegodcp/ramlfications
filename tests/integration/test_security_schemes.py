@@ -116,8 +116,10 @@ def test_oauth_2_0_scheme(api):
 
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "default", "repeat", "pattern", "method", "required"
+        "default", "pattern", "method", "required"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(auth, not_set)
 
     foo = s.headers[1]
@@ -128,8 +130,10 @@ def test_oauth_2_0_scheme(api):
 
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "default", "repeat", "pattern", "method", "required"
+        "default", "pattern", "method", "required"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(foo, not_set)
 
     resp401 = s.responses[0]
@@ -183,8 +187,10 @@ def test_oauth_1_0_scheme(api):
 
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "default", "repeat", "pattern", "method", "required"
+        "default", "pattern", "method", "required"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(h, not_set)
 
     resp200 = s.responses[0]
@@ -202,8 +208,10 @@ def test_oauth_1_0_scheme(api):
     assert rh.description.raw == desc
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "default", "repeat", "pattern", "method", "required"
+        "default", "pattern", "method", "required"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(rh, not_set)
 
     st = s.settings
@@ -241,8 +249,10 @@ def test_basic(api):
 
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "default", "repeat", "pattern", "method", "required"
+        "default", "pattern", "method", "required"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(h, not_set)
 
 
@@ -273,8 +283,10 @@ def test_digest(api):
 
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "default", "repeat", "pattern", "method", "required"
+        "default", "pattern", "method", "required"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(h, not_set)
 
 
@@ -307,8 +319,10 @@ def test_custom(api):
     assert q.type == "string"
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "default", "repeat", "pattern", "required", "enum"
+        "default", "pattern", "required", "enum"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(q, not_set)
 
     u = s.uri_params[0]
@@ -320,8 +334,10 @@ def test_custom(api):
     assert u.required
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "repeat", "pattern", "enum"
+        "pattern", "enum"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(u, not_set)
 
     f = s.form_params[0]
@@ -331,8 +347,10 @@ def test_custom(api):
     assert f.type == "string"
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "repeat", "pattern", "enum", "required", "default"
+        "pattern", "enum", "required", "default"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(f, not_set)
 
     b = s.body[0]
@@ -348,8 +366,10 @@ def test_custom(api):
     assert f.type == "string"
     not_set = [
         "example", "min_length", "max_length", "minimum", "maximum",
-        "repeat", "pattern", "enum", "required", "default"
+        "pattern", "enum", "required", "default"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(f, not_set)
 
     st = s.settings

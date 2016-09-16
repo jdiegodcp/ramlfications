@@ -52,8 +52,10 @@ def test_root_node(api):
     assert b.required
     not_set = [
         "default", "enum", "max_length", "maximum", "min_length",
-        "minimum", "pattern", "repeat"
+        "minimum", "pattern"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(b, not_set)
 
     u = api.uri_params[0]
@@ -65,8 +67,10 @@ def test_root_node(api):
     assert u.required
     not_set = [
         "default", "enum", "max_length", "maximum", "min_length",
-        "minimum", "pattern", "repeat"
+        "minimum", "pattern"
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(b, not_set)
 
     d = api.documentation[0]

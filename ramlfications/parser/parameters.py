@@ -3,9 +3,13 @@
 
 from __future__ import absolute_import, division, print_function
 
+import attr
 from six import iteritems, itervalues, string_types
 
 from ramlfications.config import MEDIA_TYPES
+from ramlfications.models.base import (
+    BaseParameterRaml08, BaseParameterRaml10
+)
 from ramlfications.models.parameters import (
     Body, Header, Response, URIParameter
 )
@@ -15,11 +19,21 @@ from ramlfications.utils.parameter import (
     map_object, resolve_scalar_data, add_missing_uri_data
 )
 from ramlfications.utils.parser import get_data_type_obj_by_name
+from ramlfications.utils.examples import parse_examples
 
 
 class BaseParameterParser(object):
+
+    # We keep a cache of concrete classes created when we mix in the
+    # RAML-version-specific specialization below so general equality
+    # support provided by the attr package remains useful.
+    #
+    # Creating a new class every time through breaks that.
+    #
+    _classes = {}
+
     def create_base_param_obj(self, attribute_data, param_obj,
-                              config, errors, **kw):
+                              config, errors, root, **kw):
         """
         Helper function to create a child of a
         :py:class:`.parameters.BaseParameter` object
@@ -31,7 +45,6 @@ class BaseParameterParser(object):
                 required = _get(value, "required", default=True)
             else:
                 required = _get(value, "required", default=False)
-            root = kw.get('root')
             data_type_name = _get(value, "type")
             data_type = get_data_type_obj_by_name(data_type_name, root)
             kwargs = dict(
@@ -47,7 +60,6 @@ class BaseParameterParser(object):
                 enum=_get(value, "enum"),
                 example=_get(value, "example"),
                 required=required,
-                repeat=_get(value, "repeat", False),
                 pattern=_get(value, "pattern"),
                 type=_get(value, "type", "string"),
                 config=config,
@@ -58,7 +70,52 @@ class BaseParameterParser(object):
             if param_obj is not Body:
                 kwargs["desc"] = _get(value, "description")
 
-            item = param_obj(**kwargs)
+            # Getting the RAML version we're working with is a little
+            # tricky since we may have a root node, which always allows
+            # us to get it, but sometimes we don't (while processing
+            # parameters directly associated with the RAML root).
+            #
+            if root is None:
+                raml_version = self.kwargs['data']._raml_version
+            else:
+                raml_version = root.raml_version
+
+            if raml_version == "0.8":
+                kwargs["repeat"] = _get(value, "repeat", False)
+
+            if raml_version == "0.8" and isinstance(value, list):
+                # This is a sneaky union; need to handle this differently.
+                # Applies only to RAML 0.8; see:
+                #
+                # https://github.com/raml-org/raml-spec/blob/master/versions/
+                # raml-08/raml-08.md#named-parameters-with-multiple-types
+                #
+                # TODO: Complete once union types are implemented.
+                pass
+            else:
+                kwargs.update(parse_examples(raml_version, value))
+
+            # build object class based off of raml version
+            ParamObj = param_obj
+            mixin = BaseParameterRaml10
+            suffix = "10"
+            if raml_version == "0.8":
+                mixin = BaseParameterRaml08
+                suffix = "08"
+
+            key = param_obj, mixin
+
+            if key in self._classes:
+                ParamObj = self._classes[key]
+            else:
+                @attr.s
+                class ParamObj(param_obj, mixin):
+                    pass
+
+                ParamObj.__name__ = param_obj.__name__ + suffix
+                self._classes[key] = ParamObj
+
+            item = ParamObj(**kwargs)
             objects.append(item)
 
         return objects or None
@@ -220,7 +277,8 @@ class ResponseParser(BaseParameterParser, BodyParserMixin):
         header_objects = self.create_base_param_obj(headers, Header,
                                                     self.root.config,
                                                     self.root.errors,
-                                                    method=self.method)
+                                                    method=self.method,
+                                                    root=self.root)
         return header_objects or None
 
     def parse_response_body(self):

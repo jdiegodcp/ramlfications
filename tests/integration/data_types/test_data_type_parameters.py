@@ -37,8 +37,9 @@ def test_api_query_params(api):
     not_set = [
         'default', 'desc', 'description', 'enum', 'errors', 'example',
         'max_length', 'maximum', 'min_length', 'minimum', 'pattern',
-        'repeat'
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(id_, not_set)
     assert id_.data_type.name == 'EmployeeId'
     assert id_.data_type.type == 'string'
@@ -57,8 +58,9 @@ def test_api_uri_params(api):
     not_set = [
         'default', 'desc', 'description', 'enum', 'errors', 'example',
         'max_length', 'maximum', 'min_length', 'minimum', 'pattern',
-        'repeat'
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(id_, not_set)
     assert id_.data_type.name == 'EmployeeId'
     assert id_.data_type.type == 'string'
@@ -78,8 +80,9 @@ def test_api_response_headers(api):
     not_set = [
         'default', 'desc', 'description', 'enum', 'errors', 'example',
         'max_length', 'maximum', 'min_length', 'minimum', 'pattern',
-        'repeat'
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(id_, not_set)
     assert id_.data_type.name == 'EmployeeId'
     assert id_.data_type.type == 'string'

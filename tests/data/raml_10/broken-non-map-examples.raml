@@ -1,0 +1,16 @@
+#%RAML 1.0
+
+title: Example
+baseUri: https://example.test/{param}/
+
+baseUriParameters:
+  param:
+    type: string
+    description: account name
+    examples:
+      - some text
+      - value: more text
+        strict: false
+
+mediaType: application/json
+protocols: [ HTTPS ]

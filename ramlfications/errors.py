@@ -31,6 +31,10 @@ class BaseRAMLParserError(BaseRAMLError):
     pass
 
 
+class InvalidRAMLStructureError(BaseRAMLParserError):
+    """Disallowed structure was found in YAML."""
+
+
 class InvalidRootNodeError(BaseRAMLParserError):
     pass
 

@@ -1,0 +1,134 @@
+#%RAML 1.0
+
+title: Example
+baseUri: https://example.test/{param}/
+
+baseUriParameters:
+  param:
+    type: string
+    description: account name
+    example: splat
+
+mediaType: application/json
+protocols: [ HTTPS ]
+
+types:
+
+  with_multiple_examples:
+    type: string
+    examples:
+      simple: "abc"
+      fancy: "two words"
+      excessive:
+        displayName: "Serious Overkill"
+        description: |
+          There's way too much text here.
+        value:
+          error: This should not be a map.
+        strict: false
+
+  with_example_structured:
+    type: object
+    properties:
+      key:
+        type: string
+        example:
+          description: Typical value.
+          value: This is a value.
+    example:
+      description: This is a typical structure.
+      displayName: Typical Example
+      strict: true
+      value:
+        key: Yo.
+
+  with_example_unstructured:
+    type: object
+    properties:
+      key:
+        type: string
+        example: This is a value.
+    example:
+      key: "Example value."
+
+
+/with_multiple_examples:
+  post:
+    queryParameters:
+      cached:
+        type: boolean
+        example: false
+        description: Allow cached data?
+    body:
+      application/json:
+        type:
+          type: string
+          properties:
+            key:
+              type: string
+              examples:
+                simple: "abc"
+                fancy: "two words"
+                excessive:
+                  displayName: "Serious Overkill"
+                  description: |
+                    There's way too much text here.
+                  value: "This is a long example."
+                  strict: false
+
+/with_uri_param/{id}:
+  uriParameters:
+    id:
+      example: s234gs9
+
+/with_example_structured:
+  post:
+    body:
+      application/json:
+        type:
+          type: object
+          properties:
+            key:
+              type: object
+              example:
+                value: This whole map is a value.
+
+/with_example_unstructured:
+  post:
+    body:
+      application/json:
+        type:
+          type: object
+          properties:
+            key:
+              type: string
+              example: This is a value.
+
+/with_header:
+  displayName: Silly, silly example.
+  headers:
+    x-extra-fluff:
+      type: boolean
+      example: true
+    x-structured:
+      example:
+        displayName: just a parameter
+        value: just a string
+    x-multiple:
+      type: string
+      examples:
+        simple: "42"
+        typical:
+          description: This is what we expect.
+          displayName: Typical Value
+          value: "typical"
+          strict: true
+        special:
+          description: No one expects the ...
+          displayName: Surprise Visit
+          value: Spanish Inqusition!
+        broken:
+          description: Send this for a 500
+          displayName: "DON'T DO THIS"
+          strict: False
+          value: breakfast
