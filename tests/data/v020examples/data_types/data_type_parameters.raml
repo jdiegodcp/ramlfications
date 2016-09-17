@@ -11,6 +11,7 @@ types:
     queryParameters:
       id:
         type: EmployeeId
+        required: true
   /{id}:
     get:
       uriParameters:
@@ -21,3 +22,9 @@ types:
     headers:
       X-Employee:
         type: EmployeeId
+        required: true
+    responses:
+      200:
+        body:
+          application/json:
+            type: EmployeeId

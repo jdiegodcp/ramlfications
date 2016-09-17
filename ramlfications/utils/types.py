@@ -53,6 +53,8 @@ def parse_type(name, raw, root):
     data["description"] = raw.get("description")
     data["raml_version"] = root.raml_version
     data["display_name"] = raw.get("displayName", name)
+    # TODO: what to do when it's a list?
+    data["type"] = declared_type
 
     # TODO: super hacky, fixme
     if declared_type == "string":

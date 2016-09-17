@@ -7,15 +7,18 @@ import os
 import pytest
 
 from ramlfications.config import setup_config
+from ramlfications.models import data_types
 from ramlfications.parser import parse_raml
 from ramlfications.utils import load_file
 
 from tests.base import RAMLEXAMPLES, V020EXAMPLES, assert_not_set
 
+DATA_TYPES = os.path.join(V020EXAMPLES, "data_types")
+
 
 @pytest.fixture(scope="session")
 def api():
-    ramlfile = os.path.join(V020EXAMPLES, "data_type_parameters.raml")
+    ramlfile = os.path.join(DATA_TYPES, "data_type_parameters.raml")
     loaded_raml = load_file(ramlfile)
     configfile = os.path.join(RAMLEXAMPLES, "simple_config.ini")
     config = setup_config(configfile)
@@ -28,8 +31,7 @@ def test_api_query_params(api):
 
     id_ = res.query_params[0]
     assert id_.type == 'EmployeeId'
-    # TODO: support me!
-    # assert id_.required
+    assert id_.required
     assert id_.name == 'id'
 
     not_set = [
@@ -38,6 +40,9 @@ def test_api_query_params(api):
         'repeat'
     ]
     assert_not_set(id_, not_set)
+    assert id_.data_type.name == 'EmployeeId'
+    assert id_.data_type.type == 'string'
+    assert isinstance(id_.data_type, data_types.StringDataType)
 
 
 def test_api_uri_params(api):
@@ -55,17 +60,19 @@ def test_api_uri_params(api):
         'repeat'
     ]
     assert_not_set(id_, not_set)
+    assert id_.data_type.name == 'EmployeeId'
+    assert id_.data_type.type == 'string'
+    assert isinstance(id_.data_type, data_types.StringDataType)
 
 
-def test_api_headers(api):
+def test_api_response_headers(api):
     res = api.resources[2]
 
     assert len(res.headers) == 1
 
     id_ = res.headers[0]
     assert id_.type == 'EmployeeId'
-    # TODO: support me!
-    # assert id_.required
+    assert id_.required
     assert id_.name == 'X-Employee'
 
     not_set = [
@@ -74,3 +81,19 @@ def test_api_headers(api):
         'repeat'
     ]
     assert_not_set(id_, not_set)
+    assert id_.data_type.name == 'EmployeeId'
+    assert id_.data_type.type == 'string'
+    assert isinstance(id_.data_type, data_types.StringDataType)
+
+
+def test_api_response_body(api):
+    res = api.resources[2]
+    assert len(res.responses) == 1
+
+    resp = res.responses[0]
+    assert len(resp.body) == 1
+    body = resp.body[0]
+    assert body.type == 'EmployeeId'
+    assert body.data_type.name == 'EmployeeId'
+    assert body.data_type.type == 'string'
+    assert isinstance(body.data_type, data_types.StringDataType)

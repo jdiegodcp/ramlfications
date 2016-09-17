@@ -12,10 +12,12 @@ from ramlfications.utils import load_file
 
 from tests.base import RAMLEXAMPLES, V020EXAMPLES
 
+DATA_TYPES = os.path.join(V020EXAMPLES, "data_types")
+
 
 @pytest.fixture(scope="session")
 def fragment_api():
-    ramlfile = os.path.join(V020EXAMPLES, "uses_data_fragment.raml")
+    ramlfile = os.path.join(DATA_TYPES, "uses_data_fragment.raml")
     loaded_raml = load_file(ramlfile)
     configfile = os.path.join(RAMLEXAMPLES, "simple_config.ini")
     config = setup_config(configfile)
@@ -56,7 +58,7 @@ def test_employee_data_type(fragment_api):
 
 @pytest.fixture(scope="session")
 def api():
-    ramlfile = os.path.join(V020EXAMPLES, "data_type_inheritance.raml")
+    ramlfile = os.path.join(DATA_TYPES, "data_type_inheritance.raml")
     loaded_raml = load_file(ramlfile)
     configfile = os.path.join(RAMLEXAMPLES, "simple_config.ini")
     config = setup_config(configfile)

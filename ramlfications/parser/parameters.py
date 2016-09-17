@@ -31,9 +31,13 @@ class BaseParameterParser(object):
                 required = _get(value, "required", default=True)
             else:
                 required = _get(value, "required", default=False)
+            root = kw.get('root')
+            data_type_name = _get(value, "type")
+            data_type = get_data_type_obj_by_name(data_type_name, root)
             kwargs = dict(
                 name=key,
                 raw={key: value},
+                data_type=data_type,
                 desc=_get(value, "description"),
                 display_name=_get(value, "displayName", key),
                 min_length=_get(value, "minLength"),
@@ -83,6 +87,7 @@ class BodyParserMixin(object):
             example=load_schema(_get(data, "example")),
             form_params=form_params,
             data_type=data_type,
+            type=_get(data, "type"),
             config=root.config,
             errors=root.errors
         )
@@ -193,8 +198,10 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
             errs = self.root.errors
 
         object_name = map_object(self.param)
+
         params = self.create_base_param_obj(resolved, object_name, conf,
-                                            errs, method=self.method)
+                                            errs, method=self.method,
+                                            root=self.root)
         return params or None
 
 

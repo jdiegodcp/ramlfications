@@ -16,8 +16,10 @@ class URIParameter(BaseParameter):
     "Named Parameters" section, e.g.: ``/foo/{id}`` where ``id`` is the \
     name of the URI parameter.
     """
-    required = attr.ib(repr=False, default=True)
-    type         = attr.ib(repr=False, default="string")
+    required  = attr.ib(repr=False, default=True)
+    type      = attr.ib(repr=False, default="string")
+    # TODO: add validator
+    data_type    = attr.ib(repr=False, default=None)
 
 
 @attr.s
@@ -29,6 +31,8 @@ class QueryParameter(BaseParameter):
     """
     required     = attr.ib(repr=False, default=False)
     type         = attr.ib(repr=False, default="string")
+    # TODO: add validator
+    data_type    = attr.ib(repr=False, default=None)
 
 
 @attr.s
@@ -43,6 +47,8 @@ class FormParameter(BaseParameter):
     """
     required     = attr.ib(repr=False, default=False)
     type         = attr.ib(repr=False, default="string")
+    # TODO: add validator
+    data_type    = attr.ib(repr=False, default=None)
 
 
 @attr.s
@@ -62,6 +68,8 @@ class Header(BaseParameter):
     type         = attr.ib(repr=False, default="string", validator=header_type)
     method       = attr.ib(repr=False, default=None)
     required     = attr.ib(repr=False, default=False)
+    # TODO: add validator
+    data_type = attr.ib(repr=False, default=None)
 
 
 @attr.s
@@ -88,7 +96,9 @@ class Body(BaseParameterAttrs):
     example     = attr.ib(repr=False, validator=body_example)
     form_params = attr.ib(repr=False, validator=body_form)
     # TODO: add validator
-    data_type   = attr.ib(repr=False)
+    type        = attr.ib(repr=False, default=None)
+    # TODO: add validator
+    data_type   = attr.ib(repr=False, default=None)
 
 
 @attr.s
