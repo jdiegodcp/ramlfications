@@ -53,4 +53,12 @@ def parse_type(name, raw, root):
     data["description"] = raw.get("description")
     data["raml_version"] = root.raml_version
     data["display_name"] = raw.get("displayName", name)
+
+    # TODO: super hacky, fixme
+    if declared_type == "string":
+        # TODO: prob want to clean this up, too
+        try:
+            data.pop("properties")
+        except KeyError:
+            pass
     return data_type_cls(**data)
