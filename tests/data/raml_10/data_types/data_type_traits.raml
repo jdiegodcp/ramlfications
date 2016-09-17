@@ -1,0 +1,18 @@
+#%RAML 1.0
+title: API with Types
+types:
+  PageId:
+    properties:
+      id:
+        required: true
+        type: string
+traits:
+  paged:
+    queryParameters:
+      id:
+        type: PageId
+
+/employees:
+  get:
+    description: a collection of employees
+    is: [paged]

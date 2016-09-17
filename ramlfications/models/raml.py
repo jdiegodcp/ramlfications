@@ -102,7 +102,7 @@ class RAML10(BaseRootNode):
     """
     API Root Node for 1.0 raml files
     """
-    types        = attr.ib(repr=False, init=False)
+    types        = attr.ib(repr=False, init=False, default=None)
     raml_version = "1.0"
 
 

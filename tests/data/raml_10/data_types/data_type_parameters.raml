@@ -1,0 +1,30 @@
+#%RAML 1.0
+title: API with Types
+types:
+    EmployeeId:
+      properties:
+        id:
+          required: true
+          type: string
+/users:
+  get:
+    queryParameters:
+      id:
+        type: EmployeeId
+        required: true
+  /{id}:
+    get:
+      uriParameters:
+        id:
+          type: EmployeeId
+/employees:
+  get:
+    headers:
+      X-Employee:
+        type: EmployeeId
+        required: true
+    responses:
+      200:
+        body:
+          application/json:
+            type: EmployeeId

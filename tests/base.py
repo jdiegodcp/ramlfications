@@ -5,15 +5,16 @@ from __future__ import absolute_import, division, print_function
 import os
 
 PAR_DIR = os.path.abspath(os.path.dirname(__file__))
-EXAMPLES = os.path.join(PAR_DIR + '/data/examples/')
-VALIDATE = os.path.join(PAR_DIR + '/data/validate/')
+DATA_DIR = os.path.join(PAR_DIR, 'data')
+RAML_08 = os.path.join(DATA_DIR, 'raml_08')
+RAML_10 = os.path.join(DATA_DIR, 'raml_10')
+VALIDATE_08 = os.path.join(RAML_08, 'validate')
 FIXTURES = os.path.join(PAR_DIR + '/data/fixtures/')
 UPDATE = os.path.join(PAR_DIR + '/data/update/')
 JSONREF = os.path.join(PAR_DIR + '/data/jsonref/')
 
-V020EXAMPLES = os.path.join(PAR_DIR + '/data/v020examples/')
-RAML10EXAMPLES = os.path.join(PAR_DIR + '/data/raml10examples/')
-V020VALIDATE = os.path.join(PAR_DIR + '/data/v020examples/validate/')
+# examples from github.com/raml-org/raml-examples
+RAML_ORG_EXAMPLES = os.path.join(DATA_DIR, 'ramlorgexamples')
 
 
 class AssertNotSetError(Exception):

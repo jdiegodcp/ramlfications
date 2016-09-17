@@ -144,3 +144,16 @@ def convert_camel_case(name):
     """
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
+# stupid helper function to grab parsed data types in root
+# assumes only one
+# TODO: error out if multiple of the same name
+def get_data_type_obj_by_name(data_type, root):
+    raml_version = getattr(root, "raml_version", None)
+    if raml_version == "1.0":
+        types = root.types
+        if types:
+            for t in types:
+                if t.name == data_type:
+                    return t

@@ -1,0 +1,40 @@
+#%RAML 1.0
+title: API with Types
+types:
+    Name:
+      type: object
+      properties:
+        firstName:
+            type: string
+            required: true
+        middleName: string
+        lastName:
+            type: string
+            required: true
+    Person:
+      type: object
+      properties:
+        name:
+          required: true
+          type: Name
+    Employee:
+      type: Person
+      properties:
+        id:
+          required: true
+          type: string
+    Staff:
+      type: object
+      properties:
+        id:
+          required: true
+          type: string
+    Teacher:
+      type: [ Staff, Person ]
+/users/{id}:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: User
