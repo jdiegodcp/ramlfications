@@ -3,8 +3,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-from ramlfications._decorators import collecterrors
 from ramlfications.errors import *  # NOQA
+
+from .decorators import collecterrors
 
 
 @collecterrors
