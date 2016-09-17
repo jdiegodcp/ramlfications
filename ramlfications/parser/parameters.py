@@ -105,6 +105,7 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
         self.path = _get(kwargs, "resource_path")
         self.is_ = _get(kwargs, "is_", None)
         self.type_ = _get(kwargs, "type_", None)
+        self.data_type = _get(kwargs, "data_type", None)
         self.root = _get(kwargs, "root")
 
     def _set_param_data(self, param_data, path, path_name):

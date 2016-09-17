@@ -89,7 +89,10 @@ def get_inherited_trait_data(attr, traits, name, root):
                 n = list(iterkeys(n))[0]
             names.append(n)
 
-    trait_raml = [t for t in traits if list(iterkeys(t))[0] in names]
+    if root.raml_version == "0.8":
+        trait_raml = [t for t in traits if list(iterkeys(t))[0] in names]
+    else:
+        trait_raml = [traits]
     trait_data = []
     for n in names:
         for t in trait_raml:
@@ -156,11 +159,18 @@ def __get_inherited_res_type_data(attr, types, name, method, root):
     ]
     if isinstance(name, dict):
         name = list(iterkeys(name))[0]
-    res_type_raml = [r for r in types if list(iterkeys(r))[0] == name]
+    if root.raml_version == "0.8":
+        res_type_raml = [r for r in types if list(iterkeys(r))[0] == name]
+        # only need the first one
+        # TODO: clean me up
+        if res_type_raml:
+            res_type_raml = res_type_raml[0]
+    else:
+        res_type_raml = types
     if attr == "uri_params":
         attr = "uriParameters"
     if res_type_raml:
-        res_type_raml = _get(res_type_raml[0], name, {})
+        res_type_raml = _get(res_type_raml, name, {})
         raw = _get(res_type_raml, method, None)
         if not raw:
             if method:

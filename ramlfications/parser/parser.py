@@ -140,6 +140,35 @@ class RootParser(BaseParser):
 
 
 @collectparser
+class DataTypeParser(BaseNodeParser):
+    """
+    Parses raw RAML data to create `DataTypeNode` objects, if any.
+    """
+    raml_property = "types"
+    root_property = "types"
+
+    def __init__(self, data, root, config):
+        super(DataTypeParser, self).__init__(data, root, config)
+        # TODO: Think, is this needed?
+        self.resolve_from = ["method", "resource", "types", "traits", "root"]
+
+    def create_node(self, name, raw):
+        raw["errors"] = self.root.errors
+        raw["config"] = self.root.config
+        return parse_type(name, raw, self.root)
+
+    def create_nodes(self):
+        data = self.data.get(self.raml_property, {})
+        node_objects = NodeList()
+
+        for k, v in list(iteritems(data)):
+            # node = self.create_node(k, v)
+            node = self.create_node(k, v)
+            node_objects.append(node)
+        return node_objects
+
+
+@collectparser
 class SecuritySchemeParser(BaseNodeParser):
     """
     Parse raw RAML data to create `SecurityScheme` objects, if any.
@@ -254,6 +283,21 @@ class TraitParser(BaseNodeParser):
 
         return TraitNode(**self.node)
 
+    def create_nodes(self):
+        data = self.data.get(self.raml_property, [])
+        node_objects = NodeList()
+
+        for d in data:
+            if self.root.raml_version == "0.8":
+                self.name = list(iterkeys(d))[0]
+                self.data = list(itervalues(d))[0]
+            else:
+                self.name = d
+                self.data = data[d]
+            node_objects.append(self.create_node())
+
+        return node_objects
+
 
 @collectparser
 class ResourceTypeParser(BaseNodeParser, NodeMixin):
@@ -265,7 +309,9 @@ class ResourceTypeParser(BaseNodeParser, NodeMixin):
 
     def __init__(self, data, root, config):
         super(ResourceTypeParser, self).__init__(data, root, config)
-        self.resolve_from = ["method", "resource", "types", "traits", "root"]
+        self.resolve_from = [
+            "method", "resource", "types", "traits", "root"
+        ]
 
     def optional(self):
         if self.method:
@@ -306,35 +352,47 @@ class ResourceTypeParser(BaseNodeParser, NodeMixin):
 
         return ResourceTypeNode(**self.node)
 
+    def _iterate_resource_types(self, name, data, resource_type_objects):
+        self.name = name
+        self.data = data
+        self.method = None
+        self.method_data = {}
+        if isinstance(data, dict):
+            values = list(iterkeys(data))
+            methods = [m for m in self.avail if m in values]
+            # it's possible for resource types to not define methods
+            if len(methods) == 0:
+                node = self.create_node()
+                resource_type_objects.append(node)
+            else:
+                for meth in methods:
+                    self.method = meth
+                    self.method_data = self.data.get(self.method, {})
+                    node = self.create_node()
+                    resource_type_objects.append(node)
+        # is it ever not a dictionary?
+        # yes, if there's an empty mapping
+        else:
+            self.data = {}
+            node = self.create_node()
+            resource_type_objects.append(node)
+
+        return resource_type_objects
+
     def create_nodes(self):
         resource_types = self.data.get(self.raml_property, [])
         resource_type_objects = NodeList()
 
         for res in resource_types:
-            for k, v in list(iteritems(res)):
-                self.name = k
-                self.data = v
-                self.method = None
-                self.method_data = {}
-                if isinstance(v, dict):
-                    values = list(iterkeys(v))
-                    methods = [m for m in self.avail if m in values]
-                    # it's possible for resource types to not define methods
-                    if len(methods) == 0:
-                        node = self.create_node()
-                        resource_type_objects.append(node)
-                    else:
-                        for meth in methods:
-                            self.method = meth
-                            self.method_data = self.data.get(self.method, {})
-                            node = self.create_node()
-                            resource_type_objects.append(node)
-                # is it ever not a dictionary?
-                # yes, if there's an empty mapping
-                else:
-                    self.data = {}
-                    node = self.create_node()
-                    resource_type_objects.append(node)
+            # RAML 0.8 uses a list of maps; RAML 1.0+ uses a simple map.
+            if self.root.raml_version == "0.8":
+                for k, v in list(iteritems(res)):
+                    resource_type_objects = self._iterate_resource_types(
+                        k, v, resource_type_objects)
+            else:
+                resource_type_objects = self._iterate_resource_types(
+                    res, resource_types[res], resource_type_objects)
+
         return resource_type_objects
 
 
@@ -446,32 +504,3 @@ class ResourceParser(BaseNodeParser, NodeMixin):
                 nodes = self.create_nodes(nodes, child)
 
         return nodes
-
-
-@collectparser
-class DataTypeParser(BaseNodeParser):
-    """
-    Parses raw RAML data to create `DataTypeNode` objects, if any.
-    """
-    raml_property = "types"
-    root_property = "types"
-
-    def __init__(self, data, root, config):
-        super(DataTypeParser, self).__init__(data, root, config)
-        # TODO: Think, is this needed?
-        self.resolve_from = ["method", "resource", "types", "traits", "root"]
-
-    def create_node(self, name, raw):
-        raw["errors"] = self.root.errors
-        raw["config"] = self.root.config
-        return parse_type(name, raw, self.root)
-
-    def create_nodes(self):
-        data = self.data.get(self.raml_property, {})
-        node_objects = NodeList()
-
-        for k, v in list(iteritems(data)):
-            # node = self.create_node(k, v)
-            node = self.create_node(k, v)
-            node_objects.append(node)
-        return node_objects

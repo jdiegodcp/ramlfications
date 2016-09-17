@@ -150,8 +150,10 @@ def convert_camel_case(name):
 # assumes only one
 # TODO: error out if multiple of the same name
 def get_data_type_obj_by_name(data_type, root):
-    if root.raml_version == '1.0':
+    raml_version = getattr(root, "raml_version", None)
+    if raml_version == "1.0":
         types = root.types
-        for t in types:
-            if t.name == data_type:
-                return t
+        if types:
+            for t in types:
+                if t.name == data_type:
+                    return t

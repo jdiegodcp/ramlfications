@@ -15,7 +15,8 @@ from tests.base import V020EXAMPLES, assert_not_set
 
 @pytest.fixture(scope="session")
 def root():
-    raml_file = os.path.join(V020EXAMPLES, "basic_types.raml")
+    data_types = os.path.join(V020EXAMPLES, "data_types")
+    raml_file = os.path.join(data_types, "basic_types.raml")
     conf_file = os.path.join(V020EXAMPLES, "test_config.ini")
     return parse(raml_file, conf_file)
 

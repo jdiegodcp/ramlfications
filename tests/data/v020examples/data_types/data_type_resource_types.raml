@@ -1,0 +1,28 @@
+#%RAML 1.0
+title: API with Types
+types:
+  EmployeeId:
+    properties:
+      id:
+        required: true
+        type: string
+resourceTypes:
+  qParamCollection:
+    get:
+      queryParameters:
+        id:
+          type: EmployeeId
+  uParamCollection:
+    get:
+      uriParameters:
+        id:
+          type: EmployeeId
+
+/employees:
+  type: qParamCollection
+  get:
+    description: a collection of employees
+  /{id}:
+    type: uParamCollection
+    get:
+      description: get a specific employee
