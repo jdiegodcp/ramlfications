@@ -28,14 +28,17 @@ class BaseContent(object):
         """
         Return raw Markdown/plain text written in the RAML file
         """
-        return self.data
+        if self.data:
+            return self.data
+        return ""
 
     @property
     def html(self):
         """
         Returns parsed Markdown into HTML
         """
-        return md.markdown(self.data)
+        if self.data:
+            return md.markdown(self.data)
 
     def __repr__(self):
         return self.raw
@@ -160,12 +163,6 @@ class BaseParameterAttrs(object):
                      validator=attr.validators.instance_of(dict))
     errors = attr.ib(repr=False)
 
-    @property
-    def description(self):
-        if self.desc:
-            return BaseContent(self.desc)
-        return None
-
 
 @attr.s
 class BaseParameter(BaseNamedParameter, BaseParameterAttrs):
@@ -180,3 +177,9 @@ class BaseParameter(BaseNamedParameter, BaseParameterAttrs):
         ``ramlfications`` library.
     :param list errors: List of RAML validation errors.
     """
+
+    @property
+    def description(self):
+        if self.desc:
+            return BaseContent(self.desc)
+        return None

@@ -38,7 +38,6 @@ class BaseParameterParser(object):
                 name=key,
                 raw={key: value},
                 data_type=data_type,
-                desc=_get(value, "description"),
                 display_name=_get(value, "displayName", key),
                 min_length=_get(value, "minLength"),
                 max_length=_get(value, "maxLength"),
@@ -56,6 +55,8 @@ class BaseParameterParser(object):
             )
             if param_obj is Header:
                 kwargs["method"] = _get(kw, "method")
+            if param_obj is not Body:
+                kwargs["desc"] = _get(value, "description")
 
             item = param_obj(**kwargs)
             objects.append(item)

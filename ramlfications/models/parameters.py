@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 import attr
 
-from .base import BaseParameter, BaseParameterAttrs
+from .base import BaseContent, BaseParameter, BaseParameterAttrs
 from ramlfications.validate import *  # NOQA
 
 
@@ -118,6 +118,13 @@ class Response(BaseParameterAttrs):
     headers  = attr.ib(repr=False)
     body     = attr.ib(repr=False)
     method   = attr.ib(default=None)
+
+    # TODO: I'm not liking how I copy-pasted this here :-/
+    @property
+    def description(self):
+        if self.desc:
+            return BaseContent(self.desc)
+        return None
 
 
 # FIXME: this currently isn't used... probably will need to use it though
