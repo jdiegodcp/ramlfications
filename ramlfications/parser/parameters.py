@@ -55,7 +55,7 @@ class BaseParameterParser(object):
             )
             if param_obj is Header:
                 kwargs["method"] = _get(kw, "method")
-            if param_obj not in (Response, Body):
+            if param_obj is not Body:
                 kwargs["desc"] = _get(value, "description")
 
             item = param_obj(**kwargs)
@@ -253,6 +253,7 @@ class ResponseParser(BaseParameterParser, BodyParserMixin):
     def parse(self):
         headers = self.parse_response_headers()
         body = self.parse_response_body()
+        desc = _get(self.data, "description", None)
 
         if isinstance(self.code, string_types):
             try:
@@ -265,6 +266,7 @@ class ResponseParser(BaseParameterParser, BodyParserMixin):
             code=self.code,
             raw={self.code: self.data},
             method=self.method,
+            desc=desc,
             headers=headers,
             body=body,
             config=self.root.config,
