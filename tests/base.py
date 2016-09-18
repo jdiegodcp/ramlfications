@@ -17,6 +17,15 @@ JSONREF = os.path.join(PAR_DIR + '/data/jsonref/')
 RAML_ORG_EXAMPLES = os.path.join(DATA_DIR, 'ramlorgexamples')
 
 
+DATA_TYPE_OBJECT_ATTRS = [
+    'additional_properties', 'annotation', 'config', 'default',
+    'description', 'discriminator', 'discriminator_value',
+    'display_name', 'errors', 'example', 'examples', 'facets',
+    'max_properties', 'min_properties', 'name', 'properties',
+    'raml_version', 'raw', 'root', 'schema', 'type', 'usage', 'xml'
+]
+
+
 class AssertNotSetError(Exception):
     pass
 
