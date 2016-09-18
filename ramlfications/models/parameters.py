@@ -114,7 +114,6 @@ class Response(BaseParameterAttrs):
     :param str method: HTTP request method associated with response.
     """
     code     = attr.ib(validator=response_code)
-    desc     = attr.ib(repr=False)
     headers  = attr.ib(repr=False)
     body     = attr.ib(repr=False)
     method   = attr.ib(default=None)

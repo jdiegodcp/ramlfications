@@ -160,12 +160,6 @@ class BaseParameterAttrs(object):
                      validator=attr.validators.instance_of(dict))
     errors = attr.ib(repr=False)
 
-    @property
-    def description(self):
-        if self.desc:
-            return BaseContent(self.desc)
-        return None
-
 
 @attr.s
 class BaseParameter(BaseNamedParameter, BaseParameterAttrs):
@@ -180,3 +174,9 @@ class BaseParameter(BaseNamedParameter, BaseParameterAttrs):
         ``ramlfications`` library.
     :param list errors: List of RAML validation errors.
     """
+
+    @property
+    def description(self):
+        if self.desc:
+            return BaseContent(self.desc)
+        return None

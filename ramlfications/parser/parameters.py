@@ -38,7 +38,6 @@ class BaseParameterParser(object):
                 name=key,
                 raw={key: value},
                 data_type=data_type,
-                desc=_get(value, "description"),
                 display_name=_get(value, "displayName", key),
                 min_length=_get(value, "minLength"),
                 max_length=_get(value, "maxLength"),
@@ -56,6 +55,8 @@ class BaseParameterParser(object):
             )
             if param_obj is Header:
                 kwargs["method"] = _get(kw, "method")
+            if param_obj not in (Response, Body):
+                kwargs["desc"] = _get(value, "description")
 
             item = param_obj(**kwargs)
             objects.append(item)
@@ -252,7 +253,6 @@ class ResponseParser(BaseParameterParser, BodyParserMixin):
     def parse(self):
         headers = self.parse_response_headers()
         body = self.parse_response_body()
-        desc = _get(self.data, "description", None)
 
         if isinstance(self.code, string_types):
             try:
@@ -265,7 +265,6 @@ class ResponseParser(BaseParameterParser, BodyParserMixin):
             code=self.code,
             raw={self.code: self.data},
             method=self.method,
-            desc=desc,
             headers=headers,
             body=body,
             config=self.root.config,
