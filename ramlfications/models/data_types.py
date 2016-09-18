@@ -136,7 +136,7 @@ class ObjectDataType(BaseDataType):
                                     convert=parse_properties)
     min_properties        = attr.ib(repr=False, default=0)
     max_properties        = attr.ib(repr=False, default=None)
-    additional_properties = attr.ib(repr=False, default=True)
+    additional_properties = attr.ib(repr=False, default=None)
     discriminator         = attr.ib(repr=False, default=None)
     # TODO: validate based on if discriminator is set in type declaration
     discriminator_value   = attr.ib(repr=False, default=None,
