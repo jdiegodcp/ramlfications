@@ -33,11 +33,13 @@ def test_parse_filepath(raml):
     assert result
     assert isinstance(result, RootNode)
 
+
 def test_parse_string(raml_string):
     config = os.path.join(EXAMPLES + "test-config.ini")
     result = parse(raml_string, config)
     assert result
     assert isinstance(result, RootNode)
+
 
 def test_parse_nonexistant_file():
     raml_file = "/tmp/non-existant-raml-file.raml"
