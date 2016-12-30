@@ -2,6 +2,9 @@
 # Copyright (c) 2015 Spotify AB
 
 from __future__ import absolute_import, division, print_function
+
+
+import copy
 import re
 
 import attr
@@ -25,7 +28,7 @@ from .utils import (
     _get, _create_base_param_obj, _get_res_type_attribute,
     _get_inherited_type_params, _get_inherited_item, _get_attribute_dict,
     get_inherited, set_param_object, set_params, _get_data_union,
-    _preserve_uri_order
+    _preserve_uri_order, _parse_assigned_trait_dicts
 )
 
 
@@ -52,6 +55,7 @@ def parse_raml(loaded_raml, config):
     root.security_schemes = create_sec_schemes(root.raml_obj, root)
     root.traits = create_traits(root.raml_obj, root)
     root.resource_types = create_resource_types(root.raml_obj, root)
+
     root.resources = create_resources(root.raml_obj, [], root,
                                       parent=None)
 
@@ -60,7 +64,6 @@ def parse_raml(loaded_raml, config):
 
         if root.errors:
             raise InvalidRAMLError(root.errors)
-
     return root
 
 
@@ -722,8 +725,8 @@ def create_node(name, raw_data, method, parent, root):
 
     def absolute_uri():
         """Set resource's absolute URI path."""
-        uri = root.base_uri + path()
-        proto = protocols()
+        uri = root.base_uri + res_path
+        proto = res_protos
         if proto:
             uri = uri.split("://")
             if len(uri) == 2:
@@ -742,10 +745,9 @@ def create_node(name, raw_data, method, parent, root):
 
     def protocols():
         """Set resource's supported protocols."""
-        # trait = _get_trait("protocols", root, is_())
         kwargs = dict(root=root,
-                      is_=is_(),
-                      type_=type_(),
+                      is_=assigned_traits,
+                      type_=assigned_type,
                       method=method,
                       data=raw_data,
                       parent=parent)
@@ -765,8 +767,8 @@ def create_node(name, raw_data, method, parent, root):
     def headers():
         """Set resource's supported headers."""
         headers = _get_attribute("headers", method, raw_data)
-        header_objs = _get_inherited_attribute("headers", root, type_(),
-                                               method, is_())
+        header_objs = _get_inherited_attribute("headers", root, assigned_type,
+                                               method, assigned_traits)
 
         _headers = _create_base_param_obj(headers,
                                           Header,
@@ -780,8 +782,8 @@ def create_node(name, raw_data, method, parent, root):
     def body():
         """Set resource's supported request/response body."""
         bodies = _get_attribute("body", method, raw_data)
-        body_objects = _get_inherited_attribute("body", root, type_(),
-                                                method, is_())
+        body_objects = _get_inherited_attribute("body", root, assigned_type,
+                                                method, assigned_traits)
 
         _body_objs = []
         for k, v in list(iteritems(bodies)):
@@ -875,8 +877,9 @@ def create_node(name, raw_data, method, parent, root):
             return body_list or None
 
         resps = _get_attribute("responses", method, raw_data)
-        type_resp = _get_resource_type("responses", root, type_(), method)
-        trait_resp = _get_trait("responses", root, is_())
+        assigned_type = res_type
+        type_resp = _get_resource_type("responses", root, assigned_type, method)
+        trait_resp = _get_trait("responses", root, assigned_traits)
         resp_objs = type_resp + trait_resp
         resp_codes = [r.code for r in resp_objs]
         for k, v in list(iteritems(resps)):
@@ -932,8 +935,8 @@ def create_node(name, raw_data, method, parent, root):
         parsed_attr = "uri_params"
         root_params = root.uri_params
         params = _create_uri_params(unparsed_attr, parsed_attr, root_params,
-                                    root, type_(), is_(), method, raw_data,
-                                    parent)
+                                    root, assigned_type, assigned_traits,
+                                    method, raw_data, parent)
         declared = []
         base = base_uri_params()
         if base:
@@ -945,7 +948,8 @@ def create_node(name, raw_data, method, parent, root):
     def base_uri_params():
         """Set resource's base URI parameters."""
         root_params = root.base_uri_params
-        kw = dict(type=type_(), is_=is_(), root_params=root_params)
+        kw = dict(type=assigned_type, is_=assigned_traits,
+                  root_params=root_params)
         params = set_params(raw_data, "base_uri_params", root, method,
                             inherit=True, **kw)
         declared = []
@@ -959,13 +963,13 @@ def create_node(name, raw_data, method, parent, root):
                                    root.errors, declared)
 
     def query_params():
-        kw = dict(type_=type_(), is_=is_())
+        kw = dict(type_=assigned_type, is_=assigned_traits)
         return set_params(raw_data, "query_params", root, method,
                           inherit=True, **kw)
 
     def form_params():
         """Set resource's form parameters."""
-        kw = dict(type_=type_(), is_=is_())
+        kw = dict(type_=assigned_type, is_=assigned_traits)
         return set_params(raw_data, "form_params", root, method,
                           inherit=True, **kw)
 
@@ -974,8 +978,8 @@ def create_node(name, raw_data, method, parent, root):
         if method is None:
             return None
         kwargs = dict(root=root,
-                      is_=is_(),
-                      type_=type_(),
+                      is_=assigned_traits,
+                      type_=assigned_type,
                       method=method,
                       data=raw_data)
         objects_to_inherit = [
@@ -997,8 +1001,8 @@ def create_node(name, raw_data, method, parent, root):
             if desc is None:
                 raise AttributeError
         except AttributeError:
-            if type_():
-                assigned = _resource_type_lookup(type_(), root)
+            if res_type:
+                assigned = _resource_type_lookup(assigned_type, root)
                 try:
                     if assigned.method == method:
                         desc = assigned.description.raw
@@ -1025,7 +1029,8 @@ def create_node(name, raw_data, method, parent, root):
 
     def traits():
         """Set resource's assigned trait objects."""
-        assigned = is_()
+        assigned = res_is
+        assigned = _parse_assigned_trait_dicts(assigned)
         if assigned:
             if root.traits:
                 trait_objs = []
@@ -1033,6 +1038,10 @@ def create_node(name, raw_data, method, parent, root):
                     obj = [t for t in root.traits if t.name == trait]
                     if obj:
                         trait_objs.append(obj[0])
+                # such a hack - current implementation of replacing/substituting
+                # `<<parameters>>` would otherwise overwrite the root traits.
+                # damn python object referencing.
+                root.traits = copy.deepcopy(root.traits)
                 return trait_objs or None
 
     # TODO: wow this function sucks.
@@ -1041,21 +1050,20 @@ def create_node(name, raw_data, method, parent, root):
         __get_method = _get(raw_data, method, {})
         assigned_type = _get(__get_method, "type")
         if assigned_type:
-            if not isinstance(assigned_type, dict):
-                return assigned_type
-            return list(iterkeys(assigned_type))[0]  # NOCOV
+            return assigned_type
 
         assigned_type = _get(raw_data, "type")
-        if isinstance(assigned_type, dict):
-            return list(iterkeys(assigned_type))[0]  # NOCOV
         return assigned_type
 
     def resource_type():
         """Set resource's assigned resource type objects."""
-        if type_() and root.resource_types:
-            assigned_name = type_()
+        if res_type and root.resource_types:
             res_types = root.resource_types
-            type_obj = [r for r in res_types if r.name == assigned_name]
+            type_obj = [r for r in res_types if r.name == assigned_type]
+            # such a hack - current implementation of replacing/substituting
+            # `<<parameters>>` would otherwise overwrite the root traits.
+            # damn python object referencing.
+            root.resource_types = copy.deepcopy(root.resource_types)
             if type_obj:
                 return type_obj[0]
 
@@ -1081,6 +1089,16 @@ def create_node(name, raw_data, method, parent, root):
         secured = secured_by()
         return security_schemes(secured, root)
 
+    # removing some repeated function calls from within above closures
+    res_path = path()
+    res_is = is_()
+    res_type = type_()
+    assigned_traits = _parse_assigned_trait_dicts(res_is)
+    assigned_type = res_type
+    if isinstance(assigned_type, dict):
+        assigned_type = list(iterkeys(assigned_type))[0]
+    res_protos = protocols()
+
     node = ResourceNode(
         name=name,
         raw=raw_data,
@@ -1088,9 +1106,9 @@ def create_node(name, raw_data, method, parent, root):
         parent=parent,
         root=root,
         display_name=_get(raw_data, "displayName", name),
-        path=path(),
+        path=res_path,
         absolute_uri=absolute_uri(),
-        protocols=protocols(),
+        protocols=res_protos,
         headers=headers(),
         body=body(),
         responses=responses(),
@@ -1100,15 +1118,19 @@ def create_node(name, raw_data, method, parent, root):
         form_params=form_params(),
         media_type=media_type_(),
         desc=description(),
-        is_=is_(),
+        is_=res_is,
         traits=traits(),
-        type=type_(),
+        type=res_type,
         resource_type=resource_type(),
         secured_by=secured_by(),
         security_schemes=security_schemes_(),
         errors=root.errors
     )
-    if resource_type():
+
+    if res_type:
         # correct inheritance (issue #23)
         node._inherit_type()
+        node._parse_resource_type_parameters()
+    if res_is:
+        node._parse_trait_parameters()
     return node

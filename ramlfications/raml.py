@@ -4,8 +4,10 @@
 from __future__ import absolute_import, division, print_function
 
 import attr
+from six import iteritems, itervalues
 from six.moves import BaseHTTPServer as httpserver  # NOQA
 
+from . import _parameter_tags
 from .parameters import Content
 from .validate import *  # NOQA
 
@@ -19,6 +21,7 @@ METHOD_PROPERTIES = [
     "headers", "body", "responses", "query_params", "form_params"
 ]
 
+RESOURCE_PROPERTIES = METHOD_PROPERTIES + ["base_uri_params", "uri_params"]
 
 @attr.s
 class RootNode(object):
@@ -216,8 +219,88 @@ class ResourceNode(BaseNode):
 
     def _inherit_type(self):
         for p in METHOD_PROPERTIES:
-            inherited_prop = getattr(self.resource_type, p)
-            resource_prop = getattr(self, p)
+            try:
+                inherited_prop = getattr(self.resource_type, p)
+                resource_prop = getattr(self, p)
+            except AttributeError:
+                # this won't be valid when validating
+                return
             if resource_prop and inherited_prop:
                 for r in resource_prop:
                     r._inherit_type_properties(inherited_prop)
+
+    def _parse_trait_parameters(self):
+        to_parse = []
+        for t in self.is_:
+            if isinstance(t, dict):
+                for trait, param in list(iteritems(t)):
+                    # get trait object
+                    trait_obj = [t for t in self.traits if t.name == trait][0]
+                    # get parameter name & value
+                    for k, v in list(iteritems(param)):
+                        to_parse.append(dict(name=k, value=v, obj=trait_obj))
+                    to_parse.append(dict(name="methodName",
+                                         value=self.method,
+                                         obj=trait_obj))
+                    to_parse.append(dict(name="resourcePath",
+                                         value=self.name,
+                                         obj=trait_obj))
+                    to_parse.append(dict(name="resourcePathName",
+                                         value = self.name[1:],
+                                         obj=trait_obj))
+        self._update_parameters(to_parse, RESOURCE_PROPERTIES)
+
+    def _parse_resource_type_parameters(self):
+        to_parse = []
+        if not self.resource_type:
+            return
+        if isinstance(self.type, dict):
+            for key, value in list(iteritems(self.type)):
+                # note: not sure what else 'value' could be...
+                # but just being safe...
+                if isinstance(value, dict):
+                    for param, v in list(iteritems(value)):
+                        to_parse.append(dict(name=param, value=v, obj=self.resource_type))
+
+        to_parse.append(dict(name="resourcePath",
+                             value=self.name,
+                             obj=self.resource_type))
+        to_parse.append(dict(name="resourcePathName",
+                             value = self.name[1:],
+                             obj=self.resource_type))
+        self._update_parameters(to_parse, RESOURCE_PROPERTIES)
+
+    def __replace_str_attr(self, param, new_value, current_str):
+        pattern = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'
+        p = re.compile(pattern.format(param))
+        ret = re.findall(p, current_str)
+        if not ret:
+            return current_str
+        for item in ret:
+            to_replace = "".join(item[0:3]) + item[-1]
+            tag_func = item[3]
+            if tag_func:
+                tag_func = tag_func.strip("!")
+                tag_func = tag_func.strip()
+                func = getattr(_parameter_tags, tag_func)
+                if func:
+                    new_value = func(new_value)
+            current_str = current_str.replace(to_replace, str(new_value), 1)
+
+        return current_str
+
+    def _update_parameters(self, to_parse, properties):
+        for item in to_parse:
+            obj = item.get("obj")
+            name = item.get("name")
+            value = item.get("value")
+
+            for p in properties:
+                props = getattr(obj, p)
+                if props:
+                    for i in props:
+                        i._substitute_parameters(i, name, value)
+            desc = getattr(obj, "desc")
+            if desc:
+                if "resourcePath" in desc or "resourcePathName" in desc:
+                    self.desc = self.__replace_str_attr(name, value, desc)

@@ -731,3 +731,22 @@ def _preserve_uri_order(path, param_objs, config, errors, declared=[]):
         if _param:
             sorted_params.append(_param[0])
     return sorted_params or None
+
+
+#####
+# Traits
+#####
+# 1. clean up traits if an assigned trait is a dictionary
+# 2. parse `<< parameters >>`
+# 3. parameter functions
+def _parse_assigned_trait_dicts(traits):
+    if not traits:
+        return []
+    trait_names = []
+    for t in traits:
+        if isinstance(t, str):
+            trait_names.append(t)
+        elif isinstance(t, dict):
+            name = list(iterkeys(t))[0]
+            trait_names.append(name)
+    return trait_names
