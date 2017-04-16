@@ -38,7 +38,7 @@ The latest stable version can be found on PyPI_, and you can install via pip_::
 
    $ pip install ramlfications
 
-``ramlfications`` runs on Python 2.6, 2.7, and 3.3+, and PyPy. Both Linux and OS X are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
+``ramlfications`` runs on Python 2.7, and 3.4+, and PyPy. Both Linux and OS X are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
 
 Continue onto `usage`_ to get started on using ``ramlfications``.
 
@@ -56,7 +56,7 @@ System requirements:
 
 - C Compiler (gcc/clang/etc.)
 - If on Linux - you'll need to install Python headers (e.g. ``apt-get install python-dev``)
-- Python 2.6, 2.7, 3.3+, or PyPy
+- Python 2.7, 3.4+, or PyPy
 - virtualenv_
 
 Here's how to set your machine up::
@@ -78,10 +78,10 @@ To run all tests::
 
     (env) $ tox
 
-To run a specific test setup (options include: ``py26``, ``py27``, ``py33``, ``py34``, ``py35``, ``pypy``,
+To run a specific test setup (options include: ``py27``, ``py34``, ``py35``, ``py36``, ``pypy``,
 ``flake8``, ``verbose``, ``manifest``, ``docs``, ``setup``, ``setupcov``)::
 
-    (env) $ tox -e py26
+    (env) $ tox -e py36
 
 To run tests without tox::
 
