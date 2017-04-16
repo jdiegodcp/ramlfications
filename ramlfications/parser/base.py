@@ -20,7 +20,6 @@ class BaseParser(object):
         self.config = config
         self.kw = {}
         self.resolve_from = []
-        self.node = {}
 
     def create_node(self):
         raise NotImplemented()
