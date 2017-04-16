@@ -93,7 +93,7 @@ def _handles_file_extra_arg(runner, usage_prefix, cli):
     """
     Assertion helper: Command complains about extraneous file arguments.
     """
-    existing_file = os.path.join(EXAMPLES, "complete-valid-example.raml")
+    existing_file = os.path.join(RAML_08, "complete-valid-example.raml")
     result = runner.invoke(cli, [existing_file, 'extra'])
     expected = usage_prefix + 'Error: Got unexpected extra argument (extra)\n'
     check_result(2, expected, result)
@@ -117,7 +117,6 @@ def test_validate_help(runner, args):
     check_result(0, VALIDATE_HELP, result)
 
 
-@pytest.mark.skip(reason="TODO: investigate")
 def test_validate_bad_file_handling(runner):
     """
     The validate command handles bad file arguments.
@@ -165,7 +164,6 @@ def test_tree_help(runner, args):
     check_result(0, TREE_HELP, result)
 
 
-@pytest.mark.skip(reason="TODO: investigate")
 def test_tree_bad_file_handling(runner):
     """
     The tree command handles bad file arguments.

@@ -33,6 +33,7 @@ class OrderedDict(PythonOrderedDict):
         ret += "}"
         return ret
 
+
 # pattern for `<<parameter>>` substitution
 PATTERN = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'
 
