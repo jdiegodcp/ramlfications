@@ -108,23 +108,23 @@ class RootParser(BaseParser):
         return schemas or None
 
     def create_node_dict(self):
-        node = {}
-        node["raml_obj"] = self.data
-        node["raw"] = self.data
-        node["raml_version"] = self.data._raml_version
-        node["title"] = self.data.get("title", "")
-        node["version"] = self.data.get("version")
-        node["protocols"] = self.protocols()
-        node["base_uri"] = self.base_uri()
-        node["base_uri_params"] = self.base
-        node["uri_params"] = self.create_param_objects("uriParameters")
-        node["media_type"] = self.media_type()
-        node["documentation"] = self.docs()
-        node["schemas"] = self.schemas()
-        node["secured_by"] = self.data.get("securedBy")
-        node["config"] = self.config
-        node["errors"] = self.errors
-        return node
+        return {
+            "raml_obj": self.data,
+            "raw": self.data,
+            "raml_version": self.data._raml_version,
+            "title": self.data.get("title", ""),
+            "version": self.data.get("version"),
+            "protocols": self.protocols(),
+            "base_uri": self.base_uri(),
+            "base_uri_params": self.base,
+            "uri_params": self.create_param_objects("uriParameters"),
+            "media_type": self.media_type(),
+            "documentation": self.docs(),
+            "schemas": self.schemas(),
+            "secured_by": self.data.get("securedBy"),
+            "config": self.config,
+            "errors": self.errors
+        }
 
     def create_node(self):
         self.kw["data"] = self.data
