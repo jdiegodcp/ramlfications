@@ -131,4 +131,4 @@ To use via the command line:
 .. _`default media type`: http://raml.org/spec.html#default-media-type
 .. _IANA: https://www.iana.org/assignments/media-types/media-types.xml
 .. _GitHub: https://github.com/spotify/ramlfications/blob/master/ramlfications/data/supported_mime_types.json
-.. _validate: https://ramlfications.readthedocs.org/en/latest/usage.html#validate
+.. _validate: https://ramlfications.readthedocs.io/en/latest/usage.html#validate

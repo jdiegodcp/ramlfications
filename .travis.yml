@@ -1,5 +1,6 @@
 language: python
-python: 2.7
+# Currently, Travis only makes Python 3.5 available if it's the version declared here.
+python: 3.5
 branches:
   only:
   - master
@@ -8,6 +9,7 @@ env:
 - TOX_ENV=py27
 - TOX_ENV=py33
 - TOX_ENV=py34
+- TOX_ENV=py35
 - TOX_ENV=pypy
 - TOX_ENV=docs
 - TOX_ENV=flake8

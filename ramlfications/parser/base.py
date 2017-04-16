@@ -20,7 +20,6 @@ class BaseParser(object):
         self.config = config
         self.kw = {}
         self.resolve_from = []
-        self.node = {}
 
     def create_node(self):
         raise NotImplemented()
@@ -61,22 +60,22 @@ class BaseNodeParser(BaseParser):
         return node_objects
 
     def create_node_dict(self):
-        return dict(
-            name=self.name,
-            root=self.root,
-            raw=self.kw.get("data", {}),
-            headers=self.create_param_objects("headers"),
-            body=self.create_param_objects("body"),
-            responses=self.create_param_objects("responses"),
-            uri_params=self.create_param_objects("uriParameters"),
-            base_uri_params=self.create_param_objects("baseUriParameters"),
-            query_params=self.create_param_objects("queryParameters"),
-            form_params=self.create_param_objects("formParameters"),
-            media_type=self.resolve_inherited("mediaType"),
-            desc=self.resolve_inherited("description"),
-            protocols=self.protocols(),
-            errors=self.root.errors,
-        )
+        return {
+            "name": self.name,
+            "root": self.root,
+            "raw": self.kw.get("data", {}),
+            "headers": self.create_param_objects("headers"),
+            "body": self.create_param_objects("body"),
+            "responses": self.create_param_objects("responses"),
+            "uri_params": self.create_param_objects("uriParameters"),
+            "base_uri_params": self.create_param_objects("baseUriParameters"),
+            "query_params": self.create_param_objects("queryParameters"),
+            "form_params": self.create_param_objects("formParameters"),
+            "media_type": self.resolve_inherited("mediaType"),
+            "desc": self.resolve_inherited("description"),
+            "protocols": self.protocols(),
+            "errors": self.root.errors,
+        }
 
     def resolve_inherited(self, item):
         return resolve_inherited_scalar(item, self.resolve_from, **self.kw)

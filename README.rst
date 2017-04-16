@@ -78,7 +78,7 @@ To run all tests::
 
     (env) $ tox
 
-To run a specific test setup (options include: ``py26``, ``py27``, ``py33``, ``py34``, ``pypy``,
+To run a specific test setup (options include: ``py26``, ``py27``, ``py33``, ``py34``, ``py35``, ``pypy``,
 ``flake8``, ``verbose``, ``manifest``, ``docs``, ``setup``, ``setupcov``)::
 
     (env) $ tox -e py26
@@ -119,9 +119,9 @@ Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `Tw
 .. _pyenv: https://github.com/yyuu/pyenv
 .. _Sphinx: http://sphinx-doc.org/
 .. _`Read the Docs`: https://github.com/snide/sphinx_rtd_theme
-.. _`Read the Docs site`: https://ramlfications.readthedocs.org
-.. _`usage`: http://ramlfications.readthedocs.org/en/latest/usage.html
-.. _`How to Contribute`: http://ramlfications.readthedocs.org/en/latest/contributing.html
+.. _`Read the Docs site`: https://ramlfications.readthedocs.io
+.. _`usage`: https://ramlfications.readthedocs.io/en/latest/usage.html
+.. _`How to Contribute`: https://ramlfications.readthedocs.io/en/latest/contributing.html
 .. _`webchat`: http://webchat.freenode.net?channels=%23ramlfications&uio=ND10cnVlJjk9dHJ1ZQb4
 .. _`econchick`: https://github.com/econchick
 .. _`Twitter`: https://twitter.com/roguelynn

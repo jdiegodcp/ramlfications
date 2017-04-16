@@ -14,13 +14,20 @@ from .utils import load_file
 from ramlfications import validate as vvalidate
 
 
-@click.group()
+#: Global Click defaults
+CONTEXT_SETTINGS = dict(
+    help_option_names=['-h', '--help'],
+)
+
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 def main():
     """Yet Another RAML Parser"""
     # Needed to collect the validate & tree commands
 
 
-@main.command(help="Validate a RAML file.")
+@main.command(context_settings=CONTEXT_SETTINGS,
+              help="Validate a RAML file.")
 @click.argument("ramlfile", type=click.Path(exists=True))
 @click.option("--config", "-c", type=click.Path(exists=True),
               help="Additionally supported items beyond RAML spec.")
@@ -37,7 +44,8 @@ def validate(ramlfile, config):
         raise SystemExit(1)
 
 
-@main.command(help="Visualize the RAML file as a tree.")
+@main.command(context_settings=CONTEXT_SETTINGS,
+              help="Visualize the RAML file as a tree.")
 @click.argument('ramlfile', type=click.Path(exists=True))
 @click.option("-C", "--color", type=click.Choice(['dark', 'light']),
               default=None,
@@ -62,7 +70,8 @@ def tree(ramlfile, color, output, verbose, validate, config):
         raise SystemExit(1)
 
 
-@main.command(help="Update RAMLfications' supported MIME types from IANA.")
+@main.command(context_settings=CONTEXT_SETTINGS,
+              help="Update RAMLfications' supported MIME types from IANA.")
 def update():
     umt()
 
