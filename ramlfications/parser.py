@@ -1055,7 +1055,7 @@ def create_node(name, raw_data, method, parent, root):
         if type_() and root.resource_types:
             assigned_name = type_()
             res_types = root.resource_types
-            type_obj = [r for r in res_types if r.name == assigned_name]
+            type_obj = [r for r in res_types if r.name == assigned_name and r.method == method]
             if type_obj:
                 return type_obj[0]
 
