@@ -112,7 +112,7 @@ setup(
         "all": ["requests[security]"]
     },
     tests_require=[
-        "pytest", "mock"
+        "pytest", "mock", "pytest-mock", "pytest-localserver"
     ],
     cmdclass={
         "test": PyTest,
