@@ -112,8 +112,11 @@ class BaseNamedParameter(object):
         in RAML file, defaults to ``name``.
     :param list enum: Array of valid parameter values, or ``None``.  \
         Only applies when primative ``type`` is ``string``.
-    :param example: Example value for property, or ``None``.  Type of \
-        ``example`` will match that of ``type``.
+    :param example: Example value for property, or ``None``. \
+        For RAML 0.8, the type of ``example`` will match that of ``type``. \
+        For RAML 1.0, ``example`` will be an ``Example`` object with a \
+        ``value`` attribute whose type matches that of ``type``.
+    :param examples: List of ``Example`` objects (RAML 1.0 only).
     :param int max_length: Parameter value's maximum number of \
         characters, or ``None``. Only applies when primative ``type`` \
         is ``string``.
@@ -144,7 +147,6 @@ class BaseNamedParameter(object):
                            validator=string_type_parameter)
     pattern      = attr.ib(repr=False, default=None,
                            validator=string_type_parameter)
-    repeat       = attr.ib(repr=False, default=False)
 
 
 @attr.s
@@ -183,3 +185,15 @@ class BaseParameter(BaseNamedParameter, BaseParameterAttrs):
         if self.desc:
             return BaseContent(self.desc)
         return None
+
+
+@attr.s
+class BaseParameterRaml08(object):
+    """TODO: writeme"""
+    repeat = attr.ib(repr=False)
+
+
+@attr.s
+class BaseParameterRaml10(object):
+    """TODO: writeme"""
+    examples = attr.ib(repr=False)

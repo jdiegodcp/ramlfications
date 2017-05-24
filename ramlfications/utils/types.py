@@ -8,6 +8,7 @@ from six import iteritems
 from ramlfications.errors import UnknownDataTypeError
 from ramlfications.models import RAML_DATA_TYPES, STANDARD_RAML_TYPES
 from .common import merge_dicts
+from .examples import parse_examples
 from .parser import convert_camel_case
 
 
@@ -63,4 +64,7 @@ def parse_type(name, raw, root):
             data.pop("properties")
         except KeyError:
             pass
+
+    data.update(parse_examples(root.raml_version, data))
+
     return data_type_cls(**data)

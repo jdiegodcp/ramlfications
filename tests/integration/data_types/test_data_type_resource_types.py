@@ -74,8 +74,10 @@ def test_resource_query_params(api):
     not_set = [
         'default', 'desc', 'description', 'enum', 'errors', 'example',
         'max_length', 'maximum', 'min_length', 'minimum', 'pattern',
-        'repeat', 'required'
+        'required'
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(q_param, not_set)
 
     not_set = [
@@ -103,8 +105,9 @@ def test_resource_uri_params(api):
     not_set = [
         'default', 'desc', 'description', 'enum', 'errors', 'example',
         'max_length', 'maximum', 'min_length', 'minimum', 'pattern',
-        'repeat'
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(uri_param, not_set)
 
     not_set = [

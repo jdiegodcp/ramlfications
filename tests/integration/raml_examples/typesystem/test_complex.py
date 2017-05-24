@@ -333,8 +333,9 @@ def test_resource(api):
         'data_type', 'default', 'desc', 'description',
         'enum', 'errors', 'example', 'max_length',
         'maximum', 'min_length', 'minimum', 'pattern',
-        'repeat',
     ]
+    if api.raml_version == "0.8":
+        not_set.append("repeat")
     assert_not_set(u_param, not_set)
     _set = ["config", "raw"]
     for s in _set:
