@@ -155,6 +155,8 @@ class DataTypeParser(BaseNodeParser):
         self.resolve_from = ["method", "resource", "types", "traits", "root"]
 
     def create_node(self, name, raw):
+        if not isinstance(raw, dict):
+            raw = dict(type=raw)
         raw["errors"] = self.root.errors
         raw["config"] = self.root.config
         return parse_type(name, raw, self.root)

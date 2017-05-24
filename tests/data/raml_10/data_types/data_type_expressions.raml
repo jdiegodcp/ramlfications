@@ -1,0 +1,53 @@
+#%RAML 1.0
+
+types:
+  Org:
+    type: object
+    properties:
+      name: string
+      phone_number:
+        type: string
+        pattern: "\\d(-?\\d)+"
+
+  Organization: Org
+
+# TODO: Arrays using [] notations not yet implemented.
+#  Organizations: Organization[]
+
+  Snake:
+    type: object
+    properties:
+      length:
+        type: integer
+        description: Length in centimeters.
+
+  Python:
+    type: Snake
+    properties:
+      kind:
+        type: string
+        enum:
+          - Aspidites
+          - Ball
+          - Burmese
+          - Carpet
+          - Green tree
+          - Liasis
+          - Morelia
+          - Reticulated
+          - Spotted
+
+  Boa:
+    type: Snake
+    properties:
+      kind:
+        type: string
+        enum:
+          - Argentine
+          - Common northern
+          - Ecuadorian
+          - Red-tailed
+          - Tumbes Peru
+
+# TODO: Union types not yet implemented.
+#   FunPet: Python | Boa
