@@ -224,7 +224,16 @@ def _get(data, item, default=None):
     :ret: value for RAML key
     """
     try:
-        return data.get(item, default)
+        if not isinstance(item, list):
+            return data.get(item, default)
+
+        result = None
+        for i in item:
+            result = data.get(i, default)
+            if result is not None:
+                break
+
+        return result
     except AttributeError:
         return default
 
@@ -468,7 +477,12 @@ def _get_trait(attribute, root, is_):
 
 def _get_scheme(item, root):
     schemes = root.raw.get("securitySchemes", [])
-    for s in schemes:
+    for i in schemes:
+        if isinstance(schemes, dict):
+            s = {i:schemes[i]}
+        else:
+            s = i
+
         if isinstance(item, str):
             if item == list(iterkeys(s))[0]:
                 return s
