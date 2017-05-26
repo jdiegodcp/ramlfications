@@ -118,7 +118,11 @@ def create_root(raml, config):
         if not _schemas:
             return None
         schemas = []
-        for schema in _schemas:
+        for i in _schemas:
+            if isinstance(_schemas, dict):
+                schema = {i:_schemas[i]}
+            else:
+                schema = i
             value = load_schema(list(itervalues(schema))[0])
             schemas.append({list(iterkeys(schema))[0]: value})
         return schemas or None
@@ -278,7 +282,12 @@ def create_sec_schemes(raml_data, root):
 
     schemes = _get(raml_data, "securitySchemes", [])
     scheme_objs = []
-    for s in schemes:
+    for i in schemes:
+        if isinstance(schemes, dict):
+            s = {i:schemes[i]}
+        else:
+            s = i
+
         name = list(iterkeys(s))[0]
         data = list(itervalues(s))[0]
         node = initial_wrap(name, data)
@@ -368,7 +377,12 @@ def create_traits(raml_data, root):
 
     traits = _get(raml_data, "traits", [])
     trait_objects = []
-    for trait in traits:
+    for i in traits:
+        if isinstance(traits, dict):
+            trait = {i:traits[i]}
+        else:
+            trait = i
+
         name = list(iterkeys(trait))[0]
         data = list(itervalues(trait))[0]
         trait_objects.append(wrap(name, data))
@@ -792,7 +806,7 @@ def create_node(name, raw_data, method, parent, root):
                 raw={k: v},
                 schema=load_schema(_get(v, "schema")),
                 example=load_schema(_get(v, "example")),
-                form_params=_get(v, "formParameters"),
+                form_params=_get(v, ["formParameters", "properties"]),
                 config=root.config,
                 errors=root.errors
             )
