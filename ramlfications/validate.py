@@ -186,7 +186,12 @@ def assigned_traits(inst, attr, value):
             msg = ("Trying to assign traits that are not defined"
                    "in the root of the API.")
             raise InvalidResourceNodeError(msg)
-        trait_names = [list(iterkeys(i))[0] for i in traits]
+        trait_names = []
+        if isinstance(traits, dict):
+            trait_names = [list(iterkeys({key : value}))[0] for key, value in traits.items()]
+        else:
+            trait_names = [list(iterkeys(i))[0] for i in traits]
+
         if isinstance(value, list):
             for v in value:
                 if isinstance(v, dict):
@@ -295,7 +300,7 @@ def body_form(inst, attr, value):
     """
     form_types = ["multipart/form-data", "application/x-www-form-urlencoded"]
     if inst.mime_type in form_types and not value:
-        msg = "Body with mime_type '{0}' requires formParameters.".format(
+        msg = "Body with mime_type '{0}' requires formParameters (RAML 0.8) or properties (RAML 1.0).".format(
             inst.mime_type)
         raise InvalidParameterError(msg, "body")
 
