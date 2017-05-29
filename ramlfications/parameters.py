@@ -97,8 +97,7 @@ class BaseParameter(object):
     repeat       = attr.ib(repr=False, default=False)
     pattern      = attr.ib(repr=False, default=None,
                            validator=string_type_parameter)
-    enum         = attr.ib(repr=False, default=None,
-                           validator=string_type_parameter)
+    enum         = attr.ib(repr=False, default=None)
     type         = attr.ib(repr=False, default="string")
 
     @property
@@ -228,8 +227,7 @@ class Header(object):
                            validator=attr.validators.instance_of(dict))
     errors       = attr.ib(repr=False)
     type         = attr.ib(repr=False, default="string", validator=header_type)
-    enum         = attr.ib(repr=False, default=None,
-                           validator=string_type_parameter)
+    enum         = attr.ib(repr=False, default=None)
     repeat       = attr.ib(repr=False, default=False)
     pattern      = attr.ib(repr=False, default=None,
                            validator=string_type_parameter)
