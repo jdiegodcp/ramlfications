@@ -1,6 +1,8 @@
+coverage==4.0.1
+tox
 pytest==2.8.2
 pytest-cov==2.2.0
 mock==1.0.1
 pytest-mock==0.4.3
 pytest-localserver==0.3.4
-coverage==4.0.1
+codecov
