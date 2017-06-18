@@ -41,8 +41,8 @@ matrix:
 #
 # See: https://github.com/travis-ci/travis-ci/issues/3239
 #
-before_script:
-  - pip install tox codecov
+before_install:
+  - cat tox-requirements.txt >> requirements.txt
 
 script:
 - tox
