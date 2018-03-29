@@ -42,7 +42,7 @@ class Property(object):
     :param <any> default: default value for this property
     :param <BaseDataType> data_type: type definition of the property
     """
-    required = attr.ib(repr=False, default=False)
+    required = attr.ib(repr=False, default=True)
     default  = attr.ib(repr=False, default=None)
     type     = attr.ib(default='string')
 
