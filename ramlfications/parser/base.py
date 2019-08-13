@@ -22,10 +22,10 @@ class BaseParser(object):
         self.resolve_from = []
 
     def create_node(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def create_node_dict(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def create_param_objects(self, param):
         """
