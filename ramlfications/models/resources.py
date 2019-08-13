@@ -22,8 +22,8 @@ class ResourceNode(BaseNode):
     :param str path: relative path of resource
     :param str absolute_uri: Absolute URI of resource: \
         :py:class:`RootNodeAPI08`'s ``base_uri`` + ``path``
-    :param list is\_: A list of ``str`` s or ``dict`` s of resource-assigned \
-        traits, or ``None``
+    :param list is\_: A list of ``str`` s or ``dict`` s of \  # noqa: W605
+        resource-assigned traits, or ``None``
     :param list traits: A list of assigned :py:class:`TraitNode` objects, \
         or ``None``
     :param str type: The name of the assigned resource type, or ``None``
@@ -36,15 +36,15 @@ class ResourceNode(BaseNode):
     :param list security_schemes: A list of assigned \
         :py:class:`parameters.SecurityScheme` objects, or ``None``.
     """
-    name             = attr.ib(repr=False)
-    parent           = attr.ib(repr=False)
-    method           = attr.ib()
-    display_name     = attr.ib(repr=False)
-    path             = attr.ib()
-    absolute_uri     = attr.ib(repr=False)
-    is_              = attr.ib(repr=False, validator=assigned_traits)
-    traits           = attr.ib(repr=False)
-    type             = attr.ib(repr=False, validator=assigned_res_type)
-    resource_type    = attr.ib(repr=False)
-    secured_by       = attr.ib(repr=False)
+    name = attr.ib(repr=False)
+    parent = attr.ib(repr=False)
+    method = attr.ib()
+    display_name = attr.ib(repr=False)
+    path = attr.ib()
+    absolute_uri = attr.ib(repr=False)
+    is_ = attr.ib(repr=False, validator=assigned_traits)
+    traits = attr.ib(repr=False)
+    type = attr.ib(repr=False, validator=assigned_res_type)
+    resource_type = attr.ib(repr=False)
+    secured_by = attr.ib(repr=False)
     security_schemes = attr.ib(repr=False)

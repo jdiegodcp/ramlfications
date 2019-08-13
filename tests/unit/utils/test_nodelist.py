@@ -30,7 +30,7 @@ def test_nodelist():
     assert linuses.first() == torvalds
     assert (
         linuses.filter_by(first_name='Linus').filter_by(last_name='Torvalds')
-        .one() ==
+        .one() ==  # noqa: W504
         linuses.filter_by(first_name='Linus', last_name='Torvalds').one()
     )
 
@@ -59,7 +59,7 @@ def test_nodelist_dicts():
     assert linuses.first() == torvalds
     assert (
         linuses.filter_by(first_name='Linus').filter_by(last_name='Torvalds')
-        .one() ==
+        .one() ==  # noqa: W504
         linuses.filter_by(first_name='Linus', last_name='Torvalds').one()
     )
 
