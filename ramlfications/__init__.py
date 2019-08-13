@@ -76,7 +76,7 @@ def validate(raml, config_file=None):
     with :py:class:`.loader.RAMLLoader` then validates with \
     :py:func:`.validate.validate_raml`.
 
-    :param str raml: Either string path to the RAML file, a file object, \or
+    :param str raml: Either string path to the RAML file, a file object, or \
         a string representation of RAML.
     :param str config_file:  String path to desired config file, if any.
     :return: No return value if successful
