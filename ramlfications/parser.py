@@ -53,7 +53,7 @@ def parse_raml(loaded_raml, config):
     root.traits = create_traits(root.raml_obj, root)
     root.resource_types = create_resource_types(root.raml_obj, root)
     root.resources = create_resources(root.raml_obj, [], root,
-                                      parent=None)
+                                      parent=root)
 
     if validate:
         attr.validate(root)  # need to validate again for root node
@@ -676,6 +676,7 @@ def create_resources(node, resources, root, parent):
                                         parent=parent,
                                         root=root)
                     resources.append(child)
+                    parent.children.append(child)
             # inherit resource type methods
             elif "type" in list(iterkeys(v)):
                 if hasattr(assigned, "method"):
@@ -688,6 +689,7 @@ def create_resources(node, resources, root, parent):
                                     parent=parent,
                                     root=root)
                 resources.append(child)
+                parent.children.append(child)
             else:
                 child = create_node(name=k,
                                     raw_data=v,
@@ -695,6 +697,7 @@ def create_resources(node, resources, root, parent):
                                     parent=parent,
                                     root=root)
                 resources.append(child)
+                parent.children.append(child)
             resources = create_resources(child.raw, resources, root, child)
     return resources
 
@@ -716,7 +719,7 @@ def create_node(name, raw_data, method, parent, root):
     def path():
         """Set resource's relative URI path."""
         parent_path = ""
-        if parent:
+        if parent and parent != root:
             parent_path = parent.path
         return parent_path + name
 
