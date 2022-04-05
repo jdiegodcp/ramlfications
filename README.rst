@@ -1,10 +1,6 @@
 ramlfications: RAML reference implementation in Python
 ======================================================
 
-.. image:: https://img.shields.io/travis/spotify/ramlfications.svg?style=flat-square
-   :target: https://travis-ci.org/spotify/ramlfications
-   :alt: CI status
-
 .. image:: https://img.shields.io/pypi/v/ramlfications.svg?style=flat-square
    :target: https://pypi.python.org/pypi/ramlfications/
    :alt: Latest Version
@@ -109,11 +105,10 @@ or::
 Then within ``ramlfications/docs/_build`` you can open the index.html page in your browser.
 
 
-Still have issues?
-^^^^^^^^^^^^^^^^^^
-
-Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `Twitter`_.
-"roguelynn" is the maintainer, a.k.a `econchick`_ on GitHub, and based in San Fran.
+Project History
+^^^^^^^^^^^^^^^
+Ramlfications was originally created by Spotify engineer github.com/econchick, but is currently not in use at Spotify. The project was discontinued 
+in April 2022 and transferred to an external maintainer. 
 
 
 .. _pip: https://pip.pypa.io/en/latest/installing.html#install-pip
