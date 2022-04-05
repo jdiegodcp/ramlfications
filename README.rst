@@ -28,6 +28,9 @@ ramlfications: RAML reference implementation in Python
 
 .. begin
 
+Note: this project has been discontinued at Spotify and will be transferred to a new maintainer, we are currently finishing the transfer of this repository and the associated pypi package. 
+
+
 Requirements and Installation
 =============================
 
