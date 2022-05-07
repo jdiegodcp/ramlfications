@@ -1,5 +1,5 @@
 PyYAML==3.11
-markdown2==2.3.0
+markdown2==2.4.0
 click==3.3
 termcolor==1.1.0
 six==1.8.0
