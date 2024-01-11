@@ -65,7 +65,12 @@ def parse(raml, config_file=None):
     :raises InvalidParameterError: Named parameter is invalid \
         according to RAML `specification <http://raml.org/spec.html>`_.
     """
-    loader = load(raml)
+    if "#%RAML" in raml:
+        # This has RAML declaration so it's not a filepath
+        # Load from string
+        loader = loads(raml)
+    else:
+        loader = load(raml)
     config = setup_config(config_file)
     return parse_raml(loader, config)
 

@@ -27,9 +27,16 @@ baseUri: https://api.github.com/
 """
 
 
-def test_parse(raml):
+def test_parse_filepath(raml):
     config = os.path.join(EXAMPLES + "test-config.ini")
     result = parse(raml, config)
+    assert result
+    assert isinstance(result, RootNode)
+
+
+def test_parse_string(raml_string):
+    config = os.path.join(EXAMPLES + "test-config.ini")
+    result = parse(raml_string, config)
     assert result
     assert isinstance(result, RootNode)
 
