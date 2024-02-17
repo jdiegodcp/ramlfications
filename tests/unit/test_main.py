@@ -6,6 +6,7 @@ from textwrap import dedent
 
 from click.testing import CliRunner
 import pytest
+import re
 
 from ramlfications import __main__ as main
 
@@ -25,7 +26,7 @@ Options:
 
 Commands:
   tree      Visualize the RAML file as a tree.
-  update    Update RAMLfications' supported MIME types...
+  update    Update RAMLfications' supported MIME types from IANA.
   validate  Validate a RAML file.
 """
 
@@ -68,12 +69,29 @@ def check_result(exp_code, exp_msg, result):
         assert result.output == exp_msg
 
 
+def add_help_message(input_string):
+    # Regular expression pattern to match the value between ":" and "["
+    pattern = r':\s*(.*?)\s*\['
+    # Using re.search() to find the first occurrence of the pattern
+    match = re.search(pattern, input_string)
+
+    if match:
+        expected = (input_string.rstrip('\n') +
+                    "\nTry '" +
+                    str(match.group(1)) +
+                    " -h' for help.\n\n")
+        return expected
+    else:
+        return "No match found in the provided string."
+
+
 def _handles_no_file(runner, usage_prefix, cli):
     """
     Assertion helper: Command complains about a missing file argument.
     """
     result = runner.invoke(cli, [])
-    expected = usage_prefix + 'Error: Missing argument "ramlfile".\n'
+    expected = (add_help_message(usage_prefix) +
+                "Error: Missing argument 'RAMLFILE'.\n")
     check_result(2, expected, result)
 
 
@@ -83,9 +101,9 @@ def _handles_nonexistent_file(runner, usage_prefix, cli):
     """
     for args in [['nonexistent'], ['nonexistent', 'extra']]:
         result = runner.invoke(cli, args)
-        expected = usage_prefix + (
-            'Error: Invalid value for "ramlfile": '
-            'Path "nonexistent" does not exist.\n')
+        expected = add_help_message(usage_prefix) + (
+            "Error: Invalid value for 'RAMLFILE': "
+            "Path 'nonexistent' does not exist.\n")
         check_result(2, expected, result)
 
 
@@ -95,7 +113,8 @@ def _handles_file_extra_arg(runner, usage_prefix, cli):
     """
     existing_file = os.path.join(RAML_08, "complete-valid-example.raml")
     result = runner.invoke(cli, [existing_file, 'extra'])
-    expected = usage_prefix + 'Error: Got unexpected extra argument (extra)\n'
+    usag_prefix_2 = add_help_message(usage_prefix)
+    expected = usag_prefix_2 + 'Error: Got unexpected extra argument (extra)\n'
     check_result(2, expected, result)
 
 
@@ -216,7 +235,7 @@ def test_update_unexpected_arg(runner):
     The update command rejects unexpected extra arguments.
     """
     result = runner.invoke(main.update, ['surprise'])
-    expected = UPDATE_USAGE + (
+    expected = add_help_message(UPDATE_USAGE) + (
         'Error: Got unexpected extra argument (surprise)\n')
     check_result(2, expected, result)
 

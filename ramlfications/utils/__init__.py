@@ -110,7 +110,7 @@ def download_url(url):
     msg = ("Downloading over HTTPS but can not verify the host's "
            "certificate.  To avoid this in the future, `pip install"
            " \"requests[security]\"`.")
-    log.warn(msg)
+    log.warning(msg)
     return _urllib_download(url)
 
 
@@ -149,7 +149,7 @@ def _parse_xml_data(xml_data):
     if not registries:
         msg = "No registries found to parse."
         raise MediaTypeError(msg)
-    if len(registries) is not 9:
+    if len(registries) != 9:
         msg = ("Expected 9 registries but parsed "
                "{0}".format(len(registries)))
         raise MediaTypeError(msg)

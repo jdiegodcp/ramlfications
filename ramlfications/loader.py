@@ -53,7 +53,7 @@ class RAMLLoader(object):
         base_path = os.path.abspath(base_path)
         if not base_path.endswith("/"):
             base_path = base_path + "/"
-        base_path = "file://" + base_path
+        base_path = "file:" + base_path
 
         with open(jsonfile, "r") as f:
             schema = jsonref.load(f, base_uri=base_path, jsonschema=True)

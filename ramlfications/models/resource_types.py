@@ -22,7 +22,7 @@ class ResourceTypeNode(BaseNode):
         method. Else, resource must implement the method.
     :param str usage: Usage of resource type, or ``None``
     :param bool optional: Inherited if resource defines method.
-    :param list is\_: List of assigned trait names, or ``None``
+    :param list is: List of assigned trait names, or ``None``
     :param list traits: List of assigned :py:class:`TraitNode` objects, \
         or ``None``
     :param str secured_by: List of ``str`` s or ``dict`` s of assigned \

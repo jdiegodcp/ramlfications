@@ -566,6 +566,7 @@ Validate
 Functions are used when instantiating the classes from ``ramlfications.raml``.
 
 .. automodule:: ramlfications.validate
+    :noindex:
     :members:
 
 Tree

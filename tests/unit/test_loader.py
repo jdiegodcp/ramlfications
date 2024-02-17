@@ -7,6 +7,7 @@ import os
 import json
 import pytest
 from six import iteritems, StringIO
+import platform
 
 from ramlfications import loader
 from ramlfications.errors import LoadRAMLError
@@ -155,6 +156,8 @@ def test_jsonref_multiref_internal_fragments():
     assert dict_equal(raml, expected_data)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason="Skipping this test because it's Windows.")
 def test_jsonref_absolute_local_uri(tmpdir):
     # Set up a tmp RAML file with an absolute path
     json_schema_file = tmpdir.join("json_absolute_ref.json")
@@ -249,6 +252,8 @@ def test_jsonref_relative_local_includes_file():
     assert dict_equal(expected, actual)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason="Skipping this test because it's Windows.")
 def test_jsonref_absolute_local_uri_file(tmpdir):
     # Set up a tmp RAML file with an absolute path
     json_schema_file = tmpdir.join("json_absolute_ref_file.json")

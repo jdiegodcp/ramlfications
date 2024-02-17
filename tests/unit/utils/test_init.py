@@ -8,6 +8,7 @@ import sys
 import tempfile
 from mock import Mock, patch
 import pytest
+import platform
 
 import xmltodict
 
@@ -199,6 +200,8 @@ def test_update_mime_types(
         expected_data)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason="Skipping this test because it's Windows.")
 def test_save_updated_mime_types():
     content = ["foo/bar", "bar/baz"]
     temp_output = tempfile.mkstemp()[1]

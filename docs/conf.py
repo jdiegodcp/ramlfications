@@ -57,7 +57,7 @@ def find_latest_release_date():
     date_match = date_regex.findall(changelog)[0]
     if date_match:
         release_date = datetime.datetime.strptime(date_match, "%Y-%m-%d")
-        fmt_release_date = release_date.strftime("%b %-d, %Y")
+        fmt_release_date = release_date.strftime("%b %e, %Y")
         return fmt_release_date
     raise RuntimeError("Unable to find latest release date in changelog.rst")
 

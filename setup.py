@@ -70,7 +70,18 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import pytest
-        errno = pytest.main(self.pytest_args + ' tests')
+        pog = []
+        if not isinstance(self.pytest_args, list):
+            # Perform the action when the variable is not a list
+            print("The variable is not a list. Performing the desired action.")
+            pog.append('tests')
+            # Add your code here to perform the desired action
+        else:
+            # The variable is a list
+            print("The variable is a list. Skipping the action.")
+            pog = self.pytest_args + ' tests'
+
+        errno = pytest.main(pog)
         sys.exit(errno)
 
 setup(
@@ -84,6 +95,10 @@ setup(
     author_email=find_meta("email"),
     keywords=["raml", "rest"],
     packages=find_packages(exclude=["tests*"]),
+    setup_requires=[
+        'setuptools>=69.1.0',
+        'wheel',
+    ],
     entry_points={
         'console_scripts': [
             'ramlfications = ramlfications.__main__:main'
@@ -101,7 +116,9 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",

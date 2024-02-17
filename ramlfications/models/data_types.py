@@ -10,6 +10,7 @@ from six import iteritems
 
 from ramlfications.utils.common import OrderedDict
 from ramlfications.validate import *  # NOQA
+from ramlfications.validate import defined_schema
 
 from .base import BaseContent
 
@@ -21,6 +22,13 @@ RAML_MAX_INT = 2147483647
 # TO CLEAN ->
 RAML_DATA_TYPES = {}
 STANDARD_RAML_TYPES = {}
+
+
+def convert_to_int(value):
+    try:
+        return int(value)
+    except ValueError:
+        return RAML_MAX_INT
 
 
 def type_class(type_name):
@@ -51,16 +59,16 @@ def create_property(property_def):
     # we remove the attributes for the property in order to keep
     # only attributes needed for the type definition
     if isinstance(property_def, dict):
-        default = property_def.get('default', None)
         required = property_def.get('required', False)
+        default = property_def.get('default', None)
         type_ = property_def.get('type', 'string')
     elif isinstance(property_def, str):
-        default = None
         required = False
+        default = None
         type_ = property_def
 
-    return Property(default=default,
-                    required=required,
+    return Property(required=required,
+                    default=default,
                     type=type_)
 
 
@@ -75,6 +83,17 @@ def parse_properties(properties):
 
 # <- TO CLEAN
 ####
+@attr.s
+class DataTypeAttrs(object):
+    """
+    Mixin to add properties to BaseDataType that is not a part of the RAML
+    spec.
+    """
+    raw          = attr.ib(repr=False, cmp=False)
+    raml_version = attr.ib(repr=False)
+    root         = attr.ib(repr=False)
+    errors       = attr.ib(repr=False, cmp=False)
+    config       = attr.ib(repr=False)
 
 
 @attr.s
@@ -92,7 +111,7 @@ class RAMLDataType(object):
     display_name = attr.ib(repr=False, default=None)
     annotation   = attr.ib(repr=False, default=None)
     default      = attr.ib(repr=False, default=None)
-    description  = attr.ib(repr=False, default="", convert=BaseContent)
+    description  = attr.ib(repr=False, converter=BaseContent, default="")
     example      = attr.ib(repr=False, default=None)
     examples     = attr.ib(repr=False, default=None)
     # TODO: how to validate? See:
@@ -101,26 +120,13 @@ class RAMLDataType(object):
     # TODO: Validation: if type is defined, schema can not be, and vice versa
     type         = attr.ib(repr=False, default=None)
     # TODO: how to implement deprecation warning
-    schema       = attr.ib(repr=False, default=None, validator=defined_schema)
+    schema       = attr.ib(repr=False, validator=defined_schema, default=None)
     usage        = attr.ib(repr=False, default=None)
     xml          = attr.ib(repr=False, default=None)
 
 
 @attr.s
-class DataTypeAttrs(object):
-    """
-    Mixin to add properties to BaseDataType that is not a part of the RAML
-    spec.
-    """
-    raw          = attr.ib(repr=False, cmp=False)
-    raml_version = attr.ib(repr=False)
-    root         = attr.ib(repr=False)
-    errors       = attr.ib(repr=False, cmp=False)
-    config       = attr.ib(repr=False)
-
-
-@attr.s
-class BaseDataType(RAMLDataType, DataTypeAttrs):
+class BaseDataType(DataTypeAttrs, RAMLDataType):
     """
     Base class for all data types.
     """
@@ -133,14 +139,14 @@ class ObjectDataType(BaseDataType):
     Type class for RAML object data types.
     """
     properties            = attr.ib(repr=False, default=None,
-                                    convert=parse_properties)
+                                    converter=parse_properties)
     min_properties        = attr.ib(repr=False, default=0)
     max_properties        = attr.ib(repr=False, default=None)
     additional_properties = attr.ib(repr=False, default=None)
     discriminator         = attr.ib(repr=False, default=None)
     # TODO: validate based on if discriminator is set in type declaration
-    discriminator_value   = attr.ib(repr=False, default=None,
-                                    validator=discriminator_value)
+    discriminator_value   = attr.ib(repr=False, validator=discriminator_value,
+                                    default=None)
 
 
 @attr.s
@@ -150,8 +156,8 @@ class ArrayDataType(BaseDataType):
     """
     items        = attr.ib(repr=False, default=None)
     unique_items = attr.ib(repr=False, default=False)
-    min_items    = attr.ib(repr=False, default=0, convert=int)
-    max_items    = attr.ib(repr=False, default=RAML_MAX_INT, convert=int)
+    min_items    = attr.ib(repr=False, converter=int, default=0)
+    max_items    = attr.ib(repr=False, converter=int, default=RAML_MAX_INT)
 
 
 @attr.s
@@ -181,11 +187,11 @@ class StringDataType(ScalarDataType):
     """
     Type class for RAML string data types.
     """
-    pattern    = attr.ib(repr=False, default=None, convert=create_re)
+    pattern    = attr.ib(repr=False, converter=create_re, default=None)
     # TODO: validate if int & if positive
-    min_length = attr.ib(repr=False, default=0, convert=int)
+    min_length = attr.ib(repr=False, converter=int, default=0)
     # TODO: validate if int and if positive
-    max_length = attr.ib(repr=False, default=RAML_MAX_INT, convert=int)
+    max_length = attr.ib(repr=False, converter=int, default=RAML_MAX_INT)
 
 
 @type_class("number")
@@ -240,9 +246,9 @@ class FileDataType(BaseScalarDataType):
     # TODO: validate on valid content-type strings
     file_type = attr.ib(repr=False, default=None)
     # TODO: validate if int & if positive
-    min_length = attr.ib(repr=False, default=0, convert=int)
+    min_length = attr.ib(repr=False, default=0, converter=int)
     # TODO: validate if int and if positive
-    max_length = attr.ib(repr=False, default=RAML_MAX_INT, convert=int)
+    max_length = attr.ib(repr=False, default=RAML_MAX_INT, converter=int)
 
 
 @attr.s

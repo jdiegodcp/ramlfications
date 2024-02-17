@@ -167,7 +167,7 @@ class BaseParameterAttrs(object):
 
 
 @attr.s
-class BaseParameter(BaseNamedParameter, BaseParameterAttrs):
+class BaseParameter(BaseParameterAttrs, BaseNamedParameter):
     """
     Base parameter with named params plus additional attributes.
     Extends :py:class:`.BaseNamedParameter` with raw dict data from \
