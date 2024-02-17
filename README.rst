@@ -38,7 +38,7 @@ The latest stable version can be found on PyPI_, and you can install via pip_::
 
    $ pip install ramlfications
 
-``ramlfications`` runs on Python 2.7, and 3.4+, and PyPy. Both Linux and OS X are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
+``ramlfications`` runs on Python 2.7, and 3.4+, and PyPy. Linux , OS X and Windows are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
 
 Continue onto `usage`_ to get started on using ``ramlfications``.
 
