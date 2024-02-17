@@ -6,3 +6,4 @@ six==1.16.0
 attrs==23.2.0
 xmltodict==0.13.0
 jsonref==1.1.0
+inflect==7.0.0
