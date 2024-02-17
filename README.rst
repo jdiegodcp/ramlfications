@@ -61,7 +61,7 @@ System requirements:
 
 Here's how to set your machine up::
 
-    $ git clone git@github.com:spotify/ramlfications
+    $ git clone git@github.com:jdiegodcp/ramlfications
     $ cd ramlfications
     $ virtualenv env
     $ source env/bin/activate
