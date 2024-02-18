@@ -72,13 +72,8 @@ class PyTest(TestCommand):
         import pytest
         pog = []
         if not isinstance(self.pytest_args, list):
-            # Perform the action when the variable is not a list
-            print("The variable is not a list. Performing the desired action.")
             pog.append('tests')
-            # Add your code here to perform the desired action
         else:
-            # The variable is a list
-            print("The variable is a list. Skipping the action.")
             pog = self.pytest_args + ' tests'
 
         errno = pytest.main(pog)
