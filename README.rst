@@ -1,10 +1,6 @@
 ramlfications: RAML reference implementation in Python
 ======================================================
 
-.. image:: https://img.shields.io/travis/spotify/ramlfications.svg?style=flat-square
-   :target: https://travis-ci.org/spotify/ramlfications
-   :alt: CI status
-
 .. image:: https://img.shields.io/pypi/v/ramlfications.svg?style=flat-square
    :target: https://pypi.python.org/pypi/ramlfications/
    :alt: Latest Version
@@ -27,6 +23,9 @@ ramlfications: RAML reference implementation in Python
 
 
 .. begin
+
+Note: this project has been discontinued at Spotify and will be transferred to a new maintainer, we are currently finishing the transfer of this repository and the associated pypi package. 
+
 
 Requirements and Installation
 =============================
@@ -104,6 +103,13 @@ or::
     (env) $ sphinx-build -b docs/ docs/_build
 
 Then within ``ramlfications/docs/_build`` you can open the index.html page in your browser.
+
+
+Project History
+^^^^^^^^^^^^^^^
+
+Ramlfications was originally created by Spotify engineer github.com/econchick, but is currently not in use at Spotify. The project was discontinued 
+in April 2022 and transferred to an external maintainer. 
 
 
 Still have issues?

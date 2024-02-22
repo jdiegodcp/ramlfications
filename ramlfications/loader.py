@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
+<<<<<<< HEAD
 from __future__ import absolute_import, division, print_function
+=======
+try:
+    from collections import OrderedDict
+except ImportError:  # pragma: no cover
+    from ordereddict import OrderedDict
+>>>>>>> master
 
 import os
 import jsonref
@@ -19,6 +26,9 @@ __all__ = ["RAMLLoader"]
 RAMLHEADER = "#%RAML "
 SUPPORTED_FRAGMENT_TYPES = ("DataType",)
 RAML10_FRAGMENT_TYPES = ("DataType", "AnnotationType")
+
+
+__all__ = ["RAMLLoader"]
 
 
 class RAMLLoader(object):
