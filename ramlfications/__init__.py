@@ -6,11 +6,11 @@ from __future__ import absolute_import, division, print_function
 from ramlfications.config import setup_config
 from ramlfications.parser import parse_raml
 
-from ramlfications._helpers import load_file, load_string
+from ramlfications.utils import load_file, load_string
 
 
 __author__ = "Lynn Root"
-__version__ = "0.1.9"
+__version__ = "0.2.0"
 __license__ = "Apache 2.0"
 
 __email__ = "lynn@spotify.com"
@@ -77,7 +77,7 @@ def validate(raml, config_file=None):
     with :py:class:`.loader.RAMLLoader` then validates with \
     :py:func:`.validate.validate_raml`.
 
-    :param str raml: Either string path to the RAML file, a file object, \or
+    :param str raml: Either string path to the RAML file, a file object, or
         a string representation of RAML.
     :param str config_file:  String path to desired config file, if any.
     :return: No return value if successful

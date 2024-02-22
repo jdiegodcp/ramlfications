@@ -19,6 +19,7 @@ def _load_media_types():
     with open(media_types_file, "r") as f:
         return json.load(f)
 
+
 HTTP_METHODS = [
     "get", "post", "put", "delete", "patch", "head",
     "options", "trace", "connect"

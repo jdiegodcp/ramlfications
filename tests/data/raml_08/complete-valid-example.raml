@@ -1,0 +1,625 @@
+#%RAML 0.8
+title: Example Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://{subdomain}.example.com/{version}/{communityPath}
+baseUriParameters:
+  subdomain:
+    description: subdomain of API
+    default: api
+uriParameters:
+ communityPath:
+   displayName: Community Path
+   type: string
+   pattern: ^[a-zA-Z0-9][-a-zA-Z0-9]*$
+   minLength: 1
+mediaType: application/json
+documentation:
+  - title: Example Web API Docs
+    content: |
+      Welcome to the _Example Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+schemas:
+  - Thingy: !include includes/post-thingy-schema.json
+  - ThingyXsd: !include includes/thingy.xsd
+  - ThingyListXsd: !include includes/thingy-list.xsd
+resourceTypes:
+  - base:
+      uriParameters:
+        mediaTypeExtension:
+          enum: [ .json ]
+          description: Use .json to specify application/json media type.
+      get?: &common
+        headers:
+          Accept:
+            description: Is used to set specified media type.
+            type: string
+        body:
+          application/json:
+            schema: {"name": "string"}
+            example: {"name": "Foo Bar"}
+        responses:
+          403:
+            description: |
+              API rate limit exceeded.
+            headers:
+              X-waiting-period:
+                description: |
+                  The number of seconds to wait before you can attempt to make a request again.
+                type: integer
+                required: true
+                minimum: 1
+                maximum: 3600
+                example: 34
+            body:
+              application/json:
+                schema: {"name": "string"}
+                example: {"name": "Foo Bar"}
+      post?: *common
+  - collection:
+      description: A description of the collection resource type
+      post?:
+        formParameters:
+          ids:
+            displayName: IDs
+            description: A list of IDs
+  - item:
+      type: base
+      get?:
+        protocols: ["HTTP"]
+        headers:
+          X-another-header:
+            description: Another header
+  - queryParamType:
+      get?:
+        queryParameters:
+          ids:
+            displayName: Some sort of IDs
+            type: string
+            description: A comma-separated list of IDs
+            required: true
+  - formParamType:
+      post?:
+        formParameters:
+          aFormParam:
+            displayName: Some sort of Form Parameter
+            type: string
+            description: An uncreative form parameter
+            required: true
+  - baseUriType:
+      get?:
+        baseUriParameters:
+          subdomain:
+            description: subdomain for the baseUriType resource type
+            default: fooBar
+  - anotherExample:
+      description: Another Resource Type example
+      usage: Some sort of usage description
+      mediaType: text/xml
+      get:
+        is: [ filterable ]
+        securedBy: [ oauth_2_0 ]
+  - inheritBaseExample:
+      type: base
+      usage: Some sort of usage text
+      get?:
+        displayName: inherited example
+        body:
+          application/x-www-form-urlencoded:
+            formParameters:
+              foo:
+                displayName: Foo
+                description: some foo bar
+        responses:
+          200:
+            description: A 200 response
+            headers:
+              X-another-header:
+                description: a 200 header
+                type: string
+                required: true
+                example: f00bAr
+            body:
+              application/json:
+                schema: {"name": "an schema body"}
+                example: {"name": "an example body"}
+          500:
+            description: A 500 response
+            headers:
+              X-foo-bar:
+                description: The foo bar header
+                type: string
+                required: true
+                example: fuuuuuu
+  - protocolExampleType:
+      protocols: ["HTTP"]
+      description: A resource type with a protocol definition
+      get?:
+        description: dummy method
+  - parameterType:
+      get:
+        queryParameters:
+          <<queryParamName>>:
+            description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+          <<fallbackParamName>>:
+            description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+securitySchemes:
+  - oauth_2_0:
+      description: |
+          Example API supports OAuth 2.0 for authenticating all API requests.
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Used to send a valid OAuth 2 access token.
+            type: string
+          X-Foo-Header:
+            description: a foo header
+            type: string
+        responses:
+          401:
+            description: |
+              Bad or expired token. This can happen if the user revoked a token or
+              the access token has expired. You should re-authenticate the user.
+          403:
+            description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+      settings:
+        authorizationUri: https://accounts.example.com/authorize
+        accessTokenUri: https://accounts.example.com/api/token
+        authorizationGrants: [ code, token ]
+        scopes:
+          - "user-public-profile"
+          - "user-email"
+          - "user-activity"
+          - "nsa-level-privacy"
+  - custom_auth:
+      description: custom auth for testing
+      type: Custom Auth
+      describedBy:
+        documentation:
+          - title: foo docs
+            content: foo content
+        mediaType: application/x-www-form-urlencode
+        usage: Some usage description
+        protocols: [HTTPS]
+        queryParameters:
+          fooQParam:
+            description: A foo Query parameter
+            type: string
+        uriParameters:
+          subDomain:
+            description: subdomain of auth
+            default: fooauth
+        formParameters:
+          fooFormParam:
+            description: A foo form parameter
+            type: string
+        body:
+          application/x-www-form-urlencoded:
+            formParameters:
+              anotherFormParam:
+                description: another form parameter
+      settings:
+        foo: bar
+  - no_desc:
+      settings:
+        foo: bar
+traits:
+  - filterable:
+      usage: Some description about using filterable
+      queryParameters:
+        fields:
+          description: A comma-separated list of fields to filter query
+          type: string
+          example: gizmos.items(added_by.id,gizmo(name,href,widget(name,href)))
+          displayName: Fields
+      headers:
+        X-example-header:
+          description: An example of a trait header
+      body:
+        application/json:
+          schema: {"name": "string"}
+          example: {"name": "example body for trait"}
+      responses:
+        200:
+          description: Yay filterable!
+  - paged:
+      description: A description of the paged trait
+      mediaType: application/xml
+      queryParameters:
+        limit:
+          displayName: Limit
+          description: The maximum number of gizmo objects to return
+          type: integer
+          example: 10
+          minimum: 0
+          default: 20
+          maximum: 50
+        offset:
+          displayName: Offset
+          description: The index of the first gizmo to return
+          type: integer
+          example: 5
+          default: 0
+  - formTrait:
+      description: A description of a trait with form parameters
+      mediaType: application/x-www-form-urlencoded
+      formParameters:
+        foo:
+          displayName: Foo
+          description: The Foo Form Field
+          type: string
+          minLength: 5
+          maxLength: 50
+          default: bar
+  - baseUriTrait:
+      description: A description of a trait with base URI parameters
+      baseUriParameters:
+        communityPath:
+          displayName: Community Path trait
+          description: The community path base URI trait
+          type: string
+          example: baz-community
+  - uriParamsTrait:
+      description: A description of a trait with URI parameters
+      uriParameters:
+        communityPath:
+          displayName: Community Path trait
+          description: The community path URI params trait
+          type: string
+          example: baz-community
+  - protocolTrait:
+      description: A trait to assign a protocol
+      protocols: ["HTTP"]
+  - parameterTrait:
+      queryParameters:
+        <<tokenName>>:
+          description: A valid <<tokenName>> is required
+/widgets:
+  displayName: several-widgets
+  get:
+    mediaType: application/xml
+    description: |
+      [Get Several Widgets](https://developer.example.com/widgets/)
+    headers:
+      X-bogus-header:
+        description: just an extra header for funsies
+    queryParameters:
+      ids:
+        displayName: Example Widget IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: "widget1,widget2,widget3"
+  /{id}:
+    displayName: widget
+    mediaType: application/xml
+    uriParameters:
+      id:
+        displayName: Example Widget ID
+        type: string
+        description: The Example ID for the widget
+        example: widget2
+    get:
+      type: protocolExampleType
+      description: |
+        [Get a Widget](https://developer.example.com/widgets/)
+    /gizmos:
+      displayName: widget-gizmos
+      type: baseUriType
+      get:
+        is: [ paged ]
+        description: |
+          [Get a Widget's Gizmos](https://developer.example.com/widget-gizmos/)
+/thingys:
+  displayName: several-thingys
+  get:
+    type: anotherExample
+    description: |
+      [Get Several Thingys](https://developer.example.com/thingys/)
+    queryParameters:
+      ids:
+        displayName: Example Thingy IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: 'thingy1,thingy2,thingy3'
+  /{id}:
+    displayName: thingy
+    uriParameters:
+      id:
+        displayName: Example Thingy ID
+        type: string
+        description: The Example ID for the thingy
+        example: thingy1
+        required: true
+    get:
+      description: |
+        [Get a Thingy](https://developer.example.com/thingys/)
+    /top-doodads:
+      displayName: thingy-top-doodads
+      get:
+        description: |
+          [Get a Thingy's Top Doodads](https://developer.example.com/thingys/)
+        queryParameters:
+          country:
+            displayName: Country
+            description: The country (an ISO 3166-1 alpha-2 country code)
+            type: string
+            example: ES
+            required: true
+    /related-thingys:
+      displayName: thingy-related-thingys
+      get:
+        description: |
+          [Get a Thingy's Related Thingys](https://developer.example.com/thingys/)
+    /doodads:
+      displayName: thingy-doodads
+      get:
+        is: [ paged ]
+        description: |
+          [Get a Thingy's Doodads](https://developer.example.com/thingys/)
+        queryParameters:
+          thingy_type:
+            displayName: Thingy Type
+            description: Filter by thingy types
+            type: string
+            enum: ["do_your_thang", "thingamajig", "thingamabob"]
+            required: false
+            example: do_your_thang
+          country:
+            displayName: Country
+            description: The country (an ISO 3166-1 alpha-2 country code)
+            type: string
+            example: ES
+            required: false
+/gizmos:
+  displayName: several-gizmos
+  get:
+    description: |
+      [Get Several Gizmos](https://developer.example.com/gizmos/)
+    queryParameters:
+      ids:
+        displayName: Example Gizmo IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: 'gizmo1,gizmo2,gizmo3'
+  /{id}:
+    displayName: gizmo
+    type: baseUriType
+    uriParameters:
+      id:
+        type: string
+        displayName: Example Gizmo ID
+        example: gizmo3
+    get:
+      description: |
+        [Get a Gizmo](https://developer.example.com/gizmos/)
+/search:
+  displayName: search-item
+  type: inheritBaseExample
+  get:
+    is: [ paged ]
+    description: |
+      [Search for a Whachamacallit](https://developer.example.com/searh/)
+    queryParameters:
+      q:
+        displayName: Query
+        type: string
+        description: "The search query's keywords"
+        example: doohicky
+        required: true
+      type:
+        displayName: Item Type
+        description: A comma-separated list of item types to search across.
+        type: string
+        example: gizmo
+        enum: ["widget", "gizmo", "thingy"]
+        required: true
+    responses:
+      200:
+        headers:
+          X-search-header:
+            description: the search header
+        body:
+          application/json:
+            schema: {"name": "the search body"}
+            example: {"name": "the example search body"}
+          application/xml: !!null
+/me:
+  displayName: current-user
+  securedBy: [ oauth_2_0 ]
+  type: queryParamType
+  get:
+    is: [ protocolTrait ]
+    description: |
+      [Get Current User's Profile](https://developer.example.com/get-current-users-profile/)
+  /widgets:
+    displayName: current-user-saved-widgets
+    type: collection
+    get:
+      is: [ paged ]
+      description: |
+        [Get Current User's Saved Widgets](https://developer.example.com/get-users-saved-widgets/)
+      securedBy: [ oauth_2_0: {scopes: ['user-library-read']}]
+    put:
+      description: |
+        [Save Widgets for Current User](https://developer.example.com/save-widgets-user/)
+      securedBy: [ oauth_2_0: {scopes: ['user-library-modify']}]
+      protocols: ["HTTP"]
+      queryParameters:
+        ids:
+          displayName: Widget IDs
+          type: string
+          description: A comma-separated list of IDs
+          required: true
+          example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+    delete:
+      description: |
+        [Remove Widgets for Current User](https://developer.example.com/remove-widgets-user/)
+      securedBy: [ oauth_2_0: {scopes: ['user-library-modify']}]
+      queryParameters:
+        ids:
+          displayName: Widget IDs
+          type: string
+          description: A comma-separated list of IDs
+          required: true
+          example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+    /contains:
+      displayName: current-user-contains-saved-widgets
+      get:
+        description: |
+          [Check Current User's Saved Widgets](https://developer.example.com/check-users-saved-widgets/)
+        securedBy: [ oauth_2_0: {scopes: ['user-library-read']}]
+        queryParameters:
+          ids:
+            displayName: Widget IDs
+            type: string
+            description: A comma-separated list of IDs
+            required: true
+            example: '7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B'
+/users/{user_id}:
+  baseUriParameters:
+    subdomain:
+      description: a test base URI parameter for resource-level
+      default: barFoo
+  displayName: users-profile
+  protocols: [ "HTTP" ]
+  uriParameters:
+    user_id:
+      displayName: User ID
+      type: string
+      description: The user's Example Site user ID.
+      example: smedjan
+  get:
+    description: |
+      [Get a User's Profile](https://developer.example.com/get-users-profile/)
+/users/{user_id}/thingys:
+  type: collection
+  uriParameters:
+    user_id:
+      displayName: User ID
+      type: string
+      description: The user's Example Site user ID.
+      example: smedjan
+  displayName: thingys
+  get:
+    is: [ paged ]
+    description: |
+      [Get a List of a User's Thingys](https://developer.example.com/get-list-users-thingys/)
+    securedBy: [ oauth_2_0: {scopes: ['thingy-read-private']}]
+    responses:
+      200:
+        body:
+          application/json:
+            schema: |
+              {
+                "$schema": "http://json-schema.org/draft-03/schema",
+                "type": "array",
+                "items": {
+                  "$ref": "schemas/thingy.json"
+                }
+              }
+          text/xml:
+            schema: ThingyListXsd
+            example: |
+              <thingies>
+                <thingy><name>Foo</name></thingy>
+                <thingy><name>Bar</name></thingy>
+              </thingies>
+  post:
+    description: |
+      [Create a Thingy](https://developer.example.com/create-thingy/)
+    securedBy: [ oauth_2_0: {scopes: ['thingy-modify-public', 'thingy-modify-private']}]
+    body:
+      application/json:
+        schema: !include includes/post-thingy-schema.json
+        example: !include includes/post-thingy-example.json
+    responses:
+      201:
+        headers:
+          X-another-bogus-header:
+            description: A bogus header
+        body:
+          schema: Thingy
+  /{thingy_id}:
+    type: item
+    displayName: thingy
+    uriParameters:
+      thingy_id:
+        displayName: Thingy ID
+        description: The Example thingy ID.
+        example: 3dEjWfgB5jC6zn6tLoy9yy
+        type: string
+        required: true
+    get:
+      description: |
+        [Get a Thingy](https://developer.example.com/get-thingy/)
+      securedBy: [ oauth_2_0: { scopes: ['thingy-read-private']}]
+      is: [ filterable ]
+      responses:
+        200:
+          body:
+            application/json:
+              schema: Thingy
+    put:
+      description: |
+        [Change a Thingy's Details](https://developer.example.com/change-thingy-details/)
+      securedBy: [ oauth_2_0: { scopes: ['thingy-modify-public', 'thingy-modify-private']}]
+      body:
+        application/json:
+          schema: !include includes/post-thingy-schema.json
+          example: !include includes/post-thingy-example.json
+    /gizmos:
+      type: collection
+      displayName: thingy-gizmos
+      get:
+        description: |
+          [Get a Thingy's Gizmos](https://developer.example.com/get-thingys-gizmos/)
+        securedBy: [ oauth_2_0: { scopes: ['thingys-read-private']}]
+        is: [ filterable, paged ]
+      post:
+        description: |
+          [Add Gizmos to a Thingy](https://developer.example.com/add-gizmos-to-thingy/)
+        securedBy: [ oauth_2_0: { scopes: ['thingy-modify-public', 'thingy-modify-private']}]
+        body:
+          application/json:
+      put:
+        description: |
+          [Replace a Thingy's gizmos](https://developer.example.com/replace-thingys-gizmos/)
+        securedBy: [ oauth_2_0: { scopes: ['thingy-modify-public', 'thingy-modify-private']}]
+        body:
+          application/json:
+      delete:
+        description: |
+          [Remove Gizmos from a Thingy](https://developer.example.com/web-api/remove-gizmos-thingy/)
+        securedBy: [ oauth_2_0: { scopes: ['thingy-modify-public', 'thingy-modify-private']}]
+        body:
+          application/json:
+/form_parameters:
+  description: A example resource with form parameters
+  displayName: formParamResource
+  post:
+    formParameters:
+      foo:
+        description: Post some foo
+        type: string
+        required: true
+        minLength: 10
+        maxLength: 100
+      bar:
+        description: Post some bar
+        type: string
+        required: false
+        minLength: 15
+        maxLength: 150
+        default: aPostedBarExample
+/no_method_properties:
+  /child:
+    description: Child of "/no_method_properties"
+    get:
+

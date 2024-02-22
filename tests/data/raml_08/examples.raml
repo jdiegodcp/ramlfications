@@ -1,0 +1,77 @@
+#%RAML 0.8
+
+title: Example
+baseUri: https://example.test/{param}/
+
+baseUriParameters:
+  param:
+    type: string
+    description: account name
+    example: splat
+
+mediaType: application/json
+protocols: [ HTTPS ]
+
+/with_example_and_examples:
+  post:
+    queryParameters:
+      cached:
+        type: boolean
+        example: false
+        description: Allow cached data?
+    body:
+      application/json:
+        formParameters:
+          key:
+            type: string
+            example: This is the example.
+
+            # examples is ignored; may produce an lint warning later.
+            examples:
+              simple: "abc"
+              fancy: "two words"
+              excessive:
+                displayName: "Serious Overkill"
+                description: |
+                  There's way too much text here.
+                value: "This is a long example."
+                strict: false
+
+          # This really isn't supported yet.
+          multityped:
+            - type: string
+              description: Long explanation.
+              example: Pile o text.
+            - type: file
+              description: File upload.
+
+/with_uri_param/{id}:
+  uriParameters:
+    id:
+      example: s234gs9
+
+/with_example_structured:
+  post:
+    body:
+      application/json:
+        formParameters:
+          key:
+            type: object
+            example:
+              value: This whole map is a value.
+
+/with_example_unstructured:
+  post:
+    body:
+      application/json:
+        formParameters:
+          key:
+            type: string
+            example: This is a value.
+
+/with_header:
+  displayName: Silly, silly example.
+  headers:
+    x-extra-fluff:
+      type: boolean
+      example: true

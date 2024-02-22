@@ -1,0 +1,99 @@
+#%RAML 0.8
+title: Example Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+documentation:
+  - title: Example Web API Docs
+    content: |
+      Welcome to the _Example Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+traits:
+  - filterable:
+      usage: Some description about using filterable
+      queryParameters:
+        fields:
+          description: A comma-separated list of fields to filter query
+          type: string
+          example: gizmos.items(added_by.id,gizmo(name,href,widget(name,href)))
+          displayName: Fields
+      headers:
+        X-example-header:
+          description: An example of a trait header
+      body:
+        application/json:
+          schema: {"name": "string"}
+          example: {"name": "example body for trait"}
+      responses:
+        200:
+          description: Yay filterable!
+  - queryParamsTrait:
+      description: A description of the paged trait
+      mediaType: application/xml
+      queryParameters:
+        limit:
+          displayName: Limit
+          description: The maximum number of gizmo objects to return
+          type: integer
+          example: 10
+          minimum: 0
+          default: 20
+          maximum: 50
+        offset:
+          displayName: Offset
+          description: The index of the first gizmo to return
+          type: integer
+          example: 5
+          default: 0
+  - formTrait:
+      description: A description of a trait with form parameters
+      mediaType: application/x-www-form-urlencoded
+      formParameters:
+        foo:
+          displayName: Foo
+          description: The Foo Form Field
+          type: string
+          minLength: 5
+          maxLength: 50
+          default: bar
+  - baseUriTrait:
+      description: A description of a trait with base URI parameters
+      baseUriParameters:
+        communityPath:
+          displayName: Community Path trait
+          description: The community path base URI trait
+          type: string
+          example: baz-community
+  - uriParamsTrait:
+      description: A description of a trait with URI parameters
+      uriParameters:
+        communityPath:
+          displayName: Community Path trait
+          description: The community path URI params trait
+          type: string
+          example: baz-community
+  - protocolTrait:
+      description: A trait to assign a protocol
+      protocols: ["HTTP"]
+  - parameterTrait:
+      queryParameters:
+        <<tokenName>>:
+          description: A valid <<tokenName>> is required
+
+/widgets:
+  displayName: several-widgets
+  type: inheritBase
+  get:
+    description: |
+      [Get Several Widgets](https://developer.example.com/widgets/)
+    headers:
+      X-Widgets-Header:
+        description: just an extra header for funsies
+    queryParameters:
+      ids:
+        displayName: Example Widget IDs
+        type: string
+        description: A comma-separated list of IDs
+        required: true
+        example: "widget1,widget2,widget3"

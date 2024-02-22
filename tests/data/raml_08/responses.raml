@@ -1,0 +1,49 @@
+#%RAML 0.8
+title: Example Web API
+version: v1
+protocols: [ HTTPS ]
+baseUri: https://{subDomain}.example.com/{version}/{external_party}
+baseUriParameters:
+  subDomain:
+    description: subdomain of API server
+    example: sjc
+uriParameters:
+  external_party:
+    description: code of third-party partner
+    example: gizmo_co
+mediaType: application/json
+documentation:
+  - title: Example Web API Docs
+    content: |
+      Welcome to the _Example Web API_ demo specification. This is *not* the complete API
+      specification, and is meant for testing purposes within this RAML specification.
+resourceTypes:
+  - inheritedType:
+      description: This is the header type description
+      get?:
+        headers:
+          Accept:
+            description: An Acceptable header for get method
+            type: string
+        responses:
+          200:
+            description: This description should get overwritten
+            headers:
+              X-First-Header:
+                description: The first header
+              X-Second-Header:
+                description: The second header
+            body:
+              application/json:
+                schema: {"name": "string"}
+                example: {"name": "example body for trait"}
+/widgets:
+  displayName: several-widgets
+  type: inheritedType
+  get:
+    description: |
+      [Get Several Widgets](https://developer.example.com/widgets/)
+    responses:
+      200:
+        description: This is the 200 resp description for get widgets
+

@@ -1,0 +1,15 @@
+#%RAML 0.8
+title: Multiple Method Resource Test
+version: v1
+baseUri: http://localhost:8080
+resourceTypes:
+  - external: !include includes/external-resource.raml
+/internal:
+  get:
+    description: internal get
+  patch:
+    description: internal patch
+  post:
+    description: internal post
+/external:
+  type: external

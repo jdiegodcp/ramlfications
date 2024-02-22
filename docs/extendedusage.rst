@@ -53,6 +53,8 @@ The Basics
    >>>
    >>> api.version
    v2
+   >>> api.raml_version
+   "0.8"
    >>> api.base_uri
    'https://{domainName}.foo.com/v2'
    >>> api.base_uri_parameters
@@ -87,7 +89,7 @@ With ``ramlfications``, documentation content and descriptions can either be vie
    u'<p>Welcome to the <em>Foo API</em> specification. For more information about\nhow to use the API, check out <a href="https://developer.foo.com">developer site</a>.</p>\n'
 
 
-Check out :doc:`api` for full definition of ``RootNode`` and its associated attributes and objects.
+Check out :doc:`api` for full definition of ``RootNodeAPI08`` and its associated attributes and objects.
 
 
 Security Schemes
@@ -197,6 +199,23 @@ Traits
     >>> paged.query_params[0].description
     'The index of the first track to return'
 
+
+RAML1.0 Types
+~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    >>> api.types
+    {'Person': ObjectType(name='Person', properties={'name': Property(type='string')})}
+    >>> person = api.types['Person']
+    >>> person.type
+    'object'
+    >>> person.description
+    'a Person is a type describing human beings'
+    >>> person.properties
+    {'name': Property(type='string')})
+    >>> person.validate({'foo': 'bar'})
+    ValidationError: 'foo' is not in the set of allowed properties ('name'). Missing required property 'name'
 
 Mapping of Properties and Elements from Traits & Resource Types to Resources
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -585,7 +604,7 @@ would be ``/foo/bar/{id}``, and the absolute URI path would be
 
 .. note::
 
-  The ``uri_params`` and ``base_uri_params`` on the ``api`` object (``RootNode``) and a resource object (``ResourceNode``) will **always** preserve order according to the absolute URI.
+  The ``uri_params`` and ``base_uri_params`` on the ``api`` object (``RootNodeAPI08``) and a resource object (``ResourceNode``) will **always** preserve order according to the absolute URI.
 
 
 Check out :doc:`api` for full definition of what is available for a ``resource`` object, and its associated attributes and objects.

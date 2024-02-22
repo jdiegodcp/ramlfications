@@ -45,10 +45,11 @@ def find_meta(meta):
 def install_requires():
     install_requires = [
         "attrs", "click", "jsonref", "markdown2", "pyyaml", "six",
-        "termcolor", "xmltodict"
+        "termcolor", "xmltodict", "inflect"
     ]
     if sys.version_info[:2] == (2, 6):
         install_requires.append("ordereddict")
+        install_requires.append("simplejson")
     return install_requires
 
 
@@ -69,7 +70,13 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import pytest
-        errno = pytest.main(self.pytest_args + ' tests')
+        pog = []
+        if not isinstance(self.pytest_args, list):
+            pog.append('tests')
+        else:
+            pog = self.pytest_args + ' tests'
+
+        errno = pytest.main(pog)
         sys.exit(errno)
 
 setup(
@@ -83,25 +90,25 @@ setup(
     author_email=find_meta("email"),
     keywords=["raml", "rest"],
     packages=find_packages(exclude=["tests*"]),
+    setup_requires=[
+        'setuptools>=69.1.0',
+        'wheel',
+    ],
     entry_points={
         'console_scripts': [
             'ramlfications = ramlfications.__main__:main'
         ]
     },
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Beta",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
@@ -112,7 +119,7 @@ setup(
         "all": ["requests[security]"]
     },
     tests_require=[
-        "pytest", "mock"
+        "pytest", "mock", "pytest-mock", "pytest-localserver"
     ],
     cmdclass={
         "test": PyTest,

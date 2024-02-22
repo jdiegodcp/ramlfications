@@ -1,0 +1,45 @@
+#%RAML 0.8
+title: Example API
+version: v1
+baseUri: https://api.example.com
+resourceTypes:
+  - collection_single:
+      get:
+        description: Get <<resourcePathName>> # e.g. users
+      post:
+        description: Post <<resourcePathName | !singularize>>  # e.g. user
+  - collection_plural:
+      get:
+        description: Get <<resourcePathName | !pluralize >> # e.g. users
+      post:
+        description: Post <<resourcePathName>>  # e.g. user
+traits:
+  - paged:
+      queryParameters:
+        <<item>>:
+          description: The number of <<item | !pluralize>> to return, not to exceed <<maxPages>>
+        # handle different spacing
+        <<spacedItem >>:
+          description: The number of << spacedItem | !pluralize >> to return, not to exceed << maxPages >>
+  - fooTrait:
+      headers:
+        aPluralHeader:
+          description: This header should be pluralized- << pluralHeader | !pluralize >>
+      body:
+        application/json:
+          example: << pluralBody | !pluralize >>
+      responses:
+        200:
+          description: A singular response - << singleResponse | !singularize >>
+/users:
+  type: collection_single
+  get:
+  post:
+/user:
+  type: collection_plural
+  get:
+    is: [ paged: { item: user, maxPages: 10, spacedItem: user} ]
+  post:
+/foo-trait:
+  get:
+    is: [ fooTrait: { pluralHeader: cat, pluralBody: foo, singleResponse: bars}]

@@ -1,0 +1,10 @@
+#%RAML 1.0
+title: API with Types
+types: !include data_type_fragment.raml
+/users/{id}:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: User # reference to global type definition

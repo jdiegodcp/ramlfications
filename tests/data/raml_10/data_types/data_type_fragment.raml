@@ -1,0 +1,15 @@
+#%RAML 1.0 DataType
+
+Person:
+  type: object
+  properties:
+    name:
+      required: true
+      type: string
+Employee:
+  type: Person
+  properties:
+    id:
+      required: true
+      type: string
+

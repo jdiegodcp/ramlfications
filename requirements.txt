@@ -1,8 +1,9 @@
-PyYAML==3.11
-markdown2==2.3.0
-click==3.3
-termcolor==1.1.0
-six==1.8.0
-attrs==15.0.0
-xmltodict==0.9.2
-jsonref==0.1
+PyYAML==6.0.1
+markdown2==2.4.12
+click==8.1.7
+termcolor==2.4.0
+six==1.16.0
+attrs==23.2.0
+xmltodict==0.13.0
+jsonref==1.1.0
+inflect==7.0.0

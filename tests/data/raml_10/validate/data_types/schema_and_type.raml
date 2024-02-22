@@ -1,0 +1,14 @@
+#%RAML 1.0
+title: My API With Types
+baseUri: https://api.example.com
+types:
+  # test defined_schema
+  Person:
+    type: object
+    schema: {"name": "string"}
+  Place:
+    type: object
+    discriminatorValue: foo
+
+/foo:
+  description: just a foo endpoint

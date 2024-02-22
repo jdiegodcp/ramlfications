@@ -26,7 +26,7 @@ RAML Versions
 
 | **Config variable**: ``raml_versions``
 | **Config type**: list of strings
-| **Supported**: ``0.8``
+| **Supported**: ``0.8``, ``1.0``
 |
 
 

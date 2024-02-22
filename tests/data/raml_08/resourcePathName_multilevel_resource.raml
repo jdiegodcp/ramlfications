@@ -1,0 +1,10 @@
+#%RAML 0.8
+title: resourcePathName for multilevel resources test
+version: v1
+baseUri: http://localhost:8080
+/internal:
+  description: <<resourcePathName>>
+  /secondLevel:
+    description: <<resourcePathName>>
+    /thirdLevel:
+      description: <<resourcePathName>>

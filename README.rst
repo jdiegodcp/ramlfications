@@ -37,7 +37,7 @@ The latest stable version can be found on PyPI_, and you can install via pip_::
 
    $ pip install ramlfications
 
-``ramlfications`` runs on Python 2.6, 2.7, and 3.3+, and PyPy. Both Linux and OS X are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
+``ramlfications`` runs on Python 3.10+, and PyPy. Linux , OS X and Windows are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
 
 Continue onto `usage`_ to get started on using ``ramlfications``.
 
@@ -55,12 +55,12 @@ System requirements:
 
 - C Compiler (gcc/clang/etc.)
 - If on Linux - you'll need to install Python headers (e.g. ``apt-get install python-dev``)
-- Python 2.6, 2.7, 3.3+, or PyPy
+- Python 3.10+, or PyPy
 - virtualenv_
 
 Here's how to set your machine up::
 
-    $ git clone git@github.com:spotify/ramlfications
+    $ git clone git@github.com:jdiegodcp/ramlfications
     $ cd ramlfications
     $ virtualenv env
     $ source env/bin/activate
@@ -77,10 +77,10 @@ To run all tests::
 
     (env) $ tox
 
-To run a specific test setup (options include: ``py26``, ``py27``, ``py33``, ``py34``, ``py35``, ``pypy``,
+To run a specific test setup (options include: ``py310``, ``py311``, ``py312``, ``pypy``,
 ``flake8``, ``verbose``, ``manifest``, ``docs``, ``setup``, ``setupcov``)::
 
-    (env) $ tox -e py26
+    (env) $ tox -e py310
 
 To run tests without tox::
 
@@ -107,8 +107,16 @@ Then within ``ramlfications/docs/_build`` you can open the index.html page in yo
 
 Project History
 ^^^^^^^^^^^^^^^
+
 Ramlfications was originally created by Spotify engineer github.com/econchick, but is currently not in use at Spotify. The project was discontinued 
 in April 2022 and transferred to an external maintainer. 
+
+
+Still have issues?
+^^^^^^^^^^^^^^^^^^
+
+Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `X`_.
+"jdiegodcp" is the maintainer, a.k.a `jdiegodcp`_ on GitHub.
 
 
 .. _pip: https://pip.pypa.io/en/latest/installing.html#install-pip
@@ -121,7 +129,7 @@ in April 2022 and transferred to an external maintainer.
 .. _`usage`: https://ramlfications.readthedocs.io/en/latest/usage.html
 .. _`How to Contribute`: https://ramlfications.readthedocs.io/en/latest/contributing.html
 .. _`webchat`: http://webchat.freenode.net?channels=%23ramlfications&uio=ND10cnVlJjk9dHJ1ZQb4
-.. _`econchick`: https://github.com/econchick
-.. _`Twitter`: https://twitter.com/roguelynn
+.. _`jdiegodcp`: https://github.com/jdiegodcp
+.. _`Twitter`: https://twitter.com/jdiegodcp
 .. _`project management`: https://waffle.io/spotify/ramlfications
 .. _plans: https://github.com/spotify/ramlfications/issues/54

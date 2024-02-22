@@ -1,0 +1,45 @@
+#%RAML 0.8
+title: Example API
+version: v1
+baseUri: https://api.example.com
+resourceTypes:
+  - searchableCollection:
+      get:
+        queryParameters:
+          <<queryParamName>>:
+            description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+          <<fallbackParamName>>:
+            description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+traits:
+  - secured:
+      queryParameters:
+        <<tokenName>>:
+          description: A valid <<tokenName>> is required
+      headers:
+        <<aHeaderName>>:
+          description: <<aHeaderName>> is required here
+      body:
+        application/json:
+          schema: <<schemaName>>
+  - paged:
+      queryParameters:
+        numPages:
+          description: The number of pages to return, not to exceed <<maxPages>>
+      responses:
+        200:
+          description: No more than <<maxPages>> pages returned
+          headers:
+            <<anotherHeader>>:
+              description: some description for <<anotherHeader>>
+/books:
+  type: { searchableCollection: { queryParamName: title, fallbackParamName: digest_all_fields } }
+  get:
+    is: [ secured: { tokenName: access_token, aHeaderName: x-some-header, schemaName: foo-schema}, paged: { maxPages: 10, anotherHeader: 'x-another-header' } ]
+/articles:
+  type: { searchableCollection: { queryParamName: headline, fallbackParamName: foo_fields } }
+  get:
+    is: [ secured: { tokenName: foo_token, aHeaderName: x-foo-header, schemaName: bar-schema}, paged: { maxPages: 20, anotherHeader: 'x-another-foo-header' } ]
+/videos:
+  type: { searchableCollection: { queryParamName: video_title, fallbackParamName: bar_fields } }
+  get:
+    is: [ secured: { tokenName: bar_token, aHeaderName: x-bar-header, schemaName: baz-schema}, paged: { maxPages: 30, anotherHeader: 'x-another-bar-header' } ]

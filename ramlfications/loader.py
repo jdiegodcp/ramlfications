@@ -1,17 +1,31 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
+<<<<<<< HEAD
+from __future__ import absolute_import, division, print_function
+=======
 try:
     from collections import OrderedDict
 except ImportError:  # pragma: no cover
     from ordereddict import OrderedDict
+>>>>>>> master
 
 import os
-
 import jsonref
 import yaml
 
+from six import string_types
+
 from .errors import LoadRAMLError
+from .utils.common import OrderedDict
+
+
+__all__ = ["RAMLLoader"]
+
+
+RAMLHEADER = "#%RAML "
+SUPPORTED_FRAGMENT_TYPES = ("DataType",)
+RAML10_FRAGMENT_TYPES = ("DataType", "AnnotationType")
 
 
 __all__ = ["RAMLLoader"]
@@ -49,7 +63,7 @@ class RAMLLoader(object):
         base_path = os.path.abspath(base_path)
         if not base_path.endswith("/"):
             base_path = base_path + "/"
-        base_path = "file://" + base_path
+        base_path = "file:" + base_path
 
         with open(jsonfile, "r") as f:
             schema = jsonref.load(f, base_uri=base_path, jsonschema=True)
@@ -73,6 +87,35 @@ class RAMLLoader(object):
 
         return yaml.load(stream, OrderedLoader)
 
+    def _parse_raml_header(self, raml):
+        if isinstance(raml, string_types):
+            header = raml.split('\n', 1)[0]
+        else:
+            header = raml.readline().strip()
+        if not header.startswith(RAMLHEADER):
+            msg = "Error raml file shall start with {0} but got {1}".format(
+                RAMLHEADER, header)
+            raise LoadRAMLError(msg)
+        version_string = header[len(RAMLHEADER):]
+        split_version_string = version_string.split(" ", 2)
+        version = split_version_string[0]
+        if len(split_version_string) == 2:
+            version, fragment = split_version_string
+            if version != "1.0" and fragment in RAML10_FRAGMENT_TYPES:
+                msg = ("Error parsing RAML fragment: {0} is only possible with"
+                       " version 1.0".format(fragment))
+                raise LoadRAMLError(msg)
+            if fragment not in SUPPORTED_FRAGMENT_TYPES:
+                msg = ("Error parsing RAML fragment: {0} is not (yet) "
+                       "supported. Currently supported: {1}".format(
+                           fragment, ", ".join(SUPPORTED_FRAGMENT_TYPES))
+                       )
+                raise LoadRAMLError(msg)
+        else:
+            version = split_version_string[0]
+            fragment = "Root"
+        return version, fragment
+
     def load(self, raml):
         """
         Loads the desired RAML file and returns data.
@@ -84,12 +127,18 @@ class RAMLLoader(object):
         :rtype: ``dict``
 
         """
-
+        raml_version, _raml_fragment_type = self._parse_raml_header(raml)
         try:
-            return self._ordered_load(raml, yaml.SafeLoader)
+            ret = self._ordered_load(raml, yaml.SafeLoader)
         except yaml.parser.ParserError as e:
             msg = "Error parsing RAML: {0}".format(e)
             raise LoadRAMLError(msg)
         except yaml.constructor.ConstructorError as e:
             msg = "Error parsing RAML: {0}".format(e)
             raise LoadRAMLError(msg)
+
+        if ret is None:
+            ret = OrderedDict()
+        ret._raml_version = raml_version
+        ret._raml_fragment_type = _raml_fragment_type
+        return ret

@@ -9,7 +9,7 @@ import click
 from .tree import tree as ttree
 from .errors import InvalidRAMLError
 from .utils import update_mime_types as umt
-from ._helpers import load_file
+from .utils import load_file
 
 from ramlfications import validate as vvalidate
 
