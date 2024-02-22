@@ -1,14 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-<<<<<<< HEAD
 from __future__ import absolute_import, division, print_function
-=======
-try:
-    from collections import OrderedDict
-except ImportError:  # pragma: no cover
-    from ordereddict import OrderedDict
->>>>>>> master
 
 import os
 import jsonref

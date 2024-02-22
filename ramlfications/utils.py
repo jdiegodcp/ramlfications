@@ -154,7 +154,7 @@ def _parse_xml_data(xml_data):
     if not registries:
         msg = "No registries found to parse."
         raise MediaTypeError(msg)
-    if len(registries) is not 9:
+    if len(registries) != 9:
         msg = ("Expected 9 registries but parsed "
                "{0}".format(len(registries)))
         raise MediaTypeError(msg)
@@ -339,7 +339,7 @@ def _get_data_union(child, parent):
         union[i] = child.get(i)
     for i in p_diff:
         if i in methods and not i.endswith("?"):
-                union[i] = parent.get(i)
+            union[i] = parent.get(i)
         if i not in methods:
             union[i] = parent.get(i)
     for i in inters:
@@ -688,7 +688,7 @@ def _preserve_uri_order(path, param_objs, config, errors, declared=[]):
         path = path[0]
 
     sorted_params = []
-    pattern = "\{(.*?)\}"
+    pattern = "{(.*?)}"
     params = re.findall(pattern, path)
     if not param_objs:
         param_objs = []
