@@ -38,7 +38,7 @@ The latest stable version can be found on PyPI_, and you can install via pip_::
 
    $ pip install ramlfications
 
-``ramlfications`` runs on Python 2.7, and 3.4+, and PyPy. Linux , OS X and Windows are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
+``ramlfications`` runs on Python 3.10+, and PyPy. Linux , OS X and Windows are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
 
 Continue onto `usage`_ to get started on using ``ramlfications``.
 
@@ -56,7 +56,7 @@ System requirements:
 
 - C Compiler (gcc/clang/etc.)
 - If on Linux - you'll need to install Python headers (e.g. ``apt-get install python-dev``)
-- Python 2.7, 3.4+, or PyPy
+- Python 3.10+, or PyPy
 - virtualenv_
 
 Here's how to set your machine up::
@@ -78,10 +78,10 @@ To run all tests::
 
     (env) $ tox
 
-To run a specific test setup (options include: ``py27``, ``py34``, ``py35``, ``py36``, ``pypy``,
+To run a specific test setup (options include: ``py310``, ``py311``, ``py312``, ``pypy``,
 ``flake8``, ``verbose``, ``manifest``, ``docs``, ``setup``, ``setupcov``)::
 
-    (env) $ tox -e py36
+    (env) $ tox -e py310
 
 To run tests without tox::
 
@@ -109,8 +109,8 @@ Then within ``ramlfications/docs/_build`` you can open the index.html page in yo
 Still have issues?
 ^^^^^^^^^^^^^^^^^^
 
-Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `Twitter`_.
-"roguelynn" is the maintainer, a.k.a `econchick`_ on GitHub, and based in San Fran.
+Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `X`_.
+"jdiegodcp" is the maintainer, a.k.a `jdiegodcp`_ on GitHub.
 
 
 .. _pip: https://pip.pypa.io/en/latest/installing.html#install-pip
@@ -123,7 +123,7 @@ Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `Tw
 .. _`usage`: https://ramlfications.readthedocs.io/en/latest/usage.html
 .. _`How to Contribute`: https://ramlfications.readthedocs.io/en/latest/contributing.html
 .. _`webchat`: http://webchat.freenode.net?channels=%23ramlfications&uio=ND10cnVlJjk9dHJ1ZQb4
-.. _`econchick`: https://github.com/econchick
-.. _`Twitter`: https://twitter.com/roguelynn
+.. _`jdiegodcp`: https://github.com/jdiegodcp
+.. _`Twitter`: https://twitter.com/jdiegodcp
 .. _`project management`: https://waffle.io/spotify/ramlfications
 .. _plans: https://github.com/spotify/ramlfications/issues/54
