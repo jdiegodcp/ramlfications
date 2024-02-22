@@ -25,9 +25,6 @@ from tests.base import RAML_08, UPDATE
 if sys.version_info[0] == 2:
     from io import open
 
-if sys.version_info[0] == 2:
-    from io import open
-
 
 @pytest.fixture(scope="session")
 def downloaded_xml():

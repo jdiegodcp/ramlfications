@@ -115,7 +115,7 @@ in April 2022 and transferred to an external maintainer.
 Still have issues?
 ^^^^^^^^^^^^^^^^^^
 
-Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `X`_.
+Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `Twitter[X]`_.
 "jdiegodcp" is the maintainer, a.k.a `jdiegodcp`_ on GitHub.
 
 
@@ -130,6 +130,6 @@ Feel free to drop by ``#ramlfications`` on Freenode (`webchat`_) or ping via `X`
 .. _`How to Contribute`: https://ramlfications.readthedocs.io/en/latest/contributing.html
 .. _`webchat`: http://webchat.freenode.net?channels=%23ramlfications&uio=ND10cnVlJjk9dHJ1ZQb4
 .. _`jdiegodcp`: https://github.com/jdiegodcp
-.. _`Twitter`: https://twitter.com/jdiegodcp
-.. _`project management`: https://waffle.io/spotify/ramlfications
+.. _`Twitter[X]`: https://twitter.com/jdiegodcp
+.. _`project management`: https://github.com/jdiegodcp/ramlfications/projects/1
 .. _plans: https://github.com/spotify/ramlfications/issues/54
