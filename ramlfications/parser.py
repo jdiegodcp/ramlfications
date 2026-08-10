@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 import re
 
 import attr
-from six import iteritems, iterkeys, itervalues
 
 
 from .config import MEDIA_TYPES
@@ -93,7 +91,7 @@ def create_root(raml, config):
         params = _create_base_param_obj(data, URIParameter, config, errors)
         uri = _get(raml, "baseUri", "")
         declared = _get(raml, "uriParameters", {})
-        declared = list(iterkeys(declared))
+        declared = list(declared.keys())
         return _preserve_uri_order(uri, params, config, errors, declared)
 
     def uri_params():
@@ -119,8 +117,8 @@ def create_root(raml, config):
             return None
         schemas = []
         for schema in _schemas:
-            value = load_schema(list(itervalues(schema))[0])
-            schemas.append({list(iterkeys(schema))[0]: value})
+            value = load_schema(list(schema.values())[0])
+            schemas.append({list(schema.keys())[0]: value})
         return schemas or None
 
     return RootNode(
@@ -166,7 +164,7 @@ def create_sec_schemes(raml_data, root):
     def headers(header_data):
         _headers = []
         header_data = _get(header_data, "headers", {})
-        for k, v in list(iteritems(header_data)):
+        for k, v in list(header_data.items()):
             h = _create_base_param_obj({k: v},
                                        Header,
                                        root.config,
@@ -177,7 +175,7 @@ def create_sec_schemes(raml_data, root):
     def body(body_data):
         body_data = _get(body_data, "body", {})
         _body = []
-        for k, v in list(iteritems(body_data)):
+        for k, v in list(body_data.items()):
             body = Body(
                 mime_type=k,
                 raw=v,
@@ -193,7 +191,7 @@ def create_sec_schemes(raml_data, root):
     def responses(resp_data):
         _resps = []
         resp_data = _get(resp_data, "responses", {})
-        for k, v in list(iteritems(resp_data)):
+        for k, v in list(resp_data.items()):
             response = Response(
                 code=k,
                 raw=v,
@@ -209,7 +207,7 @@ def create_sec_schemes(raml_data, root):
     def query_params(param_data):
         param_data = _get(param_data, "queryParameters", {})
         _params = []
-        for k, v in list(iteritems(param_data)):
+        for k, v in list(param_data.items()):
             p = _create_base_param_obj({k: v},
                                        QueryParameter,
                                        root.config,
@@ -220,7 +218,7 @@ def create_sec_schemes(raml_data, root):
     def uri_params(param_data):
         param_data = _get(param_data, "uriParameters")
         _params = []
-        for k, v in list(iteritems(param_data)):
+        for k, v in list(param_data.items()):
             p = _create_base_param_obj({k: v},
                                        URIParameter,
                                        root.config,
@@ -231,7 +229,7 @@ def create_sec_schemes(raml_data, root):
     def form_params(param_data):
         param_data = _get(param_data, "formParameters", {})
         _params = []
-        for k, v in list(iteritems(param_data)):
+        for k, v in list(param_data.items()):
             p = _create_base_param_obj({k: v},
                                        FormParameter,
                                        root.config,
@@ -272,15 +270,15 @@ def create_sec_schemes(raml_data, root):
         )
 
     def final_wrap(node):
-        for obj, node_data in list(iteritems(node.described_by)):
+        for obj, node_data in list(node.described_by.items()):
             set_property(node, obj, node_data)
         return node
 
     schemes = _get(raml_data, "securitySchemes", [])
     scheme_objs = []
     for s in schemes:
-        name = list(iterkeys(s))[0]
-        data = list(itervalues(s))[0]
+        name = list(s.keys())[0]
+        data = list(s.values())[0]
         node = initial_wrap(name, data)
         node = final_wrap(node)
         scheme_objs.append(node)
@@ -319,7 +317,7 @@ def create_traits(raml_data, root):
     def body(data):
         body = _get(data, "body", {})
         body_objects = []
-        for key, value in list(iteritems(body)):
+        for key, value in list(body.items()):
             body = Body(
                 mime_type=key,
                 raw=value,
@@ -334,7 +332,7 @@ def create_traits(raml_data, root):
 
     def responses():
         response_objects = []
-        for key, value in list(iteritems(_get(data, "responses", {}))):
+        for key, value in list(_get(data, "responses", {}).items()):
             response = Response(
                 code=key,
                 raw=value,
@@ -369,8 +367,8 @@ def create_traits(raml_data, root):
     traits = _get(raml_data, "traits", [])
     trait_objects = []
     for trait in traits:
-        name = list(iterkeys(trait))[0]
-        data = list(itervalues(trait))[0]
+        name = list(trait.keys())[0]
+        data = list(trait.values())[0]
         trait_objects.append(wrap(name, data))
     return trait_objects or None
 
@@ -414,7 +412,7 @@ def create_resource_types(raml_data, root):
                                         meth, v)
 
         body_objects = []
-        for key, value in list(iteritems(_body)):
+        for key, value in list(_body.items()):
             body = Body(
                 mime_type=key,
                 raw=value,
@@ -434,7 +432,7 @@ def create_resource_types(raml_data, root):
             _responses = _get_inherited_item(_responses, "responses",
                                              resource_types, meth, v)
 
-        for key, value in list(iteritems(_responses)):
+        for key, value in list(_responses.items()):
             _headers = _get(_get(data, "responses", {}), key, {})
             _headers = _get(_headers, "headers", {})
             header_objs = _create_base_param_obj(_headers, Header,
@@ -584,14 +582,14 @@ def create_resource_types(raml_data, root):
     child_res_type_names = []
 
     for res in resource_types:
-        for k, v in list(iteritems(res)):
+        for k, v in list(res.items()):
             if isinstance(v, dict):
-                if "type" in list(iterkeys(v)):
+                if "type" in list(v.keys()):
                     child_res_type_objects.append({k: v})
                     child_res_type_names.append(k)
 
                 else:
-                    for meth in list(iterkeys(v)):
+                    for meth in list(v.keys()):
                         if meth in accepted_methods:
                             method_data = _get(v, meth, {})
                             resource = wrap(k, method_data, meth, v)
@@ -603,20 +601,20 @@ def create_resource_types(raml_data, root):
 
     while child_res_type_objects:
         child = child_res_type_objects.pop()
-        name = list(iterkeys(child))[0]
-        data = list(itervalues(child))[0]
+        name = list(child.keys())[0]
+        data = list(child.values())[0]
         parent = data.get("type")
         if parent in child_res_type_names:
             continue
-        p_data = [r for r in resource_types if list(iterkeys(r))[0] == parent]
+        p_data = [r for r in resource_types if list(r.keys())[0] == parent]
         p_data = p_data[0].get(parent)
         res_data = _get_data_union(data, p_data)
 
-        for meth in list(iterkeys(res_data)):
+        for meth in list(res_data.keys()):
             if meth in accepted_methods:
                 method_data = _get(res_data, meth, {})
-                comb_data = dict(list(iteritems(method_data)) +
-                                 list(iteritems(res_data)))
+                comb_data = dict(list(method_data.items()) +
+                                 list(res_data.items()))
                 resource = ResourceTypeNode(
                     name=name,
                     raw=res_data,
@@ -658,11 +656,11 @@ def create_resources(node, resources, root, parent):
     :param ResourceNode parent: Parent ``ResourceNode`` of current ``node``
     :returns: List of :py:class:`.raml.ResourceNode` objects.
     """
-    for k, v in list(iteritems(node)):
+    for k, v in list(node.items()):
         if k.startswith("/"):
             avail = _get(root.config, "http_optional")
-            methods = [m for m in avail if m in list(iterkeys(v))]
-            if "type" in list(iterkeys(v)):
+            methods = [m for m in avail if m in list(v.keys())]
+            if "type" in list(v.keys()):
                 assigned = _resource_type_lookup(_get(v, "type"), root)
                 if hasattr(assigned, "method"):
                     if not assigned.optional:
@@ -677,7 +675,7 @@ def create_resources(node, resources, root, parent):
                                         root=root)
                     resources.append(child)
             # inherit resource type methods
-            elif "type" in list(iterkeys(v)):
+            elif "type" in list(v.keys()):
                 if hasattr(assigned, "method"):
                     method = assigned.method
                 else:
@@ -784,7 +782,7 @@ def create_node(name, raw_data, method, parent, root):
                                                 method, is_())
 
         _body_objs = []
-        for k, v in list(iteritems(bodies)):
+        for k, v in list(bodies.items()):
             if v is None:
                 continue
             body = Body(
@@ -806,7 +804,7 @@ def create_node(name, raw_data, method, parent, root):
         def resp_headers(headers):
             """Set response headers."""
             header_objs = []
-            for k, v in list(iteritems(headers)):
+            for k, v in list(headers.items()):
                 header = Header(
                     name=k,
                     display_name=_get(v, "displayName", default=k),
@@ -879,7 +877,7 @@ def create_node(name, raw_data, method, parent, root):
         trait_resp = _get_trait("responses", root, is_())
         resp_objs = type_resp + trait_resp
         resp_codes = [r.code for r in resp_objs]
-        for k, v in list(iteritems(resps)):
+        for k, v in list(resps.items()):
             if k in resp_codes:
                 resp = [r for r in resp_objs if r.code == k][0]
                 index = resp_objs.index(resp)
@@ -1043,11 +1041,11 @@ def create_node(name, raw_data, method, parent, root):
         if assigned_type:
             if not isinstance(assigned_type, dict):
                 return assigned_type
-            return list(iterkeys(assigned_type))[0]  # NOCOV
+            return list(assigned_type.keys())[0]  # NOCOV
 
         assigned_type = _get(raw_data, "type")
         if isinstance(assigned_type, dict):
-            return list(iterkeys(assigned_type))[0]  # NOCOV
+            return list(assigned_type.keys())[0]  # NOCOV
         return assigned_type
 
     def resource_type():

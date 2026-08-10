@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import re
 
-from six import iteritems, iterkeys
 
 from .common import (
     _get, get_inherited_trait_data, merge_dicts, INH_FUNC_MAPPING
@@ -75,7 +73,7 @@ def __trait(item, **kwargs):
             ret = {}
             for i in data:
                 _data = _get(i, item)
-                for k, v in list(iteritems(_data)):
+                for k, v in list(_data.items()):
                     ret[k] = v
             return ret
     return {}
@@ -95,7 +93,7 @@ def add_missing_uri_data(path, data):
     params = re.findall(pattern, path)
 
     default_data = {"type": "string", "required": True}
-    defined_params = list(iterkeys(data))
+    defined_params = list(data.keys())
     if params:
         missing_params = set(params).difference(defined_params)
         for p in missing_params:

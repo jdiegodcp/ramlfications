@@ -1,0 +1,10 @@
+#%RAML 0.8
+title: Old API
+baseUri: http://example.com/api
+types:
+  Foo: string
+uses:
+  common: libs/common.raml
+/foo:
+  get:
+    description: foo

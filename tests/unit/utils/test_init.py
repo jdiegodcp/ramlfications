@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import json
 import os
-import sys
 import tempfile
 from mock import Mock, patch
 import pytest
@@ -20,10 +18,6 @@ from tests.base import RAML_08, UPDATE
 #####
 # TODO: write tests, and associated error/failure tests
 #####
-
-
-if sys.version_info[0] == 2:
-    from io import open
 
 
 @pytest.fixture(scope="session")

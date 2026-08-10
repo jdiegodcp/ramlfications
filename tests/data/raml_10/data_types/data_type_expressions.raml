@@ -11,8 +11,10 @@ types:
 
   Organization: Org
 
-# TODO: Arrays using [] notations not yet implemented.
-#  Organizations: Organization[]
+  Organizations: Organization[]
+
+  # forward reference: FutureOrg refers to a type declared later
+  FutureOrgs: FutureOrg[]
 
   Snake:
     type: object
@@ -49,5 +51,11 @@ types:
           - Red-tailed
           - Tumbes Peru
 
-# TODO: Union types not yet implemented.
-#   FunPet: Python | Boa
+  FunPet: Python | Boa
+
+  FunPets: (Python | Boa)[]
+
+  FutureOrg:
+    type: object
+    properties:
+      name: string

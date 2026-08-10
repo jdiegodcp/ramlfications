@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import os
 import jsonref
 import yaml
 
-from six import string_types
 
 from .errors import LoadRAMLError
 from .utils.common import OrderedDict
@@ -17,8 +15,15 @@ __all__ = ["RAMLLoader"]
 
 
 RAMLHEADER = "#%RAML "
-SUPPORTED_FRAGMENT_TYPES = ("DataType",)
-RAML10_FRAGMENT_TYPES = ("DataType", "AnnotationType")
+SUPPORTED_FRAGMENT_TYPES = (
+    "DataType", "DocumentationItem", "Extension", "Library", "Overlay",
+    "ResourceType", "SecurityScheme", "Trait",
+)
+RAML10_FRAGMENT_TYPES = (
+    "AnnotationType", "AnnotationTypeDeclaration", "DataType",
+    "DocumentationItem", "Extension", "Library", "NamedExample",
+    "Overlay", "ResourceType", "SecurityScheme", "Trait",
+)
 
 
 __all__ = ["RAMLLoader"]
@@ -37,6 +42,12 @@ class RAMLLoader(object):
         file_name = os.path.join(os.path.dirname(loader.name), node.value)
         file_ext = os.path.splitext(file_name)[1]
         parsable_ext = [".yaml", ".yml", ".raml", ".json"]
+
+        if not os.path.isfile(file_name):
+            msg = ("Error loading RAML: '!include {0}' in '{1}' refers to "
+                   "a file that does not exist: {2}".format(
+                       node.value, loader.name, file_name))
+            raise LoadRAMLError(msg)
 
         if file_ext not in parsable_ext:
             with open(file_name) as inputfile:
@@ -81,10 +92,14 @@ class RAMLLoader(object):
         return yaml.load(stream, OrderedLoader)
 
     def _parse_raml_header(self, raml):
-        if isinstance(raml, string_types):
-            header = raml.split('\n', 1)[0]
+        if isinstance(raml, (str, bytes)):
+            header = raml.split(
+                b'\n' if isinstance(raml, bytes) else '\n', 1)[0]
         else:
             header = raml.readline().strip()
+        if isinstance(header, bytes):
+            # file objects opened in binary mode yield bytes (issue #168)
+            header = header.decode("utf-8", errors="replace")
         if not header.startswith(RAMLHEADER):
             msg = "Error raml file shall start with {0} but got {1}".format(
                 RAMLHEADER, header)
@@ -134,4 +149,7 @@ class RAMLLoader(object):
             ret = OrderedDict()
         ret._raml_version = raml_version
         ret._raml_fragment_type = _raml_fragment_type
+        # source file path (when loaded from a file), so relative
+        # references like `uses` library paths can be resolved
+        ret._raml_source_path = getattr(raml, "name", None)
         return ret

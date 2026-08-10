@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import json
 import os
 
-from six import iterkeys
-from six.moves import configparser
-from six.moves import BaseHTTPServer as httpserver  # NOQA
+import configparser
+import http.server as httpserver  # NOQA
 
 
 def _load_media_types():
@@ -26,7 +24,7 @@ HTTP_METHODS = [
 ]
 HTTP_OPTIONAL = [m + "?" for m in HTTP_METHODS].extend(HTTP_METHODS)
 
-RAML_VERSIONS = ["0.8"]
+RAML_VERSIONS = ["0.8", "1.0"]
 PROTOCOLS = ["HTTP", "HTTPS"]
 MEDIA_TYPES = _load_media_types()
 AUTH_SCHEMES = [
@@ -36,7 +34,7 @@ AUTH_SCHEMES = [
     "digest", "digest_auth", "digestAuth", "digestAuthentication",
     "digest_authentication", "http_digest"
 ]
-HTTP_RESP_CODES = list(iterkeys(httpserver.BaseHTTPRequestHandler.responses))
+HTTP_RESP_CODES = list(httpserver.BaseHTTPRequestHandler.responses.keys())
 PRIM_TYPES = ["string", "integer", "number", "boolean", "date", "file"]
 
 CONFIG_VARS = [

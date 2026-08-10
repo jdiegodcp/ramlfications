@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 from ramlfications.config import setup_config
 from ramlfications.parser import parse_raml
@@ -10,7 +9,7 @@ from ramlfications.utils import load_file, load_string
 
 
 __author__ = "Lynn Root"
-__version__ = "0.2.2"
+__version__ = "1.0.0b1"
 __license__ = "Apache 2.0"
 
 __email__ = "lynn@spotify.com"

@@ -1,20 +1,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
+import json
 import re
 
-try:
-    from collections import OrderedDict as PythonOrderedDict
-    import json
-except ImportError:  # pragma: no cover
-    from ordereddict import OrderedDict as PythonOrderedDict
-    # implies running python 2.6, and therefore needs simplejson
-    # to maintain dict order when loading json
-    import simplejson as json
-
-from six import iterkeys, iteritems
+from collections import OrderedDict as PythonOrderedDict
 
 from . import tags
 
@@ -29,7 +20,7 @@ class OrderedDict(PythonOrderedDict):
         ret = "o{"
         ret += ", ".join([
             "{0}: {1}".format(repr(k), repr(v))
-            for k, v in iteritems(self)])
+            for k, v in self.items()])
         ret += "}"
         return ret
 
@@ -66,7 +57,7 @@ def substitute_parameters(data, param_data):
     with the desired ``param_data``
     """
     json_data = json.dumps(data)
-    for key, value in list(iteritems(param_data)):
+    for key, value in list(param_data.items()):
         json_data = __replace_str_attr(key, value, json_data)
     if isinstance(json_data, str):
         json_data = json.loads(json_data, object_pairs_hook=OrderedDict)
@@ -87,11 +78,11 @@ def get_inherited_trait_data(attr, traits, name, root):
     else:
         for n in name:
             if isinstance(n, dict):
-                n = list(iterkeys(n))[0]
+                n = list(n.keys())[0]
             names.append(n)
 
     if root.raml_version == "0.8":
-        trait_raml = [t for t in traits if list(iterkeys(t))[0] in names]
+        trait_raml = [t for t in traits if list(t.keys())[0] in names]
     else:
         trait_raml = [traits]
     trait_data = []
@@ -99,6 +90,10 @@ def get_inherited_trait_data(attr, traits, name, root):
         for t in trait_raml:
             t_raml = _get(t, n, {})
             attribute_data = _get(t_raml, attr, {})
+            if not attribute_data:
+                # optional properties (e.g. ``headers?``) are applied
+                # when the trait is used (issue #43)
+                attribute_data = _get(t_raml, attr + "?", {})
             trait_data.append({attr: attribute_data})
     return trait_data
 
@@ -159,9 +154,9 @@ def __get_inherited_res_type_data(attr, types, name, method, root):
         "baseUriParameters", "uriParameters", "uri_params", "base_uri_params"
     ]
     if isinstance(name, dict):
-        name = list(iterkeys(name))[0]
+        name = list(name.keys())[0]
     if root.raml_version == "0.8":
-        res_type_raml = [r for r in types if list(iterkeys(r))[0] == name]
+        res_type_raml = [r for r in types if list(r.keys())[0] == name]
         # only need the first one
         # TODO: clean me up
         if res_type_raml:
@@ -178,6 +173,10 @@ def __get_inherited_res_type_data(attr, types, name, method, root):
                 raw = _get(res_type_raml, method + "?", {})
 
         attribute_data = _get(raw, attr, {})
+        if not attribute_data:
+            # optional properties (e.g. ``headers?``) are inherited when
+            # the resource defines the method (issue #43)
+            attribute_data = _get(raw, attr + "?", {})
         if not attribute_data and attr in res_level:
             attribute_data = _get(res_type_raml, attr, {})
         if _get(res_type_raml, "type"):

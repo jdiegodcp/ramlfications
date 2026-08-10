@@ -1,0 +1,11 @@
+#%RAML 1.0 Extension
+usage: Adds an admin endpoint and extra query parameter
+extends: base_api.raml
+/users:
+  get:
+    queryParameters:
+      country:
+        type: string
+/admin:
+  get:
+    description: Admin endpoint added by the extension

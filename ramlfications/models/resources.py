@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import attr
 
@@ -48,3 +47,4 @@ class ResourceNode(BaseNode):
     resource_type    = attr.ib(repr=False)
     secured_by       = attr.ib(repr=False)
     security_schemes = attr.ib(repr=False)
+    annotations      = attr.ib(repr=False, default=None)

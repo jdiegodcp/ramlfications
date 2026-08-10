@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import re
 
-from six import iterkeys, string_types
 
 from .common import (
     _get, get_inherited_trait_data, substitute_parameters,
@@ -24,14 +22,14 @@ def parse_assigned_dicts(items):
     if not items:
         return
     if isinstance(items, dict):
-        return list(iterkeys(items))[0]
+        return list(items.keys())[0]
     if isinstance(items, list):
         item_names = []
         for i in items:
-            if isinstance(i, string_types):
+            if isinstance(i, str):
                 item_names.append(i)
             elif isinstance(i, dict):
-                name = list(iterkeys(i))[0]
+                name = list(i.keys())[0]
                 item_names.append(name)
         return item_names
     return items

@@ -1,0 +1,20 @@
+#%RAML 1.0
+title: Valid API
+baseUri: http://example.com/api
+mediaType: application/json
+annotationTypes:
+  rating: integer
+types:
+  Customer:
+    type: object
+    properties:
+      name: string
+/customers:
+  get:
+    description: List customers
+    (rating): 5
+    responses:
+      200:
+        body:
+          application/json:
+            type: Customer

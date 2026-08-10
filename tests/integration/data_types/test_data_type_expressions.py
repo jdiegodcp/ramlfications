@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
 """
 Tests for handling of data type expressions in RAML 1.0.
 
@@ -8,6 +7,7 @@ Tests for handling of data type expressions in RAML 1.0.
 import os
 import pytest
 
+from ramlfications.models import data_types
 from ramlfications.parser import parse_raml
 from ramlfications.config import setup_config
 from ramlfications.utils import load_file
@@ -39,24 +39,43 @@ def test_definition_by_expression(api):
     assert typeobj.display_name == "Organization"
 
 
-@pytest.mark.skip(reason="Union types not yet implemented.")
 def test_array_definition_by_expression(api):
     typeobj = get_named_type(api, "Organizations")
     assert typeobj.example is None
     assert typeobj.examples is None
     assert typeobj.name == "Organizations"
-    assert typeobj.description.raw == ""
     assert typeobj.display_name == "Organizations"
-    # TODO: Figure out what this should look like.
-    # assert typeobj.type == "Organization[]"
+    assert isinstance(typeobj, data_types.ArrayDataType)
+    assert typeobj.type == "array"
+    assert isinstance(typeobj.items, data_types.ObjectDataType)
+    assert typeobj.items.name == "Organization"
+    assert "name" in typeobj.items.properties
 
 
-@pytest.mark.skip(reason="Union types not yet implemented.")
 def test_definition_by_union_expression(api):
     typeobj = get_named_type(api, "FunPet")
     assert typeobj.example is None
     assert typeobj.examples is None
     assert typeobj.name == "FunPet"
     assert typeobj.type == "Python | Boa"
-    assert typeobj.description.raw == ""
     assert typeobj.display_name == "FunPet"
+    assert isinstance(typeobj, data_types.UnionDataType)
+    members = typeobj.of
+    assert [m.name for m in members] == ["Python", "Boa"]
+    assert all(isinstance(m, data_types.ObjectDataType) for m in members)
+
+
+def test_array_of_union_expression(api):
+    typeobj = get_named_type(api, "FunPets")
+    assert typeobj.name == "FunPets"
+    assert isinstance(typeobj, data_types.ArrayDataType)
+    assert isinstance(typeobj.items, data_types.UnionDataType)
+    assert [m.name for m in typeobj.items.of] == ["Python", "Boa"]
+
+
+def test_forward_reference_resolves(api):
+    # FutureOrgs is declared before FutureOrg in the document
+    typeobj = get_named_type(api, "FutureOrgs")
+    assert isinstance(typeobj, data_types.ArrayDataType)
+    assert isinstance(typeobj.items, data_types.ObjectDataType)
+    assert typeobj.items.name == "FutureOrg"

@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import attr
-from six import iteritems, itervalues, string_types
 
 from ramlfications.config import MEDIA_TYPES
 from ramlfications.models.base import (
@@ -20,6 +18,19 @@ from ramlfications.utils.parameter import (
 )
 from ramlfications.utils.parser import get_data_type_obj_by_name
 from ramlfications.utils.examples import parse_examples
+
+
+def default_media_types(root):
+    """
+    Return the root-level default media type(s) as a list, for bodies
+    declared without an explicit media type.
+    """
+    media_type = root.media_type if root else None
+    if not media_type:
+        return [None]
+    if isinstance(media_type, list):
+        return media_type
+    return [media_type]
 
 
 class BaseParameterParser(object):
@@ -40,7 +51,7 @@ class BaseParameterParser(object):
         """
         objects = NodeList()
 
-        for key, value in list(iteritems(attribute_data)):
+        for key, value in list(attribute_data.items()):
             if param_obj is URIParameter:
                 required = _get(value, "required", default=True)
             else:
@@ -188,7 +199,7 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
                 # I think validate.py would error out if this is not a list
                 for i in self.is_:
                     if isinstance(i, dict):
-                        param_data = list(itervalues(i))[0]
+                        param_data = list(i.values())[0]
                         param_data = self._set_param_data(param_data, _path,
                                                           _path_name)
                         resolved = substitute_parameters(resolved, param_data)
@@ -196,7 +207,7 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
         if self.type_:
             if isinstance(self.type_, dict):
                 param_type = self.type_
-                param_data = list(itervalues(param_type))[0]
+                param_data = list(param_type.values())[0]
                 param_data = self._set_param_data(param_data, _path,
                                                   _path_name)
                 resolved = substitute_parameters(resolved, param_data)
@@ -219,11 +230,22 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
         root = _get(self.kwargs, "root")
         method = _get(self.kwargs, "method")
         body_objects = []
-        for k, v in list(iteritems(resolved)):
+        no_mime_body_data = {}
+        for k, v in list(resolved.items()):
             if v is None:
+                continue
+            if k in ("type", "schema", "example", "examples", "properties"):
+                # body declared without an explicit media type; the
+                # root-level default mediaType applies
+                no_mime_body_data[k] = v
                 continue
             body = self.parse_body(k, v, root, method)
             body_objects.append(body)
+        if no_mime_body_data:
+            for mime_type in default_media_types(root):
+                body = self.parse_body(
+                    mime_type, no_mime_body_data, root, method)
+                body_objects.append(body)
         return body_objects or None
 
     def parse_responses(self, resolved):
@@ -234,7 +256,7 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
         method = _get(self.kwargs, "method")
         response_objects = []
 
-        for key, value in list(iteritems(resolved)):
+        for key, value in list(resolved.items()):
             response_parser = ResponseParser(key, value, method, self.root)
             response = response_parser.parse()
             response_objects.append(response)
@@ -289,22 +311,25 @@ class ResponseParser(BaseParameterParser, BodyParserMixin):
         body = _get(self.data, "body", default={})
         body_list = []
         no_mime_body_data = {}
-        for key, spec in list(iteritems(body)):
+        for key, spec in list(body.items()):
             if key not in MEDIA_TYPES:
                 # if a root mediaType was defined, the response body
                 # may omit the mime_type definition
                 if key in ('schema', 'example'):
                     no_mime_body_data[key] = load_schema(spec) if spec else {}
+                elif key in ('type', 'examples', 'properties'):
+                    no_mime_body_data[key] = spec
             else:
                 # spec might be '!!null'
                 raw = spec or body
                 _body = self.parse_body(key, raw, self.root, self.method)
                 body_list.append(_body)
         if no_mime_body_data:
-            _body = self.parse_body(self.root.media_type,
-                                    no_mime_body_data, self.root,
-                                    self.method)
-            body_list.append(_body)
+            for mime_type in default_media_types(self.root):
+                _body = self.parse_body(mime_type,
+                                        no_mime_body_data, self.root,
+                                        self.method)
+                body_list.append(_body)
 
         return body_list or None
 
@@ -313,7 +338,7 @@ class ResponseParser(BaseParameterParser, BodyParserMixin):
         body = self.parse_response_body()
         desc = _get(self.data, "description", None)
 
-        if isinstance(self.code, string_types):
+        if isinstance(self.code, str):
             try:
                 self.code = int(self.code)
             except ValueError:

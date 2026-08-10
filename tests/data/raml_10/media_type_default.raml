@@ -1,0 +1,25 @@
+#%RAML 1.0
+title: Default Media Type API
+baseUri: http://example.com/api
+mediaType: application/json
+types:
+  Person:
+    type: object
+    properties:
+      name: string
+/people:
+  get:
+    responses:
+      200:
+        body:
+          type: Person
+  post:
+    body:
+      type: Person
+  /explicit:
+    get:
+      responses:
+        200:
+          body:
+            application/xml:
+              type: Person

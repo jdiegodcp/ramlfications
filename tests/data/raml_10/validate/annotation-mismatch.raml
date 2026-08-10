@@ -1,0 +1,9 @@
+#%RAML 1.0
+title: Annotated API
+baseUri: http://example.com/api
+annotationTypes:
+  rating: integer
+/items:
+  get:
+    description: List items
+    (rating): high

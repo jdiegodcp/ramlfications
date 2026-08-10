@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 
@@ -41,8 +40,8 @@ def test_resource_type(api):
     assert q_param.name == 'id'
     assert q_param.type == 'EmployeeId'
     assert q_param.data_type.name == 'EmployeeId'
-    assert q_param.data_type.type == 'string'
-    assert isinstance(q_param.data_type, data_types.StringDataType)
+    assert q_param.data_type.type == 'object'
+    assert isinstance(q_param.data_type, data_types.ObjectDataType)
 
     res_type = api.resource_types[1]
     assert res_type.name == "uParamCollection"
@@ -53,8 +52,8 @@ def test_resource_type(api):
     assert uri_param.name == 'id'
     assert uri_param.type == 'EmployeeId'
     assert uri_param.data_type.name == 'EmployeeId'
-    assert uri_param.data_type.type == 'string'
-    assert isinstance(uri_param.data_type, data_types.StringDataType)
+    assert uri_param.data_type.type == 'object'
+    assert isinstance(uri_param.data_type, data_types.ObjectDataType)
 
 
 def test_resource_query_params(api):
@@ -69,7 +68,7 @@ def test_resource_query_params(api):
     assert q_param.name == "id"
     assert q_param.type == "EmployeeId"
     assert q_param.data_type.name == "EmployeeId"
-    assert isinstance(q_param.data_type, data_types.StringDataType)
+    assert isinstance(q_param.data_type, data_types.ObjectDataType)
 
     not_set = [
         'default', 'desc', 'description', 'enum', 'errors', 'example',
@@ -81,9 +80,9 @@ def test_resource_query_params(api):
     assert_not_set(q_param, not_set)
 
     not_set = [
-        'annotation', 'default', 'enum', 'errors', 'example',
-        'examples', 'facets', 'min_length', 'pattern', 'schema',
-        'usage', 'xml'
+        'annotation', 'default', 'discriminator', 'discriminator_value',
+        'errors', 'example', 'examples', 'facets', 'max_properties',
+        'additional_properties', 'schema', 'usage', 'xml'
     ]
     assert_not_set(q_param.data_type, not_set)
 
@@ -100,7 +99,7 @@ def test_resource_uri_params(api):
     assert uri_param.name == "id"
     assert uri_param.type == "EmployeeId"
     assert uri_param.data_type.name == "EmployeeId"
-    assert isinstance(uri_param.data_type, data_types.StringDataType)
+    assert isinstance(uri_param.data_type, data_types.ObjectDataType)
 
     not_set = [
         'default', 'desc', 'description', 'enum', 'errors', 'example',
@@ -111,8 +110,8 @@ def test_resource_uri_params(api):
     assert_not_set(uri_param, not_set)
 
     not_set = [
-        'annotation', 'default', 'enum', 'errors', 'example',
-        'examples', 'facets', 'min_length', 'pattern', 'schema',
-        'usage', 'xml'
+        'annotation', 'default', 'discriminator', 'discriminator_value',
+        'errors', 'example', 'examples', 'facets', 'max_properties',
+        'additional_properties', 'schema', 'usage', 'xml'
     ]
     assert_not_set(uri_param.data_type, not_set)

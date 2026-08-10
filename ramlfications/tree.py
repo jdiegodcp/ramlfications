@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 from ramlfications.utils.common import OrderedDict
 import sys
 
-from six import iteritems, itervalues
 from termcolor import colored
 
 from .config import setup_config
@@ -80,7 +78,7 @@ def _return_param_type(node):
 
 def _params(space, node, color, desc):
     params = _return_param_type(node)
-    for k, v in list(iteritems(params)):
+    for k, v in list(params.items()):
         _print_line(space + '     ', k, color, 4)
         for p in v:
             if desc:
@@ -91,7 +89,7 @@ def _params(space, node, color, desc):
 
 
 def _print_verbosity(resources, color, verbosity):
-    for r in list(itervalues(resources)):
+    for r in list(resources.values()):
         space = _create_space(r)
         _print_line(space, "- " + r.path, color, 2)
         if verbosity > 0:

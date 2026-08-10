@@ -1,0 +1,12 @@
+#%RAML 1.0 Overlay
+usage: Adds friendlier wording and documentation to the Base API
+extends: base_api.raml
+title: Friendly Base API
+documentation:
+  - title: About
+    content: Documentation added by the overlay.
+/users:
+  displayName: All the users
+  (audience): external
+  get:
+    description: Overlaid users description

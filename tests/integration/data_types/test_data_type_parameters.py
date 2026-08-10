@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 
@@ -42,8 +41,8 @@ def test_api_query_params(api):
         not_set.append("repeat")
     assert_not_set(id_, not_set)
     assert id_.data_type.name == 'EmployeeId'
-    assert id_.data_type.type == 'string'
-    assert isinstance(id_.data_type, data_types.StringDataType)
+    assert id_.data_type.type == 'object'
+    assert isinstance(id_.data_type, data_types.ObjectDataType)
 
 
 def test_api_uri_params(api):
@@ -63,8 +62,8 @@ def test_api_uri_params(api):
         not_set.append("repeat")
     assert_not_set(id_, not_set)
     assert id_.data_type.name == 'EmployeeId'
-    assert id_.data_type.type == 'string'
-    assert isinstance(id_.data_type, data_types.StringDataType)
+    assert id_.data_type.type == 'object'
+    assert isinstance(id_.data_type, data_types.ObjectDataType)
 
 
 def test_api_response_headers(api):
@@ -85,8 +84,8 @@ def test_api_response_headers(api):
         not_set.append("repeat")
     assert_not_set(id_, not_set)
     assert id_.data_type.name == 'EmployeeId'
-    assert id_.data_type.type == 'string'
-    assert isinstance(id_.data_type, data_types.StringDataType)
+    assert id_.data_type.type == 'object'
+    assert isinstance(id_.data_type, data_types.ObjectDataType)
 
 
 def test_api_response_body(api):
@@ -98,5 +97,5 @@ def test_api_response_body(api):
     body = resp.body[0]
     assert body.type == 'EmployeeId'
     assert body.data_type.name == 'EmployeeId'
-    assert body.data_type.type == 'string'
-    assert isinstance(body.data_type, data_types.StringDataType)
+    assert body.data_type.type == 'object'
+    assert isinstance(body.data_type, data_types.ObjectDataType)

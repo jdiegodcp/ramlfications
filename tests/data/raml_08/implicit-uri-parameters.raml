@@ -1,0 +1,14 @@
+#%RAML 0.8
+title: Implicit URI Parameters API
+version: v1
+baseUri: http://example.com/api
+/items/{id}:
+  get:
+    description: An implicitly declared URI parameter
+/things/{thingId}:
+  uriParameters:
+    thingId:
+      type: integer
+      description: An explicitly declared URI parameter
+  get:
+    description: Explicit declaration overrides the string default

@@ -1,0 +1,28 @@
+#%RAML 0.8
+title: Optional Properties API
+version: v1
+baseUri: http://example.com/api
+resourceTypes:
+  - gizmoType:
+      usage: resource type with optional non-method properties
+      get:
+        description: This description should be inherited
+        headers?:
+          X-Inherited-Header:
+            description: This header should be inherited
+        queryParameters?:
+          inheritedParam:
+            description: This query parameter should be inherited
+            type: string
+      post?:
+        description: This optional method should not appear on resources
+        headers?:
+          X-Never-Inherited:
+            description: Should not appear anywhere
+/gizmos:
+  type: gizmoType
+  get:
+    description: gizmo-level description
+    headers:
+      X-Gizmo-Header:
+        description: A gizmo-defined header

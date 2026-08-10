@@ -1,21 +1,14 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
-
 
 import json
 import logging
 import os
 import re
-import sys
 
-try:
-    from collections import OrderedDict
-except ImportError:  # NOCOV
-    from ordereddict import OrderedDict
+from collections import OrderedDict
 
-from six import iterkeys, iteritems
 import xmltodict
 
 from .errors import MediaTypeError
@@ -23,23 +16,15 @@ from .parameters import (
     Body, URIParameter, Header, FormParameter, QueryParameter
 )
 
-PYVER = sys.version_info[:3]
-
-if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):  # NOCOV
-    import six.moves.urllib.request as urllib
-    import six.moves.urllib.error as urllib_error
-    URLLIB = True
+try:  # NOCOV
+    import requests
+    URLLIB = False
     SECURE_DOWNLOAD = True
-else:
-    try:  # NOCOV
-        import requests
-        URLLIB = False
-        SECURE_DOWNLOAD = True
-    except ImportError:
-        import six.moves.urllib.request as urllib
-        import six.moves.urllib.error as urllib_error
-        URLLIB = True
-        SECURE_DOWNLOAD = False
+except ImportError:
+    import urllib.request as urllib
+    import urllib.error as urllib_error
+    URLLIB = True
+    SECURE_DOWNLOAD = False
 
 
 IANA_URL = "https://www.iana.org/assignments/media-types/media-types.xml"
@@ -233,7 +218,7 @@ def _create_base_param_obj(attribute_data, param_obj, config, errors, **kw):
     """Helper function to create a BaseParameter object"""
     objects = []
 
-    for key, value in list(iteritems(attribute_data)):
+    for key, value in list(attribute_data.items()):
         if param_obj is URIParameter:
             required = _get(value, "required", default=True)
         else:
@@ -280,18 +265,18 @@ def _map_param_unparsed_str_obj(param):
 # create_resource_types
 def _get_union(resource, method, inherited):
     union = {}
-    for key, value in list(iteritems(inherited)):
+    for key, value in list(inherited.items()):
         if resource.get(method) is not None:
-            if key not in list(iterkeys(resource.get(method, {}))):
+            if key not in list(resource.get(method, {}).keys()):
                 union[key] = value
             else:
                 resource_values = resource.get(method, {}).get(key)
                 inherited_values = inherited.get(key, {})
-                union[key] = dict(list(iteritems(resource_values)) +
-                                  list(iteritems(inherited_values)))
+                union[key] = dict(list(resource_values.items()) +
+                                  list(inherited_values.items()))
     if resource.get(method) is not None:
-        for key, value in list(iteritems(resource.get(method, {}))):
-            if key not in list(iterkeys(inherited)):
+        for key, value in list(resource.get(method, {}).items()):
+            if key not in list(inherited.keys()):
                 union[key] = value
     return union
 
@@ -310,9 +295,9 @@ def __get_sets(child, parent):
     child_keys = []
     parent_keys = []
     if child:
-        child_keys = list(iterkeys(child))
+        child_keys = list(child.keys())
     if parent:
-        parent_keys = list(iterkeys(parent))
+        parent_keys = list(parent.keys())
     child_diff = list(set(child_keys) - set(parent_keys))
     parent_diff = list(set(parent_keys) - set(child_keys))
     intersection = list(set(child_keys).intersection(parent_keys))
@@ -354,7 +339,7 @@ def _get_data_union(child, parent):
 
 def _get_inherited_resource(res_name, resource_types):
     for resource in resource_types:
-        if res_name == list(iterkeys(resource))[0]:
+        if res_name == list(resource.keys())[0]:
             return resource
 
 
@@ -369,8 +354,8 @@ def _get_inherited_type_params(data, attribute, params, resource_types):
     inherited = inherited.get(data.get("type"))
     inherited_params = inherited.get(attribute, {})
 
-    return dict(list(iteritems(params)) +
-                list(iteritems(inherited_params)))
+    return dict(list(params.items()) +
+                list(inherited_params.items()))
 
 
 def _get_inherited_item(items, item_name, res_types, meth_, _data):
@@ -381,9 +366,9 @@ def _get_inherited_item(items, item_name, res_types, meth_, _data):
     method_ = resource.get(meth_, {})
     method_level = method_.get(item_name, {})
     items = dict(
-        list(iteritems(items)) +
-        list(iteritems(res_level)) +
-        list(iteritems(method_level))
+        list(items.items()) +
+        list(res_level.items()) +
+        list(method_level.items())
     )
     return items
 
@@ -391,8 +376,8 @@ def _get_inherited_item(items, item_name, res_types, meth_, _data):
 def _get_attribute_dict(data, item, v):
     resource_level = _get(v, item, {})
     method_level = _get(data, item, {})
-    return dict(list(iteritems(resource_level)) +
-                list(iteritems(method_level)))
+    return dict(list(resource_level.items()) +
+                list(method_level.items()))
 
 
 def _map_attr(attribute):
@@ -470,18 +455,18 @@ def _get_scheme(item, root):
     schemes = root.raw.get("securitySchemes", [])
     for s in schemes:
         if isinstance(item, str):
-            if item == list(iterkeys(s))[0]:
+            if item == list(s.keys())[0]:
                 return s
         elif isinstance(item, dict):
-            if list(iterkeys(item))[0] == list(iterkeys(s))[0]:
+            if list(item.keys())[0] == list(s.keys())[0]:
                 return s
 
 
 def _get_attribute(attribute, method, raw_data):
     method_level = _get_method(attribute, method, raw_data)
     resource_level = _get_resource(attribute, raw_data)
-    return OrderedDict(list(iteritems(method_level)) +
-                       list(iteritems(resource_level)))
+    return OrderedDict(list(method_level.items()) +
+                       list(resource_level.items()))
 
 
 def _get_inherited_attribute(attribute, root, type_, method, is_):

@@ -3,10 +3,8 @@
 #
 # Objects representing RAML file types
 
-from __future__ import absolute_import, division, print_function
 
 import attr
-from six import iterkeys
 
 from ramlfications.validate import *  # NOQA
 
@@ -15,7 +13,7 @@ RAML_VERSION_LOOKUP = {}
 
 def collectramlversions(cls):
     def klass():
-        if cls.raml_version not in list(iterkeys(RAML_VERSION_LOOKUP)):
+        if cls.raml_version not in list(RAML_VERSION_LOOKUP.keys()):
             RAML_VERSION_LOOKUP[cls.raml_version] = cls
     klass()
     return cls
@@ -81,7 +79,7 @@ class BaseRootNode(BaseRAML):
     security_schemes = attr.ib(repr=False, init=False)
     resources        = attr.ib(repr=False, init=False,
                                validator=root_resources)
-    raml_obj         = attr.ib(repr=False)
+    raml_obj         = attr.ib(repr=False, validator=root_version_constructs)
     config           = attr.ib(repr=False,
                                validator=attr.validators.instance_of(dict))
     errors           = attr.ib(repr=False)
@@ -102,7 +100,9 @@ class RAML10(BaseRootNode):
     """
     API Root Node for 1.0 raml files
     """
-    types        = attr.ib(repr=False, init=False, default=None)
+    types            = attr.ib(repr=False, init=False, default=None)
+    annotation_types = attr.ib(repr=False, init=False, default=None)
+    uses             = attr.ib(repr=False, init=False, default=None)
     raml_version = "1.0"
 
 

@@ -1,0 +1,17 @@
+#%RAML 1.0
+title: Annotated API
+baseUri: http://example.com/api
+annotationTypes:
+  monitoring: boolean
+  clearanceLevel:
+    type: string
+    allowedTargets: [ Method ]
+    description: The clearance level required
+  deprecated:
+    type: nil | string
+/status:
+  (clearanceLevel): high
+  get:
+    (monitoring): true
+    (undeclared): whatever
+    description: Get service status

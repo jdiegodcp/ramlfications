@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
-
 
 from ramlfications.errors import *  # NOQA
 
@@ -107,10 +105,14 @@ def root_media_type(inst, attr, value):
     """
     Only support media types based on config and regex
     """
-    if value:
-        match = validate_mime_type(value)
-        if value not in inst.config.get("media_types") and not match:
-            msg = "Unsupported MIME Media Type: '{0}'.".format(value)
+    if not value:
+        return
+    # RAML 1.0 allows a list of default media types
+    media_types = value if isinstance(value, list) else [value]
+    for media_type in media_types:
+        match = validate_mime_type(media_type)
+        if media_type not in inst.config.get("media_types") and not match:
+            msg = "Unsupported MIME Media Type: '{0}'.".format(media_type)
             raise InvalidRootNodeError(msg)
 
 
@@ -124,6 +126,31 @@ def root_resources(inst, attr, value):
 @collecterrors
 def root_secured_by(inst, attr, value):
     pass
+
+
+RAML10_ROOT_CONSTRUCTS = ("types", "annotationTypes", "uses")
+
+
+@collecterrors
+def root_version_constructs(inst, attr, value):
+    """
+    Apply the rule set matching the detected RAML version: reject
+    1.0-only root constructs in 0.8 documents, and 0.8-style root
+    ``schemas`` used alongside 1.0 ``types``.
+    """
+    raw = value or {}
+    if inst.raml_version == "0.8":
+        invalid = [k for k in RAML10_ROOT_CONSTRUCTS if k in raw]
+        if invalid:
+            msg = ("The following are RAML 1.0 constructs and are not "
+                   "valid in a RAML 0.8 document: {0}.".format(
+                       ", ".join(invalid)))
+            raise InvalidRootNodeError(msg)
+    elif inst.raml_version == "1.0":
+        if "schemas" in raw and "types" in raw:
+            msg = ("A RAML 1.0 document cannot declare both 'schemas' "
+                   "(RAML 0.8) and 'types'; declare only 'types'.")
+            raise InvalidRootNodeError(msg)
 
 
 #####

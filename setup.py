@@ -43,14 +43,10 @@ def find_meta(meta):
 
 
 def install_requires():
-    install_requires = [
-        "attrs", "click", "jsonref", "markdown2", "pyyaml", "six",
+    return [
+        "attrs", "click", "jsonref", "markdown2", "pyyaml",
         "termcolor", "xmltodict", "inflect"
     ]
-    if sys.version_info[:2] == (2, 6):
-        install_requires.append("ordereddict")
-        install_requires.append("simplejson")
-    return install_requires
 
 
 long_description = read('README.rst', 'docs/changelog.rst')
@@ -114,6 +110,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     package_data={"": ["data/supported_mime_types.json"]},
+    python_requires=">=3.10",
     install_requires=install_requires(),
     extras_require={
         "all": ["requests[security]"]

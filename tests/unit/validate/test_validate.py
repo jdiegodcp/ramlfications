@@ -2,7 +2,6 @@
 # Copyright (c) 2015 Spotify AB
 
 # TODO: break me up!
-from __future__ import absolute_import, division, print_function
 
 import os
 
@@ -383,11 +382,19 @@ def test_empty_mapping_sec_scheme_settings():
                          msg)
 
 
+def test_security_scheme_without_settings_is_valid():
+    # Issues #79/#118: 'settings' is optional per the RAML spec; a scheme
+    # that omits it entirely must validate.
+    raml = load_raml("no-settings-security-scheme.raml")
+    config = load_config("valid-config.ini")
+    assert validate(raml, config) is None
+
+
 def test_invalid_raml_version():
     _raml = "invalid-version.raml"
     raml = load_raml(_raml)
     config = load_config("valid-config.ini")
     with pytest.raises(errors.InvalidVersionError) as e:
         validate(raml, config)
-    msg = "RAML version not allowed in config 0.9: allowed: 0.8"
+    msg = "RAML version not allowed in config 0.9: allowed: 0.8, 1.0"
     assert msg in e.value.args

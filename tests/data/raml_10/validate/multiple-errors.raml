@@ -1,0 +1,15 @@
+#%RAML 1.0
+title: Multi Error API
+baseUri: http://example.com/api
+mediaType: application/json
+annotationTypes:
+  rating: integer
+/items:
+  get:
+    description: List items
+    (rating): high
+    responses:
+      200:
+        body:
+          application/json:
+            type: Customer

@@ -1,6 +1,47 @@
 Changelog
 =========
 
+1.0.0b1 (unreleased)
+--------------------
+
+Added:
+
+- RAML 1.0 support, dispatched automatically from the ``#%RAML`` header
+  at the existing ``parse()``/``load()``/``validate()`` entry points:
+
+    * data types with inheritance, facets, and type expressions
+      (named types, arrays ``T[]``, unions ``A | B``)
+    * ``annotationTypes`` declarations and annotations applied on
+      resources and methods
+    * ``uses`` libraries with dotted ``LibName.member`` references,
+      including libraries used by other libraries
+    * typed fragments (DataType, Trait, ResourceType, Library,
+      SecurityScheme, DocumentationItem), parsed standalone or included
+    * Overlay and Extension documents with RAML 1.0 merge semantics;
+      overlays may not change behavioral aspects of their target
+    * security scheme updates (RAML 1.0 OAuth 2.0 grants and ``null``
+      ``securedBy`` for optional security)
+
+- Version-routed validation: RAML 1.0-only constructs are rejected in
+  0.8 documents and vice versa, and RAML 1.0 rules (unresolvable type
+  references, annotation value conformance) report located errors that
+  are collected rather than failing at the first one.
+
+Changed:
+
+- Python 3.10+ is now the minimum supported version; Python 2 era
+  compatibility shims have been removed.
+- Dependencies modernized (PyYAML 6.x, current attrs).
+
+Fixed:
+
+- RAML 0.8 resource type/trait inheritance edge cases, including
+  optional (``?``) properties.
+- ``!include`` resolution (nested includes, relative paths, and
+  missing-file errors).
+- URI/base URI parameter handling (implicit template parameters and
+  explicit overrides).
+
 0.1.9 (2015-12-24)
 ------------------
 

@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 
 import pytest
 
-from six import iteritems
 
 from ramlfications.config import setup_config
 from ramlfications.config import (
@@ -44,7 +42,7 @@ def _clean(a_list):
 
 
 def _dict_equal(dict1, dict2):
-    for k, v1 in list(iteritems(dict1)):
+    for k, v1 in list(dict1.items()):
         assert k in dict2
         v2 = dict2[k]
         assert v1, v2

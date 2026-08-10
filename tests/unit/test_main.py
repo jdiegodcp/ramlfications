@@ -79,7 +79,7 @@ def add_help_message(input_string):
         expected = (input_string.rstrip('\n') +
                     "\nTry '" +
                     str(match.group(1)) +
-                    " -h' for help.\n\n")
+                    " --help' for help.\n\n")
         return expected
     else:
         return "No match found in the provided string."
@@ -118,13 +118,22 @@ def _handles_file_extra_arg(runner, usage_prefix, cli):
     check_result(2, expected, result)
 
 
-@pytest.mark.parametrize('args', [[], ['-h'], ['--help']])
+@pytest.mark.parametrize('args', [['-h'], ['--help']])
 def test_main_help(runner, args):
     """
     Show the main usage help.
     """
     result = runner.invoke(main.main, args)
     check_result(0, MAIN_HELP, result)
+
+
+def test_main_no_args_shows_help(runner):
+    """
+    Invoking without a subcommand shows the help but exits non-zero
+    (click >= 8.2 behavior).
+    """
+    result = runner.invoke(main.main, [])
+    check_result(2, MAIN_HELP, result)
 
 
 @pytest.mark.parametrize('args', [['-h'], ['--help']])

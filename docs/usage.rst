@@ -71,6 +71,33 @@ For more complete understanding of what's available when parsing a RAML file, ch
 or the :doc:`api`.
 
 
+RAML 1.0
+--------
+
+The same entry points work for RAML 1.0 documents; the parser detects the
+version from the ``#%RAML`` header.  RAML 1.0 features are exposed on the
+returned API object:
+
+.. code-block:: python
+
+   >>> api = ramlfications.parse("/path/to/my-1.0-api.raml")
+   >>> api.types                        # `types` declarations
+   [ObjectDataType(name='Person'), ObjectDataType(name='Employee')]
+   >>> api.annotation_types             # `annotationTypes` declarations
+   [AnnotationType(name='monitoring')]
+   >>> api.resources[0].annotations     # applied `(name): value` annotations
+   [Annotation(name='monitoring')]
+   >>> api.uses                         # `uses` libraries
+   [Library(name='common')]
+
+Library members are addressable with the dotted ``LibName.member``
+notation (e.g. ``type: common.Error``), typed fragment files
+(``DataType``, ``Trait``, ``ResourceType``, ``Library``,
+``SecurityScheme``, ``DocumentationItem``) can be included from an API
+document or parsed standalone, and ``Overlay``/``Extension`` documents
+are merged into the API they ``extends`` when parsed.
+
+
 Validate
 --------
 

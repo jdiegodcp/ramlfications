@@ -1,20 +1,23 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
-
 
 import re
 
-from six import iterkeys, itervalues, iteritems
 
+from ramlfications.errors import UnknownDataTypeError
 from ramlfications.models import (
     RAML_VERSION_LOOKUP, ResourceTypeNode, ResourceNode,
     SecuritySchemeNode, TraitNode
 )
+from ramlfications.models.annotations import AnnotationType
 from ramlfications.models.root import Documentation
 from ramlfications.utils import load_schema, NodeList
-from ramlfications.utils.common import _map_attr
+from ramlfications.utils.annotations import parse_annotations
+from ramlfications.utils.common import _get, _map_attr
+from ramlfications.utils.libraries import (
+    attach_library_members, library_source_path, load_libraries
+)
 from ramlfications.utils.parser import sort_uri_params
 from ramlfications.utils.types import parse_type
 
@@ -48,6 +51,10 @@ class RAMLParser(object):
     def parse(self):
         root_parser = RootParser(self.data, self.config)
         root = root_parser.create_node()
+        if hasattr(root, "uses"):
+            # injects library members into self.data under dotted
+            # names so the section parsers below pick them up
+            root.uses = load_libraries(self.data, self.config)
         for p in parsers:
             parser = p(self.data, root, self.config)
             nodes = parser.create_nodes()
@@ -55,6 +62,8 @@ class RAMLParser(object):
 
         resource_parser = ResourceParser(self.data, root, self.config)
         root.resources = resource_parser.create_nodes(nodes=NodeList())
+        if getattr(root, "uses", None):
+            attach_library_members(root)
         return root
 
 
@@ -102,9 +111,14 @@ class RootParser(BaseParser):
         if not _schemas:
             return None
         schemas = []
-        for s in _schemas:
-            value = load_schema(list(itervalues(s))[0])
-            schemas.append({list(iterkeys(s))[0]: value})
+        # RAML 0.8 uses a list of maps; RAML 1.0+ uses a simple map.
+        if isinstance(_schemas, dict):
+            for k, v in list(_schemas.items()):
+                schemas.append({k: load_schema(v)})
+        else:
+            for s in _schemas:
+                value = load_schema(list(s.values())[0])
+                schemas.append({list(s.keys())[0]: value})
         return schemas or None
 
     def create_node_dict(self):
@@ -159,17 +173,70 @@ class DataTypeParser(BaseNodeParser):
             raw = dict(type=raw)
         raw["errors"] = self.root.errors
         raw["config"] = self.root.config
-        return parse_type(name, raw, self.root)
+        try:
+            return parse_type(name, raw, self.root)
+        except UnknownDataTypeError as e:
+            # when validating, collect the located error and keep
+            # parsing so independent problems are reported together
+            if str(_get(self.root.config, "validate")).lower() != "true":
+                raise
+            msg = "Invalid type declaration '{0}': {1}".format(name, e)
+            source = (library_source_path(self.root, name) or
+                      getattr(self.root.raw, "_raml_source_path", None))
+            if source:
+                msg = "{0} [{1}]".format(msg, source)
+            self.root.errors.append(UnknownDataTypeError(msg))
+            return None
 
     def create_nodes(self):
         data = self.data.get(self.raml_property, {})
         node_objects = NodeList()
 
-        for k, v in list(iteritems(data)):
-            # node = self.create_node(k, v)
+        for k, v in list(data.items()):
             node = self.create_node(k, v)
-            node_objects.append(node)
+            if node is not None:
+                node_objects.append(node)
         return node_objects
+
+
+@collectparser
+class AnnotationTypeParser(BaseNodeParser):
+    """
+    Parses raw RAML data to create `AnnotationType` objects, if any.
+    """
+    raml_property = "annotationTypes"
+    root_property = "annotation_types"
+
+    def create_node(self, name, raw):
+        if not isinstance(raw, dict):
+            raw = dict(type=raw)
+        declared_type = raw.get("type", "string")
+        type_raw = dict(
+            (k, v) for k, v in raw.items() if k != "allowedTargets"
+        )
+        data_type = None
+        try:
+            data_type = parse_type(name, type_raw, self.root)
+        except Exception:  # noqa: broad by design; validation reports it
+            pass
+        return AnnotationType(
+            name=name,
+            raw=raw,
+            type=declared_type,
+            data_type=data_type,
+            display_name=raw.get("displayName", name),
+            description=raw.get("description") or "",
+            allowed_targets=raw.get("allowedTargets"),
+            errors=self.root.errors,
+            config=self.root.config,
+        )
+
+    def create_nodes(self):
+        data = self.data.get(self.raml_property, {}) or {}
+        node_objects = NodeList()
+        for k, v in list(data.items()):
+            node_objects.append(self.create_node(k, v))
+        return node_objects or None
 
 
 @collectparser
@@ -204,7 +271,7 @@ class SecuritySchemeParser(BaseNodeParser):
         setattr(node, attr, item_objs)
 
     def _described_by_properties(self, node, node_dict):
-        for obj, node_data in list(iteritems(node_dict.get("described_by"))):
+        for obj, node_data in list(node_dict.get("described_by").items()):
             self._set_property(node, obj, node_data)
         return node
 
@@ -249,8 +316,8 @@ class SecuritySchemeParser(BaseNodeParser):
         for d in data:
             # RAML 0.8 uses a list of maps; RAML 1.0+ uses a simple map.
             if self.root.raml_version == "0.8":
-                self.name = list(iterkeys(d))[0]
-                self.data = list(itervalues(d))[0]
+                self.name = list(d.keys())[0]
+                self.data = list(d.values())[0]
             else:
                 self.name = d
                 self.data = data[d]
@@ -295,8 +362,8 @@ class TraitParser(BaseNodeParser):
 
         for d in data:
             if self.root.raml_version == "0.8":
-                self.name = list(iterkeys(d))[0]
-                self.data = list(itervalues(d))[0]
+                self.name = list(d.keys())[0]
+                self.data = list(d.values())[0]
             else:
                 self.name = d
                 self.data = data[d]
@@ -365,7 +432,7 @@ class ResourceTypeParser(BaseNodeParser, NodeMixin):
         self.method = None
         self.method_data = {}
         if isinstance(data, dict):
-            values = list(iterkeys(data))
+            values = list(data.keys())
             methods = [m for m in self.avail if m in values]
             # it's possible for resource types to not define methods
             if len(methods) == 0:
@@ -393,7 +460,7 @@ class ResourceTypeParser(BaseNodeParser, NodeMixin):
         for res in resource_types:
             # RAML 0.8 uses a list of maps; RAML 1.0+ uses a simple map.
             if self.root.raml_version == "0.8":
-                for k, v in list(iteritems(res)):
+                for k, v in list(res.items()):
                     resource_type_objects = self._iterate_resource_types(
                         k, v, resource_type_objects)
             else:
@@ -465,7 +532,20 @@ class ResourceParser(BaseNodeParser, NodeMixin):
         node["secured_by"] = self.secured_by()
         node["resource_type"] = self.resource_type()
         node["security_schemes"] = self.security_schemes()
+        node["annotations"] = self.annotations()
         return node
+
+    def annotations(self):
+        method_annotations = parse_annotations(
+            self.method_data, self.root) or NodeList()
+        resource_annotations = parse_annotations(
+            self.child_data, self.root) or NodeList()
+        merged = NodeList(method_annotations)
+        declared = [a.name for a in merged]
+        for annotation in resource_annotations:
+            if annotation.name not in declared:
+                merged.append(annotation)
+        return merged or None
 
     def create_node(self):
         if self.method is not None:
@@ -492,14 +572,14 @@ class ResourceParser(BaseNodeParser, NodeMixin):
         return ResourceNode(**node)
 
     def create_nodes(self, nodes, parent=None):
-        for k, v in list(iteritems(self.data)):
+        for k, v in list(self.data.items()):
             if k.startswith("/"):
                 self.parent = parent
 
                 self.name = k
                 self.child_data = v
                 self.data = self.child_data
-                methods = [m for m in self.avail if m in list(iterkeys(v))]
+                methods = [m for m in self.avail if m in list(v.keys())]
                 if methods:
                     for m in methods:
                         self.method = m

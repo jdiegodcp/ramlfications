@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 import pytest
 
-from six import iterkeys
 
 from ramlfications import parse
 
@@ -29,7 +27,7 @@ def test_parse_data_types(root):
     assert t.name == "Person"
     assert t.display_name == t.name
     assert t.type == "object"
-    assert list(iterkeys(t.properties)) == ["name"]
+    assert list(t.properties.keys()) == ["name"]
 
     p = t.properties.get("name")
     assert not p.default
@@ -40,7 +38,7 @@ def test_parse_data_types(root):
     assert t.name == "Place"
     assert t.type == "object"
     assert t.display_name == t.name
-    props = sorted(list(iterkeys(t.properties)))
+    props = sorted(list(t.properties.keys()))
     assert props == ["city", "province", "state"]
 
     p = t.properties.get("city")

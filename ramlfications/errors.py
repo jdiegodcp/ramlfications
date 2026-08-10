@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
-
 
 #####
 # Validation Exceptions
@@ -51,6 +49,10 @@ class InvalidParameterError(BaseRAMLParserError):
 
 class InvalidSecuritySchemeError(BaseRAMLParserError):
     pass
+
+
+class InvalidOverlayError(BaseRAMLParserError):
+    """Overlay modifies behavioral aspects of its target API."""
 
 
 #####
