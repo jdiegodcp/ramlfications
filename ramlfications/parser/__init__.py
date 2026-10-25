@@ -35,8 +35,8 @@ def parse_raml(loaded_raml, config):
     """
     Parse loaded RAML file into RAML/Python objects.
 
-    :param RAMLDict loaded_raml: OrderedDict of loaded RAML file
-    :returns: :py:class:`.raml.RootNodeAPI08` object.
+    :param dict loaded_raml: loaded RAML file
+    :returns: :py:class:`.RAML08` or :py:class:`.RAML10` object.
     :raises: :py:class:`.errors.InvalidRAMLError` when RAML file is invalid
     """
     validate = str(_get(config, "validate")).lower() == 'true'

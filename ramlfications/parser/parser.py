@@ -50,7 +50,7 @@ class RAMLParser(object):
     :param dict data: raw RAML data
     :param dict config: parser configuration
 
-    :ret: A `RootNodeAPI` object
+    :ret: A :py:class:`.RAML08` or :py:class:`.RAML10` object
     """
     def __init__(self, data, config):
         self.data = data
@@ -83,12 +83,12 @@ class RAMLParser(object):
 
 class RootParser(BaseParser):
     """
-    Parses raw RAML data into a RootNodeAPI object.
+    Parses raw RAML data into a RAML08 or RAML10 object.
 
     :param dict data: raw RAML data
     :param dict config: parser configuration
 
-    :ret: :py:class:`ramlfications.raml.RootNodeAPI` object
+    :ret: :py:class:`.RAML08` or :py:class:`.RAML10` object
     """
     def __init__(self, data, config):
         super(RootParser, self).__init__(data, config)

@@ -49,7 +49,8 @@ class BaseContent(object):
 @attr.s
 class BaseNode(object):
     """
-    :param RootNodeAPI08 root: Back reference to the node's API root
+    :param root: Back reference to the node's API root \
+        (:py:class:`.RAML08` or :py:class:`.RAML10`)
     :param list headers: List of node's :py:class:`parameters.Header` \
         objects, or ``None``
     :param list body: List of node's :py:class:`parameters.Body` objects, \
@@ -69,10 +70,10 @@ class BaseNode(object):
     :param list form_params: List of node's \
         :py:class:`parameters.FormParameter` objects, or ``None``
     :param str media_type: Supported request MIME media type. Defaults to \
-        :py:class:`RootNodeAPI08`'s ``media_type``.
+        the API root's ``media_type``.
     :param str description: Description of node.
     :param list protocols: List of ``str`` 's of supported protocols. \
-        Defaults to :py:class:`RootNodeAPI08`'s ``protocols``.
+        Defaults to the API root's ``protocols``.
     """
     root            = attr.ib(repr=False)
     raw             = attr.ib(repr=False)  # TODO: abstract validator

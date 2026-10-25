@@ -34,7 +34,7 @@ def merge_extends(loaded_raml, config):
     """
     Resolve and load the ``extends`` target of an Overlay/Extension
     document, merge the document into it, and return the merged target
-    (a ``Root``-fragment RAMLDict ready for normal parsing).
+    (a ``Root``-fragment ``dict`` ready for normal parsing).
     """
     from ramlfications.utils import load_file
 

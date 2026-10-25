@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.0b1 (unreleased)
---------------------
+0.3.0 (2026-10-26)
+------------------
 
 Added:
 
@@ -77,6 +77,14 @@ Fixed:
   ``baseUri``; it used to be a one-element list.
 - URI/base URI parameter handling (implicit template parameters and
   explicit overrides).
+- Passing a config file without a ``[main] validate`` option to
+  ``parse()`` or ``ramlfications tree -c`` no longer turns validation
+  off; such files now validate, as documented.  To turn validation off,
+  set ``validate = False`` (the older spelling ``validation`` is still
+  accepted when ``validate`` is not set).
+- ``ramlfications tree -V``/``--validate`` now validates the file even
+  when the config file turns validation off; the flag used to be
+  ignored.
 
 0.1.9 (2015-12-24)
 ------------------

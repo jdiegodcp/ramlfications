@@ -22,7 +22,7 @@ HTTP_METHODS = [
     "get", "post", "put", "delete", "patch", "head",
     "options", "trace", "connect"
 ]
-HTTP_OPTIONAL = [m + "?" for m in HTTP_METHODS].extend(HTTP_METHODS)
+HTTP_OPTIONAL = [m + "?" for m in HTTP_METHODS] + HTTP_METHODS
 
 RAML_VERSIONS = ["0.8", "1.0"]
 PROTOCOLS = ["HTTP", "HTTPS"]
@@ -60,8 +60,12 @@ def add_custom_config(user_config, parser_config):
             conf = [c.strip() for c in conf]
             pc[i[0]] = pc[i[0]] + conf
     pc["resp_codes"] = _clean([int(r) for r in pc["resp_codes"]])
-    pc["validate"] = user_config.has_option("main", "validate") and \
-        user_config.get("main", "validate")
+    # a missing ``validate`` keeps the default (on); ``validation`` is the
+    # spelling the docs used to give, honored when ``validate`` is absent
+    for option in ("validate", "validation"):
+        if user_config.has_option("main", option):
+            pc["validate"] = user_config.get("main", option)
+            break
     # a missing ``production`` stays unset, which validation treats as true
     if user_config.has_option("main", "production"):
         pc["production"] = user_config.get("main", "production")

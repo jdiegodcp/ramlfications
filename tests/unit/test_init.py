@@ -7,9 +7,11 @@ import pytest
 
 from ramlfications import parse, load, loads, validate
 from ramlfications.models.raml import RAML08, RAML10
-from ramlfications.errors import InvalidVersionError, LoadRAMLError
+from ramlfications.errors import (
+    InvalidRAMLError, InvalidVersionError, LoadRAMLError
+)
 
-from tests.base import RAML_08, RAML_10
+from tests.base import RAML_08, RAML_10, VALIDATE_08
 
 
 @pytest.fixture(scope="session")
@@ -111,3 +113,37 @@ title: From The Future
         parse(raml_string)
     assert "2.0" in e.value.args[0]
     assert "0.8, 1.0" in e.value.args[0]
+
+
+NO_TITLE = os.path.join(VALIDATE_08, "no-title.raml")
+
+
+def test_parse_with_custom_only_config_validates():
+    config = os.path.join(VALIDATE_08, "custom-only-config.ini")
+    with pytest.raises(InvalidRAMLError) as e:
+        parse(NO_TITLE, config)
+    assert "does not define an API title" in str(e.value)
+
+
+@pytest.mark.parametrize("text,raises", [
+    (None, True),
+    ("[custom]\nprotocols = FTP\n", True),
+    ("[main]\nvalidate = False\n", False),
+    ("[main]\nvalidate = false\n", False),
+    ("[main]\nvalidation = False\n", False),
+    ("[main]\nvalidate = True\nvalidation = False\n", True),
+    ("[main]\nvalidate = False\nvalidation = True\n", False),
+])
+def test_parse_validation_by_config_contents(tmp_path, text, raises):
+    config = None
+    if text is not None:
+        config_file = tmp_path / "config.ini"
+        config_file.write_text(text)
+        config = str(config_file)
+
+    if raises:
+        with pytest.raises(InvalidRAMLError,
+                           match="does not define an API title"):
+            parse(NO_TITLE, config)
+    else:
+        assert parse(NO_TITLE, config)

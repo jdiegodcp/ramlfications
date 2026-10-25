@@ -20,7 +20,7 @@ class ResourceNode(BaseNode):
         defaults to ``name``
     :param str path: relative path of resource
     :param str absolute_uri: Absolute URI of resource: \
-        :py:class:`RootNodeAPI08`'s ``base_uri`` + ``path``
+        the API root's ``base_uri`` + ``path``
     :param list is: A list of ``str`` s or ``dict`` s of resource-assigned \
         traits, or ``None``
     :param list traits: A list of assigned :py:class:`TraitNode` objects, \

@@ -229,6 +229,28 @@ def test_tree_invalid(runner):
     check_result(exp_code, exp_msg, result)
 
 
+@pytest.mark.parametrize("args,exp_code", [
+    ([], 1),
+    (["-c", os.path.join(VALIDATE_08, "custom-only-config.ini")], 1),
+    (["-c", os.path.join(VALIDATE_08, "validation-off.ini")], 0),
+    (["-V", "-c", os.path.join(VALIDATE_08, "validation-off.ini")], 1),
+    (["--validate", "-c", os.path.join(VALIDATE_08, "validation-off.ini")],
+     1),
+])
+def test_tree_validate_flag_overrides_config(runner, args, exp_code):
+    """
+    ``-V``/``--validate`` validates even when the config turns it off.
+    """
+    raml_file = os.path.join(VALIDATE_08, "no-title.raml")
+    result = runner.invoke(main.tree, [raml_file] + args)
+    assert result.exit_code == exp_code
+    title_error = "does not define an API title" in result.output
+    assert title_error is (exp_code == 1)
+    # the tree is printed only when validation is skipped
+    tree_printed = "|- /foo" in result.output
+    assert tree_printed is (exp_code == 0)
+
+
 @pytest.mark.parametrize('args', [['-h'], ['--help']])
 def test_update_help(runner, args):
     """

@@ -143,8 +143,11 @@ def tree(load_obj, color, output, verbosity, validate, config):  # NOCOV
         output
     :param str output: Path to output file, if given
     :param str verbosity: Level of verbosity to print out
-    :return: ASCII Tree representation of API
-    :rtype: stdout to screen or given file name
+    :param bool validate: Validate the RAML file even if ``config`` turns \
+        validation off
+    :param str config: Path to a config file, if given
+    :return: ASCII Tree representation of API, printed to stdout or to \
+        ``output``
     :raises InvalidRootNodeError: API metadata is invalid according to RAML \
         `specification <http://raml.org/spec.html>`_.
     :raises InvalidResourceNodeError: API resource endpoint is invalid \
@@ -153,6 +156,8 @@ def tree(load_obj, color, output, verbosity, validate, config):  # NOCOV
         according to RAML `specification <http://raml.org/spec.html>`_.
     """
     config = setup_config(config)
+    if validate:
+        config["validate"] = True
     api = parse_raml(load_obj, config)
     resources = _get_tree(api)
 
