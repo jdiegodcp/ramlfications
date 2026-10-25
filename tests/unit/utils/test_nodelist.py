@@ -75,9 +75,8 @@ def test_nodelist_dicts():
     assert linuses.filter_by(first_name='Guido').first() is None
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME fool!")
 def test_nodelist_ramlfications_integration():
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     config = os.path.join(RAML_08, "test-config.ini")
     api = parse(raml_file, config)
     assert isinstance(api.base_uri_params, NodeList)

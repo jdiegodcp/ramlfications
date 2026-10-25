@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 from ramlfications.utils.common import OrderedDict
 import sys
 
-from six import iteritems, itervalues
 from termcolor import colored
 
 from .config import setup_config
@@ -73,14 +71,30 @@ def _return_param_type(node):
         params["Query Params"] = node.query_params
     if node.uri_params:
         params["URI Params"] = node.uri_params
-    if node.form_params:
-        params["Form Params"] = node.form_params
+    form_params = _form_params(node)
+    if form_params:
+        params["Form Params"] = form_params
     return params
+
+
+def _form_params(node):
+    # RAML 0.8 declares formParameters under a form body mime type;
+    # method-level form params are listed first, each name once
+    form_params = list(node.form_params or [])
+    for body in node.body or []:
+        form_params.extend(body.form_params or [])
+    names = set()
+    unique = []
+    for param in form_params:
+        if param.name not in names:
+            names.add(param.name)
+            unique.append(param)
+    return unique
 
 
 def _params(space, node, color, desc):
     params = _return_param_type(node)
-    for k, v in list(iteritems(params)):
+    for k, v in list(params.items()):
         _print_line(space + '     ', k, color, 4)
         for p in v:
             if desc:
@@ -91,7 +105,7 @@ def _params(space, node, color, desc):
 
 
 def _print_verbosity(resources, color, verbosity):
-    for r in list(itervalues(resources)):
+    for r in list(resources.values()):
         space = _create_space(r)
         _print_line(space, "- " + r.path, color, 2)
         if verbosity > 0:
@@ -129,8 +143,11 @@ def tree(load_obj, color, output, verbosity, validate, config):  # NOCOV
         output
     :param str output: Path to output file, if given
     :param str verbosity: Level of verbosity to print out
-    :return: ASCII Tree representation of API
-    :rtype: stdout to screen or given file name
+    :param bool validate: Validate the RAML file even if ``config`` turns \
+        validation off
+    :param str config: Path to a config file, if given
+    :return: ASCII Tree representation of API, printed to stdout or to \
+        ``output``
     :raises InvalidRootNodeError: API metadata is invalid according to RAML \
         `specification <http://raml.org/spec.html>`_.
     :raises InvalidResourceNodeError: API resource endpoint is invalid \
@@ -139,6 +156,8 @@ def tree(load_obj, color, output, verbosity, validate, config):  # NOCOV
         according to RAML `specification <http://raml.org/spec.html>`_.
     """
     config = setup_config(config)
+    if validate:
+        config["validate"] = True
     api = parse_raml(load_obj, config)
     resources = _get_tree(api)
 

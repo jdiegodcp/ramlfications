@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
-
-
-from six import iterkeys, itervalues
 
 from ramlfications.utils import NodeList
 from ramlfications.utils.parser import resolve_inherited_scalar
@@ -53,8 +49,8 @@ class BaseNodeParser(BaseParser):
         node_objects = NodeList()
 
         for d in data:
-            self.name = list(iterkeys(d))[0]
-            self.data = list(itervalues(d))[0]
+            self.name = list(d.keys())[0]
+            self.data = list(d.values())[0]
             node_objects.append(self.create_node())
 
         return node_objects

@@ -1,0 +1,17 @@
+#%RAML 1.0
+title: Unresolved API
+baseUri: http://example.com/api
+mediaType: application/json
+types:
+  Person:
+    type: object
+    properties:
+      name: string
+/customers:
+  get:
+    description: List customers
+    responses:
+      200:
+        body:
+          application/json:
+            type: Customer

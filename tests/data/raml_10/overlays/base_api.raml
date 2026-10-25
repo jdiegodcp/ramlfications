@@ -1,0 +1,12 @@
+#%RAML 1.0
+title: Base API
+baseUri: http://example.com/api
+mediaType: application/json
+annotationTypes:
+  audience: string
+/users:
+  get:
+    description: Original users description
+    queryParameters:
+      city:
+        type: string

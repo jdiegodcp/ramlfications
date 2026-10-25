@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 
 import pytest
 
 from ramlfications import parse
+from ramlfications.parser.parameters import ParameterParser
 
 from tests.base import RAML_08
 
@@ -33,3 +33,28 @@ def test_create_response(api):
 #####
 # TODO: COMPLETE ME
 #####
+
+
+def test_substitute_path_params_with_string_type():
+    kwargs = {"resource_path": "/root/widget-d", "type_": "collection-item"}
+    parser = ParameterParser("body", kwargs)
+    resolved = {"application/json": {"schema": "<<resourcePathName>>"},
+                "text/plain": {"example": "<<resourcePath>>"}}
+
+    result = parser._substitute_params(resolved)
+
+    # resourcePathName is the rightmost path segment, not "root/widget-d"
+    assert result["application/json"]["schema"] == "widget-d"
+    assert result["text/plain"]["example"] == "/root/widget-d"
+
+
+def test_substitute_params_does_not_mutate_assignment():
+    type_ = {"collection": {"item": "job"}}
+    kwargs = {"resource_path": "/jobs", "type_": type_}
+    parser = ParameterParser("body", kwargs)
+
+    result = parser._substitute_params(
+        {"schema": "<<item>>", "example": "<<resourcePathName>>"})
+
+    assert result == {"schema": "job", "example": "jobs"}
+    assert type_ == {"collection": {"item": "job"}}

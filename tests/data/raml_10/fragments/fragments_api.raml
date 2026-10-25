@@ -1,0 +1,16 @@
+#%RAML 1.0
+title: Fragment Using API
+baseUri: http://example.com/api
+mediaType: application/json
+documentation:
+  - !include getting_started.raml
+traits:
+  paged: !include paged_trait.raml
+resourceTypes:
+  collection: !include collection_resource_type.raml
+securitySchemes:
+  oauth_2_0: !include oauth2_scheme.raml
+/items:
+  get:
+    is: [ paged ]
+    description: List items

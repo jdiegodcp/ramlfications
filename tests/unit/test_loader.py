@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 
+from io import StringIO
+
 import json
 import pytest
-from six import iteritems, StringIO
 import platform
 
 from ramlfications import loader
@@ -17,7 +17,7 @@ from tests.data.fixtures import load_fixtures as lf
 
 
 def dict_equal(dict1, dict2):
-    for k, v1 in list(iteritems(dict1)):
+    for k, v1 in list(dict1.items()):
         assert k in dict2
         v2 = dict2[k]
         assert v1 == v2
@@ -68,8 +68,8 @@ def test_load_string():
 
 def test_yaml_parser_error():
     raml_obj = os.path.join(RAML_08, "invalid_yaml.yaml")
-    with pytest.raises(LoadRAMLError) as e:
-        loader.RAMLLoader().load(open(raml_obj))
+    with open(raml_obj) as f, pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
 
@@ -103,8 +103,8 @@ def test_include_markdown():
 
 def test_invalid_yaml_tag():
     raml_file = os.path.join(RAML_08, "invalid_yaml_tag.raml")
-    with pytest.raises(LoadRAMLError) as e:
-        loader.RAMLLoader().load(open(raml_file))
+    with open(raml_file) as f, pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
 
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
@@ -112,8 +112,8 @@ def test_invalid_yaml_tag():
 
 def test_includes_has_invalid_tag():
     raml_file = os.path.join(RAML_08, "include_has_invalid_tag.raml")
-    with pytest.raises(LoadRAMLError) as e:
-        loader.RAMLLoader().load(open(raml_file))
+    with open(raml_file) as f, pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
 
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
@@ -205,7 +205,8 @@ def test_jsonref_relative_local_uri_includes():
 
 def test_jsonref_remote_uri(tmpdir, httpserver):
     mock_remote_json = os.path.join(JSONREF, "jsonref_mock_remote.json")
-    httpserver.serve_content(open(mock_remote_json).read())
+    with open(mock_remote_json) as f:
+        httpserver.serve_content(f.read())
 
     # since we don't know what port httpserver will be on until it's
     # created, have to create the JSON file that ref's it with the url
@@ -324,3 +325,46 @@ def test_parse_ramlfragment_unknown_type():
     msg = ("Error parsing RAML fragment: garbage is not (yet) supported. "
            "Currently supported: DataType")
     assert msg in e.value.args[0]
+
+
+def test_load_binary_file_object():
+    # Issue #168: loading from a binary-mode file object raised TypeError
+    raml_file = os.path.join(RAML_08, "base-includes.raml")
+    with open(raml_file, "rb") as f:
+        raml = loader.RAMLLoader().load(f)
+
+    expected_data = lf.load_file_expected_data
+    assert dict_equal(raml, expected_data)
+
+
+def test_missing_include_raises_load_raml_error():
+    # A missing !include target should raise a clear LoadRAMLError
+    # naming the missing path, not a raw FileNotFoundError.
+    raml_file = os.path.join(RAML_08, "missing-include.raml")
+    with pytest.raises(LoadRAMLError) as e:
+        with open(raml_file) as f:
+            loader.RAMLLoader().load(f)
+    assert "does-not-exist.raml" in e.value.args[0]
+
+
+def test_load_preserves_key_order():
+    raml_str = ("""#%RAML 0.8
+title: Ordered API
+zebra: last letter
+version: v1
+alpha: first letter
+mango: fruit
+""")
+    raml = loader.RAMLLoader().load(raml_str)
+    assert list(raml.keys()) == [
+        "title", "zebra", "version", "alpha", "mango"
+    ]
+
+
+def test_load_preserves_key_order_in_includes():
+    raml_file = os.path.join(RAML_08, "base-includes.raml")
+    with open(raml_file) as f:
+        raml = loader.RAMLLoader().load(f)
+    assert list(raml.keys()) == ["title", "version", "external", "foo"]
+    assert list(raml["external"].keys()) == ["propertyA", "propertyB"]
+    assert list(raml["foo"].keys()) == ["foo", "bar"]

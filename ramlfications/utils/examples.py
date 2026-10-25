@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, print_function
-
-from six import iteritems
 
 from ramlfications.errors import InvalidRAMLStructureError
 from ramlfications.models.base import BaseContent
@@ -46,7 +43,7 @@ def parse_examples(raml_version, data):
                 # Need to decide what exception to make this.
                 raise InvalidRAMLStructureError("examples must be a map node")
             kw["examples"] = NodeList([parse_example(nm, val)
-                                       for nm, val in iteritems(examples)])
+                                       for nm, val in examples.items()])
 
     return kw
 

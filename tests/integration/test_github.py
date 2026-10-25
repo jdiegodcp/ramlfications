@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 
@@ -10,7 +9,9 @@ import pytest
 from ramlfications import parse
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
-from ramlfications.raml import RootNodeAPI08, ResourceTypeNode, TraitNode
+from ramlfications.models import ResourceTypeNode, TraitNode
+from ramlfications.models.raml import RAML08
+from ramlfications.parser.parser import RootParser
 from ramlfications.utils import load_file
 
 from tests.base import RAML_08
@@ -26,7 +27,7 @@ def test_parse_raml(github_raml):
     config_file = os.path.join(RAML_08, "github-config.ini")
     config = setup_config(config_file)
     root = pw.parse_raml(github_raml, config)
-    assert isinstance(root, RootNodeAPI08)
+    assert isinstance(root, RAML08)
 
 
 @pytest.fixture(scope="session")
@@ -35,7 +36,7 @@ def root():
     loaded_raml_file = load_file(raml_file)
     config_file = os.path.join(RAML_08, "github-config.ini")
     config = setup_config(config_file)
-    return pw.create_root(loaded_raml_file, config)
+    return RootParser(loaded_raml_file, config).create_node()
 
 
 def test_base_uri(root):

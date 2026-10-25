@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import json
 import os
-import sys
 import tempfile
 from mock import Mock, patch
 import pytest
@@ -20,10 +18,6 @@ from tests.base import RAML_08, UPDATE
 #####
 # TODO: write tests, and associated error/failure tests
 #####
-
-
-if sys.version_info[0] == 2:
-    from io import open
 
 
 @pytest.fixture(scope="session")
@@ -192,9 +186,11 @@ def test_update_mime_types(
     mock_downloaded_url.assert_called_once_with(
         'https://www.iana.org/assignments/media-types/media-types.xml')
 
+    # the shipped data file at the package root, not under utils/
     expected_save_path = os.path.realpath(os.path.join(
-        os.path.dirname(utils.__file__),
+        os.path.dirname(utils.__file__), os.pardir,
         'data/supported_mime_types.json'))
+    assert os.path.isfile(expected_save_path)
     mock_save_updated_mime_types.assert_called_once_with(
         expected_save_path,
         expected_data)
@@ -207,8 +203,8 @@ def test_save_updated_mime_types():
     temp_output = tempfile.mkstemp()[1]
     utils._save_updated_mime_types(temp_output, content)
 
-    result = open(temp_output, "r", encoding="UTF-8").read()
-    result = json.loads(result)
+    with open(temp_output, "r", encoding="UTF-8") as f:
+        result = json.loads(f.read())
     assert result == content
 
     os.remove(temp_output)
@@ -216,7 +212,7 @@ def test_save_updated_mime_types():
 
 @pytest.fixture(scope="session")
 def raml_file():
-    return os.path.join(RAML_08, "complete-valid-example.raml")
+    return os.path.join(RAML_08, "complete-example.raml")
 
 
 def test_raml_file_is_none():

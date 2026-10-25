@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 
@@ -39,8 +38,8 @@ def test_traits(api):
     assert q_param.name == "id"
     assert q_param.type == "PageId"
     assert q_param.data_type.name == "PageId"
-    assert q_param.data_type.type == "string"
-    assert isinstance(q_param.data_type, data_types.StringDataType)
+    assert q_param.data_type.type == "object"
+    assert isinstance(q_param.data_type, data_types.ObjectDataType)
 
 
 def test_resource(api):
@@ -56,5 +55,5 @@ def test_resource(api):
     assert q_param.name == "id"
     assert q_param.type == "PageId"
     assert q_param.data_type.name == "PageId"
-    assert q_param.data_type.type == "string"
-    assert isinstance(q_param.data_type, data_types.StringDataType)
+    assert q_param.data_type.type == "object"
+    assert isinstance(q_param.data_type, data_types.ObjectDataType)

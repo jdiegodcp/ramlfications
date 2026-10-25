@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import re
 
-from six import iterkeys, string_types
 
 from .common import (
-    _get, get_inherited_trait_data, substitute_parameters,
+    _get, get_inherited_trait_data, resource_path_name, substitute_parameters,
     INH_FUNC_MAPPING
 )
 
@@ -24,14 +22,14 @@ def parse_assigned_dicts(items):
     if not items:
         return
     if isinstance(items, dict):
-        return list(iterkeys(items))[0]
+        return list(items.keys())[0]
     if isinstance(items, list):
         item_names = []
         for i in items:
-            if isinstance(i, string_types):
+            if isinstance(i, str):
                 item_names.append(i)
             elif isinstance(i, dict):
-                name = list(iterkeys(i))[0]
+                name = list(i.keys())[0]
                 item_names.append(name)
         return item_names
     return items
@@ -45,18 +43,43 @@ def resolve_inherited_scalar(item, inherit_from=[], **kwargs):
     path = _get(kwargs, "resource_path")
     path_name = "<<resourcePathName>>"
     if path:
-        path_name = path.split("/")[-1]
+        root = _get(kwargs, "root")
+        path_name = resource_path_name(
+            path, getattr(root, "raml_version", None))
     else:
         path = "<<resourcePath>>"
     for obj_type in inherit_from:
         inherit_func = __map_inheritance(obj_type)
         inh = inherit_func(item, **kwargs)
         if inh:
-            param = {}
+            param = __assigned_params(kwargs)
+            # reserved parameters can not be overridden by assignments
             param["resourcePath"] = path
             param["resourcePathName"] = path_name
-            return substitute_parameters(inh, param)
+            return substitute_parameters(
+                inh, param,
+                getattr(_get(kwargs, "root"), "raml_version", None))
     return None
+
+
+def __assigned_params(kwargs):
+    """
+    Returns a new dict of the ``<<parameter>>`` values passed in trait
+    (``is: [{name: {...}}]``) and resource type (``type: {name: {...}}``)
+    assignments.
+    """
+    params = {}
+    for assigned in (_get(kwargs, "is_"), _get(kwargs, "type_")):
+        if isinstance(assigned, dict):
+            assigned = [assigned]
+        if not isinstance(assigned, list):
+            continue
+        for item in assigned:
+            if isinstance(item, dict):
+                values = list(item.values())[0]
+                if isinstance(values, dict):
+                    params.update(values)
+    return params
 
 
 def sort_uri_params(params, path):

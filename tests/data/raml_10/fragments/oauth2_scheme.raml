@@ -1,0 +1,13 @@
+#%RAML 1.0 SecurityScheme
+displayName: oauth_2_0
+description: OAuth 2.0 for authenticating requests.
+type: OAuth 2.0
+describedBy:
+  headers:
+    Authorization:
+      description: Bearer token
+      type: string
+settings:
+  authorizationUri: https://example.com/oauth/authorize
+  accessTokenUri: https://example.com/oauth/token
+  authorizationGrants: [ authorization_code, client_credentials ]

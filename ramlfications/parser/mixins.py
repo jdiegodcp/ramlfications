@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
-
 
 from ramlfications.utils.parser import parse_assigned_dicts
 

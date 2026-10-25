@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import attr
 
@@ -21,7 +20,7 @@ class ResourceNode(BaseNode):
         defaults to ``name``
     :param str path: relative path of resource
     :param str absolute_uri: Absolute URI of resource: \
-        :py:class:`RootNodeAPI08`'s ``base_uri`` + ``path``
+        the API root's ``base_uri`` + ``path``
     :param list is: A list of ``str`` s or ``dict`` s of resource-assigned \
         traits, or ``None``
     :param list traits: A list of assigned :py:class:`TraitNode` objects, \
@@ -48,3 +47,4 @@ class ResourceNode(BaseNode):
     resource_type    = attr.ib(repr=False)
     secured_by       = attr.ib(repr=False)
     security_schemes = attr.ib(repr=False)
+    annotations      = attr.ib(repr=False, default=None)

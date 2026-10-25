@@ -1,40 +1,27 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
-
-from io import open
+from io import StringIO
 import json
 import logging
 import os
-import sys
 
-import six
 import xmltodict
 
 from ramlfications.errors import MediaTypeError, LoadRAMLError
 from ramlfications.loader import RAMLLoader
 from ramlfications.utils.nodelist import NodeList  # noqa
 
-
-PYVER = sys.version_info[:3]
-
-if PYVER == (2, 7, 9) or PYVER == (3, 4, 3):  # NOCOV
-    import six.moves.urllib.request as urllib
-    import six.moves.urllib.error as urllib_error
-    URLLIB = True
+try:  # NOCOV
+    import requests
+    URLLIB = False
     SECURE_DOWNLOAD = True
-else:
-    try:  # NOCOV
-        import requests
-        URLLIB = False
-        SECURE_DOWNLOAD = True
-    except ImportError:
-        import six.moves.urllib.request as urllib
-        import six.moves.urllib.error as urllib_error
-        URLLIB = True
-        SECURE_DOWNLOAD = False
+except ImportError:
+    import urllib.request as urllib
+    import urllib.error as urllib_error
+    URLLIB = True
+    SECURE_DOWNLOAD = False
 
 
 IANA_URL = "https://www.iana.org/assignments/media-types/media-types.xml"
@@ -168,7 +155,7 @@ def _save_updated_mime_types(output_file, mime_types):
     # str -> unicode
     data = json.dumps(mime_types)
     with open(output_file, "w", encoding="UTF-8") as f:
-        f.write(six.text_type(data))
+        f.write(str(data))
 
 
 def update_mime_types():
@@ -183,8 +170,9 @@ def update_mime_types():
     xml_data = _xml_to_dict(raw_data)
     mime_types = _parse_xml_data(xml_data)
 
+    # data/ lives at the package root (see config.py), one level above utils/
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(current_dir, "data")
+    data_dir = os.path.join(os.path.dirname(current_dir), "data")
     output_file = os.path.join(data_dir, "supported_mime_types.json")
 
     _save_updated_mime_types(output_file, mime_types)
@@ -212,7 +200,11 @@ def _get_raml_object(raml_file):
         msg = "RAML file can not be 'None'."
         raise LoadRAMLError(msg)
 
-    if isinstance(raml_file, six.text_type) or isinstance(
+    if isinstance(raml_file, str) and raml_file.lstrip().startswith("#%RAML"):
+        # a string of RAML content rather than a path (issue #135)
+        return StringIO(raml_file)
+
+    if isinstance(raml_file, str) or isinstance(
             raml_file, bytes):
         return open(os.path.abspath(raml_file), 'r', encoding="UTF-8")
     elif hasattr(raml_file, 'read'):

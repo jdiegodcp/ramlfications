@@ -7,57 +7,59 @@ With the command line, you can validate or visualize the RAML-defined API as a t
 Parse
 -----
 
-To parse a RAML file, include ramlfications in your project and call the parse function:
+To parse a RAML file, include ramlfications in your project and call the parse function.
+The output below comes from the ``tests/data/raml_08/complete-example.raml`` file in this
+repository:
 
-.. doctest::
+.. code-block:: python
 
    >>> import ramlfications
-   >>> RAML_FILE = "/path/to/my-api.raml"
+   >>> RAML_FILE = "tests/data/raml_08/complete-example.raml"
    >>> api = ramlfications.parse(RAML_FILE)
    >>> api
-   RootNodeAPI08(title='Example Web API')
+   RAML08(title='Example Web API')
    >>> api.title
-   'My Foo API'
+   'Example Web API'
    >>> api.version
    'v1'
 
 .. code-block:: python
 
    >>> api.security_schemes
-   [SecurityScheme(name='oauth_2_0')]
+   NodeList([SecuritySchemeNode(name='oauth_2_0'), SecuritySchemeNode(name='custom_auth'), SecuritySchemeNode(name='no_desc')])
    >>> oauth2 = api.security_schemes[0]
    >>> oauth2.name
    'oauth_2_0'
    >>> oauth2.type
    'OAuth 2.0'
    >>> oauth2.settings.get("scopes")
-   ['playlist-read-private', 'playlist-modify-public',..., 'user-read-email']
+   ['user-public-profile', 'user-email', 'user-activity', 'nsa-level-privacy']
    >>> oauth2.settings.get("accessTokenUri")
-   'https://accounts.foo.com/api/token'
+   'https://accounts.example.com/api/token'
 
 .. code-block:: python
 
    >>> api.resources
-   [ResourceNode(method='get', path='/foo'), ResourceNode(method='put', path='/foo'), ..., ResourceNode(method='get', path='/foo/bar/{id}')]
-   >>> foo_bar = api.resources[-1]
-   >>> foo_bar.name
+   NodeList([ResourceNode(method='get', path='/widgets'), ResourceNode(method='get', path='/widgets/{id}'), ..., ResourceNode(method='get', path='/no_method_properties/child')])
+   >>> widget = api.resources[1]
+   >>> widget.name
    '/{id}'
-   >>> foo_bar.display_name
-   'fooBarID'
-   >>> foo_bar.absolute_uri
-   'https://api.foo.com/v1/foo/bar/{id}'
-   >>> foo_bar.uri_params
-   [URIParameter(name='id')]
+   >>> widget.display_name
+   'widget'
+   >>> widget.absolute_uri
+   'https://{subdomain}.example.com/v1/{communityPath}/widgets/{id}'
+   >>> [param.name for param in widget.uri_params]
+   ['communityPath', 'id']
 
 .. code-block:: python
 
-   >>> id_param = foo_bar.uri_params[0]
+   >>> id_param = widget.uri_params[1]
    >>> id_param.required
    True
    >>> id_param.type
    'string'
    >>> id_param.example
-   'f00b@r1D'
+   'widget2'
 
 You can pass in an optional config file to add additional values for certain parameters. Find out more \
 within the :doc:`extendedusage`:
@@ -71,6 +73,33 @@ For more complete understanding of what's available when parsing a RAML file, ch
 or the :doc:`api`.
 
 
+RAML 1.0
+--------
+
+The same entry points work for RAML 1.0 documents; the parser detects the
+version from the ``#%RAML`` header.  RAML 1.0 features are exposed on the
+returned API object:
+
+.. code-block:: python
+
+   >>> api = ramlfications.parse("/path/to/my-1.0-api.raml")
+   >>> api.types                        # `types` declarations
+   [ObjectDataType(name='Person'), ObjectDataType(name='Employee')]
+   >>> api.annotation_types             # `annotationTypes` declarations
+   [AnnotationType(name='monitoring')]
+   >>> api.resources[0].annotations     # applied `(name): value` annotations
+   [Annotation(name='monitoring')]
+   >>> api.uses                         # `uses` libraries
+   NodeList([Library(name='common')])
+
+Library members are addressable with the dotted ``LibName.member``
+notation (e.g. ``type: common.Error``), typed fragment files
+(``DataType``, ``Trait``, ``ResourceType``, ``Library``,
+``SecurityScheme``, ``DocumentationItem``) can be included from an API
+document or parsed standalone, and ``Overlay``/``Extension`` documents
+are merged into the API they ``extends`` when parsed.
+
+
 Validate
 --------
 
@@ -81,12 +110,14 @@ To validate a RAML file via the command line:
 .. code-block:: bash
 
    $ ramlfications validate /path/to/my-api.raml
-   Success! Valid RAML file: tests/data/examples/simple-tree.raml
+   Success! Valid RAML file: /path/to/my-api.raml
 
 .. code-block:: bash
 
     $ ramlfications validate /path/to/invalid/no-title.raml
-    Error validating file /path/to/invalid/no-title.raml: RAML File does not define an API title.
+    Error validating file /path/to/invalid/no-title.raml:
+
+        InvalidRootNodeError: RAML File does not define an API title.
 
 
 To validate a RAML file with Python:
@@ -141,7 +172,7 @@ To visualize a tree output of a RAML file:
 
 .. code-block:: bash
 
-   $ ramlfications tree /path/to/my-api.raml [-C|--color light|dark] [-v|vv|vvv] [-o|--output]
+   $ ramlfications tree /path/to/my-api.raml [-C|--color light|dark] [-v|vv|vvv] [-o|--output FILENAME] [-V|--validate] [-c|--config PATH]
 
 The least verbose option would show something like this:
 
@@ -194,12 +225,6 @@ defined by the `IANA`_.  To do so:
 
    $ ramlfications update
 
-.. note::
-   If you are running Python version 2.7.8 or earlier, or Python version 3.4.2 or earlier, it is
-   encouraged to have ``requests[all]`` installed in your environment.
-   The command will still work without the package using the standard lib's ``urllib2``, but does
-   not perform SSL certificate verification.  Please see `PEP 467`_ for more details.
-
 Options and Arguments
 ---------------------
 
@@ -245,6 +270,12 @@ Valid ``COMMAND`` s are the following:
 
       Save tree output to desired file
 
+   .. option:: -V, --validate
+
+      Validate the RAML file, even if the config file turns validation off.
+      Without this flag, ``tree`` validates unless the config file sets
+      ``validate = False``.
+
    .. option:: -v
 
       Increase verbose output of the tree one level: adds the HTTP methods
@@ -262,4 +293,3 @@ Valid ``COMMAND`` s are the following:
 .. _`RAML Specification`: http://raml.org/spec.html
 .. _GitHub: https://github.com/spotify/ramlfications/blob/master/ramlfications/data/supported_mime_types.json
 .. _IANA: https://www.iana.org/assignments/media-types/media-types.xml
-.. _`PEP 467`: https://www.python.org/dev/peps/pep-0476/

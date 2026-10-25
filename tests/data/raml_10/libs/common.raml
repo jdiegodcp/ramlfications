@@ -1,0 +1,24 @@
+#%RAML 1.0 Library
+usage: Common definitions
+uses:
+  base: base.raml
+types:
+  BaseError:
+    type: object
+    properties:
+      message: string
+  Error:
+    type: BaseError
+    properties:
+      code: integer
+  Envelope:
+    type: object
+    properties:
+      payload: base.Payload
+traits:
+  paged:
+    queryParameters:
+      page:
+        type: integer
+annotationTypes:
+  deprecated: string

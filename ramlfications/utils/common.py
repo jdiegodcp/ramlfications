@@ -1,20 +1,13 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
+import json
 import re
 
-try:
-    from collections import OrderedDict as PythonOrderedDict
-    import json
-except ImportError:  # pragma: no cover
-    from ordereddict import OrderedDict as PythonOrderedDict
-    # implies running python 2.6, and therefore needs simplejson
-    # to maintain dict order when loading json
-    import simplejson as json
+from collections import OrderedDict as PythonOrderedDict
 
-from six import iterkeys, iteritems
+from ramlfications.errors import InvalidRAMLStructureError
 
 from . import tags
 
@@ -29,13 +22,15 @@ class OrderedDict(PythonOrderedDict):
         ret = "o{"
         ret += ", ".join([
             "{0}: {1}".format(repr(k), repr(v))
-            for k, v in iteritems(self)])
+            for k, v in self.items()])
         ret += "}"
         return ret
 
 
 # pattern for `<<parameter>>` substitution
-PATTERN = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'
+# the name ends at a word boundary and a function name is word characters,
+# so a match cannot run past its own ``>>`` into the next placeholder
+PATTERN = r'(<<\s*)(?P<pname>{0}\b)(\s*\|?\s*(?P<tag>!\w+))?(\s*>>)'
 
 
 #####
@@ -60,14 +55,35 @@ def _get(data, item, default=None):
         return default
 
 
-def substitute_parameters(data, param_data):
+def resource_path_name(path, raml_version):
+    """
+    Returns the value of ``<<resourcePathName>>`` for ``path``.
+
+    RAML 0.8: the rightmost path segment. RAML 1.0: the rightmost segment
+    that does not contain a URI parameter, falling back to the rightmost
+    segment when every segment contains one.
+    """
+    segments = path.split("/")
+    if raml_version == "1.0":
+        plain = [s for s in segments if s and "{" not in s]
+        if plain:
+            return plain[-1]
+    return segments[-1]
+
+
+def substitute_parameters(data, param_data, raml_version=None):
     """
     Returns named parameter ``data`` with ``<<parameter>>`` substituted
     with the desired ``param_data``
+
+    :param str raml_version: ``"0.8"`` allows only the RAML 0.8 parameter
+        functions; ``"1.0"`` or ``None`` allows all RAML 1.0 functions
+    :raises InvalidRAMLStructureError: a placeholder names an unknown
+        function, or a RAML 1.0 function in a RAML 0.8 document
     """
     json_data = json.dumps(data)
-    for key, value in list(iteritems(param_data)):
-        json_data = __replace_str_attr(key, value, json_data)
+    for key, value in list(param_data.items()):
+        json_data = __replace_str_attr(key, value, json_data, raml_version)
     if isinstance(json_data, str):
         json_data = json.loads(json_data, object_pairs_hook=OrderedDict)
     return json_data
@@ -87,11 +103,11 @@ def get_inherited_trait_data(attr, traits, name, root):
     else:
         for n in name:
             if isinstance(n, dict):
-                n = list(iterkeys(n))[0]
+                n = list(n.keys())[0]
             names.append(n)
 
     if root.raml_version == "0.8":
-        trait_raml = [t for t in traits if list(iterkeys(t))[0] in names]
+        trait_raml = [t for t in traits if list(t.keys())[0] in names]
     else:
         trait_raml = [traits]
     trait_data = []
@@ -99,6 +115,10 @@ def get_inherited_trait_data(attr, traits, name, root):
         for t in trait_raml:
             t_raml = _get(t, n, {})
             attribute_data = _get(t_raml, attr, {})
+            if not attribute_data:
+                # optional properties (e.g. ``headers?``) are applied
+                # when the trait is used (issue #43)
+                attribute_data = _get(t_raml, attr + "?", {})
             trait_data.append({attr: attribute_data})
     return trait_data
 
@@ -109,6 +129,9 @@ def merge_dicts(child, parent, path=[]):
         path = []
     if not parent:
         return child
+    if not isinstance(child, dict) or not isinstance(parent, dict):
+        # scalars (e.g. ``description``): the nearer definition wins
+        return child if child else parent
     for key in parent:
         if key in child:
             if isinstance(child[key], dict) and isinstance(parent[key], dict):
@@ -126,7 +149,26 @@ def merge_dicts(child, parent, path=[]):
 #####
 # Private, module-level helper functions
 #####
-def __replace_str_attr(param, new_value, current_str):
+def __parameter_function(name, raml_version):
+    """
+    Returns the parameter function ``!name`` allowed for ``raml_version``.
+    """
+    if raml_version == "0.8":
+        functions = tags.RAML08_FUNCTIONS
+    else:
+        functions = tags.RAML10_FUNCTIONS
+    if name in functions:
+        return functions[name]
+    if name in tags.RAML10_FUNCTIONS:
+        msg = ("'!{0}' is a RAML 1.0 parameter function and is not valid "
+               "in a RAML 0.8 document.".format(name))
+    else:
+        msg = ("'!{0}' is not a RAML parameter function. Valid functions: "
+               "{1}.".format(name, ", ".join("!" + f for f in functions)))
+    raise InvalidRAMLStructureError(msg)
+
+
+def __replace_str_attr(param, new_value, current_str, raml_version=None):
     """
     Replaces ``<<parameters>>`` with their assigned value, processed with \
     any function tags, e.g. ``!pluralize``.
@@ -140,11 +182,9 @@ def __replace_str_attr(param, new_value, current_str):
         tag_func = item[3]
         transformed_value = new_value
         if tag_func:
-            tag_func = tag_func.strip("!")
-            tag_func = tag_func.strip()
-            func = getattr(tags, tag_func)
-            if func:
-                transformed_value = func(new_value)
+            func = __parameter_function(tag_func.lstrip("!"), raml_version)
+            # functions transform text; YAML may give a number or boolean
+            transformed_value = func(str(new_value))
         current_str = current_str.replace(
             to_replace, str(transformed_value), 1)
     return current_str
@@ -154,14 +194,22 @@ def __replace_str_attr(param, new_value, current_str):
 # Private module-level helper functions for mapping `resolve_from` items
 # to their respective helper parser functions within ramlfications/utils/
 #####
-def __get_inherited_res_type_data(attr, types, name, method, root):
+def __get_inherited_res_type_data(attr, types, name, method, root,
+                                  seen=None):
     res_level = [
         "baseUriParameters", "uriParameters", "uri_params", "base_uri_params"
     ]
     if isinstance(name, dict):
-        name = list(iterkeys(name))[0]
+        name = list(name.keys())[0]
+    # a ``type`` chain that refers back to itself contributes nothing more
+    # (invalid list assignments are reported by validation, not here)
+    seen = set(seen or ())
+    if isinstance(name, str):
+        if name in seen:
+            return {}
+        seen.add(name)
     if root.raml_version == "0.8":
-        res_type_raml = [r for r in types if list(iterkeys(r))[0] == name]
+        res_type_raml = [r for r in types if list(r.keys())[0] == name]
         # only need the first one
         # TODO: clean me up
         if res_type_raml:
@@ -178,24 +226,36 @@ def __get_inherited_res_type_data(attr, types, name, method, root):
                 raw = _get(res_type_raml, method + "?", {})
 
         attribute_data = _get(raw, attr, {})
+        if not attribute_data:
+            # optional properties (e.g. ``headers?``) are inherited when
+            # the resource defines the method (issue #43)
+            attribute_data = _get(raw, attr + "?", {})
         if not attribute_data and attr in res_level:
             attribute_data = _get(res_type_raml, attr, {})
         if _get(res_type_raml, "type"):
-            inherited = __resource_type_data(attr, root,
-                                             res_type_raml.get("type"),
-                                             method)
+            assigned = res_type_raml.get("type")
+            inherited = __resource_type_data(attr, root, assigned,
+                                             method, seen)
+            # parameters this type passes to its own type, e.g.
+            # ``type: {base: {thing: <<item>>}}``; ``<<item>>`` is filled
+            # in later from the resource's own assignment
+            if isinstance(assigned, dict) and inherited:
+                values = list(assigned.values())[0]
+                if isinstance(values, dict):
+                    inherited = substitute_parameters(
+                        inherited, values, root.raml_version)
             attribute_data = merge_dicts(attribute_data, inherited)
         return attribute_data
     return {}
 
 
-def __resource_type_data(attr, root, res_type, method):
+def __resource_type_data(attr, root, res_type, method, seen=None):
     if not res_type:
         return {}
     raml = _get(root.raw, "resourceTypes")
     if raml:
         return __get_inherited_res_type_data(attr, raml, res_type,
-                                             method, root)
+                                             method, root, seen)
 
 
 def __method_data(item, **kwargs):

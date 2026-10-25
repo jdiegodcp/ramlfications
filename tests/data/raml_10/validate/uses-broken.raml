@@ -1,0 +1,8 @@
+#%RAML 1.0
+title: Library Error API
+baseUri: http://example.com/api
+uses:
+  bad: libs/bad_lib.raml
+/things:
+  get:
+    description: List things

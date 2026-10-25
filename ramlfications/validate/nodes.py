@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
 
-from __future__ import absolute_import, division, print_function
-
-from six import iterkeys, string_types
 
 from ramlfications.errors import *  # NOQA
 
 from .decorators import collecterrors
+
+
+def _declared_names(declarations):
+    """
+    Names declared in a root section: RAML 0.8 sections are lists of
+    single-key maps, RAML 1.0+ sections are plain maps.
+    """
+    if isinstance(declarations, dict):
+        return list(declarations.keys())
+    return [list(i.keys())[0] for i in declarations]
 
 
 #####
@@ -15,8 +22,16 @@ from .decorators import collecterrors
 #####
 @collecterrors
 def defined_sec_scheme_settings(inst, attr, value):
-    """Assert that ``settings`` are defined/not an empty map."""
-    if not value:
+    """
+    Assert that ``settings``, when declared, is not an empty map.
+
+    ``settings`` itself is optional per the RAML spec (issues #79/#118),
+    so a scheme that omits the key entirely is valid.
+    """
+    if value:
+        return
+    raw = inst.raw or {}
+    if "settings" in raw:
         msg = ("'settings' for security scheme '{0}' require "
                "definition.".format(inst.name))
         raise InvalidSecuritySchemeError(msg)
@@ -30,8 +45,12 @@ def defined_resource_type(inst, attr, value):
     """
     Assert that a resource type is defined (e.g. not an empty map) or is
     inherited from a defined resource type.
+
+    Only the method-less node of a resource type carries its whole
+    declaration as ``raw``; per-method nodes carry that method's data,
+    which may legitimately be empty (e.g. ``get:``).
     """
-    if not inst.type:
+    if inst.method is None and not inst.type:
         if not value:
             msg = ("The resourceType '{0}' requires "
                    "definition.".format(inst.name))
@@ -64,7 +83,7 @@ def assigned_traits(inst, attr, value):
             msg = ("Trying to assign traits that are not defined"
                    "in the root of the API.")
             raise InvalidResourceNodeError(msg)
-        trait_names = [list(iterkeys(i))[0] for i in traits]
+        trait_names = _declared_names(traits)
         if not isinstance(value, list):
             msg = ("The assigned traits, '{0}', needs to be either an array "
                    "of strings or dictionaries mapping parameter values to "
@@ -73,18 +92,18 @@ def assigned_traits(inst, attr, value):
         if isinstance(value, list):
             for v in value:
                 if isinstance(v, dict):
-                    if list(iterkeys(v))[0] not in trait_names:  # NOCOV
+                    if list(v.keys())[0] not in trait_names:  # NOCOV
                         msg = (
                             "Trait '{0}' is assigned to '{1}' but is not def"
                             "ined in the root of the API.".format(v, inst.path)
                         )
                         raise InvalidResourceNodeError(msg)
-                    if not isinstance(list(iterkeys(v))[0], str):  # NOCOV
+                    if not isinstance(list(v.keys())[0], str):  # NOCOV
                         msg = ("'{0}' needs to be a string referring to a "
                                "trait, or a dictionary mapping parameter "
                                "values to a trait".format(v))
                         raise InvalidResourceNodeError(msg)
-                elif isinstance(v, string_types):
+                elif isinstance(v, str):
                     if v not in trait_names:
                         msg = (
                             "Trait '{0}' is assigned to '{1}' but is not "
@@ -113,11 +132,11 @@ def assigned_res_type(inst, attr, value):
             raise InvalidResourceNodeError(msg)
 
         res_types = inst.root.raw.get("resourceTypes", {})
-        res_type_names = [list(iterkeys(i))[0] for i in res_types]
+        res_type_names = _declared_names(res_types)
         if isinstance(value, list):
             item = value[0]  # NOCOV
         elif isinstance(value, dict):
-            item = list(iterkeys(value))[0]  # NOCOV
+            item = list(value.keys())[0]  # NOCOV
         else:
             item = value
         if item not in res_type_names:

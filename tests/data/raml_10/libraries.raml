@@ -1,0 +1,14 @@
+#%RAML 1.0
+title: Library Using API
+baseUri: http://example.com/api
+mediaType: application/json
+uses:
+  common: libs/common.raml
+/errors:
+  get:
+    description: Returns the most recent error
+    responses:
+      200:
+        body:
+          application/json:
+            type: common.Error

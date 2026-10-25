@@ -26,7 +26,7 @@ except ImportError:
 
 def read(*parts):
     """
-    Build an absolute path from *parts* and and return the contents of the
+    Build an absolute path from *parts* and return the contents of the
     resulting file.  Assume UTF-8 encoding.
     """
     here = os.path.abspath(os.path.dirname(__file__))
@@ -49,17 +49,26 @@ def find_version(*file_paths):
 
 def find_latest_release_date():
     """
-    Build a date string from the latest release logged in ``changelog.rst``
+    Build a date string from the latest release logged in ``changelog.rst``.
+
+    Returns an empty string when that release is ``(unreleased)``, so Sphinx
+    falls back to the build date for ``|today|``.
     """
     changelog = read("changelog.rst")
-    # format of either YYYY-MM-DD or YYYY/MM/DD
-    date_regex = re.compile("(\d{4}[-/]\d{2}[-/]\d{2})")
-    date_match = date_regex.findall(changelog)[0]
-    if date_match:
-        release_date = datetime.datetime.strptime(date_match, "%Y-%m-%d")
-        fmt_release_date = release_date.strftime("%b %e, %Y")
-        return fmt_release_date
-    raise RuntimeError("Unable to find latest release date in changelog.rst")
+    # release headings look like ``0.3.0 (YYYY-MM-DD)`` or ``0.3.0 (unreleased)``
+    heading_regex = re.compile(
+        r"^\S+ \((unreleased|\d{4}-\d{2}-\d{2})\)\s*$", re.M
+    )
+    heading_match = heading_regex.search(changelog)
+    if not heading_match:
+        raise RuntimeError(
+            "Unable to find latest release date in changelog.rst"
+        )
+    if heading_match.group(1) == "unreleased":
+        return ""
+    release_date = datetime.datetime.strptime(heading_match.group(1),
+                                              "%Y-%m-%d")
+    return "{0:%b} {0.day}, {0:%Y}".format(release_date)
 
 
 # If extensions (or modules to document with autodoc) are in another directory,

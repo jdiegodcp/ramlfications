@@ -1,0 +1,11 @@
+#%RAML 0.8
+title: Security Scheme Without Settings
+version: v1
+baseUri: http://example.com/api
+securitySchemes:
+  - basic:
+      description: Basic authentication needs no settings per the RAML spec
+      type: Basic Authentication
+/widgets:
+  get:
+    description: List widgets

@@ -79,7 +79,7 @@ def add_help_message(input_string):
         expected = (input_string.rstrip('\n') +
                     "\nTry '" +
                     str(match.group(1)) +
-                    " -h' for help.\n\n")
+                    " --help' for help.\n\n")
         return expected
     else:
         return "No match found in the provided string."
@@ -111,20 +111,29 @@ def _handles_file_extra_arg(runner, usage_prefix, cli):
     """
     Assertion helper: Command complains about extraneous file arguments.
     """
-    existing_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    existing_file = os.path.join(RAML_08, "complete-example.raml")
     result = runner.invoke(cli, [existing_file, 'extra'])
     usag_prefix_2 = add_help_message(usage_prefix)
     expected = usag_prefix_2 + 'Error: Got unexpected extra argument (extra)\n'
     check_result(2, expected, result)
 
 
-@pytest.mark.parametrize('args', [[], ['-h'], ['--help']])
+@pytest.mark.parametrize('args', [['-h'], ['--help']])
 def test_main_help(runner, args):
     """
     Show the main usage help.
     """
     result = runner.invoke(main.main, args)
     check_result(0, MAIN_HELP, result)
+
+
+def test_main_no_args_shows_help(runner):
+    """
+    Invoking without a subcommand shows the help but exits non-zero
+    (click >= 8.2 behavior).
+    """
+    result = runner.invoke(main.main, [])
+    check_result(2, MAIN_HELP, result)
 
 
 @pytest.mark.parametrize('args', [['-h'], ['--help']])
@@ -149,7 +158,7 @@ def test_validate(runner):
     """
     Successfully validate RAML file via CLI.
     """
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     exp_code = 0
     exp_msg = "Success! Valid RAML file: {0}\n".format(raml_file)
     result = runner.invoke(main.validate, [raml_file])
@@ -196,7 +205,7 @@ def test_tree(runner):
     """
     Successfully print out tree of RAML file via CLI.
     """
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     config_file = os.path.join(RAML_08, "test-config.ini")
     exp_code = 0
     exp_msg = None
@@ -205,7 +214,6 @@ def test_tree(runner):
     check_result(exp_code, exp_msg, result)
 
 
-@pytest.mark.skip(reason="TODO: investigate")
 def test_tree_invalid(runner):
     """
     Raise error for invalid RAML file via CLI when printing the tree.
@@ -213,12 +221,34 @@ def test_tree_invalid(runner):
     raml_file = os.path.join(VALIDATE_08, "no-title.raml")
     config_file = os.path.join(VALIDATE_08, "valid-config.ini")
     exp_code = 1
-    exp_msg = '"{0}" is not a valid RAML file: \n{1}: {2}\n'.format(
+    exp_msg = '"{0}" is not a valid RAML file: \n\t{1}: {2}\n'.format(
         raml_file, 'InvalidRootNodeError',
         'RAML File does not define an API title.')
     result = runner.invoke(main.tree, [raml_file, "--color=light",
                            "--config={0}".format(config_file)])
     check_result(exp_code, exp_msg, result)
+
+
+@pytest.mark.parametrize("args,exp_code", [
+    ([], 1),
+    (["-c", os.path.join(VALIDATE_08, "custom-only-config.ini")], 1),
+    (["-c", os.path.join(VALIDATE_08, "validation-off.ini")], 0),
+    (["-V", "-c", os.path.join(VALIDATE_08, "validation-off.ini")], 1),
+    (["--validate", "-c", os.path.join(VALIDATE_08, "validation-off.ini")],
+     1),
+])
+def test_tree_validate_flag_overrides_config(runner, args, exp_code):
+    """
+    ``-V``/``--validate`` validates even when the config turns it off.
+    """
+    raml_file = os.path.join(VALIDATE_08, "no-title.raml")
+    result = runner.invoke(main.tree, [raml_file] + args)
+    assert result.exit_code == exp_code
+    title_error = "does not define an API title" in result.output
+    assert title_error is (exp_code == 1)
+    # the tree is printed only when validation is skipped
+    tree_printed = "|- /foo" in result.output
+    assert tree_printed is (exp_code == 0)
 
 
 @pytest.mark.parametrize('args', [['-h'], ['--help']])
@@ -240,7 +270,6 @@ def test_update_unexpected_arg(runner):
     check_result(2, expected, result)
 
 
-@pytest.mark.skip(reason="TODO: investigate")
 def test_update(runner, mocker):
     """
     Successfully update supported mime types

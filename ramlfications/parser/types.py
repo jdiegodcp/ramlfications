@@ -11,7 +11,7 @@ def create_root_data_type(raml, root, name=None):
     Creates a :py:class:`.raml.RootNodeDataType` based off of the RAML's root\
         section.
 
-    :param RAMLDict raml: loaded RAML file
+    :param dict raml: loaded RAML file
     :returns: :py:class:`.raml.RootNodeDataType` object with API root\
         attributes set
     """

@@ -9,8 +9,13 @@ Main Configuration
 You are able to turn on/off the validation against the RAML specification within the ``config.ini`` file::
 
     [main]
-    validation = False  # defaults to True if not set
+    validate = False
 
+Validation stays on unless the config file sets ``validate = False``; a config file
+without the option (for example one that only adds ``[custom]`` values) still validates.
+The older spelling ``validation`` is still accepted when ``validate`` is not set.
+Write any comment on its own line: ``configparser`` keeps text after the value as part
+of the value.
 
 This configuration is ignored when using the `validate`_ function directly (but other configurations are not ignored).
 

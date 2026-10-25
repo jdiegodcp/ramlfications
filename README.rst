@@ -37,7 +37,7 @@ The latest stable version can be found on PyPI_, and you can install via pip_::
 
    $ pip install ramlfications
 
-``ramlfications`` runs on Python 3.10+, and PyPy. Linux , OS X and Windows are supported. Currently, only RAML 0.8 is supported, but there are plans_ to support 1.0.
+``ramlfications`` runs on Python 3.10+, and PyPy. Linux, OS X and Windows are supported. Both RAML 0.8 and RAML 1.0 are supported: the parser detects the version from the ``#%RAML`` header and dispatches automatically, so ``parse()``, ``load()``, and ``validate()`` work unchanged for both.
 
 Continue onto `usage`_ to get started on using ``ramlfications``.
 
@@ -78,7 +78,7 @@ To run all tests::
     (env) $ tox
 
 To run a specific test setup (options include: ``py310``, ``py311``, ``py312``, ``pypy``,
-``flake8``, ``verbose``, ``manifest``, ``docs``, ``setup``, ``setupcov``)::
+``flake8``, ``manifest``, ``docs``, ``dev``)::
 
     (env) $ tox -e py310
 
@@ -91,7 +91,7 @@ To run tests without tox::
 Build Docs
 ^^^^^^^^^^
 
-Documentation is build with Sphinx_, written in rST, uses the `Read the Docs`_ theme with
+Documentation is built with Sphinx_, written in rST, uses the `Read the Docs`_ theme with
 a slightly customized CSS, and is hosted on `Read the Docs site`_.
 
 To rebuild docs locally, within the parent ``ramlfications`` directory::
@@ -100,7 +100,7 @@ To rebuild docs locally, within the parent ``ramlfications`` directory::
 
 or::
 
-    (env) $ sphinx-build -b docs/ docs/_build
+    (env) $ sphinx-build -b html docs docs/_build
 
 Then within ``ramlfications/docs/_build`` you can open the index.html page in your browser.
 

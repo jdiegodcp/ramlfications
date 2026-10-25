@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import re
 
 import attr
-from six import iteritems
 
 from ramlfications.utils.common import OrderedDict
 from ramlfications.validate import *  # NOQA
@@ -78,7 +76,7 @@ def parse_properties(properties):
         return None
     return OrderedDict([
         (k, create_property(v))
-        for k, v in iteritems(properties)])
+        for k, v in properties.items()])
 
 
 # <- TO CLEAN
@@ -149,6 +147,7 @@ class ObjectDataType(BaseDataType):
                                     default=None)
 
 
+@type_class("array")
 @attr.s
 class ArrayDataType(BaseDataType):
     """
@@ -158,6 +157,17 @@ class ArrayDataType(BaseDataType):
     unique_items = attr.ib(repr=False, default=False)
     min_items    = attr.ib(repr=False, converter=int, default=0)
     max_items    = attr.ib(repr=False, converter=int, default=RAML_MAX_INT)
+
+
+@type_class("union")
+@attr.s
+class UnionDataType(BaseDataType):
+    """
+    Type class for RAML union data types (``A | B`` expressions).
+
+    :param list of: member data types of the union
+    """
+    of = attr.ib(repr=False, default=None)
 
 
 @attr.s
@@ -227,6 +237,11 @@ class BooleanDataType(ScalarDataType):
     # TODO: validation?
 
 
+@type_class("date-only")
+@type_class("time-only")
+@type_class("datetime-only")
+@type_class("datetime")
+@type_class("date")
 @attr.s
 class DateDataType(ScalarDataType):
     """
@@ -238,6 +253,7 @@ class DateDataType(ScalarDataType):
     # TODO: perhaps convert by valid values
 
 
+@type_class("file")
 @attr.s
 class FileDataType(BaseScalarDataType):
     """
@@ -251,6 +267,7 @@ class FileDataType(BaseScalarDataType):
     max_length = attr.ib(repr=False, default=RAML_MAX_INT, converter=int)
 
 
+@type_class("null")
 @attr.s
 class NullDataType(ScalarDataType):
     """

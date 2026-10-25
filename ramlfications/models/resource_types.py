@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
 
-from __future__ import absolute_import, division, print_function
 
 import attr
 
@@ -36,9 +35,9 @@ class ResourceTypeNode(BaseNode):
 
     """
     name             = attr.ib()
-    # TODO: abstract validator in BaseNode
-    # raw              = attr.ib(repr=False, validator=defined_resource_type)
-    type             = attr.ib(repr=False, validator=assigned_res_type)
+    # redefines BaseNode.raw to attach the validator
+    raw              = attr.ib(repr=False, validator=defined_resource_type)
+    type            = attr.ib(repr=False, validator=assigned_res_type)
     method           = attr.ib(repr=False)
     usage            = attr.ib(repr=False)
     optional         = attr.ib(repr=False)

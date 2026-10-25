@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2014 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 
@@ -9,9 +8,9 @@ import pytest
 
 from ramlfications import parser as pw
 from ramlfications.config import setup_config
-from ramlfications.raml import (
-    RootNodeAPI08, ResourceTypeNode, TraitNode, ResourceNode
-)
+from ramlfications.models import ResourceNode, ResourceTypeNode, TraitNode
+from ramlfications.models.raml import RAML08
+from ramlfications.parser.parser import RootParser
 from ramlfications.utils import load_file
 
 from tests.base import RAML_08
@@ -27,14 +26,14 @@ def test_parse_raml(raml):
     config_file = os.path.join(RAML_08, "twitter-config.ini")
     config = setup_config(config_file)
     root = pw.parse_raml(raml, config)
-    assert isinstance(root, RootNodeAPI08)
+    assert isinstance(root, RAML08)
 
 
 @pytest.fixture(scope="session")
 def root(raml):
     config_file = os.path.join(RAML_08, "twitter-config.ini")
     config = setup_config(config_file)
-    return pw.create_root(raml, config)
+    return RootParser(raml, config).create_node()
 
 
 @pytest.fixture(scope="session")
@@ -354,7 +353,9 @@ def test_resources_statuses(resources):
     assert res.traits is None
     assert res.is_ is None
     assert res.resource_type is None
-    assert res.description.raw is None
+    # no description: ``desc`` is None and ``raw`` is "" (BaseContent)
+    assert res.desc is None
+    assert res.description.raw == ""
     assert res.headers is None
     assert res.body is None
     assert res.responses is None
@@ -362,7 +363,8 @@ def test_resources_statuses(resources):
     assert res.query_params is None
     assert res.form_params is None
     assert res.parent is None
-    assert res.media_type is None
+    # inherited from the root, like ``protocols`` and ``secured_by`` below
+    assert res.media_type == "application/json"
     assert res.absolute_uri == "https://api.twitter.com/1.1/statuses"
     assert res.path == "/statuses"
     assert res.protocols == ["HTTPS"]

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 import os
 import pytest
 
-from six import iterkeys
 
 from ramlfications import parse
+from ramlfications.errors import InvalidRAMLStructureError
 
 
 from tests.base import RAML_10, assert_not_set
@@ -29,7 +28,7 @@ def test_parse_data_types(root):
     assert t.name == "Person"
     assert t.display_name == t.name
     assert t.type == "object"
-    assert list(iterkeys(t.properties)) == ["name"]
+    assert list(t.properties.keys()) == ["name"]
 
     p = t.properties.get("name")
     assert not p.default
@@ -40,7 +39,7 @@ def test_parse_data_types(root):
     assert t.name == "Place"
     assert t.type == "object"
     assert t.display_name == t.name
-    props = sorted(list(iterkeys(t.properties)))
+    props = sorted(list(t.properties.keys()))
     assert props == ["city", "province", "state"]
 
     p = t.properties.get("city")
@@ -72,3 +71,15 @@ def test_parse_data_types(root):
     ]
     for t in types:
         assert_not_set(t, not_set)
+
+
+def test_data_type_fragment_unknown_facet():
+    # a ``#%RAML 1.0 DataType`` fragment declares ONE type; this file's body is
+    # a map of two types, so ``Person``/``Employee`` are unknown facets.
+    # Reported as a RAML error, not TypeError.
+    raml_file = os.path.join(RAML_10, "data_types", "data_type_fragment.raml")
+    conf_file = os.path.join(RAML_10, "test-config.ini")
+    with pytest.raises(InvalidRAMLStructureError) as e:
+        parse(raml_file, conf_file)
+    msg = e.value.args[0]
+    assert "person" in msg or "employee" in msg

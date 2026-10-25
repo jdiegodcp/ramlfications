@@ -4,9 +4,7 @@
 import io
 import os
 import re
-import sys
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand  # NOQA
 
 
 NAME = "ramlfications"
@@ -43,41 +41,14 @@ def find_meta(meta):
 
 
 def install_requires():
-    install_requires = [
-        "attrs", "click", "jsonref", "markdown2", "pyyaml", "six",
+    return [
+        "attrs", "click", "jsonref", "markdown2", "pyyaml",
         "termcolor", "xmltodict", "inflect"
     ]
-    if sys.version_info[:2] == (2, 6):
-        install_requires.append("ordereddict")
-        install_requires.append("simplejson")
-    return install_requires
 
 
 long_description = read('README.rst', 'docs/changelog.rst')
 
-
-class PyTest(TestCommand):
-    user_options = [("pytest-args=", "a", "Arguments to pass to py.test")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = ''
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import pytest
-        pog = []
-        if not isinstance(self.pytest_args, list):
-            pog.append('tests')
-        else:
-            pog = self.pytest_args + ' tests'
-
-        errno = pytest.main(pog)
-        sys.exit(errno)
 
 setup(
     name=NAME,
@@ -85,15 +56,12 @@ setup(
     description=find_meta("description"),
     long_description=long_description,
     url=find_meta("uri"),
-    license=find_meta("license"),
+    license_expression="Apache-2.0",
+    license_files=["LICENSE"],
     author=find_meta("author"),
     author_email=find_meta("email"),
     keywords=["raml", "rest"],
     packages=find_packages(exclude=["tests*"]),
-    setup_requires=[
-        'setuptools>=69.1.0',
-        'wheel',
-    ],
     entry_points={
         'console_scripts': [
             'ramlfications = ramlfications.__main__:main'
@@ -103,7 +71,6 @@ setup(
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Natural Language :: English",
-        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.10",
@@ -114,14 +81,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     package_data={"": ["data/supported_mime_types.json"]},
+    python_requires=">=3.10",
     install_requires=install_requires(),
     extras_require={
         "all": ["requests[security]"]
     },
-    tests_require=[
-        "pytest", "mock", "pytest-mock", "pytest-localserver"
-    ],
-    cmdclass={
-        "test": PyTest,
-    }
 )

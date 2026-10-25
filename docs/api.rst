@@ -47,7 +47,7 @@ parser
 raml
 ^^^^
 
-.. py:class:: ramlfications.raml.RootNodeAPI08
+.. py:class:: ramlfications.models.raml.RAML08
 
     API Root Node
 
@@ -67,24 +67,24 @@ raml
 
         ``list`` of base :py:class:`.URIParameter` s for the base URI, or
         ``None``. The order of ``base_uri_params`` will follow the order \
-        defined in the :py:obj:`.RootNodeAPI08.base_uri`.
+        defined in the :py:obj:`.RAML08.base_uri`.
 
     .. py:attribute:: uri_params
 
         ``list`` of :py:class:`.URIParameter` s that can apply to all
         resources, or ``None``. The order of ``uri_params`` will follow the \
-        order defined in the :py:obj:`.RootNodeAPI08.base_uri`.
+        order defined in the :py:obj:`.RAML08.base_uri`.
 
     .. py:attribute:: protocols
 
         ``list`` of ``str`` s of API-supported protocols.  If not defined, is
-        inferred by protocol from :py:obj:`.RootNodeAPI08.base_uri`.
+        inferred by protocol from :py:obj:`.RAML08.base_uri`.
 
     .. py:attribute:: title
 
         ``str`` of API's title.
 
-    .. py:attribute:: docs
+    .. py:attribute:: documentation
 
         ``list`` of :py:class:`.Documentation` objects, or ``None``.
 
@@ -104,9 +104,9 @@ raml
 
         ``list`` of :py:class:`.TraitNode` objects, or ``None``.
 
-    .. py:attribute:: security_schemas
+    .. py:attribute:: security_schemes
 
-        ``list`` of :py:class:`.SecurityScheme` objects, or ``None``.
+        ``list`` of :py:class:`.SecuritySchemeNode` objects, or ``None``.
 
     .. py:attribute:: resources
 
@@ -114,7 +114,24 @@ raml
 
     .. py:attribute:: raml_obj
 
-        The :py:class:`.loader.RAMLDict` object.
+        The loaded RAML data (``dict``) from :py:class:`.loader.RAMLLoader`.
+
+.. py:class:: ramlfications.models.raml.RAML10
+
+    API Root Node for RAML 1.0 documents.  It has every
+    :py:class:`.RAML08` attribute, plus:
+
+    .. py:attribute:: types
+
+        ``list`` of declared data types, or ``None``.
+
+    .. py:attribute:: annotation_types
+
+        ``list`` of declared annotation types, or ``None``.
+
+    .. py:attribute:: uses
+
+        ``list`` of libraries applied with ``uses``, or ``None``.
 
 .. note::
 
@@ -122,7 +139,7 @@ raml
     :py:class:`.ResourceNode` all inherit the following :py:class:`.BaseNode`
     attributes:
 
-.. py:class:: ramlfications.raml.BaseNode
+.. py:class:: ramlfications.models.base.BaseNode
 
     .. py:attribute:: name
 
@@ -134,7 +151,7 @@ raml
 
     .. py:attribute:: root
 
-        Back reference to the ``Node``’s API :py:class:`.RootNodeAPI08` object.
+        Back reference to the ``Node``’s API :py:class:`.RAML08` object.
 
     .. py:attribute:: headers
 
@@ -171,7 +188,7 @@ raml
     .. py:attribute:: media_type
 
         ``str`` of supported request MIME media type. Defaults to \
-        :py:class:`.RootNodeAPI08`’s ``media_type``.
+        :py:class:`.RAML08`’s ``media_type``.
 
     .. py:attribute:: description
 
@@ -180,10 +197,10 @@ raml
     .. py:attribute:: protocols
 
         ``list`` of ``str`` s of supported protocols.  Defaults to \
-        :py:obj:`.RootNodeAPI08.protocols`.
+        :py:obj:`.RAML08.protocols`.
 
 
-.. py:class:: ramlfications.raml.TraitNode
+.. py:class:: ramlfications.models.traits.TraitNode
 
     Object representing a RAML Trait.
 
@@ -195,7 +212,7 @@ raml
         Usage of trait
 
 
-.. py:class:: ramlfications.raml.ResourceTypeNode
+.. py:class:: ramlfications.models.resource_types.ResourceTypeNode
 
     Object representing a RAML Resource Type.
 
@@ -246,11 +263,11 @@ raml
 
     .. py:attribute:: security_schemes
 
-        ``list`` of assigned :py:class:`parameters.SecurityScheme` objects,
+        ``list`` of assigned :py:class:`.SecuritySchemeNode` objects,
         or ``None``.
 
 
-.. py:class:: ramlfications.raml.ResourceNode
+.. py:class:: ramlfications.models.resources.ResourceNode
 
     .. py:attribute:: parent
 
@@ -271,7 +288,7 @@ raml
     .. py:attribute:: absolute_uri
 
         ``str`` concatenation of absolute URI of resource:
-        :py:obj:`.RootNodeAPI08.base_uri` + :py:attr:`path`.
+        :py:obj:`.RAML08.base_uri` + :py:attr:`path`.
 
     .. py:attribute:: is_
 
@@ -312,19 +329,19 @@ Parameters
     :py:class:`.FormParameter`, and :py:class:`.Header` objects all share the
     same attributes.
 
-.. py:class:: ramlfications.parameters.URIParameter
+.. py:class:: ramlfications.models.parameters.URIParameter
 
     URI parameter with properties defined by the RAML specification's \
     "Named Parameters" section, e.g.: ``/foo/{id}`` where ``id`` is the \
     name of the URI parameter.
 
-.. py:class:: ramlfications.parameters.QueryParameter
+.. py:class:: ramlfications.models.parameters.QueryParameter
 
     Query parameter with properties defined by the RAML specification's \
     "Named Parameters" section, e.g. ``/foo/bar?baz=123`` where ``baz`` \
     is the name of the query parameter.
 
-.. py:class:: ramlfications.parameters.FormParameter
+.. py:class:: ramlfications.models.parameters.FormParameter
 
     Form parameter with properties defined by the RAML specification's
     "Named Parameters" section. Example:
@@ -333,7 +350,7 @@ Parameters
 
     where ``baz`` is the Form Parameter name.
 
-.. py:class:: ramlfications.parameters.Header
+.. py:class:: ramlfications.models.parameters.Header
 
     Header with properties defined by the RAML spec's 'Named Parameters'
     section, e.g.:
@@ -435,7 +452,7 @@ Parameters
             Defaults to ``True`` if :py:class:`.URIParameter`, else defaults to ``False``.
 
 
-.. py:class:: ramlfications.parameters.Body
+.. py:class:: ramlfications.models.parameters.Body
 
     Body of the request/response.
 
@@ -475,7 +492,7 @@ Parameters
             ``application/x-www-form-urlencoded``.  Can not be used when \
             schema and/or example is defined.
 
-.. py:class:: ramlfications.parameters.Response
+.. py:class:: ramlfications.models.parameters.Response
 
     Expected response parameters.
 
@@ -504,7 +521,7 @@ Parameters
 
         ``str`` of HTTP request method associated with response.
 
-.. py:class:: ramlfications.parameters.Documentation
+.. py:class:: ramlfications.models.root.Documentation
 
     User documentation for the API.
 
@@ -516,7 +533,7 @@ Parameters
 
         ``str`` content of documentation
 
-.. py:class:: ramlfications.parameters.SecurityScheme
+.. py:class:: ramlfications.models.security.SecuritySchemeNode
 
     Security scheme definition.
 
@@ -526,7 +543,7 @@ Parameters
 
     .. py:attribute:: raw
 
-        ``dict`` of all raw data associated with the ``SecurityScheme`` from
+        ``dict`` of all raw data associated with the ``SecuritySchemeNode`` from
         the RAML file/string
 
     .. py:attribute:: type
@@ -563,10 +580,16 @@ Loader
 Validate
 ^^^^^^^^
 
-Functions are used when instantiating the classes from ``ramlfications.raml``.
+Functions are used when instantiating the classes from ``ramlfications.models``.
 
 .. automodule:: ramlfications.validate
     :noindex:
+    :members:
+
+Errors
+^^^^^^
+
+.. automodule:: ramlfications.errors
     :members:
 
 Tree

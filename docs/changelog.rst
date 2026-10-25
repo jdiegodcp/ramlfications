@@ -1,6 +1,110 @@
 Changelog
 =========
 
+0.3.0 (2026-10-25)
+------------------
+
+Added:
+
+- RAML 1.0 support, dispatched automatically from the ``#%RAML`` header
+  at the existing ``parse()``/``load()``/``validate()`` entry points:
+
+    * data types with inheritance, facets, and type expressions
+      (named types, arrays ``T[]``, unions ``A | B``)
+    * ``annotationTypes`` declarations and annotations applied on
+      resources and methods
+    * ``uses`` libraries with dotted ``LibName.member`` references,
+      including libraries used by other libraries
+    * typed fragments (DataType, Trait, ResourceType, Library,
+      SecurityScheme, DocumentationItem), parsed standalone or included
+    * Overlay and Extension documents with RAML 1.0 merge semantics;
+      overlays may not change behavioral aspects of their target
+    * security scheme updates (RAML 1.0 OAuth 2.0 grants and ``null``
+      ``securedBy`` for optional security)
+    * the RAML 1.0 parameter functions ``!uppercase``, ``!lowercase``,
+      ``!lowercamelcase``, ``!uppercamelcase``, ``!lowerunderscorecase``,
+      ``!upperunderscorecase``, ``!lowerhyphencase`` and
+      ``!upperhyphencase`` (``<<name | !uppercase>>``); RAML 0.8
+      documents keep only ``!singularize`` and ``!pluralize``
+
+- Version-routed validation: RAML 1.0-only constructs are rejected in
+  0.8 documents and vice versa, and RAML 1.0 rules (unresolvable type
+  references, annotation value conformance) report located errors that
+  are collected rather than failing at the first one.
+
+Changed:
+
+- Python 3.10+ is now the minimum supported version; Python 2 era
+  compatibility shims have been removed.
+- Dependencies modernized (PyYAML 6.x, current attrs).
+- A RAML 0.8 resource assigned a resource type with ``type:`` now gets
+  that type's required (non-``?``) methods, including those of the
+  type's own ``type:``, as resource nodes. A resource that only declared
+  ``type:`` used to produce a single node with ``method=None``; it now
+  produces one node per inherited method, so ``len(api.resources)``
+  grows for such APIs. Methods the resource declares itself keep their
+  order and come first.
+- Validation follows the RAML specification where it was stricter:
+  RAML 1.0 documents without ``baseUri`` validate (the spec makes it
+  OPTIONAL); RAML 0.8 documents without ``baseUri`` validate when the
+  config sets ``production = False`` (a missing ``production`` still
+  requires it); APIs without resources validate; ``baseUriParameters``
+  accept any named-parameter type, not only ``string``.
+- A placeholder name must match the parameter exactly: ``<<item-x>>``
+  is no longer treated as the parameter ``item``.
+
+Fixed:
+
+- RAML 0.8 resource type/trait inheritance edge cases, including
+  optional (``?``) properties.
+- ``!include`` resolution (nested includes, relative paths, and
+  missing-file errors).
+- ``<<resourcePathName>>`` is the rightmost path segment for nested
+  resources (``widget`` for ``/root/widget``, previously ``root/widget``)
+  and is now also substituted when ``type:`` is a plain name.
+- Resource type and trait parameters (e.g. ``<<resourceType>>``) are
+  substituted in inherited scalar values such as ``description``.
+- Inheriting a scalar value through a resource type that has its own
+  ``type:`` no longer raises ``TypeError``, and cyclic ``type:`` chains
+  no longer raise ``RecursionError``.
+- ``ramlfications tree -vv``/``-vvv`` lists form parameters declared
+  under a form ``body`` (``ResourceNode.form_params`` is unchanged).
+- A resource declared with no value (``/empty:``) parses as a resource
+  without properties instead of raising ``AttributeError``.
+- RAML 1.0 ``<<resourcePathName>>`` skips path segments that contain a
+  URI parameter (``users`` for ``/users/{id}``), as the RAML 1.0 spec
+  defines; RAML 0.8 keeps the rightmost segment (``{id}``).
+- Parameters a resource type passes to its own ``type:`` (e.g.
+  ``type: {base: {thing: <<item>>}}``) are substituted in what it
+  inherits from that type.
+- A ``documentation`` value that is not a list, and unknown facets in a
+  RAML 1.0 type declaration, raise ``InvalidRAMLStructureError`` instead
+  of ``AssertionError`` / ``TypeError``.
+- ``absolute_uri`` is a string (the resource path) when the API has no
+  ``baseUri``; it used to be a one-element list.
+- URI/base URI parameter handling (implicit template parameters and
+  explicit overrides).
+- Passing a config file without a ``[main] validate`` option to
+  ``parse()`` or ``ramlfications tree -c`` no longer turns validation
+  off; such files now validate, as documented.  To turn validation off,
+  set ``validate = False`` (the older spelling ``validation`` is still
+  accepted when ``validate`` is not set).
+- ``ramlfications tree -V``/``--validate`` now validates the file even
+  when the config file turns validation off; the flag used to be
+  ignored.
+- Placeholders next to each other are substituted independently:
+  ``<<thing>>-<<resourcePathName>>`` gives ``gizmo-widgets`` instead of
+  losing everything after ``gizmo``.
+- ``!singularize`` and ``!pluralize`` leave a value that already has the
+  requested form unchanged (``/user`` with ``!singularize`` used to give
+  ``False``, and ``/users`` with ``!pluralize`` gave ``user``).
+- An unknown parameter function, or a RAML 1.0 function in a RAML 0.8
+  document, raises ``InvalidRAMLStructureError`` naming the function
+  instead of ``AttributeError``/``TypeError``.
+- A parameter function applied to a number or boolean value (for example
+  ``thing: 5`` with ``<<thing | !uppercase>>``) transforms its text form
+  instead of raising ``AttributeError``/``TypeError``.
+
 0.1.9 (2015-12-24)
 ------------------
 

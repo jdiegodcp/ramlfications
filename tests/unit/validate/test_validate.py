@@ -2,7 +2,6 @@
 # Copyright (c) 2015 Spotify AB
 
 # TODO: break me up!
-from __future__ import absolute_import, division, print_function
 
 import os
 
@@ -11,7 +10,7 @@ import pytest
 from ramlfications import errors
 from ramlfications import validate
 
-from tests.base import VALIDATE_08
+from tests.base import RAML_ORG_EXAMPLES, VALIDATE_08
 
 
 raises = pytest.raises(errors.InvalidRAMLError)
@@ -32,6 +31,38 @@ def load_raml(filename):
 
 def load_config(filename):
     return os.path.join(VALIDATE_08, filename)
+
+
+BASE_URI_MSG = ("RAML File does not define the baseUri.",)
+
+
+@pytest.mark.parametrize("raml_file,production,expect_error", [
+    # RAML 1.0: "The OPTIONAL baseUri node ..." (Base URI and Base URI
+    # Parameters)
+    (os.path.join(RAML_ORG_EXAMPLES, "typesystem", "simple.raml"),
+     "True", False),
+    # RAML 0.8: baseUri is "OPTIONAL to allow describing APIs that have not
+    # yet been implemented"; once implemented it "MUST contain a baseUri"
+    (os.path.join(VALIDATE_08, "no-base-uri.raml"), "True", True),
+    (os.path.join(VALIDATE_08, "no-base-uri.raml"), "False", False),
+    # no config file: ``production`` is missing, which counts as true
+    (os.path.join(VALIDATE_08, "no-base-uri.raml"), None, True),
+], ids=["raml10-production-true", "raml08-production-true",
+        "raml08-production-false", "raml08-no-config"])
+def test_base_uri_requirement(tmpdir, raml_file, production, expect_error):
+    config = None
+    if production is not None:
+        config = tmpdir.join("config.ini")
+        config.write("[main]\nvalidate = True\n"
+                     "production = {0}\n".format(production))
+        config = str(config)
+    try:
+        validate(raml_file, config)
+        found = False
+    except errors.InvalidRAMLError as e:
+        found = _error_exists(e.errors, errors.InvalidRootNodeError,
+                              BASE_URI_MSG)
+    assert found is expect_error
 
 
 def test_default_to_validate():
@@ -79,7 +110,6 @@ def test_invalid_version_base_uri():
     assert _error_exists(e.value.errors, errors.InvalidRootNodeError, msg)
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME fool")
 def test_undefined_base_uri_and_title():
     raml = load_raml("no-base-uri-no-title.raml")
     config = load_config("valid-config.ini")
@@ -99,15 +129,12 @@ def test_invalid_base_uri_not_defined():
     assert _error_exists(e.value.errors, errors.InvalidRootNodeError, msg)
 
 
-def test_invalid_base_uri_wrong_type():
-    raml = load_raml("invalid-base-uri-params.raml")
+def test_base_uri_param_integer_type():
+    # RAML 0.8 "Named Parameters": type may be string, number, integer, date
+    # or boolean; only implicit base URI parameters default to string
+    raml = load_raml("base-uri-params-integer.raml")
     config = load_config("valid-config.ini")
-    with raises as e:
-        validate(raml, config)
-    msg = ("Validation errors were found.",)
-    msg1 = ("baseUriParameter 'domainName' must be a string",)
-    assert e.value.args == msg
-    assert _error_exists(e.value.errors, errors.InvalidRootNodeError, msg1)
+    assert validate(raml, config) is None
 
 
 def test_invalid_base_uri_optional():
@@ -120,6 +147,9 @@ def test_invalid_base_uri_optional():
 
 
 def test_invalid_uri_params_version():
+    # RAML 0.8 Root Section, "URI Parameters": "The uriParameters CANNOT
+    # contain a key named version because it is a reserved URI parameter
+    # name." (raml-1-parser 1.1.67 accepts this file; the spec rejects it)
     raml = load_raml("version-in-uri-params.raml")
     config = load_config("valid-config.ini")
     with raises as e:
@@ -138,11 +168,14 @@ def test_invalid_no_title():
 
 
 def test_invalid_docs_not_list():
+    # RAML 0.8 "User Documentation": "The documentation property MUST be an
+    # array of documents."; reported as a RAML error, not AssertionError
     raml = load_raml("docs-not-list.raml")
     config = load_config("valid-config.ini")
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(errors.InvalidRAMLStructureError) as e:
         validate(raml, config)
-    assert ("Error parsing documentation",) == e.value.args
+    msg = "Error parsing documentation: 'documentation' must be a list"
+    assert (msg,) == e.value.args
 
 
 def test_invalid_docs_no_title():
@@ -174,12 +207,12 @@ def test_assigned_undefined_resource_type():
 
 
 def test_no_resources_defined():
+    # neither RAML 0.8 nor 1.0 sets a minimum number of resources (1.0 root
+    # table: "/<relativeUri>?", where "A trailing question mark in key names
+    # MAY denote an optional key")
     raml = load_raml("no-resources.raml")
     config = load_config("valid-config.ini")
-    with raises as e:
-        validate(raml, config)
-    msg = ("API does not define any resources.",)
-    assert _error_exists(e.value.errors, errors.InvalidRootNodeError, msg)
+    assert validate(raml, config) is None
 
 
 def test_invalid_media_type():
@@ -203,6 +236,9 @@ def test_invalid_trait_obj():
 
 
 def test_traits_undefined():
+    # RAML 0.8 "Applying Resource Types and Traits": the is attribute names
+    # "trait keys (names) included in the traits declaration"
+    # (raml-1-parser 1.1.67 accepts this file; the spec rejects it)
     raml = load_raml("trait-undefined.raml")
     config = load_config("valid-config.ini")
     with raises as e:
@@ -349,7 +385,6 @@ def test_invalid_string_type():
 # ResourceType, Trait, and Security Scheme validators
 #####
 
-@pytest.mark.skipif(1 == 1, reason="FIXME fool")
 def test_empty_mapping_res_type():
     raml = load_raml("empty-mapping-resource-type.raml")
     config = load_config("valid-config.ini")
@@ -360,7 +395,6 @@ def test_empty_mapping_res_type():
     assert _error_exists(e.value.errors, errors.InvalidResourceNodeError, msg)
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME fool")
 def test_empty_mapping_trait():
     raml = load_raml("empty-mapping-trait.raml")
     config = load_config("valid-config.ini")
@@ -369,6 +403,28 @@ def test_empty_mapping_trait():
 
     msg = ("The trait 'emptyTrait' requires definition.",)
     assert _error_exists(e.value.errors, errors.InvalidResourceNodeError, msg)
+
+
+def test_res_types_without_method_data_are_defined():
+    # neither a method-less resource type with other properties nor an
+    # empty method mapping is an empty resource type declaration
+    raml = "\n".join([
+        "#%RAML 0.8",
+        "title: Example",
+        "baseUri: https://example.com",
+        "resourceTypes:",
+        "  - describedOnly:",
+        "      description: no methods, still defined",
+        "  - emptyMethod:",
+        "      get:",
+        "/things:",
+        "  type: describedOnly",
+        "  get:",
+        "/others:",
+        "  type: emptyMethod",
+        "  get:",
+    ])
+    validate(raml, load_config("valid-config.ini"))
 
 
 def test_empty_mapping_sec_scheme_settings():
@@ -383,11 +439,19 @@ def test_empty_mapping_sec_scheme_settings():
                          msg)
 
 
+def test_security_scheme_without_settings_is_valid():
+    # Issues #79/#118: 'settings' is optional per the RAML spec; a scheme
+    # that omits it entirely must validate.
+    raml = load_raml("no-settings-security-scheme.raml")
+    config = load_config("valid-config.ini")
+    assert validate(raml, config) is None
+
+
 def test_invalid_raml_version():
     _raml = "invalid-version.raml"
     raml = load_raml(_raml)
     config = load_config("valid-config.ini")
     with pytest.raises(errors.InvalidVersionError) as e:
         validate(raml, config)
-    msg = "RAML version not allowed in config 0.9: allowed: 0.8"
+    msg = "RAML version not allowed in config 0.9: allowed: 0.8, 1.0"
     assert msg in e.value.args

@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Spotify AB
-from __future__ import absolute_import, division, print_function
 
 
 from termcolor import colored
@@ -122,6 +121,8 @@ tree_light_vv = (
     colored("|", "green", attrs=["bold"]) +
     colored("        ⌙ user_id", "cyan", attrs=["bold"]) + "\n" +
     colored("|", "green", attrs=["bold"]) +
+    colored("        ⌙ playlist_id", "cyan", attrs=["bold"]) + "\n" +
+    colored("|", "green", attrs=["bold"]) +
     colored("       Form Params", "cyan", attrs=["bold"]) + "\n" +
     colored("|", "green", attrs=["bold"]) +
     colored("        ⌙ name", "cyan", attrs=["bold"]) + "\n"
@@ -165,6 +166,9 @@ tree_light_vvv = (
     colored("       URI Params", "cyan", attrs=["bold"]) + "\n" +
     colored("|", "green", attrs=["bold"]) +
     colored("        ⌙ user_id: User ID", "cyan", attrs=["bold"]) + "\n" +
+    colored("|", "green", attrs=["bold"]) +
+    colored("        ⌙ playlist_id: playlist_id", "cyan",
+            attrs=["bold"]) + "\n" +
     colored("|", "green", attrs=["bold"]) +
     colored("       Form Params", "cyan", attrs=["bold"]) + "\n" +
     colored("|", "green", attrs=["bold"]) +
