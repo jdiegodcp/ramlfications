@@ -12,7 +12,9 @@ from ramlfications.models.parameters import (
     Body, Header, Response, URIParameter
 )
 from ramlfications.utils import load_schema, NodeList
-from ramlfications.utils.common import _get, substitute_parameters
+from ramlfications.utils.common import (
+    _get, resource_path_name, substitute_parameters
+)
 from ramlfications.utils.parameter import (
     map_object, resolve_scalar_data, add_missing_uri_data
 )
@@ -178,6 +180,8 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
         self.root = _get(kwargs, "root")
 
     def _set_param_data(self, param_data, path, path_name):
+        # copy so the assignment in the raw RAML data is left untouched
+        param_data = dict(param_data or {})
         param_data["resourcePath"] = path
         param_data["resourcePathName"] = path_name
         return param_data
@@ -189,7 +193,8 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
         # this logic ain't too pretty...
         if self.path:
             _path = self.path
-            _path_name = _path.lstrip("/")
+            _path_name = resource_path_name(
+                _path, getattr(self.root, "raml_version", None))
         else:
             _path = "<<resourcePath>>"
             _path_name = "<<resourcePathName>>"
@@ -211,6 +216,11 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
                 param_data = self._set_param_data(param_data, _path,
                                                   _path_name)
                 resolved = substitute_parameters(resolved, param_data)
+
+        # also needed for string (``type: name``) or no assignments
+        if self.path:
+            resolved = substitute_parameters(
+                resolved, self._set_param_data({}, _path, _path_name))
         return resolved
 
     def resolve(self):

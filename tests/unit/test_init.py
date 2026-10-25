@@ -14,7 +14,7 @@ from tests.base import RAML_08, RAML_10
 
 @pytest.fixture(scope="session")
 def raml():
-    return os.path.join(RAML_08, "complete-valid-example.raml")
+    return os.path.join(RAML_08, "complete-example.raml")
 
 
 @pytest.fixture(scope="session")

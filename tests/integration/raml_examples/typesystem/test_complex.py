@@ -15,7 +15,7 @@ from tests.base import (
 )
 
 
-def _test_attrs_set(item, attrs_to_exp):
+def assert_attrs_set(item, attrs_to_exp):
     for attrib, exp in attrs_to_exp:
         assert getattr(item, attrib) == exp
 
@@ -40,6 +40,15 @@ def test_root(api):
     assert not api.security_schemes
 
 
+@pytest.mark.xfail(strict=True, reason=(
+    "optional feature not implemented: resolving a property's type to a "
+    "type object. RAML 1.0 only requires the value to be \"a name of a type "
+    "or an inline type declaration\"; Property keeps the name in ``type``"))
+def test_org_on_call_property_resolves_data_type(api):
+    on_call = api.types[0].properties.get("onCall")
+    assert on_call.data_type.name == "Alertable"
+
+
 def test_org_type(api):
     org = api.types[0]
     attrs_to_exp = [
@@ -48,7 +57,7 @@ def test_org_type(api):
         ("display_name", "Org"),
         ("raml_version", "1.0")
     ]
-    _test_attrs_set(org, attrs_to_exp)
+    assert_attrs_set(org, attrs_to_exp)
     assert len(org.properties) == 2
     assert sorted(org.properties.keys()) == sorted(["onCall", "Head"])
     assert isinstance(org, data_types.ObjectDataType)
@@ -57,8 +66,6 @@ def test_org_type(api):
     assert on_call.type == "Alertable"
     assert not on_call.required
     assert not on_call.default
-    # TODO: add support
-    # assert on_call.data_type.name == "Alertable"
 
     not_set = [
         'additional_properties', 'annotation', 'default', 'discriminator',
@@ -80,7 +87,7 @@ def test_person_type(api):
         ("discriminator", "kind"),
         ("raml_version", "1.0")
     ]
-    _test_attrs_set(person, attrs_to_exp)
+    assert_attrs_set(person, attrs_to_exp)
     assert isinstance(person, data_types.ObjectDataType)
 
     not_set = [
@@ -94,7 +101,7 @@ def test_person_type(api):
     not_set = ["default", "required"]
     for v in person.properties.values():
         assert_not_set(v, not_set)
-        _test_attrs_set(v, [("type", "string")])
+        assert_attrs_set(v, [("type", "string")])
 
 
 def test_phone_type(api):
@@ -106,7 +113,7 @@ def test_phone_type(api):
         ("max_length", 2147483647),
         ("raml_version", "1.0")
     ]
-    _test_attrs_set(phone, attrs_to_exp)
+    assert_attrs_set(phone, attrs_to_exp)
     assert not phone.description.raw
     assert not phone.description.html
     assert phone.pattern.pattern == "^[0-9|-]+$"
@@ -128,7 +135,7 @@ def test_manager_type(api):
         ("raml_version", "1.0"),
         ("discriminator", "kind")
     ]
-    _test_attrs_set(manager, attrs_to_exp)
+    assert_attrs_set(manager, attrs_to_exp)
     assert isinstance(manager, data_types.ObjectDataType)
 
     not_set = [
@@ -171,7 +178,7 @@ def test_admin_type(api):
         ("discriminator", "kind"),
         ("raml_version", "1.0")
     ]
-    _test_attrs_set(admin, attrs_to_exp)
+    assert_attrs_set(admin, attrs_to_exp)
 
     assert isinstance(admin, data_types.ObjectDataType)
 
@@ -212,7 +219,7 @@ def test_alertable_admin_type(api):
         ("discriminator", "kind"),
         ("raml_version", "1.0")
     ]
-    _test_attrs_set(alert_admin, attrs_to_exp)
+    assert_attrs_set(alert_admin, attrs_to_exp)
 
     assert isinstance(alert_admin, data_types.ObjectDataType)
 
@@ -257,7 +264,7 @@ def test_alertable_type(api):
         ("discriminator", "kind"),
         ("raml_version", "1.0")
     ]
-    _test_attrs_set(alertable, attrs_to_exp)
+    assert_attrs_set(alertable, attrs_to_exp)
 
     assert isinstance(alertable, data_types.ObjectDataType)
 
@@ -298,13 +305,14 @@ def test_resource(api):
         ("display_name", "/orgs/{orgId}"),
         ("method", "get"),
         # why is this a list?!
-        ("absolute_uri", ["/orgs/{orgId}"]),
+        # no baseUri (optional in RAML 1.0): the URI is the path, as a string
+        ("absolute_uri", "/orgs/{orgId}"),
         ("media_type", "application/json"),
         ("path", "/orgs/{orgId}"),
         # TODO: fixme - this should just be none or something
         ("protocols", [""])
     ]
-    _test_attrs_set(res, attrs_to_exp)
+    assert_attrs_set(res, attrs_to_exp)
 
     not_set = [
         'base_uri_params', 'body', 'desc', 'errors', 'form_params',
@@ -326,7 +334,7 @@ def test_resource(api):
         ("type", "string"),
         ("required", True)
     ]
-    _test_attrs_set(u_param, attrs_to_exp)
+    assert_attrs_set(u_param, attrs_to_exp)
 
     not_set = [
         'data_type', 'default', 'desc', 'description',
@@ -347,7 +355,7 @@ def test_resource(api):
         ("code", 200),
         ("method", "get")
     ]
-    _test_attrs_set(resp, attrs_to_exp)
+    assert_attrs_set(resp, attrs_to_exp)
 
     not_set = [
         'errors', 'headers'
@@ -364,7 +372,7 @@ def test_resource(api):
         ("mime_type", "application/json"),
         ("type", "Org"),
     ]
-    _test_attrs_set(body, attrs_to_exp)
+    assert_attrs_set(body, attrs_to_exp)
 
     not_set = [
         'errors', 'form_params', 'schema'
@@ -387,7 +395,7 @@ def test_resource(api):
         ("type", "object"),
         ("raml_version", "1.0")
     ]
-    _test_attrs_set(body.data_type, attrs_to_exp)
+    assert_attrs_set(body.data_type, attrs_to_exp)
     not_set = set(DATA_TYPE_OBJECT_ATTRS) - set(_set)
     assert_not_set(body.data_type, not_set)
 

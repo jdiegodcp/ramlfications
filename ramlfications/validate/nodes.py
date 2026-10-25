@@ -45,8 +45,12 @@ def defined_resource_type(inst, attr, value):
     """
     Assert that a resource type is defined (e.g. not an empty map) or is
     inherited from a defined resource type.
+
+    Only the method-less node of a resource type carries its whole
+    declaration as ``raw``; per-method nodes carry that method's data,
+    which may legitimately be empty (e.g. ``get:``).
     """
-    if not inst.type:
+    if inst.method is None and not inst.type:
         if not value:
             msg = ("The resourceType '{0}' requires "
                    "definition.".format(inst.name))

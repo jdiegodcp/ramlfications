@@ -5,6 +5,7 @@
 import attr
 
 from .base import BaseNode
+from ramlfications.validate import defined_trait
 
 
 @attr.s
@@ -16,6 +17,6 @@ class TraitNode(BaseNode):
     :param str usage: Usage of trait
     """
     name  = attr.ib()
-    # TODO: abstract validator in BaseNode
-    # raw   = attr.ib(repr=False, validator=defined_trait)
+    # redefines BaseNode.raw to attach the validator
+    raw   = attr.ib(repr=False, validator=defined_trait)
     usage = attr.ib(repr=False)

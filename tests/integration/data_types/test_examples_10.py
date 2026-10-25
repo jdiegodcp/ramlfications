@@ -125,6 +125,9 @@ def test_header_with_mutiple_examples(api):
 
 
 def test_disallows_example_with_examples():
+    # RAML 1.0 "Type Declarations": "The "example" facet MUST NOT be available
+    # when the "examples" facet is already defined."
+    # (raml-1-parser 1.1.67 accepts this file; the spec rejects it)
     ramlfile = os.path.join(RAML_10, "broken-example-with-examples.raml")
     loaded_raml = load_file(ramlfile)
     conffile = os.path.join(RAML_10, "test-config.ini")
@@ -135,6 +138,8 @@ def test_disallows_example_with_examples():
 
 
 def test_disallows_non_map_examples():
+    # RAML 1.0 "Multiple Examples": "Its value MUST be a map of key-value
+    # pairs, where each key represents a unique identifier for an example"
     ramlfile = os.path.join(RAML_10, "broken-non-map-examples.raml")
     loaded_raml = load_file(ramlfile)
     conffile = os.path.join(RAML_10, "test-config.ini")

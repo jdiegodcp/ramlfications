@@ -4,8 +4,11 @@
 
 import re
 
+import attr
 
-from ramlfications.errors import UnknownDataTypeError
+from ramlfications.errors import (
+    InvalidRAMLStructureError, UnknownDataTypeError
+)
 from ramlfications.models import (
     RAML_VERSION_LOOKUP, ResourceTypeNode, ResourceNode,
     SecuritySchemeNode, TraitNode
@@ -18,13 +21,18 @@ from ramlfications.utils.common import _get, _map_attr
 from ramlfications.utils.libraries import (
     attach_library_members, library_source_path, load_libraries
 )
-from ramlfications.utils.parser import sort_uri_params
+from ramlfications.utils.parser import parse_assigned_dicts, sort_uri_params
 from ramlfications.utils.types import parse_type
 
 from .base import BaseParser, BaseNodeParser
 from .mixins import NodeMixin
 
 parsers = []
+
+
+# RAML 0.8 "User Documentation": "The documentation property MUST be an array
+# of documents."
+DOCS_NOT_LIST = "Error parsing documentation: 'documentation' must be a list"
 
 
 def collectparser(kls):
@@ -49,8 +57,14 @@ class RAMLParser(object):
         self.config = config
 
     def parse(self):
+        # the root node is validated explicitly once parsing is done
+        # (see parse_raml); running its validators here as well would
+        # report every root-level error twice
+        run_validators = attr.get_run_validators()
+        attr.set_run_validators(False)
         root_parser = RootParser(self.data, self.config)
         root = root_parser.create_node()
+        attr.set_run_validators(run_validators)
         if hasattr(root, "uses"):
             # injects library members into self.data under dotted
             # names so the section parsers below pick them up
@@ -102,15 +116,17 @@ class RootParser(BaseParser):
 
     def docs(self):
         d = self.data.get("documentation", [])
-        assert isinstance(d, list), "Error parsing documentation"
-        docs = [Documentation(i.get("title"), i.get("content")) for i in d]
+        if not isinstance(d, list):
+            raise InvalidRAMLStructureError(DOCS_NOT_LIST)
+        docs = NodeList(
+            Documentation(i.get("title"), i.get("content")) for i in d)
         return docs or None
 
     def schemas(self):
         _schemas = self.data.get("schemas")
         if not _schemas:
             return None
-        schemas = []
+        schemas = NodeList()
         # RAML 0.8 uses a list of maps; RAML 1.0+ uses a simple map.
         if isinstance(_schemas, dict):
             for k, v in list(_schemas.items()):
@@ -286,7 +302,8 @@ class SecuritySchemeParser(BaseNodeParser):
 
     def documentation(self):
         d = self.get_data_from_kwargs("documentation", {}, [])
-        assert isinstance(d, list), "Error parsing documentation"
+        if not isinstance(d, list):
+            raise InvalidRAMLStructureError(DOCS_NOT_LIST)
         docs = [Documentation(i.get("title"), i.get("content")) for i in d]
         return docs or None
 
@@ -367,6 +384,9 @@ class TraitParser(BaseNodeParser):
             else:
                 self.name = d
                 self.data = data[d]
+            # an empty mapping (`name:`) loads as None; keep parsing and
+            # let validation report it
+            self.data = self.data or {}
             node_objects.append(self.create_node())
 
         return node_objects
@@ -400,6 +420,9 @@ class ResourceTypeParser(BaseNodeParser, NodeMixin):
     def create_node_dict(self):
         node = super(ResourceTypeParser, self).create_node_dict()
 
+        if self.method is None:
+            # without methods, the declaration itself is the node's data
+            node["raw"] = self.data
         node["is_"] = self.is_()
         node["type"] = self.type_()
         node["usage"] = self.data.get("usage")
@@ -488,10 +511,9 @@ class ResourceParser(BaseNodeParser, NodeMixin):
 
     def absolute_uri(self):
         self.uri = self.root.base_uri + self.path
-        if self.protos:
-            self.uri = self.uri.split("://")
-            if len(self.uri) == 2:
-                self.uri = self.uri[1]
+        # without a baseUri (optional in RAML 1.0) there is no scheme to swap
+        if self.protos and "://" in self.uri:
+            self.uri = self.uri.split("://", 1)[1]
             if self.root.protocols:
                 _protos = list(set(self.root.protocols) & set(self.protos))
                 if _protos:
@@ -571,15 +593,39 @@ class ResourceParser(BaseNodeParser, NodeMixin):
 
         return ResourceNode(**node)
 
+    def _type_methods(self, assigned, seen=None):
+        """
+        Returns the required (non-``?``) methods of the assigned resource
+        type, including those inherited through the type's own ``type``.
+        """
+        name = parse_assigned_dicts(assigned)
+        seen = seen or set()
+        if not isinstance(name, str) or name in seen:
+            return []
+        seen.add(name)
+        methods = []
+        for res_type in self.root.resource_types or []:
+            if res_type.name != name:
+                continue
+            if res_type.method and not res_type.optional:
+                methods.append(res_type.method)
+            methods += self._type_methods(res_type.type, seen)
+        return methods
+
     def create_nodes(self, nodes, parent=None):
         for k, v in list(self.data.items()):
             if k.startswith("/"):
                 self.parent = parent
 
                 self.name = k
+                # ``/resource:`` with nothing under it loads as None
+                v = v or {}
                 self.child_data = v
                 self.data = self.child_data
                 methods = [m for m in self.avail if m in list(v.keys())]
+                inherited = self._type_methods(v.get("type"))
+                methods += [m for m in self.avail
+                            if m in inherited and m not in methods]
                 if methods:
                     for m in methods:
                         self.method = m

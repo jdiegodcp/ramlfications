@@ -4,8 +4,9 @@
 import os
 
 import pytest
-# import xmltodict
+import xmltodict
 
+from ramlfications import parse
 from ramlfications import parser as pw
 from ramlfications.parser.parser import RootParser
 from ramlfications.config import setup_config
@@ -13,18 +14,18 @@ from ramlfications.models import TraitNode, ResourceTypeNode
 from ramlfications.models.raml import RAML08
 from ramlfications.utils import load_file
 
-from tests.base import RAML_08
+from tests.base import RAML_08, VALIDATE_08
 
 
 @pytest.fixture(scope="session")
 def loaded_raml():
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     return load_file(raml_file)
 
 
 @pytest.fixture(scope="session")
 def root():
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     loaded_raml_file = load_file(raml_file)
     config_file = os.path.join(RAML_08, "test-config.ini")
     config = setup_config(config_file)
@@ -174,7 +175,7 @@ def test_media_type(root):
 
 @pytest.fixture(scope="session")
 def api():
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     loaded_raml_file = load_file(raml_file)
     config_file = os.path.join(RAML_08, "test-config.ini")
     config = setup_config(config_file)
@@ -186,7 +187,7 @@ def api():
 #####
 @pytest.fixture(scope="session")
 def sec_schemes():
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     loaded_raml_file = load_file(raml_file)
     config_file = os.path.join(RAML_08, "test-config.ini")
     config = setup_config(config_file)
@@ -267,7 +268,7 @@ def test_security_scheme_no_desc(sec_schemes):
 #####
 @pytest.fixture(scope="session")
 def traits():
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     loaded_raml_file = load_file(raml_file)
     config_file = os.path.join(RAML_08, "test-config.ini")
     config = setup_config(config_file)
@@ -276,6 +277,7 @@ def traits():
 
 
 def test_create_traits(api):
+    assert len(api.traits) == 7
     for trait in api.traits:
         assert isinstance(trait, TraitNode)
 
@@ -610,18 +612,19 @@ def test_trait_pluralize(param_functions):
     assert res.name == "/user"
     assert res.method == "get"
     assert len(res.traits) == 1
-    # TODO: FIXME
-    # assert len(res.query_params) == 2
+    assert len(res.query_params) == 2
 
     item = res.query_params[0]
     assert item.name == "user"
     desc = ("The number of users to return, not to exceed 10")
     assert item.description.raw == desc
 
-    # TODO: FIXME
-    # spaced_item = res.query_params[1]
-    assert item.name == "user"
-    assert item.description.raw == desc
+    # ``<<spacedItem >>`` / ``<< spacedItem | !pluralize >>`` are
+    # substituted despite the inner spaces
+    spaced_item = res.query_params[1]
+    assert spaced_item.name == "track"
+    desc = ("The number of tracks to return, not to exceed 10")
+    assert spaced_item.description.raw == desc
 
     foo_trait = param_functions.traits[1]
     assert foo_trait.name == "fooTrait"
@@ -640,12 +643,10 @@ def test_trait_pluralize(param_functions):
     assert foo.body[0].mime_type == "application/json"
     assert foo.body[0].example == "foos"
 
-    # TODO fixme: returns len 2
-    # assert len(foo.responses) == 1
+    assert len(foo.responses) == 1
     assert foo.responses[0].code == 200
     desc = "A singular response - bar"
-    # TODO: fixme
-    # assert foo.responses[0].description.raw == desc
+    assert foo.responses[0].description.raw == desc
 
 
 #####
@@ -653,7 +654,7 @@ def test_trait_pluralize(param_functions):
 #####
 @pytest.fixture(scope="session")
 def resource_types():
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     loaded_raml_file = load_file(raml_file)
     config_file = os.path.join(RAML_08, "test-config.ini")
     config = setup_config(config_file)
@@ -662,6 +663,7 @@ def resource_types():
 
 
 def test_create_resource_types(api):
+    assert len(api.resource_types) == 11
     for res_type in api.resource_types:
         assert isinstance(res_type, ResourceTypeNode)
 
@@ -790,12 +792,11 @@ def test_resource_type_inherited(resource_types):
     assert inherited.usage == "Some sort of usage text"
     assert inherited.display_name == "inherited example"
 
-    # TODO: FIXME - probably when #88 gets merged?
-    # inherited_response = inherited.responses[1]
-    # assert inherited_response.code == 403
+    inherited_response = inherited.responses[1]
+    assert inherited_response.code == 403
 
-    # new_response = inherited.responses[2]
-    # assert new_response.code == 500
+    new_response = inherited.responses[2]
+    assert new_response.code == 500
 
 
 def test_resource_type_with_trait(resource_types):
@@ -1055,7 +1056,7 @@ def test_resource_type_pluralize(param_functions):
 #####
 @pytest.fixture(scope="session")
 def resources():
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     loaded_raml_file = load_file(raml_file)
     config_file = os.path.join(RAML_08, "test-config.ini")
     config = setup_config(config_file)
@@ -1073,18 +1074,15 @@ def test_resource_properties(resources):
     assert resources[1].parent.name == "/widgets"
     assert resources[1].path == "/widgets/{id}"
 
-    # absuri = "http://{subdomain}.example.com/v1/{communityPath}/widgets/{id}"
-    # TODO: FIXME
-    # assert resources[1].absolute_uri == absuri
-    # assert resources[1].media_type == "application/xml"
-    # assert resources[1].protocols == ["HTTP"]
+    assert resources[1].media_type == "application/xml"
+    # type-level protocols are not inherited (spec): see
+    # test_resource_type_level_protocols_not_inherited
 
     assert resources[2].is_ == ["paged"]
-    # assert resources[2].media_type == "application/xml"
+    assert resources[2].media_type == "application/xml"
     assert resources[12].type == "collection"
-
-    # TODO: FIXME
-    # assert resources[3].media_type == "text/xml"
+    # type-level mediaType is not inherited (spec): see
+    # test_resource_type_level_media_type_not_inherited
 
 
 def test_resource_no_method_properties(resources):
@@ -1126,6 +1124,46 @@ def test_resource_inherited_properties(resources):
     assert res.is_ == ["protocolTrait"]
     assert res.traits[0].description.raw == "A trait to assign a protocol"
     assert res.traits[0].protocols == ["HTTP"]
+
+
+def test_resource_type_level_protocols_not_inherited(resources):
+    # /widgets/{id} GET has ``type: protocolExampleType``, whose top-level
+    # ``protocols: ["HTTP"]`` is not a resource type property: RAML 0.8 allows
+    # protocols at the root and "A method can override an API's protocols
+    # value for that single method"; RAML 1.0 lists protocols only for the
+    # root and methods. So the root's HTTPS applies.
+    res = find_node(resources, "get", path="/widgets/{id}")
+    assert res.protocols == ["HTTPS"]
+    absuri = "https://{subdomain}.example.com/v1/{communityPath}/widgets/{id}"
+    assert res.absolute_uri == absuri
+
+
+def test_resource_type_level_media_type_not_inherited(resources):
+    # /thingys GET has ``type: anotherExample`` with a top-level
+    # ``mediaType: text/xml``; RAML 0.8 "Default Media Type": "This property
+    # is specified at the root level of the API definition" (RAML 1.0: root
+    # only), so the root's application/json applies.
+    res = find_node(resources, "get", path="/thingys")
+    assert res.media_type == "application/json"
+
+
+def test_resource_type_method_protocols_inherited(tmpdir):
+    # protocols inside a resource type's method are a method property, which
+    # the method of a resource with that type inherits
+    api = parse_inline_raml(tmpdir, """#%RAML 0.8
+title: Method protocols
+baseUri: https://localhost
+protocols: [ HTTPS ]
+resourceTypes:
+  - t:
+      get:
+        protocols: [ HTTP ]
+        description: g
+/r:
+  type: t
+""")
+    res = find_node(api.resources, "get", path="/r")
+    assert res.protocols == ["HTTP"]
 
 
 def test_resource_assigned_type(resources):
@@ -1186,8 +1224,7 @@ def test_resource_assigned_type(resources):
     res = resources[1]
     assert res.type == "protocolExampleType"
     assert res.resource_type.name == "protocolExampleType"
-    # TODO: FIXME
-    # assert res.protocols == res.resource_type.protocols
+    # protocols: see test_resource_type_level_protocols_not_inherited
 
 
 def test_resource_assigned_trait(resources):
@@ -1251,15 +1288,14 @@ def test_resource_responses(resources):
     assert not example
 
     res = resources[19]
-    # TODO: FIXME - inheritance isn't working, probably for optional
-    # methods, maybe multiple inherited resource types
-    # headers = [h.name for h in res.responses[0].headers]
-    # assert "X-waiting-period" in headers
-    # body = res.responses[0].body[0].schema
-    # TODO: FIXME - assigned JSON schemas are not working
-    # assert body == {"name": "string"}
     codes = [r.code for r in res.responses]
     assert [200, 403] == sorted(codes)
+    # the 403 response (not the first one) is inherited from type ``item``
+    forbidden = [r for r in res.responses if r.code == 403][0]
+    headers = [h.name for h in forbidden.headers]
+    assert "X-waiting-period" in headers
+    body = forbidden.body[0].schema
+    assert body == {"name": "string"}
 
     res = resources[-9]
 
@@ -1362,6 +1398,20 @@ def test_resource_response_no_desc():
     assert response.description is None
 
 
+def find_node(nodes, method, path=None, name=None):
+    """
+    Return the single resource (by ``path``) or resource type (by ``name``)
+    node with ``method``; list indices shift whenever a method is inherited.
+    """
+    matches = [n for n in nodes
+               if (path is None or getattr(n, "path", None) == path) and
+               (name is None or n.name == name) and n.method == method]
+    assert len(matches) == 1, (
+        "expected one node for path={0!r} name={1!r} method={2!r}, "
+        "found {3}".format(path, name, method, len(matches)))
+    return matches[0]
+
+
 @pytest.fixture(scope="session")
 def inherited_resources():
     raml_file = os.path.join(RAML_08, "resource-type-inherited.raml")
@@ -1372,52 +1422,80 @@ def inherited_resources():
     return pw.parse_raml(loaded_raml, config)
 
 
+def test_inherited_resources_node_list(inherited_resources):
+    # spec example "node list for resource-type-inherited.raml": own methods
+    # first, required type methods after, optional (``?``) ones never added
+    nodes = [(r.path, r.method) for r in inherited_resources.resources]
+    assert nodes == [
+        ("/a-get-resource", "get"),
+        ("/a-post-resource", "post"),
+        ("/another-get-resource", "get"),
+        ("/another-post-resource", "post"),
+        ("/another-post-resource", "get"),
+        ("/inherit-no-overwrite", "get"),
+        ("/restype-inherits-restype", "get"),
+    ]
+
+
+def test_resource_inherits_scalar_through_type_chain(inherited_resources):
+    # /restype-inherits-restype has ``type: inheritbase``, which has
+    # ``type: basetype``; the description only exists on basetype's get
+    res = find_node(inherited_resources.resources, "get",
+                    path="/restype-inherits-restype")
+    assert res.type == "inheritbase"
+    assert res.desc == "Inherited description for required get method"
+    headers = [h.name for h in res.headers]
+    assert headers == ["X-InheritBaseType-Header", "X-BaseType-Header"]
+
+
 def test_resource_inherits_type(inherited_resources):
-    # TODO: returns 6 instead of 7
-    # assert len(inherited_resources.resources) == 7
-    res = inherited_resources.resources[0]
+    assert len(inherited_resources.resources) == 7
+    res = find_node(inherited_resources.resources, "get",
+                    path="/a-get-resource")
     assert res.type == "inheritgetmethod"
-    # TODO: FIXME - something's wrong here...
-    # assert res.method == "get"
-    # assert len(res.headers) == 1
-    # assert len(res.body) == 1
-    # assert len(res.responses) == 2
-    # assert len(res.query_params) == 1
+    # the resource declares no methods; ``get`` comes from the type
+    assert res.method == "get"
+    assert len(res.headers) == 1
+    assert len(res.body) == 1
+    assert len(res.responses) == 2
+    assert len(res.query_params) == 1
 
-    # exp_desc = ("This description should be inherited when applied to "
-    #             "resources")
-    # assert res.description.raw == exp_desc
+    # design decision "Non-Goals": the resource-level description keeps
+    # precedence over the resource type's method description
+    assert res.description.raw == "Resource inherits from inheritedgetmethod"
 
-    # h = res.headers[0]
-    # assert h.name == "X-Inherited-Header"
-    # assert h.description.raw == "This header should be inherited"
+    h = res.headers[0]
+    assert h.name == "X-Inherited-Header"
+    assert h.description.raw == "This header should be inherited"
 
-    # b = res.body[0]
-    # assert b.mime_type == "application/json"
-    # # lazy checking
-    # assert b.schema is not None
-    # assert b.example is not None
+    b = res.body[0]
+    assert b.mime_type == "application/json"
+    # lazy checking
+    assert b.schema is not None
+    assert b.example is not None
 
-    # q = res.query_params[0]
-    # assert q.name == "inherited_param"
-    # assert q.display_name == "inherited query parameter for a get method"
-    # assert q.type == "string"
-    # assert q.description.raw == "description for inherited query param"
-    # assert q.example == "fooBar"
-    # assert q.min_length == 1
-    # assert q.max_length == 50
-    # assert q.required is True
+    q = res.query_params[0]
+    assert q.name == "inherited_param"
+    assert q.display_name == "inherited query parameter for a get method"
+    assert q.type == "string"
+    assert q.description.raw == "description for inherited query param"
+    assert q.example == "fooBar"
+    assert q.min_length == 1
+    assert q.max_length == 50
+    assert q.required is True
 
 
 def test_res_type_inheritance(inherited_resources):
-    res = inherited_resources.resource_types[0]
+    res = find_node(inherited_resources.resource_types, "get",
+                    name="basetype")
     assert res.name == "basetype"
-    # assert len(res.query_params) == 1
-    # assert len(res.form_params) == 1
-    # assert len(res.uri_params) == 1
-    # assert len(res.base_uri_params) == 1
+    assert len(res.query_params) == 1
+    assert len(res.form_params) == 1
+    assert len(res.uri_params) == 1
+    assert len(res.base_uri_params) == 1
 
-    res = inherited_resources.resource_types[2]
+    res = find_node(inherited_resources.resource_types, "get",
+                    name="inheritbase")
     assert res.name == "inheritbase"
     assert len(res.query_params) == 2
     assert len(res.form_params) == 2
@@ -1426,39 +1504,43 @@ def test_res_type_inheritance(inherited_resources):
 
 
 def test_resource_inherits_type_optional_post(inherited_resources):
-    # TODO: FIXME - reutrns 6 instead of 7
-    # assert len(inherited_resources.resources) == 7
-    res = inherited_resources.resources[1]
+    assert len(inherited_resources.resources) == 7
+    res = find_node(inherited_resources.resources, "post",
+                    path="/a-post-resource")
     assert res.type == "inheritgetoptionalmethod"
     assert res.method == "post"
     assert res.headers is None
     assert res.query_params is None
     assert res.description.raw == "post some foobar"
+    # the type's optional ``get?`` is not added to the resource
+    methods = [r.method for r in inherited_resources.resources
+               if r.path == "/a-post-resource"]
+    assert methods == ["post"]
 
 
 def test_resource_inherits_type_optional_get(inherited_resources):
     # make sure that optional resource type methods are not inherited if not
     # explicitly included in resource (unless no methods defined)
-    # FIXME: returns 6 instead of 7
-    # assert len(inherited_resources.resources) == 7
-    res = inherited_resources.resources[2]
+    assert len(inherited_resources.resources) == 7
+    res = find_node(inherited_resources.resources, "get",
+                    path="/another-get-resource")
     assert res.type == "inheritgetoptionalmethod"
     assert res.method == "get"
     assert len(res.headers) == 2
     assert len(res.query_params) == 1
 
-    # TODO - this took the resource's description, not resource type's
-    # method description; which is preferred?
-    # desc = ("This description should be inherited when applied to resources "
-    #         "with get methods")
-    # assert res.description.raw == desc
+    # design decision "Non-Goals": the resource-level description keeps
+    # precedence over the resource type's method description
+    desc = "Resource inherits from inheritoptionalmethod"
+    assert res.description.raw == desc
 
 
 def test_resource_inherits_get(inherited_resources):
-    # FIXME: returns 6 instead of 7
-    # assert len(inherited_resources.resources) == 7
-    post_res = inherited_resources.resources[3]
-    get_res = inherited_resources.resources[4]
+    assert len(inherited_resources.resources) == 7
+    post_res = find_node(inherited_resources.resources, "post",
+                         path="/another-post-resource")
+    get_res = find_node(inherited_resources.resources, "get",
+                        path="/inherit-no-overwrite")
 
     assert get_res.method == "get"
     assert len(get_res.headers) == 2
@@ -1498,126 +1580,137 @@ def test_resource_inherits_get(inherited_resources):
     assert q.display_name == "inherited"
     assert q.type == "string"
     assert q.description.raw == "An inherited parameter"
-    # add assert_not_set
 
     assert post_res.method == "post"
     assert post_res.description.raw == "post some more foobar"
+
+    # the resource declares only ``post``; the type's required ``get``
+    # is added after it
+    methods = [r.method for r in inherited_resources.resources
+               if r.path == "/another-post-resource"]
+    assert methods == ["post", "get"]
+    inherited_get = find_node(inherited_resources.resources, "get",
+                              path="/another-post-resource")
+    assert [h.name for h in inherited_get.headers] == ["X-Inherited-Header"]
+    assert [r.code for r in inherited_get.responses] == [200, 404]
 
 
 def test_resource_inherited_no_overwrite(inherited_resources):
     # make sure that if resource inherits a resource type, and explicitly
     # defines properties that are defined in the resource type, the
-    # properties in the resource take preference
-    # FIXME: returns 6 instead of 7
-    # assert len(inherited_resources.resources) == 7
-    # res = inherited_resources.resources[5]
+    # properties in the resource take preference.
+    # Ordering (design decision "Resolve every commented-out assertion"):
+    # properties the resource defines come first, inherited ones after.
+    assert len(inherited_resources.resources) == 7
+    res = find_node(inherited_resources.resources, "get",
+                    path="/inherit-no-overwrite")
 
-    # TODO: FIXME - optional methods are not being assigned to resource methods
-    # assert res.method == "get"
-    # assert len(res.query_params) == 2
+    assert res.method == "get"
+    assert len(res.query_params) == 2
 
-    # desc = "This method-level description should be used"
-    # assert res.description.raw == desc
+    desc = "This method-level description should be used"
+    assert res.description.raw == desc
 
     # test query params
-    # first_param = res.query_params[0]
-    # second_param = res.query_params[1]
+    first_param = res.query_params[0]
+    second_param = res.query_params[1]
 
-    # assert first_param.name == "inherited"
-    # assert first_param.description.raw == "An inherited parameter"
+    assert first_param.name == "overwritten"
+    desc = "This query param description should be used"
+    assert first_param.description.raw == desc
 
-    # assert second_param.name == "overwritten"
-    # desc = "This query param description should be used"
-    # assert second_param.description.raw == desc
+    assert second_param.name == "inherited"
+    assert second_param.description.raw == "An inherited parameter"
 
-    # # test form params
-    # second_param = res.form_params[0]
+    # test form params
+    form_param = res.form_params[0]
 
-    # desc = "This description should be inherited"
-    # assert second_param.description.raw == desc
+    desc = "This description should be inherited"
+    assert form_param.description.raw == desc
 
-    # example = "This example for the overwritten form param should be used"
-    # assert second_param.example == example
+    example = "This example for the overwritten form param should be used"
+    assert form_param.example == example
 
-    # assert second_param.type == "string"
-    # assert second_param.min_length == 1
-    # assert second_param.max_length == 5
+    assert form_param.type == "string"
+    assert form_param.min_length == 1
+    assert form_param.max_length == 5
 
     # test headers
-    # first_header = res.headers[0]
-    # second_header = res.headers[1]
+    first_header = res.headers[0]
+    second_header = res.headers[1]
 
-    # assert first_header.name == "X-Inherited-Header"
-    # assert first_header.description.raw == "this header is inherited"
+    assert first_header.name == "X-Overwritten-Header"
+    desc = "This header description should be used"
+    assert first_header.description.raw == desc
+    assert first_header.required
 
-    # assert second_header.name == "X-Overwritten-Header"
-    # desc = "This header description should be used"
-    # assert second_header.description.raw == desc
-    # assert second_header.required
+    assert second_header.name == "X-Inherited-Header"
+    assert second_header.description.raw == "this header is inherited"
 
-    # # test body
-    # first_body = res.body[0]
-    # second_body = res.body[1]
+    # test body
+    first_body = res.body[0]
+    second_body = res.body[1]
 
-    # assert first_body.mime_type == "application/json"
+    assert first_body.mime_type == "text/xml"
 
-    # schema = {
-    #     "$schema": "http://json-schema.org/draft-03/schema",
-    #     "type": "object",
-    #     "properties": {
-    #         "inherited": {
-    #             "description": "this schema should be inherited"
-    #         }
-    #     }
-    # }
-    # example = {"inherited": "yes please!"}
-    # assert first_body.schema == schema
-    # assert first_body.example == example
+    schema = ("<xs:schema attributeFormDefault='unqualified' "
+              "elementFormDefault='qualified' "
+              "xmlns:xs='http://www.w3.org/2001/XMLSchema'>"
+              "<xs:include schemaLocation='./thingy.xsd'/>"
+              "<xs:element name='thingies'><xs:complexType>"
+              "<xs:sequence minOccurs='0' maxOccurs='unbounded'>"
+              "<xs:element type='thingyType' name='thingy'/>"
+              "</xs:sequence></xs:complexType></xs:element></xs:schema>")
+    schema = xmltodict.parse(schema)
 
-    # assert second_body.mime_type == "text/xml"
+    example = ("<thingies><thingy><name>Successfully overwrote body XML "
+               "example</name></thingy></thingies>")
+    example = xmltodict.parse(example)
+    assert first_body.schema == schema
+    assert first_body.example == example
 
-    # schema = ("<xs:schema attributeFormDefault='unqualified' "
-    #           "elementFormDefault='qualified' "
-    #           "xmlns:xs='http://www.w3.org/2001/XMLSchema'>"
-    #           "<xs:include schemaLocation='./thingy.xsd'/>"
-    #           "<xs:element name='thingies'><xs:complexType>"
-    #           "<xs:sequence minOccurs='0' maxOccurs='unbounded'>"
-    #           "<xs:element type='thingyType' name='thingy'/>"
-    #           "</xs:sequence></xs:complexType></xs:element></xs:schema>")
-    # schema = xmltodict.parse(schema)
+    assert second_body.mime_type == "application/json"
 
-    # example = ("<thingies><thingy><name>Successfully overwrote body XML "
-    #            "example</name></thingy></thingies>")
-    # example = xmltodict.parse(example)
-    # assert second_body.schema == schema
-    # assert second_body.example == example
+    schema = {
+        "$schema": "http://json-schema.org/draft-03/schema",
+        "type": "object",
+        "properties": {
+            "inherited": {
+                "description": "this schema should be inherited"
+            }
+        }
+    }
+    example = {"inherited": "yes please!"}
+    assert second_body.schema == schema
+    assert second_body.example == example
 
-    # # test responses
-    # first_resp = res.responses[0]
-    # second_resp = res.responses[1]
+    # test responses
+    first_resp = res.responses[0]
+    second_resp = res.responses[1]
 
-    # assert first_resp.code == 200
+    assert first_resp.code == 200
 
-    # desc = "overwriting the 200 response description"
-    # assert first_resp.description.raw == desc
-    # assert len(first_resp.headers) == 2
+    desc = "overwriting the 200 response description"
+    assert first_resp.description.raw == desc
+    assert len(first_resp.headers) == 2
 
-    # first_header = first_resp.headers[0]
-    # second_header = first_resp.headers[1]
+    first_header = first_resp.headers[0]
+    second_header = first_resp.headers[1]
 
-    # assert first_header.name == "X-Inherited-Success"
-    # desc = "inherited success response header"
-    # assert first_header.description.raw == desc
+    assert first_header.name == "X-Overwritten-Success"
+    desc = "overwritten success response header"
+    assert first_header.description.raw == desc
 
-    # assert second_header.name == "X-Overwritten-Success"
-    # desc = "overwritten success response header"
-    # assert second_header.description.raw == desc
+    assert second_header.name == "X-Inherited-Success"
+    desc = "inherited success response header"
+    assert second_header.description.raw == desc
 
-    # assert second_resp.code == 201
-    # assert second_resp.body[0].mime_type == "application/json"
-    # example = {"description": "overwritten description of 201 body example"}
-    # assert second_resp.body[0].example == example
-    pass
+    assert second_resp.code == 201
+    desc = "This 201 response description should be inherited"
+    assert second_resp.description.raw == desc
+    assert second_resp.body[0].mime_type == "application/json"
+    example = {"description": "overwritten description of 201 body example"}
+    assert second_resp.body[0].example == example
 
 
 @pytest.fixture(scope="session")
@@ -1646,8 +1739,8 @@ def test_overwrite_protocol(resource_protocol):
     assert first.display_name == "several-tracks"
     assert first.protocols == ["HTTP"]
     assert second.display_name == "track"
-    # TODO: FIXME - protocols aren't being inherited, maybe?
-    # assert second.protocols == ["HTTP"]
+    # inherited from the parent resource
+    assert second.protocols == ["HTTP"]
 
 
 @pytest.fixture(scope="session")
@@ -1815,7 +1908,8 @@ def external_resource_with_multiple_methods():
     return pw.parse_raml(loaded_raml_file, config)
 
 
-def test_resourcePathName_with_multilevel_resource(multilevel_api):
+def test_resource_path_name_with_multilevel_resource(multilevel_api):
+    assert len(multilevel_api.resources) == 3
     for resource in multilevel_api.resources:
         assert resource.desc == resource.path.split("/")[-1]
 
@@ -1830,7 +1924,6 @@ def multilevel_api():
     return pw.parse_raml(loaded_raml_file, config)
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME Fool!")
 def test_external_resource_with_multiple_methods(
         external_resource_with_multiple_methods):
     api = external_resource_with_multiple_methods
@@ -1852,11 +1945,10 @@ def extended_external_resource_with_multiple_methods():
     raml_file = os.path.join(
         RAML_08, "extended_external_resource_with_multiple_methods.raml")
     loaded_raml_file = load_file(raml_file)
-    config = setup_config(RAML_08, "test-config.ini")
+    config = setup_config(os.path.join(RAML_08, "test-config.ini"))
     return pw.parse_raml(loaded_raml_file, config)
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME Fool!")
 def test_extended_external_resource_with_multiple_methods(
         extended_external_resource_with_multiple_methods):
     api = extended_external_resource_with_multiple_methods
@@ -1875,6 +1967,233 @@ def test_extended_external_resource_with_multiple_methods(
         assert method in internal_resource_methods
 
 
+def parse_inline_raml(tmpdir, raml, raml_versions=None):
+    raml_file = tmpdir.join("inline.raml")
+    raml_file.write(raml)
+    config = setup_config(os.path.join(RAML_08, "test-config.ini"))
+    config["validate"] = False
+    if raml_versions:
+        config["raml_versions"] = raml_versions
+    return pw.parse_raml(load_file(str(raml_file)), config)
+
+
+def test_type_only_resource_optional_method_not_added(tmpdir):
+    api = parse_inline_raml(tmpdir, """#%RAML 0.8
+title: Optional type method
+baseUri: http://localhost
+resourceTypes:
+  - optionalget:
+      get?:
+        description: optional get
+/res:
+  type: optionalget
+  post:
+    description: own post
+""")
+    assert [(r.path, r.method) for r in api.resources] == [("/res", "post")]
+
+
+def test_cyclic_or_undefined_type_terminates(tmpdir):
+    api = parse_inline_raml(tmpdir, """#%RAML 0.8
+title: Cyclic and undefined types
+baseUri: http://localhost
+resourceTypes:
+  - a:
+      type: b
+      get:
+        description: a get
+  - b:
+      type: a
+      put:
+        description: b put
+/cyclic:
+  type: a
+/undefined:
+  type: missing
+""")
+    methods = [(r.path, r.method) for r in api.resources]
+    assert methods == [
+        ("/cyclic", "get"), ("/cyclic", "put"), ("/undefined", None)]
+    get = api.resources[0]
+    assert get.desc == "a get"
+
+
+def test_resource_declared_with_no_value(tmpdir):
+    # ``/empty:`` loads as None; it is a resource without properties
+    api = parse_inline_raml(tmpdir, """#%RAML 0.8
+title: Empty resource
+baseUri: http://localhost
+/empty:
+/other:
+  get:
+""")
+    nodes = [(r.path, r.method) for r in api.resources]
+    assert nodes == [("/empty", None), ("/other", "get")]
+
+
+@pytest.mark.parametrize("version,path,desc", [
+    ("0.8", "/users/{id}", "get {id}"),
+    ("1.0", "/users/{id}", "get users"),
+    ("1.0", "/users/{id}/posts", "get posts"),
+    ("1.0", "/{id}", "get {id}"),
+])
+def test_resource_path_name_per_raml_version(tmpdir, version, path, desc):
+    # RAML 1.0: rightmost segment without a URI parameter; RAML 0.8:
+    # rightmost segment
+    types = {
+        "0.8": "resourceTypes:\n  - item:\n      get:\n"
+               "        description: get <<resourcePathName>>\n",
+        "1.0": "resourceTypes:\n  item:\n    get:\n"
+               "      description: get <<resourcePathName>>\n",
+    }
+    raml = ("#%RAML {0}\ntitle: resourcePathName\n"
+            "baseUri: http://localhost\n{1}{2}:\n  type: item\n").format(
+                version, types[version], path)
+    api = parse_inline_raml(tmpdir, raml, raml_versions=["0.8", "1.0"])
+    res = find_node(api.resources, "get", path=path)
+    assert res.desc == desc
+
+
+def test_parameters_passed_along_type_chain(tmpdir):
+    # ``ext`` passes ``thing: <<item>>`` to ``base``; the resource then
+    # assigns ``item: widget`` to ``ext``
+    api = parse_inline_raml(tmpdir, """#%RAML 0.8
+title: Chained type parameters
+baseUri: http://localhost
+resourceTypes:
+  - base:
+      get:
+        description: get <<thing>>
+        headers:
+          X-Thing:
+            description: <<thing>> header
+  - ext:
+      type: { base: { thing: <<item>> } }
+      post:
+        description: post <<item>>
+/r:
+  type: { ext: { item: widget } }
+""")
+    get = find_node(api.resources, "get", path="/r")
+    post = find_node(api.resources, "post", path="/r")
+    assert get.desc == "get widget"
+    assert [(h.name, h.description.raw) for h in get.headers] == [
+        ("X-Thing", "widget header")]
+    assert post.desc == "post widget"
+    # substitution works on copies: the parsed raw RAML equals a fresh load
+    unparsed = load_file(str(tmpdir.join("inline.raml")))
+    assert api.raw["resourceTypes"] == unparsed["resourceTypes"]
+
+
+RAML_08_HEADER = "#%RAML 0.8\ntitle: Edge case\nbaseUri: http://localhost\n"
+
+INHERITANCE_EDGE_CASES = {
+    "nested child under type-only parent": (RAML_08_HEADER + """\
+resourceTypes:
+  - coll:
+      get:
+        description: g
+      post:
+        description: p
+/parent:
+  type: coll
+  /child:
+    get:
+      description: c
+""", [("/parent", "get"), ("/parent", "post"), ("/parent/child", "get")]),
+    "RAML 1.0 resourceTypes map": ("""\
+#%RAML 1.0
+title: Edge case
+baseUri: http://localhost
+resourceTypes:
+  coll:
+    get:
+    post:
+/items:
+  type: coll
+""", [("/items", "get"), ("/items", "post")]),
+    "self-referencing type": (RAML_08_HEADER + """\
+resourceTypes:
+  - a:
+      type: a
+      get:
+        description: g
+/r:
+  type: a
+""", [("/r", "get")]),
+    "type with only optional methods": (RAML_08_HEADER + """\
+resourceTypes:
+  - opt:
+      get?:
+        description: g
+/r:
+  type: opt
+""", [("/r", None)]),
+    "optional method inside a type chain": (RAML_08_HEADER + """\
+resourceTypes:
+  - base:
+      post?:
+        description: p
+      delete:
+        description: d
+  - ext:
+      type: base
+      get:
+        description: g
+/r:
+  type: ext
+""", [("/r", "get"), ("/r", "delete")]),
+    "type assignment with empty parameters": (RAML_08_HEADER + """\
+resourceTypes:
+  - coll:
+      get:
+        description: get <<resourcePathName>>
+/things:
+  type: { coll: }
+""", [("/things", "get")]),
+}
+
+
+@pytest.mark.parametrize("case", sorted(INHERITANCE_EDGE_CASES))
+def test_inheritance_edge_cases(tmpdir, case):
+    raml, expected = INHERITANCE_EDGE_CASES[case]
+    api = parse_inline_raml(tmpdir, raml, raml_versions=["0.8", "1.0"])
+    assert [(r.path, r.method) for r in api.resources] == expected
+    if case == "nested child under type-only parent":
+        child = find_node(api.resources, "get", path="/parent/child")
+        assert child.parent.path == "/parent"
+    if case == "type assignment with empty parameters":
+        assert api.resources[0].desc == "get things"
+
+
+@pytest.mark.parametrize("raml_file,count", [
+    ("external_resource_with_multiple_methods.raml", 6),
+    ("extended_external_resource_with_multiple_methods.raml", 7),
+    ("using-parameters-in-request-and-response-body.raml", 11),
+    ("parameterised-internal-resource.raml", 12),
+    ("resource-type-inherited.raml", 7),
+])
+def test_inheritance_fixtures_validate(raml_file, count):
+    # the other inheritance tests parse with validation off; inherited
+    # method nodes must not produce validation errors either
+    api = parse(os.path.join(RAML_08, raml_file),
+                os.path.join(VALIDATE_08, "valid-config.ini"))
+    assert len(api.resources) == count
+
+
+def test_absolute_uri_without_base_uri(tmpdir):
+    # RAML 1.0 makes baseUri OPTIONAL; resources still get a string URI
+    api = parse_inline_raml(tmpdir, """#%RAML 1.0
+title: No baseUri
+/users:
+  get:
+  /{id}:
+    get:
+""", raml_versions=["0.8", "1.0"])
+    uris = [(r.path, r.absolute_uri) for r in api.resources]
+    assert uris == [("/users", "/users"), ("/users/{id}", "/users/{id}")]
+
+
 @pytest.fixture(scope="session")
 def parameterised_internal_resource():
     raml_file = os.path.join(
@@ -1887,7 +2206,11 @@ def parameterised_internal_resource():
 
 def test_parameterised_internal_resource(parameterised_internal_resource):
     api = parameterised_internal_resource
-    assert len(api.resources), 12
+    assert len(api.resources) == 12
+    for path in "/jobs", "/units", "/users":
+        methods = sorted(r.method for r in api.resources if r.path == path)
+        # the desc checks below only run for methods that exist
+        assert methods == ["delete", "get", "patch", "put"]
     for r in api.resources:
         if r.path == "/jobs":
             if r.method == "get":
@@ -1928,7 +2251,6 @@ def parameterised_request_and_response_bodies():
     return pw.parse_raml(loaded_raml_file, config)
 
 
-@pytest.mark.skipif(1 == 1, reason="FIXME Fool!")
 def test_parameterised_request_and_response_bodies(
         parameterised_request_and_response_bodies):
     api = parameterised_request_and_response_bodies

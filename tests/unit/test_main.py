@@ -111,7 +111,7 @@ def _handles_file_extra_arg(runner, usage_prefix, cli):
     """
     Assertion helper: Command complains about extraneous file arguments.
     """
-    existing_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    existing_file = os.path.join(RAML_08, "complete-example.raml")
     result = runner.invoke(cli, [existing_file, 'extra'])
     usag_prefix_2 = add_help_message(usage_prefix)
     expected = usag_prefix_2 + 'Error: Got unexpected extra argument (extra)\n'
@@ -158,7 +158,7 @@ def test_validate(runner):
     """
     Successfully validate RAML file via CLI.
     """
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     exp_code = 0
     exp_msg = "Success! Valid RAML file: {0}\n".format(raml_file)
     result = runner.invoke(main.validate, [raml_file])
@@ -205,7 +205,7 @@ def test_tree(runner):
     """
     Successfully print out tree of RAML file via CLI.
     """
-    raml_file = os.path.join(RAML_08, "complete-valid-example.raml")
+    raml_file = os.path.join(RAML_08, "complete-example.raml")
     config_file = os.path.join(RAML_08, "test-config.ini")
     exp_code = 0
     exp_msg = None
@@ -214,7 +214,6 @@ def test_tree(runner):
     check_result(exp_code, exp_msg, result)
 
 
-@pytest.mark.skip(reason="TODO: investigate")
 def test_tree_invalid(runner):
     """
     Raise error for invalid RAML file via CLI when printing the tree.
@@ -222,7 +221,7 @@ def test_tree_invalid(runner):
     raml_file = os.path.join(VALIDATE_08, "no-title.raml")
     config_file = os.path.join(VALIDATE_08, "valid-config.ini")
     exp_code = 1
-    exp_msg = '"{0}" is not a valid RAML file: \n{1}: {2}\n'.format(
+    exp_msg = '"{0}" is not a valid RAML file: \n\t{1}: {2}\n'.format(
         raml_file, 'InvalidRootNodeError',
         'RAML File does not define an API title.')
     result = runner.invoke(main.tree, [raml_file, "--color=light",
@@ -249,7 +248,6 @@ def test_update_unexpected_arg(runner):
     check_result(2, expected, result)
 
 
-@pytest.mark.skip(reason="TODO: investigate")
 def test_update(runner, mocker):
     """
     Successfully update supported mime types

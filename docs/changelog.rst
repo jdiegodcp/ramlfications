@@ -32,6 +32,19 @@ Changed:
 - Python 3.10+ is now the minimum supported version; Python 2 era
   compatibility shims have been removed.
 - Dependencies modernized (PyYAML 6.x, current attrs).
+- A RAML 0.8 resource assigned a resource type with ``type:`` now gets
+  that type's required (non-``?``) methods, including those of the
+  type's own ``type:``, as resource nodes. A resource that only declared
+  ``type:`` used to produce a single node with ``method=None``; it now
+  produces one node per inherited method, so ``len(api.resources)``
+  grows for such APIs. Methods the resource declares itself keep their
+  order and come first.
+- Validation follows the RAML specification where it was stricter:
+  RAML 1.0 documents without ``baseUri`` validate (the spec makes it
+  OPTIONAL); RAML 0.8 documents without ``baseUri`` validate when the
+  config sets ``production = False`` (a missing ``production`` still
+  requires it); APIs without resources validate; ``baseUriParameters``
+  accept any named-parameter type, not only ``string``.
 
 Fixed:
 
@@ -39,6 +52,29 @@ Fixed:
   optional (``?``) properties.
 - ``!include`` resolution (nested includes, relative paths, and
   missing-file errors).
+- ``<<resourcePathName>>`` is the rightmost path segment for nested
+  resources (``widget`` for ``/root/widget``, previously ``root/widget``)
+  and is now also substituted when ``type:`` is a plain name.
+- Resource type and trait parameters (e.g. ``<<resourceType>>``) are
+  substituted in inherited scalar values such as ``description``.
+- Inheriting a scalar value through a resource type that has its own
+  ``type:`` no longer raises ``TypeError``, and cyclic ``type:`` chains
+  no longer raise ``RecursionError``.
+- ``ramlfications tree -vv``/``-vvv`` lists form parameters declared
+  under a form ``body`` (``ResourceNode.form_params`` is unchanged).
+- A resource declared with no value (``/empty:``) parses as a resource
+  without properties instead of raising ``AttributeError``.
+- RAML 1.0 ``<<resourcePathName>>`` skips path segments that contain a
+  URI parameter (``users`` for ``/users/{id}``), as the RAML 1.0 spec
+  defines; RAML 0.8 keeps the rightmost segment (``{id}``).
+- Parameters a resource type passes to its own ``type:`` (e.g.
+  ``type: {base: {thing: <<item>>}}``) are substituted in what it
+  inherits from that type.
+- A ``documentation`` value that is not a list, and unknown facets in a
+  RAML 1.0 type declaration, raise ``InvalidRAMLStructureError`` instead
+  of ``AssertionError`` / ``TypeError``.
+- ``absolute_uri`` is a string (the resource path) when the API has no
+  ``baseUri``; it used to be a one-element list.
 - URI/base URI parameter handling (implicit template parameters and
   explicit overrides).
 

@@ -1,4 +1,8 @@
 #%RAML 0.8
+# Not spec-valid RAML 0.8 on purpose: it also uses constructs RAML 0.8 does
+# not allow (e.g. formParameters and displayName on methods, name in bodies,
+# mediaType and protocols at resource type level), to exercise lenient
+# parsing. Do not use it as an example of valid RAML.
 title: Example Web API
 version: v1
 protocols: [ HTTPS ]

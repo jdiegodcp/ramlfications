@@ -170,8 +170,9 @@ def update_mime_types():
     xml_data = _xml_to_dict(raw_data)
     mime_types = _parse_xml_data(xml_data)
 
+    # data/ lives at the package root (see config.py), one level above utils/
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(current_dir, "data")
+    data_dir = os.path.join(os.path.dirname(current_dir), "data")
     output_file = os.path.join(data_dir, "supported_mime_types.json")
 
     _save_updated_mime_types(output_file, mime_types)

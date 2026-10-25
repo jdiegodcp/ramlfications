@@ -68,8 +68,8 @@ def test_load_string():
 
 def test_yaml_parser_error():
     raml_obj = os.path.join(RAML_08, "invalid_yaml.yaml")
-    with pytest.raises(LoadRAMLError) as e:
-        loader.RAMLLoader().load(open(raml_obj))
+    with open(raml_obj) as f, pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
 
@@ -103,8 +103,8 @@ def test_include_markdown():
 
 def test_invalid_yaml_tag():
     raml_file = os.path.join(RAML_08, "invalid_yaml_tag.raml")
-    with pytest.raises(LoadRAMLError) as e:
-        loader.RAMLLoader().load(open(raml_file))
+    with open(raml_file) as f, pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
 
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
@@ -112,8 +112,8 @@ def test_invalid_yaml_tag():
 
 def test_includes_has_invalid_tag():
     raml_file = os.path.join(RAML_08, "include_has_invalid_tag.raml")
-    with pytest.raises(LoadRAMLError) as e:
-        loader.RAMLLoader().load(open(raml_file))
+    with open(raml_file) as f, pytest.raises(LoadRAMLError) as e:
+        loader.RAMLLoader().load(f)
 
     msg = "Error parsing RAML:"
     assert msg in e.value.args[0]
@@ -205,7 +205,8 @@ def test_jsonref_relative_local_uri_includes():
 
 def test_jsonref_remote_uri(tmpdir, httpserver):
     mock_remote_json = os.path.join(JSONREF, "jsonref_mock_remote.json")
-    httpserver.serve_content(open(mock_remote_json).read())
+    with open(mock_remote_json) as f:
+        httpserver.serve_content(f.read())
 
     # since we don't know what port httpserver will be on until it's
     # created, have to create the JSON file that ref's it with the url

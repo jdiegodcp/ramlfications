@@ -2,7 +2,11 @@
 # Copyright (c) 2016 Spotify AB
 
 
-from ramlfications.errors import UnknownDataTypeError
+import attr
+
+from ramlfications.errors import (
+    InvalidRAMLStructureError, UnknownDataTypeError
+)
 from ramlfications.models import STANDARD_RAML_TYPES
 from .common import merge_dicts
 from .examples import parse_examples
@@ -204,6 +208,15 @@ def parse_type(name, raw, root, seen=frozenset()):
             pass
 
     data.update(parse_examples(root.raml_version, data))
+
+    # keys that are not facets of the type would otherwise surface as a
+    # TypeError from the constructor
+    unknown = sorted(set(data) - set(attr.fields_dict(data_type_cls)))
+    if unknown:
+        where = "type '{0}'".format(name) if name else "a type declaration"
+        msg = "Unknown facet(s) {0} in {1}".format(
+            ", ".join(repr(u) for u in unknown), where)
+        raise InvalidRAMLStructureError(msg)
 
     node = data_type_cls(**data)
     if (issubclass(data_type_cls, ArrayDataType) and

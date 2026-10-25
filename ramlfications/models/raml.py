@@ -77,8 +77,8 @@ class BaseRootNode(BaseRAML):
     resource_types   = attr.ib(repr=False, init=False)
     traits           = attr.ib(repr=False, init=False)
     security_schemes = attr.ib(repr=False, init=False)
-    resources        = attr.ib(repr=False, init=False,
-                               validator=root_resources)
+    # neither RAML spec requires at least one resource
+    resources        = attr.ib(repr=False, init=False)
     raml_obj         = attr.ib(repr=False, validator=root_version_constructs)
     config           = attr.ib(repr=False,
                                validator=attr.validators.instance_of(dict))

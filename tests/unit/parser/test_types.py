@@ -6,6 +6,7 @@ import pytest
 
 
 from ramlfications import parse
+from ramlfications.errors import InvalidRAMLStructureError
 
 
 from tests.base import RAML_10, assert_not_set
@@ -70,3 +71,15 @@ def test_parse_data_types(root):
     ]
     for t in types:
         assert_not_set(t, not_set)
+
+
+def test_data_type_fragment_unknown_facet():
+    # a ``#%RAML 1.0 DataType`` fragment declares ONE type; this file's body is
+    # a map of two types, so ``Person``/``Employee`` are unknown facets.
+    # Reported as a RAML error, not TypeError.
+    raml_file = os.path.join(RAML_10, "data_types", "data_type_fragment.raml")
+    conf_file = os.path.join(RAML_10, "test-config.ini")
+    with pytest.raises(InvalidRAMLStructureError) as e:
+        parse(raml_file, conf_file)
+    msg = e.value.args[0]
+    assert "person" in msg or "employee" in msg

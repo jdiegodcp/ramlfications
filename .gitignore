@@ -32,3 +32,13 @@ coverage.xml
 docs/_build/
 docs/_templates/
 cover
+
+# Spectra app data
+.spectra/
+
+# Local verification evidence (see docs/spectra/changes/*/design.md)
+docs/evidence/
+docs/spectra/.vector-search.db*
+
+# Claude Code skills (local, not part of the project)
+.claude/skills/
