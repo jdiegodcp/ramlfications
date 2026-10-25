@@ -56,7 +56,9 @@ def resolve_inherited_scalar(item, inherit_from=[], **kwargs):
             # reserved parameters can not be overridden by assignments
             param["resourcePath"] = path
             param["resourcePathName"] = path_name
-            return substitute_parameters(inh, param)
+            return substitute_parameters(
+                inh, param,
+                getattr(_get(kwargs, "root"), "raml_version", None))
     return None
 
 

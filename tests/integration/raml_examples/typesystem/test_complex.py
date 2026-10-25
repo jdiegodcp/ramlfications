@@ -41,9 +41,11 @@ def test_root(api):
 
 
 @pytest.mark.xfail(strict=True, reason=(
-    "optional feature not implemented: resolving a property's type to a "
-    "type object. RAML 1.0 only requires the value to be \"a name of a type "
-    "or an inline type declaration\"; Property keeps the name in ``type``"))
+    "Intentional, optional feature (not a bug): resolving a property's type "
+    "name to the type object. RAML 1.0 only requires a property's type to "
+    "be \"a name of a type or an inline type declaration\", which "
+    "``Property.type`` already holds; see \"Expected test failures\" in "
+    "CONTRIBUTING.rst"))
 def test_org_on_call_property_resolves_data_type(api):
     on_call = api.types[0].properties.get("onCall")
     assert on_call.data_type.name == "Alertable"

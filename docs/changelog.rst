@@ -21,6 +21,11 @@ Added:
       overlays may not change behavioral aspects of their target
     * security scheme updates (RAML 1.0 OAuth 2.0 grants and ``null``
       ``securedBy`` for optional security)
+    * the RAML 1.0 parameter functions ``!uppercase``, ``!lowercase``,
+      ``!lowercamelcase``, ``!uppercamelcase``, ``!lowerunderscorecase``,
+      ``!upperunderscorecase``, ``!lowerhyphencase`` and
+      ``!upperhyphencase`` (``<<name | !uppercase>>``); RAML 0.8
+      documents keep only ``!singularize`` and ``!pluralize``
 
 - Version-routed validation: RAML 1.0-only constructs are rejected in
   0.8 documents and vice versa, and RAML 1.0 rules (unresolvable type
@@ -45,6 +50,8 @@ Changed:
   config sets ``production = False`` (a missing ``production`` still
   requires it); APIs without resources validate; ``baseUriParameters``
   accept any named-parameter type, not only ``string``.
+- A placeholder name must match the parameter exactly: ``<<item-x>>``
+  is no longer treated as the parameter ``item``.
 
 Fixed:
 
@@ -85,6 +92,18 @@ Fixed:
 - ``ramlfications tree -V``/``--validate`` now validates the file even
   when the config file turns validation off; the flag used to be
   ignored.
+- Placeholders next to each other are substituted independently:
+  ``<<thing>>-<<resourcePathName>>`` gives ``gizmo-widgets`` instead of
+  losing everything after ``gizmo``.
+- ``!singularize`` and ``!pluralize`` leave a value that already has the
+  requested form unchanged (``/user`` with ``!singularize`` used to give
+  ``False``, and ``/users`` with ``!pluralize`` gave ``user``).
+- An unknown parameter function, or a RAML 1.0 function in a RAML 0.8
+  document, raises ``InvalidRAMLStructureError`` naming the function
+  instead of ``AttributeError``/``TypeError``.
+- A parameter function applied to a number or boolean value (for example
+  ``thing: 5`` with ``<<thing | !uppercase>>``) transforms its text form
+  instead of raising ``AttributeError``/``TypeError``.
 
 0.1.9 (2015-12-24)
 ------------------

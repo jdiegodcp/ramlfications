@@ -7,6 +7,8 @@ import re
 
 from collections import OrderedDict as PythonOrderedDict
 
+from ramlfications.errors import InvalidRAMLStructureError
+
 from . import tags
 
 
@@ -26,7 +28,9 @@ class OrderedDict(PythonOrderedDict):
 
 
 # pattern for `<<parameter>>` substitution
-PATTERN = r'(<<\s*)(?P<pname>{0}\b[^\s|]*)(\s*\|?\s*(?P<tag>!\S*))?(\s*>>)'
+# the name ends at a word boundary and a function name is word characters,
+# so a match cannot run past its own ``>>`` into the next placeholder
+PATTERN = r'(<<\s*)(?P<pname>{0}\b)(\s*\|?\s*(?P<tag>!\w+))?(\s*>>)'
 
 
 #####
@@ -67,14 +71,19 @@ def resource_path_name(path, raml_version):
     return segments[-1]
 
 
-def substitute_parameters(data, param_data):
+def substitute_parameters(data, param_data, raml_version=None):
     """
     Returns named parameter ``data`` with ``<<parameter>>`` substituted
     with the desired ``param_data``
+
+    :param str raml_version: ``"0.8"`` allows only the RAML 0.8 parameter
+        functions; ``"1.0"`` or ``None`` allows all RAML 1.0 functions
+    :raises InvalidRAMLStructureError: a placeholder names an unknown
+        function, or a RAML 1.0 function in a RAML 0.8 document
     """
     json_data = json.dumps(data)
     for key, value in list(param_data.items()):
-        json_data = __replace_str_attr(key, value, json_data)
+        json_data = __replace_str_attr(key, value, json_data, raml_version)
     if isinstance(json_data, str):
         json_data = json.loads(json_data, object_pairs_hook=OrderedDict)
     return json_data
@@ -140,7 +149,26 @@ def merge_dicts(child, parent, path=[]):
 #####
 # Private, module-level helper functions
 #####
-def __replace_str_attr(param, new_value, current_str):
+def __parameter_function(name, raml_version):
+    """
+    Returns the parameter function ``!name`` allowed for ``raml_version``.
+    """
+    if raml_version == "0.8":
+        functions = tags.RAML08_FUNCTIONS
+    else:
+        functions = tags.RAML10_FUNCTIONS
+    if name in functions:
+        return functions[name]
+    if name in tags.RAML10_FUNCTIONS:
+        msg = ("'!{0}' is a RAML 1.0 parameter function and is not valid "
+               "in a RAML 0.8 document.".format(name))
+    else:
+        msg = ("'!{0}' is not a RAML parameter function. Valid functions: "
+               "{1}.".format(name, ", ".join("!" + f for f in functions)))
+    raise InvalidRAMLStructureError(msg)
+
+
+def __replace_str_attr(param, new_value, current_str, raml_version=None):
     """
     Replaces ``<<parameters>>`` with their assigned value, processed with \
     any function tags, e.g. ``!pluralize``.
@@ -154,11 +182,9 @@ def __replace_str_attr(param, new_value, current_str):
         tag_func = item[3]
         transformed_value = new_value
         if tag_func:
-            tag_func = tag_func.strip("!")
-            tag_func = tag_func.strip()
-            func = getattr(tags, tag_func)
-            if func:
-                transformed_value = func(new_value)
+            func = __parameter_function(tag_func.lstrip("!"), raml_version)
+            # functions transform text; YAML may give a number or boolean
+            transformed_value = func(str(new_value))
         current_str = current_str.replace(
             to_replace, str(transformed_value), 1)
     return current_str
@@ -216,7 +242,8 @@ def __get_inherited_res_type_data(attr, types, name, method, root,
             if isinstance(assigned, dict) and inherited:
                 values = list(assigned.values())[0]
                 if isinstance(values, dict):
-                    inherited = substitute_parameters(inherited, values)
+                    inherited = substitute_parameters(
+                        inherited, values, root.raml_version)
             attribute_data = merge_dicts(attribute_data, inherited)
         return attribute_data
     return {}

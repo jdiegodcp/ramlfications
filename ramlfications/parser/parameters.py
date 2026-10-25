@@ -191,10 +191,10 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
         Returns dict of param data with relevant ``<<parameter>>`` substituted.
         """
         # this logic ain't too pretty...
+        raml_version = getattr(self.root, "raml_version", None)
         if self.path:
             _path = self.path
-            _path_name = resource_path_name(
-                _path, getattr(self.root, "raml_version", None))
+            _path_name = resource_path_name(_path, raml_version)
         else:
             _path = "<<resourcePath>>"
             _path_name = "<<resourcePathName>>"
@@ -207,7 +207,8 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
                         param_data = list(i.values())[0]
                         param_data = self._set_param_data(param_data, _path,
                                                           _path_name)
-                        resolved = substitute_parameters(resolved, param_data)
+                        resolved = substitute_parameters(
+                            resolved, param_data, raml_version)
 
         if self.type_:
             if isinstance(self.type_, dict):
@@ -215,12 +216,14 @@ class ParameterParser(BaseParameterParser, BodyParserMixin):
                 param_data = list(param_type.values())[0]
                 param_data = self._set_param_data(param_data, _path,
                                                   _path_name)
-                resolved = substitute_parameters(resolved, param_data)
+                resolved = substitute_parameters(
+                    resolved, param_data, raml_version)
 
         # also needed for string (``type: name``) or no assignments
         if self.path:
             resolved = substitute_parameters(
-                resolved, self._set_param_data({}, _path, _path_name))
+                resolved, self._set_param_data({}, _path, _path_name),
+                raml_version)
         return resolved
 
     def resolve(self):

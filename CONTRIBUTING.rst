@@ -54,6 +54,27 @@ Here are a few hints and rules to get you started:
    the pull request gets politely closed.
    There’s absolutely nothing to fear.
 
+Expected test failures
+----------------------
+
+The test suite reports exactly one expected failure (``1 xfailed``), and it
+is intentional:
+
+- ``tests/integration/raml_examples/typesystem/test_complex.py::test_org_on_call_property_resolves_data_type``
+  covers an **optional feature, not a bug**: resolving a property's type
+  name (``onCall: Alertable``) to the ``Alertable`` type object.  The RAML
+  1.0 specification only requires a property's type to be "a name of a type
+  or an inline type declaration", which ``Property.type`` already holds and
+  is tested.  The test stays as a strict expected failure so that, if the
+  feature is ever added, the test starts passing and reminds you to remove
+  the marker.
+
+Any other expected failure is new and needs a look.  When you add one, use
+``pytest.mark.xfail(strict=True, reason=...)`` and start the reason with
+either ``Known bug:`` (wrong behavior that should be fixed) or
+``Intentional, optional feature (not a bug):`` (behavior the specification
+does not require), and list it here.
+
 Thank you for considering to contribute to ``ramlfications``!
 
 
